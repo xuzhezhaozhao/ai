@@ -1,11 +1,5 @@
 #! /usr/bin/env python
 #-*- coding=utf8 -*-
-"""
-#Author : zhezhaoxu
-#Created Time : Wed 01 Nov 2017 03 : 59 : 24 PM CST
-#File Name : transform.py
-#Description:
-"""
 
 # 生成的文本里面有连续空格，用下面的命令压缩空格
 # sed 's/[ ][ ]*/ /g'
