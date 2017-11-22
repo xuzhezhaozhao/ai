@@ -15,7 +15,7 @@ def getLabels():
 def getStopWords():
     stop_words = [unicode(word, 'utf-8') for word in open("stop_words.txt").read().split('\n')]
     return stop_words
-    
+
 
 if __name__ == "__main__":
     labels = getLabels()
