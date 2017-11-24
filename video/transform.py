@@ -12,6 +12,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 5:
         maxlines = int(sys.argv[4])
 
+    nfilter = 0
     for index, line in enumerate(open(input, "r")):
         if maxlines != -1 and index >= maxlines:
             break
@@ -27,7 +28,7 @@ if __name__ == "__main__":
             if uin == "" or pid == "" or bid == "" or time == "":
                 continue
             if play_time < 20 and play_ratio < 0.3:
-                continue
+                ++nfilter
             if uin not in histories:
                 histories[uin] = []
             cnt = len(histories[uin])
@@ -39,6 +40,7 @@ if __name__ == "__main__":
         except:
             pass
 
+    print("nfilter: ", nfilter)
     print("write to file ...")
     with open(output, "w") as fout:
         for uin in histories:

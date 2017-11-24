@@ -22,8 +22,8 @@ echo "transform sorted file ..."
 echo "fastText train ..."
 fast_model=${output}.model
 ~/fastText/fasttext skipgram -input ${output} -output ${fast_model} -lr 0.025\
-  -dim 100 -ws 5 -epoch 2 -minCount ${minCount} -neg 5 -loss ns -bucket 2000000\
-  -minn 0 -maxn 0 -thread 6 -t 1e-4 -lrUpdateRate 100
+  -dim 100 -ws 5 -epoch 5 -minCount ${minCount} -neg 5 -loss ns -bucket 2000000\
+  -minn 0 -maxn 0 -thread 4 -t 1e-4 -lrUpdateRate 100
 
 echo "generate query list ..."
 awk '{print $1}' ${fast_model}.vec > ${fast_model}.query
@@ -32,16 +32,14 @@ sed -i "1d" ${fast_model}.query
 sed -i "1d" ${fast_model}.query
 
 echo "split query list ..."
-split -d -n l/4 ${fast_model}.query ${fast_model}.query.
+split -d -n l/3 ${fast_model}.query ${fast_model}.query.
 
 echo "fastText nn ..."
 FASTTEST=~/fastText/fasttext
 ${FASTTEST} nn ${fast_model}.bin 50 30 < ${fast_model}.query.00 > ${fast_model}.result.00 &
 ${FASTTEST} nn ${fast_model}.bin 50 30 < ${fast_model}.query.01 > ${fast_model}.result.01 &
 ${FASTTEST} nn ${fast_model}.bin 50 30 < ${fast_model}.query.02 > ${fast_model}.result.02 &
-${FASTTEST} nn ${fast_model}.bin 50 30 < ${fast_model}.query.03 > ${fast_model}.result.03 &
 wait
 wait
 wait
-wait
-cat ${fast_model}.result.00 ${fast_model}.result.01 ${fast_model}.result.02 ${fast_model}.result.03 > ${fast_model}.result
+cat ${fast_model}.result.00 ${fast_model}.result.01 ${fast_model}.result.02 > ${fast_model}.result
