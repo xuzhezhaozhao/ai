@@ -49,7 +49,7 @@ def fc(x, num_in, num_out, name, relu=True):
     Returns:
         output:
     """
-    with tf.name_scope(name) as scope:
+    with tf.name_scope(name):
 
         # Create tf variables for the weights and biases
         weights = tf.Variable(
@@ -60,7 +60,7 @@ def fc(x, num_in, num_out, name, relu=True):
                              name='biases')
 
         # Matrix multiply weights and inputs and add bias
-        act = tf.nn.xw_plus_b(x, weights, biases, name=scope.name)
+        act = tf.nn.xw_plus_b(x, weights, biases, name=name)
         if relu:
             # Apply ReLu non linearity
             relu = tf.nn.relu(act)
