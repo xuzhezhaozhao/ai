@@ -27,7 +27,7 @@ if __name__ == "__main__":
             play_ratio = play_time * 1.0 / duration
             if uin == "" or pid == "" or bid == "" or time == "":
                 continue
-            if play_time < 20 and play_ratio < 0.3:
+            if play_ratio < 0.2:
                 ++nfilter
             if uin not in histories:
                 histories[uin] = []

@@ -41,12 +41,14 @@ def fc(x, num_in, num_out, name, relu=True):
     """Create a fully connected layer.
     Args:
         x: input tensor
-        num_in:
-        num_out:
+        num_in: number of input neurons
+        num_out: number of output neurons
         name:
-        relu:
-    """
+        relu: Weather apply relu layer
 
+    Returns:
+        output:
+    """
     with tf.name_scope(name) as scope:
 
         # Create tf variables for the weights and biases

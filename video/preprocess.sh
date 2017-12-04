@@ -1,20 +1,30 @@
 #! /usr/bin/env bash
 
-# input tdw table file
-input=$1
-output=$1.fasttext
-# max items per user
-klimit=$2
-# fasttext min count
-minCount=$3
+rm -rf data.bak
+mv data data.bak
 
-tmp_file=${input}.tmp
+/data/hadoop_client/new/tdwdfsclient/bin/hadoop fs -Dhadoop.job.ugi=tdw_zhezhaoxu:zhao2017,g_sng_im_sng_imappdev_tribe -get hdfs://ss-sng-dc-v2/stage/outface/SNG/g_sng_im_sng_imappdev_tribe/zhezhaoxu/similar_videos_csv/data .
+
+if [$? -eq 0]; then
+  echo 'hdfs failed'
+  exit
+fi
+
+cat data/* > data.all
+
+input=data.all
+output=${input}.fasttext
+
+# max items per user
+klimit=1024
+# fasttext min count
+minCount=50
+
 sorted_file=${input}.sorted
 
-echo "remove first line ..."
-sed "1d" ${input} > ${tmp_file}
 echo "sort input file ..."
-sort -t ',' -k 4 ${tmp_file} > ${sorted_file}
+mkdir -p tmp/
+sort -T tmp/ -t ',' -k 4 --parallel=24 ${input} -o ${sorted_file}
 
 echo "transform sorted file ..."
 ./transform.py ${sorted_file} ${output} ${klimit}
