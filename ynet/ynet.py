@@ -2,7 +2,7 @@ import tensorflow as tf
 import math
 
 
-def YNet(object):
+class YNet(object):
     """Implementation of Deep Neural Networks for YouTube recommendations."""
 
     def __init__(self, x, keep_prob):
