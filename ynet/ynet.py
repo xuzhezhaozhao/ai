@@ -39,9 +39,8 @@ class YNet(object):
         self._uv = fc(dropout3, 512, 256, name='fc4')
 
     @property
-    def uv(self):
+    def user_vectors(self):
         return self._uv
-
 
 
 def fc(x, num_in, num_out, name, relu=True):

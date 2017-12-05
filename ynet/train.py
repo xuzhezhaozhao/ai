@@ -9,7 +9,12 @@ import os
 FLAGS = None
 
 
-def nce_loss(uv, labels, embeddings, biases, num_classes, name="nce_loss"):
+def nce_loss(user_vectors,
+             predicts,
+             embeddings,
+             biases,
+             num_classes,
+             name="nce_loss"):
     """Computes and returns the noise-contrastive estimation training loss.
 
     Args:
@@ -25,15 +30,16 @@ def nce_loss(uv, labels, embeddings, biases, num_classes, name="nce_loss"):
     Return:
         loss: nce loss
     """
-    return tf.nn.nce_loss(
+    losses = tf.nn.nce_loss(
         weights=embeddings,
         biases=biases,
-        labels=labels,
-        inputs=uv,
+        labels=predicts,
+        inputs=user_vectors,
         num_sampled=FLAGS.num_sampled,
         num_classes=num_classes,
         name=name
     )
+    return tf.reduce_mean(losses)
 
 
 def training(loss, lr):
@@ -68,27 +74,41 @@ def training(loss, lr):
 
 def run_training():
     """Train YNet for a number of epoches."""
+    batch_size = FLAGS.batch_size
+    embedding_dim = FLAGS.embedding_dim
+    keep_prob = FLAGS.keep_prob
+    learning_rate = FLAGS.learning_rate
+    epoches = FLAGS.epoches
+
+    # TODO
+    num_videos = 0
 
     with tf.Graph().as_default():
         video_embeddings = tf.Variable()
         video_biases = tf.Variable()
 
-        # Generate placeholders for the embeddings and labels.
-        embeddings_placeholder, labels_placeholder = placeholder_inputs(
-            FLAGS.batch_size, FLAGS.input_size)
+        # Generate placeholders for input and predicts
+        input_placeholder = tf.placeholder(tf.float32,
+                                           shape=(batch_size, embedding_dim))
+        predicts_placeholder = tf.placeholder(tf.int32,
+                                              shape=(batch_size))
 
-        model = YNet(embeddings_placeholder,
-                     labels_placeholder,
-                     FLAGS.keep_prob)
-        uv = model.uv   # output user vectors
+        model = YNet(input_placeholder,
+                     predicts_placeholder,
+                     keep_prob)
+        user_vectors = model.user_vectors
 
-        loss = nce_loss(uv, labels, video_embeddings, video_biases)
-        train_op = training(loss, FLAGS.learning_rate)
+        loss = nce_loss(user_vectors,
+                        predicts_placeholder,
+                        video_embeddings,
+                        video_biases,
+                        num_videos)
+        train_op = training(loss, learning_rate)
 
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
 
-            for epoch in xrange(FLAGS.epoch):
+            for epoch in xrange(epoches):
                 pass
 
 
@@ -98,23 +118,6 @@ def main(_):
     tf.gfile.MakeDirs(FLAGS.log_dir)
 
     run_training()
-
-
-def placeholder_inputs(batch_size, size):
-    """Generate placeholder variables to represent the input tensors
-
-    Args:
-        batch_size: The batch size will be baked into both placeholders.
-        size: Embeddings size.
-
-    Return:
-        embeddings_placeholder: Embeddings placeholder.
-        labels_placeholder: Labels placeholder.
-    """
-    embeddings_placeholder = tf.placeholder(tf.float32,
-                                            shape=(batch_size, size))
-    labels_placeholder = tf.placeholder(tf.int32, shape=(batch_size))
-    return embeddings_placeholder, labels_placeholder
 
 
 if __name__ == '__main__':
@@ -127,10 +130,10 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
-        '--epoch',
+        '--epoches',
         type=int,
         default=20,
-        help='Number of epoch to run trainer.'
+        help='Number of epoches to run trainer.'
     )
 
     parser.add_argument(
@@ -166,6 +169,13 @@ if __name__ == '__main__':
         type=int,
         default=12,
         help='number of sampled of NCE loss.'
+    )
+
+    parser.add_argument(
+        '--embedding_dim',
+        type=int,
+        default=256,
+        help='Video embedding dimension.'
     )
 
     FLAGS, unparsed = parser.parse_known_args()
