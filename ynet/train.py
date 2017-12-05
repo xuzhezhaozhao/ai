@@ -1,8 +1,9 @@
 #! /usr/bin/env python
-#-*-coding:utf-8 -*-
+# -*-coding:utf-8 -*-
 
 from ynet import YNet
 import tensorflow as tf
+from tensorflow.contrib.learn.python.learn.datasets import base
 import numpy as np
 import argparse
 import sys
@@ -10,6 +11,11 @@ import os
 
 # Basic model parameters as external flags.
 FLAGS = None
+
+
+class DataSet(object):
+    def __init__(self):
+        pass
 
 
 def nce_loss(embeddings,
@@ -90,14 +96,13 @@ def run_training():
         video_biases = tf.Variable(tf.zeros([num_videos]))
 
         # 用户浏览历史 placeholder
-        histories_placeholder = tf.placeholder(tf.int32,
-                                               shape=(batch_size,
-                                                      history_size))
+        histories_pl = tf.placeholder(tf.int32,
+                                      shape=(batch_size, history_size))
         # 待预测的视频 placeholder
-        predicts_placeholder = tf.placeholder(tf.int32, shape=(batch_size, 1))
+        predicts_pl = tf.placeholder(tf.int32, shape=(batch_size, 1))
 
         inputs = generate_average_inputs(video_embeddings,
-                                         histories_placeholder)
+                                         histories_pl)
 
         # 构造 DNN 网络
         model = YNet(inputs, keep_prob, embedding_dim)
@@ -106,14 +111,27 @@ def run_training():
         # 负采样算法
         loss = nce_loss(video_embeddings,
                         video_biases,
-                        predicts_placeholder,
+                        predicts_pl,
                         user_vectors,
                         num_videos)
         train_op = training(loss, learning_rate)
         init = tf.global_variables_initializer()
 
+        data_sets = read_data_sets(FLAGS.input_data_file)
         with tf.Session() as sess:
             sess.run(init)
+            for step in xrange(epoches):
+                feed_dict = fill_feed_dict(data_sets.train,
+                                           histories_pl,
+                                           predicts_pl)
+                # Run one step of the model.  The return values are the
+                # activations from the `train_op` (which is discarded) and
+                # the `loss` Op.  To inspect the values of your Ops or
+                # variables, you may include them in the list passed to
+                # sess.run() and the value tensors will be returned in the
+                # tuple from the call.
+                _, loss_value = sess.run([train_op, loss],
+                                         feed_dict=feed_dict)
 
 
 def generate_average_inputs(video_embeddings, histories_placeholder):
@@ -158,6 +176,38 @@ def load_video_embeddings():
                          skip_header=2, usecols=0)
     D = {key: index for index, key in enumerate(keys)}
     return embeddings, num, dim, D
+
+
+def fill_feed_dict(data_set, histories_pl, predicts_pl):
+    """Fills the feed_dict for training the given step.
+
+    A feed_dict takes the form of:
+    feed_dict = {
+      <placeholder>: <tensor of values to be passed for placeholder>,
+      ....
+    }
+
+    Args:
+        data_set:
+        histories_pl:
+        predicts_pl:
+
+    Returns:
+        feed_dict: The feed dictionary mapping from placeholders to values.
+    """
+    histories_feed, predicts_feed = data_set.next_batch(FLAGS.batch_size)
+    feed_dict = {
+        histories_pl: histories_feed,
+        predicts_pl: predicts_feed,
+    }
+    return feed_dict
+
+
+def read_data_sets(input_data_file):
+    train = DataSet()
+    validation = DataSet()
+    test = DataSet()
+    return base.Datasets(train=train, validation=validation, test=test)
 
 
 def main(_):
@@ -231,6 +281,13 @@ if __name__ == '__main__':
         type=str,
         default='video_embeddings.vec',
         help='Pretrained video embeddings file.'
+    )
+
+    parser.add_argument(
+        '--input_data_file',
+        type=str,
+        default='histories.csv',
+        help='input data file.'
     )
 
     FLAGS, unparsed = parser.parse_known_args()
