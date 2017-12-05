@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+#-*-coding:utf-8 -*-
 
 from ynet import YNet
 import tensorflow as tf
@@ -83,20 +85,22 @@ def run_training():
 
     with tf.Graph().as_default():
         # 加载训练好的词向量
-        video_embeddings, num_videos, embedding_dim, D = load_video_embeddings()
-        video_biases = tf.Variable(tf.zeros[num_videos])
+        video_embeddings, num_videos, embedding_dim, D = \
+            load_video_embeddings()
+        video_biases = tf.Variable(tf.zeros([num_videos]))
 
         # 用户浏览历史 placeholder
         histories_placeholder = tf.placeholder(tf.int32,
-                                               shape=(batch_size, history_size))
-        # 待预测的视频
-        predicts_placeholder = tf.placeholder(tf.int32, shape=(batch_size))
+                                               shape=(batch_size,
+                                                      history_size))
+        # 待预测的视频 placeholder
+        predicts_placeholder = tf.placeholder(tf.int32, shape=(batch_size, 1))
 
         inputs = generate_average_inputs(video_embeddings,
                                          histories_placeholder)
 
         # 构造 DNN 网络
-        model = YNet(inputs, keep_prob)
+        model = YNet(inputs, keep_prob, embedding_dim)
         user_vectors = model.user_vectors
 
         # 负采样算法
@@ -111,25 +115,20 @@ def run_training():
         with tf.Session() as sess:
             sess.run(init)
 
-            for epoch in xrange(epoches):
-                # TODO
-                feed_dict = "TODO"
-                _, loss_value = sess.run([train_op, loss],
-                                         feed_dict=feed_dict)
-
 
 def generate_average_inputs(video_embeddings, histories_placeholder):
     """Generate average tensor of embedded video watches.
 
     Args:
-        video_embeddings: Video embeddings
-        histories_placeholder: Placeholder of user watch histories
+        video_embeddings: Video embeddings.
+        histories_placeholder: A shape (batch, history_size) Tensor.
+        Placeholder of user watch histories
 
     Return:
         mean: Average tensor of embedded video watches
     """
     x = tf.gather(video_embeddings, histories_placeholder)
-    mean = tf.reduce_mean(x, 0)
+    mean = tf.reduce_mean(x, 1)
     return mean
 
 
@@ -151,9 +150,9 @@ def load_video_embeddings():
         tokens = line.split(' ')
         num, dim = map(int, tokens)
 
-    embeddings = np.genfromtxt(filename, dtype='float', delimiter=' ',
-                           skip_header=2, usecols=range(1, dim + 1))
-    embeddings = tf.convert_to_tensor(embeddings)
+    embeddings = np.genfromtxt(filename, dtype='float32', delimiter=' ',
+                               skip_header=2, usecols=range(1, dim + 1))
+    embeddings = tf.convert_to_tensor(embeddings, dtype='float32')
 
     keys = np.genfromtxt(filename, dtype='string', delimiter=' ',
                          skip_header=2, usecols=0)
@@ -188,7 +187,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--batch_size',
         type=int,
-        default=100,
+        default=50,
         help='Batch size.  Must divide evenly into the dataset sizes.'
     )
 
@@ -216,7 +215,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--num_sampled',
         type=int,
-        default=12,
+        default=10,
         help='number of sampled of NCE loss.'
     )
 
@@ -224,7 +223,7 @@ if __name__ == '__main__':
         '--history_size',
         type=int,
         default=50,
-        help='User's input history size.'
+        help="User's input history size."
     )
 
     parser.add_argument(

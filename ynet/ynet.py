@@ -5,14 +5,16 @@ import math
 class YNet(object):
     """Implementation of Deep Neural Networks for YouTube recommendations."""
 
-    def __init__(self, x, keep_prob):
+    def __init__(self, x, keep_prob, output_dim):
         """Create the graph of the YNet model
         Args:
-            x: Placeholder for the input tensor
-            keep_prob: Dropout probability
+            x: Placeholder for the input tensor.
+            keep_prob: Dropout probability.
+            output_dim: output dimension.
         """
         self._x = x
         self._keep_prob = keep_prob
+        self._output_dim = output_dim
 
         # Call the create function to build the computational graph of YNet
         self.create()
@@ -34,7 +36,7 @@ class YNet(object):
         dropout3 = dropout(fc3, self._keep_prob)
 
         # 4th Layer: FC (ReLu)
-        self._uv = fc(dropout3, 512, 256, name='fc4')
+        self._uv = fc(dropout3, 512, self._output_dim, name='fc4')
 
     @property
     def user_vectors(self):
