@@ -9,10 +9,10 @@ import os
 FLAGS = None
 
 
-def nce_loss(user_vectors,
-             predicts,
-             embeddings,
+def nce_loss(embeddings,
              biases,
+             predicts,
+             user_vectors,
              num_classes,
              name="nce_loss"):
     """Computes and returns the noise-contrastive estimation training loss.
@@ -39,7 +39,7 @@ def nce_loss(user_vectors,
         num_classes=num_classes,
         name=name
     )
-    return tf.reduce_mean(losses)
+    return tf.reduce_mean(losses, name=name+'_mean')
 
 
 def training(loss, lr):
@@ -75,41 +75,73 @@ def training(loss, lr):
 def run_training():
     """Train YNet for a number of epoches."""
     batch_size = FLAGS.batch_size
-    embedding_dim = FLAGS.embedding_dim
     keep_prob = FLAGS.keep_prob
     learning_rate = FLAGS.learning_rate
     epoches = FLAGS.epoches
-
-    # TODO
-    num_videos = 0
+    history_size = FLAGS.history_size
 
     with tf.Graph().as_default():
-        video_embeddings = tf.Variable()
-        video_biases = tf.Variable()
+        # 加载训练好的词向量
+        video_embeddings, embedding_dim, num_videos = load_video_embeddings()
+        video_biases = tf.Variable(tf.zeros[num_videos])
 
-        # Generate placeholders for input and predicts
-        input_placeholder = tf.placeholder(tf.float32,
-                                           shape=(batch_size, embedding_dim))
-        predicts_placeholder = tf.placeholder(tf.int32,
-                                              shape=(batch_size))
+        # 用户浏览历史 placeholder
+        histories_placeholder = tf.placeholder(tf.int32,
+                                           shape=(batch_size, history_size))
+        # 待预测的视频
+        predicts_placeholder = tf.placeholder(tf.int32, shape=(batch_size))
 
-        model = YNet(input_placeholder,
-                     predicts_placeholder,
-                     keep_prob)
+        inputs = generate_average_inputs(video_embeddings,
+                                         histories_placeholder)
+
+        # 构造 DNN 网络
+        model = YNet(inputs, keep_prob)
         user_vectors = model.user_vectors
 
-        loss = nce_loss(user_vectors,
-                        predicts_placeholder,
-                        video_embeddings,
+        # 负采样算法
+        loss = nce_loss(video_embeddings,
                         video_biases,
+                        predicts_placeholder,
+                        user_vectors,
                         num_videos)
         train_op = training(loss, learning_rate)
+        init = tf.global_variables_initializer()
 
         with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
+            sess.run(init)
 
             for epoch in xrange(epoches):
-                pass
+                # TODO
+                feed_dict = "TODO"
+                _, loss_value = sess.run([train_op, loss],
+                                         feed_dict=feed_dict)
+
+def generate_average_inputs(video_embeddings, histories_placeholder):
+    """Generate average tensor of embedded video watches.
+
+    Args:
+        video_embeddings: Video embeddings
+        histories_placeholder: Placeholder of user watch histories
+
+    Return:
+        mean: Average tensor of embedded video watches
+    """
+    x = tf.gather(video_embeddings, histories_placeholder)
+    mean = tf.reduce_mean(x, 0)
+    return mean
+
+def load_video_embeddings():
+    """ Load pretrained video embeddings from file
+    Return:
+        embeddings: Pretrained video embeddings
+        dim: Embedding dimension
+        num: Number of videos
+    """
+    for index, line in enumerate(open(FLAGS.video_embeddings_file, "r")):
+        if index == 0:
+            line.split(' ')
+        else:
+            pass
 
 
 def main(_):
@@ -172,10 +204,17 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
-        '--embedding_dim',
+        '--history_size',
         type=int,
-        default=256,
-        help='Video embedding dimension.'
+        default=50,
+        help='User's input history size.'
+    )
+
+    parser.add_argument(
+        '--video_embeddings_file',
+        type=str,
+        default='video_embeddings.vec',
+        help='Pretrained video embeddings file.'
     )
 
     FLAGS, unparsed = parser.parse_known_args()

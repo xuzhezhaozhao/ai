@@ -5,15 +5,13 @@ import math
 class YNet(object):
     """Implementation of Deep Neural Networks for YouTube recommendations."""
 
-    def __init__(self, x, labels, keep_prob):
+    def __init__(self, x, keep_prob):
         """Create the graph of the YNet model
         Args:
             x: Placeholder for the input tensor
-            labels: Placeholder for the labels
             keep_prob: Dropout probability
         """
         self._x = x
-        self._labels = labels
         self._keep_prob = keep_prob
 
         # Call the create function to build the computational graph of YNet
