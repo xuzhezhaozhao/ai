@@ -35,41 +35,13 @@ class YNet(object):
         fc3 = fc(dropout2, 1024, 512, name='fc3')
         dropout3 = dropout(fc3, self._keep_prob)
 
-        # 4th Layer: FC and return unscaled activations
-        self._uv = fc(dropout3, 512, 256, name='fc4', relu=False)
+        # 4th Layer: FC (ReLu)
+        self._uv = fc(dropout3, 512, 256, name='fc4')
 
     @property
     def uv(self):
         return self._uv
 
-    def loss(self):
-        pass
-
-    def trainning(self, lr):
-    """Sets up the training Ops.
-    Creates a summarizer to track the loss over time in TensorBoard.
-
-    Creates an optimizer and applies the gradients to all trainable variables.
-
-    The Op returned by this function is what must be passed to the
-    `sess.run()` call to cause the model to train.
-
-    Args:
-      lr: The learning rate to use for gradient descent.
-
-    Returns:
-      train_op: The Op for training.
-    """
-    loss = self.loss()
-    # Add a scalar summary for the snapshot loss.
-    tf.summary.scalar('loss', loss)
-    optimizer = tf.train.GradientDescentOptimizer(lr)
-    # Create a variable to track the global step.
-    global_step = tf.Variable(0, name='global_step', trainable=False)
-    # Use the optimizer to apply the gradients that minimize the loss
-    # (and also increment the global step counter) as a single training step.
-    train_op = optimizer.minimize(loss, global_step=global_step)
-    return train_op
 
 
 def fc(x, num_in, num_out, name, relu=True):

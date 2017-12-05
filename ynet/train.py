@@ -9,10 +9,70 @@ import os
 FLAGS = None
 
 
+def nce_loss(uv, labels, embeddings, biases, num_classes, name="nce_loss"):
+    """Computes and returns the noise-contrastive estimation training loss.
+
+    Args:
+        uv: A Tensor of shape [batch_size, dim]. The forward activations of
+        the YNet.
+        labels: A Tensor of type int64 and shape [batch_size].
+        The target classes.
+        embeddings: A Tensor of shape [num_classes, dim]
+        biases: A Tensor of shape [num_classes]. The class biases.
+        num_classes: An int. The number of target classes
+        name:
+
+    Return:
+        loss: nce loss
+    """
+    return tf.nn.nce_loss(
+        weights=embeddings,
+        biases=biases,
+        labels=labels,
+        inputs=uv,
+        num_sampled=FLAGS.num_sampled,
+        num_classes=num_classes,
+        name=name
+    )
+
+
+def training(loss, lr):
+    """Sets up the training Ops.
+    Creates a summarizer to track the loss over time in TensorBoard.
+
+    Creates an optimizer and applies the gradients to all trainable
+    variables.
+
+    The Op returned by this function is what must be passed to the
+    `sess.run()` call to cause the model to train.
+
+    Args:
+        loss: Loss tensor, from nce_loss()
+        lr: The learning rate to use for gradient descent.
+
+    Returns:
+        train_op: The Op for training.
+    """
+    # Add a scalar summary for the snapshot loss.
+    tf.summary.scalar('loss', loss)
+    # optimizer = tf.train.GradientDescentOptimizer(lr)
+    optimizer = tf.train.AdamOptimizer(lr)
+    # Create a variable to track the global step.
+    global_step = tf.Variable(0, name='global_step', trainable=False)
+    # Use the optimizer to apply the gradients that minimize the loss
+    # (and also increment the global step counter) as a single training
+    # step.
+    train_op = optimizer.minimize(loss, global_step=global_step)
+    return train_op
+
+
 def run_training():
     """Train YNet for a number of epoches."""
 
     with tf.Graph().as_default():
+        video_embeddings = tf.Variable()
+        video_biases = tf.Variable()
+
         # Generate placeholders for the embeddings and labels.
         embeddings_placeholder, labels_placeholder = placeholder_inputs(
             FLAGS.batch_size, FLAGS.input_size)
@@ -20,7 +80,10 @@ def run_training():
         model = YNet(embeddings_placeholder,
                      labels_placeholder,
                      FLAGS.keep_prob)
-        train_op = model.trainning(FLAGS.learning_rate)
+        uv = model.uv   # output user vectors
+
+        loss = nce_loss(uv, labels, video_embeddings, video_biases)
+        train_op = training(loss, FLAGS.learning_rate)
 
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
@@ -96,6 +159,13 @@ if __name__ == '__main__':
         type=str,
         default=os.path.join(os.getenv('TEST_TMPDIR', '/tmp'), 'logs/ynet'),
         help='Directory to put the log data.'
+    )
+
+    parser.add_argument(
+        '--num_sampled',
+        type=int,
+        default=12,
+        help='number of sampled of NCE loss.'
     )
 
     FLAGS, unparsed = parser.parse_known_args()
