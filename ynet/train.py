@@ -1,6 +1,7 @@
 
 from ynet import YNet
 import tensorflow as tf
+import numpy as np
 import argparse
 import sys
 import os
@@ -39,7 +40,7 @@ def nce_loss(embeddings,
         num_classes=num_classes,
         name=name
     )
-    return tf.reduce_mean(losses, name=name+'_mean')
+    return tf.reduce_mean(losses, name=name + '_mean')
 
 
 def training(loss, lr):
@@ -82,12 +83,12 @@ def run_training():
 
     with tf.Graph().as_default():
         # 加载训练好的词向量
-        video_embeddings, embedding_dim, num_videos = load_video_embeddings()
+        video_embeddings, num_videos, embedding_dim, D = load_video_embeddings()
         video_biases = tf.Variable(tf.zeros[num_videos])
 
         # 用户浏览历史 placeholder
         histories_placeholder = tf.placeholder(tf.int32,
-                                           shape=(batch_size, history_size))
+                                               shape=(batch_size, history_size))
         # 待预测的视频
         predicts_placeholder = tf.placeholder(tf.int32, shape=(batch_size))
 
@@ -116,6 +117,7 @@ def run_training():
                 _, loss_value = sess.run([train_op, loss],
                                          feed_dict=feed_dict)
 
+
 def generate_average_inputs(video_embeddings, histories_placeholder):
     """Generate average tensor of embedded video watches.
 
@@ -130,18 +132,33 @@ def generate_average_inputs(video_embeddings, histories_placeholder):
     mean = tf.reduce_mean(x, 0)
     return mean
 
+
 def load_video_embeddings():
     """ Load pretrained video embeddings from file
     Return:
-        embeddings: Pretrained video embeddings
-        dim: Embedding dimension
-        num: Number of videos
+        embeddings: A shape (num, dim) Tensor. Pretrained video embeddings.
+        num: A int. Number of videos.
+        dim: A int. Embedding dimension.
+        D: A python dict. video key - embedding index in embeddings.
     """
-    for index, line in enumerate(open(FLAGS.video_embeddings_file, "r")):
-        if index == 0:
-            line.split(' ')
-        else:
-            pass
+    num = 0
+    dim = 0
+    D = dict()
+
+    filename = FLAGS.video_embeddings_file
+    with open(filename, "r") as f:
+        line = f.readline().strip()
+        tokens = line.split(' ')
+        num, dim = map(int, tokens)
+
+    embeddings = np.genfromtxt(filename, dtype='float', delimiter=' ',
+                           skip_header=2, usecols=range(1, dim + 1))
+    embeddings = tf.convert_to_tensor(embeddings)
+
+    keys = np.genfromtxt(filename, dtype='string', delimiter=' ',
+                         skip_header=2, usecols=0)
+    D = {key: index for index, key in enumerate(keys)}
+    return embeddings, num, dim, D
 
 
 def main(_):
