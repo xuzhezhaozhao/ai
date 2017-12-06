@@ -1,43 +1,33 @@
 #! /usr/bin/env bash
 
-input=kandian-week.csv
+set -e
+
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd ${MYDIR}
+
+input=$1
 output=${input}.fasttext
 
 # max items per user
-klimit=1024
+klimit=128
 # fasttext min count
 minCount=5
 
+echo 'delete csv file header ...'
+sed -n '1p' ${input} > ${input}.header
+sed -i "1d" ${input}
+
+echo "sort csv file with 1st field ..."
 sorted_file=${input}.sorted
+mkdir -p tmp_sort/
+sort -T tmp_sort/ -t ',' -k 1 --parallel=4 ${input} -o ${sorted_file}
+rm -rf tmp_sort/
 
-echo "sort input file ..."
-mkdir -p tmp/
-sort -T tmp/ -t ',' -k 4 --parallel=24 ${input} -o ${sorted_file}
-
-echo "transform sorted file ..."
+echo "transform sorted file to fastText format ..."
 ./transform.py ${sorted_file} ${output} ${klimit}
 
 echo "fastText train ..."
 fast_model=${output}.model
-~/fastText/fasttext skipgram -input ${output} -output ${fast_model} -lr 0.025\
-  -dim 100 -ws 5 -epoch 5 -minCount ${minCount} -neg 5 -loss ns -bucket 2000000\
+./fasttext skipgram -input ${output} -output ${fast_model} -lr 0.025\
+  -dim 256 -ws 5 -epoch 5 -minCount ${minCount} -neg 10 -loss ns -bucket 2000000\
   -minn 0 -maxn 0 -thread 4 -t 1e-4 -lrUpdateRate 100
-
-echo "generate query list ..."
-awk '{print $1}' ${fast_model}.vec > ${fast_model}.query
-echo "remove first two lines of query list ..."
-sed -i "1d" ${fast_model}.query
-sed -i "1d" ${fast_model}.query
-
-echo "split query list ..."
-split -d -n l/3 ${fast_model}.query ${fast_model}.query.
-
-echo "fastText nn ..."
-FASTTEST=~/fastText/fasttext
-${FASTTEST} nn ${fast_model}.bin 50 30 < ${fast_model}.query.00 > ${fast_model}.result.00 &
-${FASTTEST} nn ${fast_model}.bin 50 30 < ${fast_model}.query.01 > ${fast_model}.result.01 &
-${FASTTEST} nn ${fast_model}.bin 50 30 < ${fast_model}.query.02 > ${fast_model}.result.02 &
-wait
-wait
-wait
-cat ${fast_model}.result.00 ${fast_model}.result.01 ${fast_model}.result.02 > ${fast_model}.result
