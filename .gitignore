@@ -12,3 +12,4 @@
 *.sorted
 *.fasttext
 *.header
+*.binary
