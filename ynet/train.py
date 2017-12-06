@@ -207,8 +207,8 @@ def run_training():
                 # tuple from the call.
                 _, loss_value = sess.run([train_op, loss],
                                          feed_dict=feed_dict)
-                if step % 1 == 0:
-                    print("loss: {}".format(loss_value))
+                if step % 100 == 0:
+                    print("step {}, loss = {}".format(step, loss_value))
 
 
 def generate_average_inputs(video_embeddings, watched_pl):
@@ -247,11 +247,11 @@ def load_video_embeddings():
         num, dim = map(int, tokens)
 
     embeddings = np.genfromtxt(filename, dtype='float32', delimiter=' ',
-                               skip_header=2, usecols=range(1, dim + 1))
+                               skip_header=1, usecols=range(1, dim + 1))
     embeddings = tf.convert_to_tensor(embeddings, dtype='float32')
 
     keys = np.genfromtxt(filename, dtype='string', delimiter=' ',
-                         skip_header=2, usecols=0)
+                         skip_header=1, usecols=0)
     D = {key: index for index, key in enumerate(keys)}
     return embeddings, num, dim
 
