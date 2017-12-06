@@ -3,7 +3,7 @@
 
 from ynet import YNet
 from input_data import read_data_sets
-from input_data import load_video_embeddings
+from input_data import load_video_embeddings_binary
 
 import tensorflow as tf
 import argparse
@@ -86,7 +86,9 @@ def run_training():
     with tf.Graph().as_default():
         # 加载训练好的词向量
         video_embeddings, num_videos, embedding_dim = \
-            load_video_embeddings(FLAGS.video_embeddings_file)
+            load_video_embeddings_binary(FLAGS.video_embeddings_file_binary,
+                                         FLAGS.video_embeddings_file_dict)
+
         video_biases = tf.Variable(tf.zeros([num_videos]))
 
         # 用户浏览历史 placeholder
@@ -250,6 +252,20 @@ if __name__ == '__main__':
         type=str,
         default='video_embeddings.vec',
         help='Pretrained video embeddings file.'
+    )
+
+    parser.add_argument(
+        '--video_embeddings_file_binary',
+        type=str,
+        default='video_embeddings.vec.binary',
+        help='Pretrained video embeddings file in binary form.'
+    )
+
+    parser.add_argument(
+        '--video_embeddings_file_dict',
+        type=str,
+        default='video_embeddings.vec.dict',
+        help='Dict file for binary form pretrained video embeddings file.'
     )
 
     parser.add_argument(
