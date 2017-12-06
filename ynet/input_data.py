@@ -5,6 +5,7 @@ import tensorflow as tf
 from tensorflow.contrib.learn.python.learn.datasets import base
 import numpy as np
 import random
+import struct
 
 # dict for video key to embeddings index
 D = None
@@ -116,6 +117,23 @@ def load_video_embeddings(filename):
     keys = np.genfromtxt(filename, dtype='string', delimiter=' ',
                          skip_header=1, usecols=0)
     D = {key: index for index, key in enumerate(keys)}
+    return embeddings, num, dim
+
+
+def load_video_embeddings_from_binary(binaryfile, dictfile):
+    global D
+
+    num = 0
+    dim = 0
+    with open(binaryfile, 'rb') as fbinary:
+        databytes = fbinary.read()
+        num = struct.unpack('<i', databytes[0:4])[0]
+        dim = struct.unpack('<i', databytes[4:8])[0]
+        embeddings = tf.decode_raw(databytes[8:], tf.float32).reshape(num, dim)
+
+    for index, line in enumerate(open(dictfile, 'r')):
+        D[line.strip()] = index
+
     return embeddings, num, dim
 
 
