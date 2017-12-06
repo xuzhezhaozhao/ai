@@ -9,7 +9,7 @@ input=$1
 output=${input}.fasttext
 
 # min items per user
-kmin=10
+kmin=50
 # fasttext min count
 minCount=1
 
