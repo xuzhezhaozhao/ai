@@ -5,6 +5,7 @@ from ynet import YNet
 import tensorflow as tf
 from tensorflow.contrib.learn.python.learn.datasets import base
 import numpy as np
+import random
 import argparse
 import sys
 import os
@@ -60,7 +61,11 @@ class DataSet(object):
             end = self._index_in_epoch
             records_new_part, predicts_new_part = \
                 generate_batch(self._records[start:end])
-            return np.concatenate((records_rest_part, predicts_rest_part), axis=0), np.concatenate((predicts_rest_part, predicts_new_part), axis=0)
+            return \
+                np.concatenate((records_rest_part, predicts_rest_part),
+                               axis=0), \
+                np.concatenate((predicts_rest_part, predicts_new_part),
+                               axis=0)
         else:
             self._index_in_epoch += batch_size
             end = self._index_in_epoch
@@ -72,7 +77,13 @@ def generate_batch(records):
     predicts = []
     watched_size = FLAGS.watched_size
     for record in records:
-        pass
+        assert (len(record) > watched_size), (
+            'watched record size {} should larger than --watched_size {}'.
+            format(len(record), watched_size))
+        max_start = len(record) - watched_size - 1
+        start = random.randint(0, max_start)
+        watched.append(record[start:start + watched_size])
+        predicts.append(record[start + watched_size])
     return watched, predicts
 
 
@@ -126,8 +137,6 @@ def training(loss, lr):
     Returns:
         train_op: The Op for training.
     """
-    # Add a scalar summary for the snapshot loss.
-    tf.summary.scalar('loss', loss)
     # optimizer = tf.train.GradientDescentOptimizer(lr)
     optimizer = tf.train.AdamOptimizer(lr)
     # Create a variable to track the global step.
@@ -144,12 +153,12 @@ def run_training():
     batch_size = FLAGS.batch_size
     keep_prob = FLAGS.keep_prob
     learning_rate = FLAGS.learning_rate
-    epoches = FLAGS.epoches
+    max_steps = FLAGS.max_steps
     watched_size = FLAGS.watched_size
 
     with tf.Graph().as_default():
         # 加载训练好的词向量
-        video_embeddings, num_videos, embedding_dim, D = \
+        video_embeddings, num_videos, embedding_dim = \
             load_video_embeddings()
         video_biases = tf.Variable(tf.zeros([num_videos]))
 
@@ -178,7 +187,7 @@ def run_training():
                                    FLAGS.test_file)
         with tf.Session() as sess:
             sess.run(init)
-            for step in xrange(epoches):
+            for step in xrange(max_steps):
                 feed_dict = fill_feed_dict(data_sets.train,
                                            watched_pl,
                                            predicts_pl)
@@ -190,7 +199,8 @@ def run_training():
                 # tuple from the call.
                 _, loss_value = sess.run([train_op, loss],
                                          feed_dict=feed_dict)
-                print("loss: {}".format(loss_value))
+                if step % 100 == 0:
+                    print("loss: {}".format(loss_value))
 
 
 def generate_average_inputs(video_embeddings, watched_pl):
@@ -268,7 +278,7 @@ def read_data_sets(train_file, validation_file, test_file):
 
     train_records = []
     for line in open(train_file):
-        items = line.split(' ')[1:]
+        items = line.strip().split(' ')[1:]
         record = [D[k] for k in items]
         train_records.append(record)
 
@@ -360,7 +370,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--watched_size',
         type=int,
-        default=50,
+        default=1,
         help="User's input watched size."
     )
 
