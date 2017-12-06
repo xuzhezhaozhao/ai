@@ -8,10 +8,10 @@ cd ${MYDIR}
 input=$1
 output=${input}.fasttext
 
-# max items per user
-klimit=128
+# min items per user
+kmin=10
 # fasttext min count
-minCount=5
+minCount=1
 
 echo 'delete csv file header ...'
 sed -n '1p' ${input} > ${input}.header
@@ -24,10 +24,10 @@ sort -T tmp_sort/ -t ',' -k 1 --parallel=4 ${input} -o ${sorted_file}
 rm -rf tmp_sort/
 
 echo "transform sorted file to fastText format ..."
-./transform.py ${sorted_file} ${output} ${klimit}
+./transform.py ${sorted_file} ${output} ${kmin}
 
 echo "fastText train ..."
 fast_model=${output}.model
 ./fasttext skipgram -input ${output} -output ${fast_model} -lr 0.025\
-  -dim 256 -ws 5 -epoch 5 -minCount ${minCount} -neg 10 -loss ns -bucket 2000000\
+  -dim 256 -ws 5 -epoch 1 -minCount ${minCount} -neg 5 -loss ns -bucket 2000000\
   -minn 0 -maxn 0 -thread 4 -t 1e-4 -lrUpdateRate 100

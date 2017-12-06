@@ -8,7 +8,7 @@ import os
 histories = dict()
 input = sys.argv[1]
 output = sys.argv[2]
-klimit = int(sys.argv[3])
+kmin = int(sys.argv[3])
 maxlines = -1
 
 if len(sys.argv) == 5:
@@ -46,6 +46,8 @@ print("histories size: ", len(histories))
 with open(output, "w") as fout:
     for index, uin in enumerate(histories):
         history = histories[uin]
+        if len(history) < kmin:
+            continue
         fout.write("__label__" + uin + " ")
         for item in history:
             fout.write(item + " ")

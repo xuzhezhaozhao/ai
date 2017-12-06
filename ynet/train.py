@@ -19,9 +19,12 @@ D = None
 
 class DataSet(object):
     def __init__(self, records):
-        """Construct a DataSet."""
+        """Construct a DataSet.
+        Args:
+            records: Python list of list.
+        """
         self._records = records
-        self._num_examples = records.shape[0]
+        self._num_examples = len(records)
         self._epochs_completed = 0
         self._index_in_epoch = 0
 
@@ -40,6 +43,7 @@ class DataSet(object):
     def next_batch(self, batch_size, shuffle=True):
         """Return the next 'batch_size' examples from this data set."""
         start = self._index_in_epoch
+        # Shuffle for the first epoch
         if self._epochs_completed == 0 and start == 0 and shuffle:
             perm0 = np.arange(self._num_examples)
             np.random.shuffle(perm0)
@@ -48,6 +52,7 @@ class DataSet(object):
         if start + batch_size > self._num_examples:
             # Finished epoch
             self._epochs_completed += 1
+            # Get the rest examples in this epoch
             rest_num_examples = self._num_examples - start
             records_rest_part, predicts_rest_part = \
                 generate_batch(self._records[start:self._num_examples])
@@ -62,13 +67,16 @@ class DataSet(object):
             records_new_part, predicts_new_part = \
                 generate_batch(self._records[start:end])
             return \
-                np.concatenate((records_rest_part, predicts_rest_part),
+                np.concatenate((records_rest_part, records_new_part),
                                axis=0), \
                 np.concatenate((predicts_rest_part, predicts_new_part),
                                axis=0)
         else:
             self._index_in_epoch += batch_size
             end = self._index_in_epoch
+            if self._index_in_epoch == self._num_examples:
+                self._index_in_epoch = 0
+                self._epochs_completed += 1
             return generate_batch(self._records[start:end])
 
 
@@ -83,7 +91,7 @@ def generate_batch(records):
         max_start = len(record) - watched_size - 1
         start = random.randint(0, max_start)
         watched.append(record[start:start + watched_size])
-        predicts.append(record[start + watched_size])
+        predicts.append(record[start + watched_size:start + watched_size + 1])
     return watched, predicts
 
 
@@ -199,7 +207,7 @@ def run_training():
                 # tuple from the call.
                 _, loss_value = sess.run([train_op, loss],
                                          feed_dict=feed_dict)
-                if step % 100 == 0:
+                if step % 1 == 0:
                     print("loss: {}".format(loss_value))
 
 
