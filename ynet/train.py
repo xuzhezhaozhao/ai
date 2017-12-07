@@ -55,7 +55,7 @@ def run_model():
     elif mode == "test":
         pass
     else:
-        pass
+        raise Exception("unkown run mode: {}".format(mode))
 
 
 def main(_):
