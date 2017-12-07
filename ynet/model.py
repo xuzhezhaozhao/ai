@@ -76,15 +76,18 @@ def model_fn(features, labels, mode, params):
         inputs=output_layer,
         num_sampled=params["num_sampled"],
         num_classes=num_videos,
-        name="nce_loss"
+        name="nce_losses"
     )
-    loss = tf.reduce_mean(losses)
+    loss = tf.reduce_mean(losses, name="nce_loss_mean")
 
     optimizer = tf.train.GradientDescentOptimizer(
         learning_rate=params["learning_rate"])
 
     train_op = optimizer.minimize(
-        loss=loss, global_step=tf.train.get_global_step())
+        loss=loss,
+        global_step=tf.train.get_global_step(),
+        name="train_op"
+    )
 
     # Calculate root mean squared error as additional eval metric
     eval_metric_ops = {
