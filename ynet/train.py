@@ -80,7 +80,7 @@ def run_training():
     batch_size = FLAGS.batch_size
     keep_prob = FLAGS.keep_prob
     learning_rate = FLAGS.learning_rate
-    max_steps = FLAGS.max_steps
+    epoches = FLAGS.epoches
     watched_size = FLAGS.watched_size
 
     with tf.Graph().as_default():
@@ -118,6 +118,10 @@ def run_training():
                                                FLAGS.test_watched_file,
                                                FLAGS.test_predicts_file,
                                                FLAGS.watched_size)
+        num_examples = data_sets.train.num_examples
+        max_steps = ((num_examples + batch_size - 1) / batch_size) * epoches
+        print("max steps: {}".format(max_steps))
+
         with tf.Session() as sess:
             sess.run(init)
             for step in xrange(max_steps):
