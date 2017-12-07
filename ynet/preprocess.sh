@@ -15,7 +15,7 @@ minCount=1
 dim=256
 
 watched_size=20
-max_per_user=5
+max_per_user=1
 ws=5
 epoch=1
 neg=5
@@ -34,7 +34,7 @@ rm -rf tmp_sort/
 
 preprocessed=${input}.preprocessed
 echo "transform sorted file to fastText format ..."
-./transform.py ${sorted_file} ${preprocessed} ${kmin}
+python transform.py ${sorted_file} ${preprocessed} ${kmin}
 
 echo "fastText train ..."
 fast_output=${input}
@@ -44,4 +44,4 @@ fast_output=${input}
 
 tf_input=${input}.tf
 python vec2binary.py --input ${fast_output}.vec --output ${tf_input}.vec --output_dict_file ${tf_input}.dict
-python records2binary.py --input ${preprocessed} --output_watched ${tf_input}.watched --output_predicts ${tf_input}.predicts --input_dict_file ${tf_input}.dict --watched_size ${watched_size} --max_per_user ${max_per_user}
+python records2binary.py --input_records ${preprocessed} --output_watched ${tf_input}.watched --output_predicts ${tf_input}.predicts --input_dict_file ${tf_input}.dict --watched_size ${watched_size} --max_per_user ${max_per_user}
