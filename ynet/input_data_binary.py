@@ -4,6 +4,7 @@
 import tensorflow as tf
 import struct
 import numpy as np
+from tensorflow.contrib.learn.python.learn.datasets import base
 
 
 class DataSet(object):
@@ -94,25 +95,58 @@ def read_data_sets_from_binary(train_watched_file,
         with open(train_watched_file, 'rb') as f:
             databytes = f.read()
             train_watched = np.fromfile(databytes, tf.int32)
+            total = train_watched.shape[0]
+            assert (total % watched_size == 0)
+            nlines = total / watched_size
+            train_watched = train_watched.reshape(nlines, watched_size)
+
     if train_predicts_file:
         with open(train_predicts_file, 'rb') as f:
             databytes = f.read()
             train_predicts = np.fromfile(databytes, tf.int32)
+            total = train_predicts.shape[0]
+            assert (total % watched_size == 0)
+            nlines = total / watched_size
+            train_predicts = train_predicts.reshape(nlines, watched_size)
 
     if validation_watched_file:
         with open(validation_watched_file, 'rb') as f:
             databytes = f.read()
             validation_watched = np.fromfile(databytes, tf.int32)
+            total = validation_watched.shape[0]
+            assert (total % watched_size == 0)
+            nlines = total / watched_size
+            validation_watched = validation_watched.reshape(nlines,
+                                                            watched_size)
     if validation_predicts_file:
         with open(validation_predicts_file, 'rb') as f:
             databytes = f.read()
-            validation_predicts_file = np.fromfile(databytes, np.int32)
+            validation_predicts = np.fromfile(databytes, np.int32)
+            total = validation_predicts.shape[0]
+            assert (total % watched_size == 0)
+            nlines = total / watched_size
+            validation_predicts = validation_predicts.reshape(nlines,
+                                                              watched_size)
 
     if test_watched_file:
         with open(test_watched_file, 'rb') as f:
             databytes = f.read()
             test_watched = np.fromfile(databytes, tf.int32)
+            total = test_watched.shape[0]
+            assert (total % watched_size == 0)
+            nlines = total / watched_size
+            test_watched = test_watched.reshape(nlines, watched_size)
     if test_predicts_file:
         with open(test_predicts_file, 'rb') as f:
             databytes = f.read()
             test_predicts = np.fromfile(databytes, tf.int32)
+            total = test_predicts.shape[0]
+            assert (total % watched_size == 0)
+            nlines = total / watched_size
+            test_predicts = test_predicts.reshape(nlines, watched_size)
+
+    train = DataSet(train_watched, train_predicts)
+    validation = DataSet(validation_watched, validation_predicts)
+    test = DataSet(test_watched, test_predicts)
+
+    return base.Datasets(train=train, validation=validation, test=test)
