@@ -15,4 +15,5 @@
 *.binary
 *.dict
 ynet/data
+ynet/model_dir
 *.out

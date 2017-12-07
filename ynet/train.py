@@ -11,6 +11,9 @@ import argparse
 import sys
 import os
 
+
+tf.logging.set_verbosity(tf.logging.INFO)
+
 # Basic model parameters as external flags.
 FLAGS = None
 
@@ -201,7 +204,11 @@ def run_model():
     }
 
     # Instantiate Estimator
-    nn = tf.estimator.Estimator(model_fn=model_fn, params=model_params)
+    nn = tf.estimator.Estimator(
+        model_fn=model_fn,
+        model_dir=FLAGS.model_dir,
+        params=model_params
+    )
     train_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"watched": data_sets.train.watched_videos},
         y=data_sets.train.predicts,
@@ -209,7 +216,7 @@ def run_model():
         num_epochs=FLAGS.epoches,
         shuffle=True
     )
-    nn.train(input_fn=train_input_fn, steps=1000)
+    nn.train(input_fn=train_input_fn)
 
 
 def main(_):
@@ -356,6 +363,13 @@ if __name__ == '__main__':
         type=bool,
         default=False,
         help='Run estimator model.'
+    )
+
+    parser.add_argument(
+        '--model_dir',
+        type=str,
+        default='',
+        help='Model dir.'
     )
 
     FLAGS, unparsed = parser.parse_known_args()
