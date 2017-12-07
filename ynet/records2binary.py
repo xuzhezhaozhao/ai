@@ -28,8 +28,8 @@ def records2binary(recordsfile, dictfile, watchedfile, predictsfile):
                 # generate binary records
                 max_start = len(records) - watched_size - 1
                 assert max_start >= 0
-                num_sampled = min(max_start, FLAGS.max_per_user)
-                sampled = random.sample(range(max_start), num_sampled)
+                num_sampled = min(max_start + 1, FLAGS.max_per_user)
+                sampled = random.sample(range(max_start + 1), num_sampled)
                 for start in sampled:
                     for r in xrange(start, start + watched_size):
                         index = D[records[r]]
@@ -42,11 +42,11 @@ def binary2records(recordsfile, dictfile, watchedfile, predictsfile):
     D = dict()
     # load dict
     for index, line in enumerate(open(dictfile, "r")):
-        D[line.strip()] = index
+        D[index] = line.strip()
 
     watched_size = FLAGS.watched_size
-    watched = np.fromfile(watchedfile)
-    predicts = np.fromfile(predictsfile)
+    watched = np.fromfile(watchedfile, np.int32)
+    predicts = np.fromfile(predictsfile, np.int32)
 
     assert (watched.shape[0] % watched_size == 0)
     nlines = watched.shape[0] / watched_size
@@ -56,12 +56,12 @@ def binary2records(recordsfile, dictfile, watchedfile, predictsfile):
         for x in xrange(nlines):
             for y in xrange(watched_size):
                 offset = x * watched_size + y
-                n = struct.unpack('<i', watched[offset])
-                frecords.write(str(n))
+                n = watched[offset]
+                frecords.write(D[n])
                 frecords.write(' ')
             offset = x
-            n = struct.unpack('<i', predicts[offset])
-            frecords.write(str(n))
+            n = predicts[offset]
+            frecords.write(D[n])
             frecords.write('\n')
 
 
