@@ -111,9 +111,12 @@ def run_training():
         train_op = training(loss, learning_rate)
         init = tf.global_variables_initializer()
 
-        data_sets = read_data_sets_from_binary(FLAGS.train_file,
-                                               FLAGS.validation_file,
-                                               FLAGS.test_file,
+        data_sets = read_data_sets_from_binary(FLAGS.train_watched_file,
+                                               FLAGS.train_predicts_file,
+                                               FLAGS.validation_watched_file,
+                                               FLAGS.validation_predicts_file,
+                                               FLAGS.test_watched_file,
+                                               FLAGS.test_predicts_file,
                                                FLAGS.watched_size)
         with tf.Session() as sess:
             sess.run(init)
@@ -251,42 +254,63 @@ if __name__ == '__main__':
         '--video_embeddings_file',
         type=str,
         default='',
-        help='Pretrained video embeddings file.'
+        help='Pretrained video embeddings file in text format.'
     )
 
     parser.add_argument(
         '--video_embeddings_file_binary',
         type=str,
         default='',
-        help='Pretrained video embeddings file in binary form.'
+        help='Pretrained video embeddings file in binary format.'
     )
 
     parser.add_argument(
         '--video_embeddings_file_dict',
         type=str,
         default='',
-        help='Dict file for binary form pretrained video embeddings file.'
+        help='Dict file for binary format pretrained video embeddings file.'
     )
 
     parser.add_argument(
-        '--train_file',
+        '--train_watched_file',
         type=str,
         default='',
-        help='train data file.'
+        help='train watched data file.'
     )
 
     parser.add_argument(
-        '--validation_file',
+        '--train_predicts_file',
         type=str,
         default='',
-        help='validation data file.'
+        help='train predicts data file.'
     )
 
     parser.add_argument(
-        '--test_file',
+        '--validation_watched_file',
         type=str,
         default='',
-        help='test data file.'
+        help='validation watched data file.'
+    )
+
+    parser.add_argument(
+        '--validation_predicts_file',
+        type=str,
+        default='',
+        help='validation predicts data file.'
+    )
+
+    parser.add_argument(
+        '--test_watched_file',
+        type=str,
+        default='',
+        help='test watched data file.'
+    )
+
+    parser.add_argument(
+        '--test_predicts_file',
+        type=str,
+        default='',
+        help='test predicts data file.'
     )
 
     FLAGS, unparsed = parser.parse_known_args()
