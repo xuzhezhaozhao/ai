@@ -6,7 +6,7 @@ from input_data_binary import load_video_embeddings_from_binary
 
 
 def model_fn(features, labels, mode, params):
-    # 加载训练好的词向量
+    # loading pretrained word vectors
     video_embeddings, num_videos, embedding_dim = \
         load_video_embeddings_from_binary(params["embeddings_file_path"])
     video_biases = tf.Variable(tf.zeros([num_videos]))
@@ -14,6 +14,7 @@ def model_fn(features, labels, mode, params):
     x = tf.gather(video_embeddings, features["watched"])
     mean_input = tf.reduce_mean(x, 1)
 
+    keep_prob = params["keep_prob"]
     """Model function for Estimator."""
     # Connect the first hedden layer to input layer
     # (features["watched"]) with relu activation
@@ -25,6 +26,7 @@ def model_fn(features, labels, mode, params):
         kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1),
         name='fc1'
     )
+    first_hidden_layer = tf.nn.dropout(first_hidden_layer, keep_prob)
 
     # Connect the second hidden layer to first hidden layer with relu
     second_hidden_layer = tf.layers.dense(
@@ -35,6 +37,7 @@ def model_fn(features, labels, mode, params):
         kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1),
         name='fc2'
     )
+    second_hidden_layer = tf.nn.dropout(second_hidden_layer, keep_prob)
 
     # Connect the third hidden layer to first hidden layer with relu
     third_hidden_layer = tf.layers.dense(
@@ -45,6 +48,7 @@ def model_fn(features, labels, mode, params):
         kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1),
         name='fc3'
     )
+    third_hidden_layer = tf.nn.dropout(third_hidden_layer, keep_prob)
 
     output_layer = tf.layers.dense(
         inputs=third_hidden_layer,
