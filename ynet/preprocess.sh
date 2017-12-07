@@ -9,13 +9,13 @@ input=$1
 output=${input}.fasttext
 
 # min items per user
-kmin=50
+kmin=20
 # fasttext min count
 minCount=1
 
-echo 'delete csv file header ...'
-sed -n '1p' ${input} > ${input}.header
-sed -i "1d" ${input}
+#echo 'delete csv file header ...'
+#sed -n '1p' ${input} > ${input}.header
+#sed -i "1d" ${input}
 
 echo "sort csv file with 1st field ..."
 sorted_file=${input}.sorted
@@ -29,5 +29,5 @@ echo "transform sorted file to fastText format ..."
 echo "fastText train ..."
 fast_model=${output}.model
 ./fasttext skipgram -input ${output} -output ${fast_model} -lr 0.025\
-  -dim 256 -ws 5 -epoch 1 -minCount ${minCount} -neg 5 -loss ns -bucket 2000000\
+  -dim 256 -ws 1 -epoch 1 -minCount ${minCount} -neg 5 -loss ns -bucket 2000000\
   -minn 0 -maxn 0 -thread 4 -t 1e-4 -lrUpdateRate 100

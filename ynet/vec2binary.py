@@ -75,7 +75,7 @@ if __name__ == "__main__":
         '--dict_file',
         type=str,
         default='output.vec.binary.dict',
-        help='Dict file for binary form of word vectors.'
+        help='Output dict file for binary form of word vectors.'
     )
 
     parser.add_argument(
