@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 # -*-coding:utf-8 -*-
 
+
 import struct
 import argparse
 import random
@@ -22,11 +23,13 @@ def records2binary(recordsfile, dictfile, watchedfile, predictsfile):
             for index, line in enumerate(open(recordsfile, "r")):
                 tokens = line.strip().split(' ')
                 records = tokens[1:]  # skip __label__
+
                 # generate binary records
                 max_start = len(records) - watched_size - 1
+                assert max_start >= 0
                 num_sampled = min(max_start, FLAGS.max_per_user)
                 sampled = random.sample(range(max_start), num_sampled)
-                for start in xrange(sampled):
+                for start in sampled:
                     for r in xrange(start, start + watched_size):
                         index = D[records[r]]
                         fwatched.write(struct.pack('<i', index))

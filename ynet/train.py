@@ -2,8 +2,8 @@
 # -*-coding:utf-8 -*-
 
 from ynet import YNet
-from input_data import read_data_sets
-from input_data import load_video_embeddings_from_binary
+from input_data_binary import read_data_sets_from_binary
+from input_data_binary import load_video_embeddings_from_binary
 
 import tensorflow as tf
 import argparse
@@ -87,8 +87,7 @@ def run_training():
         # 加载训练好的词向量
         video_embeddings, num_videos, embedding_dim = \
             load_video_embeddings_from_binary(
-                FLAGS.video_embeddings_file_binary,
-                FLAGS.video_embeddings_file_dict)
+                FLAGS.video_embeddings_file_binary)
 
         video_biases = tf.Variable(tf.zeros([num_videos]))
 
@@ -112,10 +111,10 @@ def run_training():
         train_op = training(loss, learning_rate)
         init = tf.global_variables_initializer()
 
-        data_sets = read_data_sets(FLAGS.train_file,
-                                   FLAGS.validation_file,
-                                   FLAGS.test_file,
-                                   FLAGS.watched_size)
+        data_sets = read_data_sets_from_binary(FLAGS.train_file,
+                                               FLAGS.validation_file,
+                                               FLAGS.test_file,
+                                               FLAGS.watched_size)
         with tf.Session() as sess:
             sess.run(init)
             for step in xrange(max_steps):
@@ -251,42 +250,42 @@ if __name__ == '__main__':
     parser.add_argument(
         '--video_embeddings_file',
         type=str,
-        default='video_embeddings.vec',
+        default='',
         help='Pretrained video embeddings file.'
     )
 
     parser.add_argument(
         '--video_embeddings_file_binary',
         type=str,
-        default='video_embeddings.vec.binary',
+        default='',
         help='Pretrained video embeddings file in binary form.'
     )
 
     parser.add_argument(
         '--video_embeddings_file_dict',
         type=str,
-        default='video_embeddings.vec.dict',
+        default='',
         help='Dict file for binary form pretrained video embeddings file.'
     )
 
     parser.add_argument(
         '--train_file',
         type=str,
-        default='train.in',
+        default='',
         help='train data file.'
     )
 
     parser.add_argument(
         '--validation_file',
         type=str,
-        default='validation.in',
+        default='',
         help='validation data file.'
     )
 
     parser.add_argument(
         '--test_file',
         type=str,
-        default='test.in',
+        default='',
         help='test data file.'
     )
 

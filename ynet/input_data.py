@@ -5,7 +5,6 @@ import tensorflow as tf
 from tensorflow.contrib.learn.python.learn.datasets import base
 import numpy as np
 import random
-import struct
 
 # dict for video key to embeddings index
 D = dict()
@@ -120,44 +119,29 @@ def load_video_embeddings(filename):
     return embeddings, num, dim
 
 
-def load_video_embeddings_from_binary(binaryfile, dictfile):
-    global D
-
-    num = 0
-    dim = 0
-    with open(binaryfile, 'rb') as fbinary:
-        databytes = fbinary.read()
-        num = struct.unpack('<i', databytes[0:4])[0]
-        dim = struct.unpack('<i', databytes[4:8])[0]
-        embeddings = tf.decode_raw(databytes[8:], tf.float32)
-        embeddings = tf.reshape(embeddings, shape=(num, dim))
-
-    for index, line in enumerate(open(dictfile, 'r')):
-        D[line.strip()] = index
-
-    return embeddings, num, dim
-
-
 def read_data_sets(train_file, validation_file, test_file, watched_size):
     global D
 
     train_records = []
-    for line in open(train_file):
-        items = line.strip().split(' ')[1:]
-        record = [D[k] for k in items]
-        train_records.append(record)
+    if train_file:
+        for line in open(train_file):
+            items = line.strip().split(' ')[1:]
+            record = [D[k] for k in items]
+            train_records.append(record)
 
     validation_records = []
-    for line in open(validation_file):
-        items = line.split(' ')[1:]
-        record = [D[k] for k in items]
-        validation_records.append(record)
+    if validation_file:
+        for line in open(validation_file):
+            items = line.split(' ')[1:]
+            record = [D[k] for k in items]
+            validation_records.append(record)
 
     test_records = []
-    for line in open(test_file):
-        items = line.split(' ')[1:]
-        record = [D[k] for k in items]
-        test_records.append(record)
+    if test_file:
+        for line in open(test_file):
+            items = line.split(' ')[1:]
+            record = [D[k] for k in items]
+            test_records.append(record)
 
     train = DataSet(train_records, watched_size)
     validation = DataSet(validation_records, watched_size)
