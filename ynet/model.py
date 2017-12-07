@@ -53,7 +53,7 @@ def model_fn(features, labels, mode, params):
 
     # TODO Generate top-K predictions
     probs = tf.nn.bias_add(
-        tf.matmul(output_layer, video_embeddings),
+        tf.matmul(output_layer, video_embeddings, transpose_b=True),
         video_biases
     )
     predictions = tf.argmax(probs)
@@ -66,8 +66,8 @@ def model_fn(features, labels, mode, params):
 
     # Calculate loss
     loss = tf.nn.nce_loss(
-        weights=params["embeddings"],
-        biases=params["biases"],
+        weights=video_embeddings,
+        biases=video_biases,
         labels=labels,
         inputs=output_layer,
         num_sampled=params["num_sampled"],
