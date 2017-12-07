@@ -22,7 +22,8 @@ def model_fn(features, labels, mode, params):
         units=2048,
         activation=tf.nn.relu,
         kernel_initializer=tf.truncated_normal_initializer(0, 1),
-        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1)
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1),
+        name='fc1'
     )
 
     # Connect the second hidden layer to first hidden layer with relu
@@ -31,7 +32,8 @@ def model_fn(features, labels, mode, params):
         units=1024,
         activation=tf.nn.relu,
         kernel_initializer=tf.truncated_normal_initializer(0, 1),
-        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1)
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1),
+        name='fc2'
     )
 
     # Connect the third hidden layer to first hidden layer with relu
@@ -40,7 +42,8 @@ def model_fn(features, labels, mode, params):
         units=512,
         activation=tf.nn.relu,
         kernel_initializer=tf.truncated_normal_initializer(0, 1),
-        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1)
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1),
+        name='fc3'
     )
 
     output_layer = tf.layers.dense(
@@ -48,7 +51,8 @@ def model_fn(features, labels, mode, params):
         units=256,
         activation=tf.nn.relu,
         kernel_initializer=tf.truncated_normal_initializer(0, 1),
-        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1)
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1),
+        name='fc4'
     )
 
     # TODO Generate top-K predictions
@@ -65,14 +69,16 @@ def model_fn(features, labels, mode, params):
         )
 
     # Calculate loss
-    loss = tf.nn.nce_loss(
+    losses = tf.nn.nce_loss(
         weights=video_embeddings,
         biases=video_biases,
         labels=labels,
         inputs=output_layer,
         num_sampled=params["num_sampled"],
-        num_classes=num_videos
+        num_classes=num_videos,
+        name="nce_loss"
     )
+    loss = tf.reduce_mean(losses)
 
     optimizer = tf.train.GradientDescentOptimizer(
         learning_rate=params["learning_rate"])
