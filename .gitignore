@@ -13,3 +13,4 @@
 *.fasttext
 *.header
 *.binary
+*.dict

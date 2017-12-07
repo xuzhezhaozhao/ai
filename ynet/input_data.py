@@ -8,7 +8,7 @@ import random
 import struct
 
 # dict for video key to embeddings index
-D = None
+D = dict()
 
 
 class DataSet(object):
@@ -129,7 +129,8 @@ def load_video_embeddings_from_binary(binaryfile, dictfile):
         databytes = fbinary.read()
         num = struct.unpack('<i', databytes[0:4])[0]
         dim = struct.unpack('<i', databytes[4:8])[0]
-        embeddings = tf.decode_raw(databytes[8:], tf.float32).reshape(num, dim)
+        embeddings = tf.decode_raw(databytes[8:], tf.float32)
+        embeddings = tf.reshape(embeddings, shape=(num, dim))
 
     for index, line in enumerate(open(dictfile, 'r')):
         D[line.strip()] = index
