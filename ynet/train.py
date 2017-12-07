@@ -15,12 +15,14 @@ import os
 FLAGS = None
 
 
-def nce_loss(embeddings,
-             biases,
-             predicts,
-             user_vectors,
-             num_classes,
-             name="nce_loss"):
+def nce_loss(
+        embeddings,
+        biases,
+        predicts,
+        user_vectors,
+        num_classes,
+        name="nce_loss",
+        partition_strategy="div"):
     """Computes and returns the noise-contrastive estimation training loss.
 
     Args:
@@ -181,13 +183,8 @@ def fill_feed_dict(data_set, watched_pl, predicts_pl):
     }
     return feed_dict
 
+
 def run_model():
-    # 加载训练好的词向量
-    video_embeddings, num_videos, embedding_dim = \
-        load_video_embeddings_from_binary(FLAGS.video_embeddings_file_binary)
-    video_biases = tf.Variable(tf.zeros([num_videos]))
-
-
     data_sets = read_data_sets_from_binary(FLAGS.train_watched_file,
                                            FLAGS.train_predicts_file,
                                            FLAGS.validation_watched_file,
@@ -197,11 +194,12 @@ def run_model():
                                            FLAGS.watched_size)
 
     # inputs = generate_average_inputs(video_embeddings, watched_pl)
-    model_params = {"learning_rate": FLAGS.learning_rate,
-                    # "embeddings": video_embeddings,
-                    # "biases": video_biases,
-                    "num_sampled": FLAGS.num_sampled,
-                    "num_classes": num_videos}
+    model_params = {
+        "learning_rate": FLAGS.learning_rate,
+        "embeddings_file_path": FLAGS.video_embeddings_file_binary,
+        "num_sampled": FLAGS.num_sampled
+    }
+
     # Instantiate Estimator
     nn = tf.estimator.Estimator(model_fn=model_fn, params=model_params)
     train_input_fn = tf.estimator.inputs.numpy_input_fn(
@@ -218,7 +216,6 @@ def main(_):
     if tf.gfile.Exists(FLAGS.log_dir):
         tf.gfile.DeleteRecursively(FLAGS.log_dir)
     tf.gfile.MakeDirs(FLAGS.log_dir)
-
 
     if FLAGS.run_model:
         run_model()
