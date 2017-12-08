@@ -111,7 +111,7 @@ def model_fn(features, labels, mode, params):
         "recall_at_k": tf.metrics.recall_at_k(
             labels=tf.cast(one_hot_labels, tf.int64),
             predictions=probs,
-            k=20
+            k=params["k"]
         )
     }
 
