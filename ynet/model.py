@@ -22,9 +22,9 @@ def model_fn(features, labels, mode, params):
     first_hidden_layer = tf.layers.dense(
         inputs=mean_input,
         units=2048,
-        activation=tf.nn.relu,
+        activation=tf.nn.relu6,
         kernel_initializer=tf.truncated_normal_initializer(0, 1),
-        # kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
         name='fc1'
     )
     first_hidden_layer = tf.nn.dropout(first_hidden_layer, keep_prob)
@@ -33,8 +33,8 @@ def model_fn(features, labels, mode, params):
     second_hidden_layer = tf.layers.dense(
         inputs=first_hidden_layer,
         units=1024,
-        activation=tf.nn.relu,
-        # kernel_initializer=tf.truncated_normal_initializer(0, 1),
+        activation=tf.nn.relu6,
+        kernel_initializer=tf.truncated_normal_initializer(0, 1),
         kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
         name='fc2'
     )
@@ -44,8 +44,8 @@ def model_fn(features, labels, mode, params):
     third_hidden_layer = tf.layers.dense(
         inputs=second_hidden_layer,
         units=512,
-        activation=tf.nn.relu,
-        # kernel_initializer=tf.truncated_normal_initializer(0, 1),
+        activation=tf.nn.relu6,
+        kernel_initializer=tf.truncated_normal_initializer(0, 1),
         kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
         name='fc3'
     )
@@ -54,8 +54,9 @@ def model_fn(features, labels, mode, params):
     output_layer = tf.layers.dense(
         inputs=third_hidden_layer,
         units=256,
-        activation=tf.nn.relu,
-        # kernel_initializer=tf.truncated_normal_initializer(0, 1),
+        activation=tf.nn.relu6,
+        # activation=tf.nn.sigmoid,
+        kernel_initializer=tf.truncated_normal_initializer(0, 1),
         kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
         name='fc4'
     )
