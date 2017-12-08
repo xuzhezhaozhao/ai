@@ -3,6 +3,7 @@
 
 import tensorflow as tf
 from input_data_binary import load_video_embeddings_from_binary
+from __future__ import division
 
 
 def model_fn(features, labels, mode, params):
@@ -97,9 +98,11 @@ def model_fn(features, labels, mode, params):
     )
 
     # Calculate root mean squared error as additional eval metric
+    correct = tf.nn.in_top_k(probs, labels, params["k"], name="in_top_k")
+    num_correct = tf.reduce_sum(tf.cast(correct, tf.int32), name="num_correct")
+
     eval_metric_ops = {
-        "rmse": tf.metrics.root_mean_squared_error(
-            tf.cast(labels, tf.int64), predictions)
+        "Prediction @ k": num_correct / labels.shape[0].value
     }
 
     # Provide an estimator spec for 'ModeKeys.EVAL' and 'ModeKeys.TRAIN'
