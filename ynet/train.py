@@ -32,7 +32,8 @@ def run_model():
         "embeddings_file_path": FLAGS.video_embeddings_file_binary,
         "num_sampled": FLAGS.num_sampled,
         "keep_prob": FLAGS.keep_prob,
-        "k": FLAGS.k
+        "k": FLAGS.k,
+        "loss": FLAGS.loss
     }
 
     # Instantiate Estimator
@@ -52,6 +53,7 @@ def run_model():
         )
         nn.train(input_fn=train_input_fn)
     elif mode == "eval":
+        # TODO use seperated data set
         train_input_fn = tf.estimator.inputs.numpy_input_fn(
             x={"watched": data_sets.train.watched_videos},
             y=data_sets.train.predicts,
@@ -60,7 +62,6 @@ def run_model():
             shuffle=True
         )
         nn.evaluate(input_fn=train_input_fn)
-        pass
     elif mode == "test":
         pass
     else:
@@ -204,6 +205,13 @@ if __name__ == '__main__':
         type=int,
         default=1,
         help='Predicts top k items.'
+    )
+
+    parser.add_argument(
+        '--loss',
+        type=str,
+        default='nce',
+        help='Loss funcition. [nce, softmax]'
     )
 
     FLAGS, unparsed = parser.parse_known_args()

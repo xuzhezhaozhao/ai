@@ -79,16 +79,20 @@ def model_fn(features, labels, mode, params):
         )
 
     # Calculate loss
-    losses = tf.nn.nce_loss(
-        weights=video_embeddings,
-        biases=video_biases,
-        labels=labels,
-        inputs=output_layer,
-        num_sampled=params["num_sampled"],
-        num_classes=num_videos,
-        name="nce_losses"
-    )
-    loss = tf.reduce_mean(losses, name="nce_loss_mean")
+    loss_parm = params["loss"]
+    if loss_parm == 'nce':
+        losses = tf.nn.nce_loss(
+            weights=video_embeddings,
+            biases=video_biases,
+            labels=labels,
+            inputs=output_layer,
+            num_sampled=params["num_sampled"],
+            num_classes=num_videos,
+            name="nce_losses"
+        )
+        loss = tf.reduce_mean(losses, name="nce_loss_mean")
+    else:
+        raise Exception("Loss function not supported.")
 
     optimizer = tf.train.GradientDescentOptimizer(
         learning_rate=params["learning_rate"])
