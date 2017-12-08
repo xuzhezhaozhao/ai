@@ -52,6 +52,14 @@ def run_model():
         )
         nn.train(input_fn=train_input_fn)
     elif mode == "eval":
+        train_input_fn = tf.estimator.inputs.numpy_input_fn(
+            x={"watched": data_sets.train.watched_videos},
+            y=data_sets.train.predicts,
+            batch_size=FLAGS.batch_size,
+            num_epochs=FLAGS.epoches,
+            shuffle=True
+        )
+        nn.evaluate(input_fn=train_input_fn)
         pass
     elif mode == "test":
         pass
@@ -193,8 +201,8 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--k',
-        type=str,
-        default='train',
+        type=int,
+        default=1,
         help='Predicts top k items.'
     )
 

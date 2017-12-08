@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 # -*-coding:utf-8 -*-
 
+from __future__ import division
+
 import tensorflow as tf
 from input_data_binary import load_video_embeddings_from_binary
-from __future__ import division
 
 
 def model_fn(features, labels, mode, params):
@@ -68,12 +69,13 @@ def model_fn(features, labels, mode, params):
         video_biases,
         name="probs"
     )
-    predictions = tf.nn.top_k(probs, params["k"], "top_k")
+    predictions = tf.nn.top_k(probs, params["k"], name="top_k_predictions")
+    predictions_k_1 = tf.nn.top_k(probs, 1, name="top_1_predictions")
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(
             mode=mode,
-            predictions={"results": predictions}
+            predictions={"predictions": predictions}
         )
 
     # Calculate loss
@@ -98,11 +100,19 @@ def model_fn(features, labels, mode, params):
     )
 
     # Calculate root mean squared error as additional eval metric
-    correct = tf.nn.in_top_k(probs, labels, params["k"], name="in_top_k")
-    num_correct = tf.reduce_sum(tf.cast(correct, tf.int32), name="num_correct")
+    one_hot_labels = tf.reshape(labels, [-1])
+    # correct = tf.nn.in_top_k(probs, one_hot_labels, params["k"])
 
     eval_metric_ops = {
-        "Prediction @ k": num_correct / labels.shape[0].value
+        "accuracy": tf.metrics.accuracy(
+            labels=one_hot_labels,
+            predictions=predictions_k_1.indices
+        ),
+        "recall_at_k": tf.metrics.recall_at_k(
+            labels=tf.cast(one_hot_labels, tf.int64),
+            predictions=probs,
+            k=20
+        )
     }
 
     # Provide an estimator spec for 'ModeKeys.EVAL' and 'ModeKeys.TRAIN'
