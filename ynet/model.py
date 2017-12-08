@@ -9,7 +9,8 @@ def model_fn(features, labels, mode, params):
     # loading pretrained word vectors
     video_embeddings, num_videos, embedding_dim = \
         load_video_embeddings_from_binary(params["embeddings_file_path"])
-    video_biases = tf.Variable(tf.zeros([num_videos]))
+    video_embeddings = tf.Variable(video_embeddings, name="video_embeddings")
+    video_biases = tf.Variable(tf.zeros([num_videos]), name="video_biases")
 
     x = tf.gather(video_embeddings, features["watched"])
     mean_input = tf.reduce_mean(x, 1)
@@ -23,7 +24,7 @@ def model_fn(features, labels, mode, params):
         units=2048,
         activation=tf.nn.relu,
         kernel_initializer=tf.truncated_normal_initializer(0, 1),
-        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1),
+        # kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
         name='fc1'
     )
     first_hidden_layer = tf.nn.dropout(first_hidden_layer, keep_prob)
@@ -33,8 +34,8 @@ def model_fn(features, labels, mode, params):
         inputs=first_hidden_layer,
         units=1024,
         activation=tf.nn.relu,
-        kernel_initializer=tf.truncated_normal_initializer(0, 1),
-        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1),
+        # kernel_initializer=tf.truncated_normal_initializer(0, 1),
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
         name='fc2'
     )
     second_hidden_layer = tf.nn.dropout(second_hidden_layer, keep_prob)
@@ -44,8 +45,8 @@ def model_fn(features, labels, mode, params):
         inputs=second_hidden_layer,
         units=512,
         activation=tf.nn.relu,
-        kernel_initializer=tf.truncated_normal_initializer(0, 1),
-        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1),
+        # kernel_initializer=tf.truncated_normal_initializer(0, 1),
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
         name='fc3'
     )
     third_hidden_layer = tf.nn.dropout(third_hidden_layer, keep_prob)
@@ -54,8 +55,8 @@ def model_fn(features, labels, mode, params):
         inputs=third_hidden_layer,
         units=256,
         activation=tf.nn.relu,
-        kernel_initializer=tf.truncated_normal_initializer(0, 1),
-        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.1),
+        # kernel_initializer=tf.truncated_normal_initializer(0, 1),
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
         name='fc4'
     )
 

@@ -93,10 +93,10 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
-        '--input_size',
+        '--embedding_dim',
         type=int,
         default=256,
-        help='Embedding input size.'
+        help='Word vector embedding dimension.'
     )
 
     parser.add_argument(
