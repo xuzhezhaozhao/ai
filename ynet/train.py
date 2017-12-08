@@ -31,7 +31,8 @@ def run_model():
         "learning_rate": FLAGS.learning_rate,
         "embeddings_file_path": FLAGS.video_embeddings_file_binary,
         "num_sampled": FLAGS.num_sampled,
-        "keep_prob": FLAGS.keep_prob
+        "keep_prob": FLAGS.keep_prob,
+        "k": FLAGS.k
     }
 
     # Instantiate Estimator
@@ -188,6 +189,13 @@ if __name__ == '__main__':
         type=str,
         default='train',
         help='Run mode - train, eval or predict'
+    )
+
+    parser.add_argument(
+        '--k',
+        type=str,
+        default='train',
+        help='Predicts top k items.'
     )
 
     FLAGS, unparsed = parser.parse_known_args()

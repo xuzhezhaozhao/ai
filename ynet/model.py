@@ -61,12 +61,13 @@ def model_fn(features, labels, mode, params):
         name='fc4'
     )
 
-    # TODO Generate top-K predictions
+    # Generate top-K predictions
     probs = tf.nn.bias_add(
         tf.matmul(output_layer, video_embeddings, transpose_b=True),
-        video_biases
+        video_biases,
+        name="probs"
     )
-    predictions = tf.argmax(probs)
+    predictions = tf.nn.top_k(probs, params["k"], "top_k")
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(
