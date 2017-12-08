@@ -94,8 +94,7 @@ def model_fn(features, labels, mode, params):
     else:
         raise Exception("Loss function not supported.")
 
-    optimizer = tf.train.GradientDescentOptimizer(
-        learning_rate=params["learning_rate"])
+    optimizer = tf.train.AdamOptimizer(learning_rate=params["learning_rate"])
 
     train_op = optimizer.minimize(
         loss=loss,
@@ -103,9 +102,7 @@ def model_fn(features, labels, mode, params):
         name="train_op"
     )
 
-    # Calculate root mean squared error as additional eval metric
     one_hot_labels = tf.reshape(labels, [-1])
-    # correct = tf.nn.in_top_k(probs, one_hot_labels, params["k"])
 
     eval_metric_ops = {
         "accuracy": tf.metrics.accuracy(
