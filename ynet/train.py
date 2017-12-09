@@ -33,7 +33,8 @@ def run_model():
         "num_sampled": FLAGS.num_sampled,
         "keep_prob": FLAGS.keep_prob,
         "k": FLAGS.k,
-        "loss": FLAGS.loss
+        "loss": FLAGS.loss,
+        "embedding_dim": FLAGS.embedding_dim
     }
 
     config = tf.estimator.RunConfig(

@@ -41,7 +41,7 @@ def model_fn(features, labels, mode, params):
 
     loss_parm = params["loss"]
     if loss_parm == "nce":
-        num_output = 256
+        num_output = params["embedding_dim"]
     elif loss_parm == "softmax":
         num_output = num_videos
     else:
@@ -106,8 +106,8 @@ def model_fn(features, labels, mode, params):
     gradients = optimizer.compute_gradients(loss, trainable_variables)
 
     # Add gradients to summary
-    # for gradient, var in gradients:
-        # tf.summary.histogram(var.name + '/gradient', gradient)
+    for gradient, var in gradients:
+        tf.summary.histogram(var.name + '/gradient', gradient)
 
     train_op = optimizer.apply_gradients(
         grads_and_vars=gradients,
