@@ -18,7 +18,8 @@ def model_fn(features, labels, mode, params):
     )
     video_biases = tf.Variable(
         tf.zeros([num_videos]),
-        trainable=params["embeddings_trainable"],
+        # trainable=params["embeddings_trainable"],
+        trainable=False,
         name="video_biases"
     )
 
@@ -103,6 +104,9 @@ def model_fn(features, labels, mode, params):
         raise Exception("Loss function not supported.")
 
     optimizer = tf.train.AdamOptimizer(learning_rate=params["learning_rate"])
+    # optimizer = tf.train.GradientDescentOptimizer(
+        # learning_rate=params["learning_rate"]
+    # )
     trainable_variables = tf.trainable_variables()
     gradients = optimizer.compute_gradients(loss, trainable_variables)
 
