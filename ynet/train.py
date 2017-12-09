@@ -53,25 +53,25 @@ def run_model():
         params=model_params,
     )
     mode = FLAGS.run_mode
+    # TODO magic 500000
     if mode == "train":
         train_input_fn = tf.estimator.inputs.numpy_input_fn(
-            x={"watched": data_sets.train.watched_videos},
-            y=data_sets.train.predicts,
+            x={"watched": data_sets.train.watched_videos[:-500000]},
+            y=data_sets.train.predicts[:-500000],
             batch_size=FLAGS.batch_size,
             num_epochs=FLAGS.epoches,
             shuffle=True
         )
         nn.train(input_fn=train_input_fn)
     elif mode == "eval":
-        # TODO use seperated data set
-        train_input_fn = tf.estimator.inputs.numpy_input_fn(
-            x={"watched": data_sets.train.watched_videos},
-            y=data_sets.train.predicts,
+        eval_input_fn = tf.estimator.inputs.numpy_input_fn(
+            x={"watched": data_sets.train.watched_videos[-500000:]},
+            y=data_sets.train.predicts[-500000:],
             batch_size=FLAGS.batch_size,
             num_epochs=FLAGS.epoches,
             shuffle=True
         )
-        nn.evaluate(input_fn=train_input_fn)
+        nn.evaluate(input_fn=eval_input_fn)
     elif mode == "test":
         pass
     else:

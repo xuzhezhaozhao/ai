@@ -8,12 +8,14 @@ from tensorflow.contrib.learn.python.learn.datasets import base
 
 
 class DataSet(object):
-    def __init__(self, watched_videos, predicts):
+    def __init__(self, watched_videos, predicts, shuffle=True):
         self._watched_videos = watched_videos
         self._predicts = predicts
         self._epochs_completed = 0
         self._index_in_epoch = 0
         self._num_examples = watched_videos.shape[0]
+        if shuffle:
+            self._shuffle()
         print("num examples: {}".format(self._num_examples))
 
     @property
@@ -32,14 +34,17 @@ class DataSet(object):
     def epochs_completed(self):
         return self._epochs_completed
 
+    def _shuffle(self):
+        perm0 = np.arange(self._num_examples)
+        np.random.shuffle(perm0)
+        self._watched_videos = self.watched_videos[perm0]
+        self._predicts = self.predicts[perm0]
+
     def next_batch(self, batch_size, shuffle=True):
         start = self._index_in_epoch
         # Shuffle for the first epoch
         if self._epochs_completed == 0 and start == 0 and shuffle:
-            perm0 = np.arange(self._num_examples)
-            np.random.shuffle(perm0)
-            self._watched_videos = self.watched_videos[perm0]
-            self._predicts = self.predicts[perm0]
+            self._shuffle()
         # Go to the next epoch
         if start + batch_size > self._num_examples:
             # Finished epoch
