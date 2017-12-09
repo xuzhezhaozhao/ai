@@ -95,11 +95,20 @@ def model_fn(features, labels, mode, params):
         raise Exception("Loss function not supported.")
 
     optimizer = tf.train.AdamOptimizer(learning_rate=params["learning_rate"])
+    trainable_variables = tf.trainable_variables()
+    gradients = optimizer.compute_gradients(loss, trainable_variables)
 
-    train_op = optimizer.minimize(
-        loss=loss,
+    # Add gradients to summary
+    for gradient, var in gradients:
+        tf.summary.histogram(var.name + '/gradient', gradient)
+
+    # Add the Variables we train to the summary
+    # for var in trainable_variables:
+        # tf.summary.histogram(var.name, var)
+
+    train_op = optimizer.apply_gradients(
+        grads_and_vars=gradients,
         global_step=tf.train.get_global_step(),
-        name="train_op"
     )
 
     one_hot_labels = tf.reshape(labels, [-1])

@@ -36,11 +36,19 @@ def run_model():
         "loss": FLAGS.loss
     }
 
+    config = tf.estimator.RunConfig(
+        save_summary_steps=50,
+        save_checkpoints_secs=600,
+        keep_checkpoint_max=3,
+        log_step_count_steps=50
+    )
+
     # Instantiate Estimator
     nn = tf.estimator.Estimator(
         model_fn=model_fn,
         model_dir=FLAGS.model_dir,
-        params=model_params
+        config=config,
+        params=model_params,
     )
     mode = FLAGS.run_mode
     if mode == "train":
