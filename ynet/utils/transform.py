@@ -9,9 +9,10 @@ histories = dict()
 input = sys.argv[1]
 output = sys.argv[2]
 kmin = int(sys.argv[3])
+kmax = int(sys.argv[4])
 maxlines = -1
 
-if len(sys.argv) == 5:
+if len(sys.argv) == 6:
     maxlines = int(sys.argv[4])
 
 for index, line in enumerate(open(input, "r")):
@@ -46,7 +47,7 @@ print("histories size: ", len(histories))
 with open(output, "w") as fout:
     for index, uin in enumerate(histories):
         history = histories[uin]
-        if len(history) < kmin:
+        if len(history) < kmin or len(history) > kmax:
             continue
         fout.write("__label__" + uin + " ")
         for item in history:

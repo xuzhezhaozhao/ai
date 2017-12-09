@@ -8,15 +8,18 @@ cd ${MYDIR}
 input=$1
 
 # min items per user
-kmin=31
+kmin=50
+
+# max items per user
+kmax=150
 
 # fasttext args
-minCount=20
+minCount=50
 dim=100
 
 watched_size=20
-max_per_user=10
-ws=5
+max_per_user=100
+ws=10
 epoch=5
 neg=5
 thread=4
@@ -34,7 +37,7 @@ sorted_file=${input}.sorted
 
 preprocessed=${input}.preprocessed
 echo "transform sorted file to fastText format ..."
-python utils/transform.py ${sorted_file} ${preprocessed} ${kmin}
+python utils/transform.py ${sorted_file} ${preprocessed} ${kmin} ${kmax}
 
 echo "fastText train ..."
 fast_output=${input}

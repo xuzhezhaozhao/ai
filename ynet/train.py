@@ -34,7 +34,8 @@ def run_model():
         "keep_prob": FLAGS.keep_prob,
         "k": FLAGS.k,
         "loss": FLAGS.loss,
-        "embedding_dim": FLAGS.embedding_dim
+        "embedding_dim": FLAGS.embedding_dim,
+        "embeddings_trainable": FLAGS.embeddings_trainable
     }
 
     config = tf.estimator.RunConfig(
@@ -221,6 +222,13 @@ if __name__ == '__main__':
         type=str,
         default='nce',
         help='Loss funcition. [nce, softmax]'
+    )
+
+    parser.add_argument(
+        '--embeddings_trainable',
+        type=bool,
+        default=True,
+        help='Weather embeddings can be trainable.'
     )
 
     FLAGS, unparsed = parser.parse_known_args()

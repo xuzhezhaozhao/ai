@@ -13,12 +13,12 @@ def model_fn(features, labels, mode, params):
         load_video_embeddings_from_binary(params["embeddings_file_path"])
     video_embeddings = tf.Variable(
         video_embeddings,
-        trainable=False,
+        trainable=params["embeddings_trainable"],
         name="video_embeddings"
     )
     video_biases = tf.Variable(
         tf.zeros([num_videos]),
-        trainable=False,
+        trainable=params["embeddings_trainable"],
         name="video_biases"
     )
 
@@ -34,7 +34,7 @@ def model_fn(features, labels, mode, params):
         units=512,
         activation=tf.nn.relu6,
         kernel_initializer=tf.truncated_normal_initializer(0, 0.1),
-        # kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
+        kernel_regularizer=tf.contrib.layers.l1_regularizer(0.01),
         name='fc1'
     )
     first_hidden_layer = tf.nn.dropout(first_hidden_layer, keep_prob)
@@ -51,9 +51,9 @@ def model_fn(features, labels, mode, params):
         inputs=first_hidden_layer,
         units=num_output,
         # activation=tf.nn.relu6,
-        # activation=tf.nn.sigmoid,
+        activation=tf.nn.sigmoid,
         kernel_initializer=tf.truncated_normal_initializer(0, 0.1),
-        # kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
+        kernel_regularizer=tf.contrib.layers.l1_regularizer(0.01),
         name='fc2'
     )
 
@@ -89,6 +89,7 @@ def model_fn(features, labels, mode, params):
             inputs=output_layer,
             num_sampled=params["num_sampled"],
             num_classes=num_videos,
+            remove_accidental_hits=True,
             name="nce_losses"
         )
         loss = tf.reduce_mean(losses, name="nce_loss_mean")
