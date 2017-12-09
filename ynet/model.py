@@ -11,8 +11,16 @@ def model_fn(features, labels, mode, params):
     # loading pretrained word vectors
     video_embeddings, num_videos, embedding_dim = \
         load_video_embeddings_from_binary(params["embeddings_file_path"])
-    video_embeddings = tf.Variable(video_embeddings, name="video_embeddings")
-    video_biases = tf.Variable(tf.zeros([num_videos]), name="video_biases")
+    video_embeddings = tf.Variable(
+        video_embeddings,
+        trainable=False,
+        name="video_embeddings"
+    )
+    video_biases = tf.Variable(
+        tf.zeros([num_videos]),
+        trainable=False,
+        name="video_biases"
+    )
 
     x = tf.gather(video_embeddings, features["watched"])
     mean_input = tf.reduce_mean(x, 1)
@@ -23,44 +31,22 @@ def model_fn(features, labels, mode, params):
     # (features["watched"]) with relu activation
     first_hidden_layer = tf.layers.dense(
         inputs=mean_input,
-        units=2048,
+        units=512,
         activation=tf.nn.relu6,
         kernel_initializer=tf.truncated_normal_initializer(0, 1),
-        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
+        # kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
         name='fc1'
     )
     first_hidden_layer = tf.nn.dropout(first_hidden_layer, keep_prob)
 
-    # Connect the second hidden layer to first hidden layer with relu
-    second_hidden_layer = tf.layers.dense(
-        inputs=first_hidden_layer,
-        units=1024,
-        activation=tf.nn.relu6,
-        kernel_initializer=tf.truncated_normal_initializer(0, 1),
-        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
-        name='fc2'
-    )
-    second_hidden_layer = tf.nn.dropout(second_hidden_layer, keep_prob)
-
-    # Connect the third hidden layer to first hidden layer with relu
-    third_hidden_layer = tf.layers.dense(
-        inputs=second_hidden_layer,
-        units=512,
-        activation=tf.nn.relu6,
-        kernel_initializer=tf.truncated_normal_initializer(0, 1),
-        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
-        name='fc3'
-    )
-    third_hidden_layer = tf.nn.dropout(third_hidden_layer, keep_prob)
-
     output_layer = tf.layers.dense(
-        inputs=third_hidden_layer,
+        inputs=first_hidden_layer,
         units=256,
         activation=tf.nn.relu6,
         # activation=tf.nn.sigmoid,
         kernel_initializer=tf.truncated_normal_initializer(0, 1),
-        kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
-        name='fc4'
+        # kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
+        name='fc2'
     )
 
     # Generate top-K predictions
