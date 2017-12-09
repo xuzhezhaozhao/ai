@@ -27,7 +27,8 @@ def records2binary(recordsfile, dictfile, watchedfile, predictsfile):
 
                 # generate binary records
                 max_start = len(records) - watched_size - 1
-                assert max_start >= 0
+                if max_start < 0:
+                    continue
                 num_sampled = min(max_start + 1, FLAGS.max_per_user)
                 sampled = random.sample(range(max_start + 1), num_sampled)
                 for start in sampled:

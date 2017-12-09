@@ -44,4 +44,5 @@ utils/fasttext skipgram -input ${preprocessed} -output ${fast_output} -lr 0.025\
 
 tf_input=${input}.tf
 python utils/vec2binary.py --input ${fast_output}.vec --output ${tf_input}.vec --output_dict_file ${tf_input}.dict
-python utils/records2binary.py --input_records ${preprocessed} --output_watched ${tf_input}.watched --output_predicts ${tf_input}.predicts --input_dict_file ${tf_input}.dict --watched_size ${watched_size} --max_per_user ${max_per_user}
+python utils/filter_transform.py --input ${preprocessed} --output ${tf_input}.records --dictfile ${tf_input}.dict
+python utils/records2binary.py --input_records ${tf_input}.records --output_watched ${tf_input}.watched --output_predicts ${tf_input}.predicts --input_dict_file ${tf_input}.dict --watched_size ${watched_size} --max_per_user ${max_per_user}
