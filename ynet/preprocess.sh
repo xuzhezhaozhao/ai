@@ -8,16 +8,16 @@ cd ${MYDIR}
 input=$1
 
 # min items per user
-kmin=21
+kmin=31
 
 # fasttext args
-minCount=1
-dim=256
+minCount=20
+dim=100
 
 watched_size=20
-max_per_user=1
+max_per_user=10
 ws=5
-epoch=1
+epoch=5
 neg=5
 thread=4
 
@@ -28,9 +28,9 @@ thread=4
 
 echo "sort csv file with 1st field ..."
 sorted_file=${input}.sorted
-mkdir -p tmp_sort/
-sort -T tmp_sort/ -t ',' -k 1 --parallel=4 ${input} -o ${sorted_file}
-rm -rf tmp_sort/
+#mkdir -p tmp_sort/
+#sort -T tmp_sort/ -t ',' -k 1 --parallel=4 ${input} -o ${sorted_file}
+#rm -rf tmp_sort/
 
 preprocessed=${input}.preprocessed
 echo "transform sorted file to fastText format ..."

@@ -33,28 +33,42 @@ def model_fn(features, labels, mode, params):
         inputs=mean_input,
         units=512,
         activation=tf.nn.relu6,
-        kernel_initializer=tf.truncated_normal_initializer(0, 1),
+        kernel_initializer=tf.truncated_normal_initializer(0, 0.1),
         # kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
         name='fc1'
     )
     first_hidden_layer = tf.nn.dropout(first_hidden_layer, keep_prob)
 
+    loss_parm = params["loss"]
+    if loss_parm == "nce":
+        num_output = 256
+    elif loss_parm == "softmax":
+        num_output = num_videos
+    else:
+        raise Exception("Loss function not supported.")
+
     output_layer = tf.layers.dense(
         inputs=first_hidden_layer,
-        units=256,
-        activation=tf.nn.relu6,
+        units=num_output,
+        # activation=tf.nn.relu6,
         # activation=tf.nn.sigmoid,
-        kernel_initializer=tf.truncated_normal_initializer(0, 1),
+        kernel_initializer=tf.truncated_normal_initializer(0, 0.1),
         # kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
         name='fc2'
     )
 
     # Generate top-K predictions
-    probs = tf.nn.bias_add(
-        tf.matmul(output_layer, video_embeddings, transpose_b=True),
-        video_biases,
-        name="probs"
-    )
+    if loss_parm == "nce":
+        probs = tf.nn.bias_add(
+            tf.matmul(output_layer, video_embeddings, transpose_b=True),
+            video_biases,
+            name="probs"
+        )
+    elif loss_parm == "softmax":
+        probs = output_layer
+    else:
+        raise Exception("Loss function not supported.")
+
     predictions = tf.nn.top_k(probs, params["k"], name="top_k_predictions")
     predictions_k_1 = tf.nn.top_k(probs, 1, name="top_1_predictions")
 
@@ -64,8 +78,9 @@ def model_fn(features, labels, mode, params):
             predictions={"predictions": predictions}
         )
 
+    one_hot_labels = tf.reshape(labels, [-1])
+
     # Calculate loss
-    loss_parm = params["loss"]
     if loss_parm == 'nce':
         losses = tf.nn.nce_loss(
             weights=video_embeddings,
@@ -77,6 +92,12 @@ def model_fn(features, labels, mode, params):
             name="nce_losses"
         )
         loss = tf.reduce_mean(losses, name="nce_loss_mean")
+    elif loss_parm == 'softmax':
+        losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            labels=one_hot_labels,
+            logits=output_layer
+        )
+        loss = tf.reduce_mean(losses, name="cross_entropy_loss_mean")
     else:
         raise Exception("Loss function not supported.")
 
@@ -85,19 +106,13 @@ def model_fn(features, labels, mode, params):
     gradients = optimizer.compute_gradients(loss, trainable_variables)
 
     # Add gradients to summary
-    for gradient, var in gradients:
-        tf.summary.histogram(var.name + '/gradient', gradient)
-
-    # Add the Variables we train to the summary
-    # for var in trainable_variables:
-        # tf.summary.histogram(var.name, var)
+    # for gradient, var in gradients:
+        # tf.summary.histogram(var.name + '/gradient', gradient)
 
     train_op = optimizer.apply_gradients(
         grads_and_vars=gradients,
         global_step=tf.train.get_global_step(),
     )
-
-    one_hot_labels = tf.reshape(labels, [-1])
 
     eval_metric_ops = {
         "accuracy": tf.metrics.accuracy(
