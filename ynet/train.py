@@ -75,8 +75,7 @@ def run_model():
     elif mode == "predict":
         predict_input_fn = tf.estimator.inputs.numpy_input_fn(
             x={"watched": data_sets.train.watched_videos[-2:]},
-            # y=data_sets.train.predicts[-2:],
-            shuffle=True
+            shuffle=False
         )
         predictions = nn.predict(input_fn=predict_input_fn)
         print(list(predictions))

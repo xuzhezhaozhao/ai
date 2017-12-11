@@ -70,7 +70,7 @@ def model_fn(features, labels, mode, params):
             name="probs"
         )
     elif loss_parm == "softmax":
-        probs = output_layer
+        probs = tf.exp(output_layer)
     else:
         raise Exception("Loss function not supported.")
 
@@ -81,7 +81,7 @@ def model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(
             mode=mode,
             predictions={"indeces": predictions.indices,
-                         "values": predictions.values}
+                         "values": tf.exp(predictions.values)}
         )
 
     one_hot_labels = tf.reshape(labels, [-1])
@@ -109,9 +109,6 @@ def model_fn(features, labels, mode, params):
         raise Exception("Loss function not supported.")
 
     optimizer = tf.train.AdamOptimizer(learning_rate=params["learning_rate"])
-    # optimizer = tf.train.GradientDescentOptimizer(
-        # learning_rate=params["learning_rate"]
-    # )
     trainable_variables = tf.trainable_variables()
     gradients = optimizer.compute_gradients(loss, trainable_variables)
 
