@@ -18,3 +18,4 @@ ynet/data
 ynet/model_dir
 *.out
 ynet/model
+*.tgz
