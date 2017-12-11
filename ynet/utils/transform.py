@@ -35,7 +35,8 @@ for index, line in enumerate(open(input, "r")):
 
         if uin not in histories:
             histories[uin] = []
-        histories[uin].append(rowkey)
+        if rowkey not in histories[uin]:
+            histories[uin].append(rowkey)
 
         if index % 2000000 == 0:
             print(str(index) + " lines processed ...")
