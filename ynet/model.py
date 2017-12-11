@@ -5,6 +5,7 @@ from __future__ import division
 
 import tensorflow as tf
 from input_data_binary import load_video_embeddings_from_binary
+import numpy as np
 
 
 def model_fn(features, labels, mode, params):
@@ -30,11 +31,13 @@ def model_fn(features, labels, mode, params):
     """Model function for Estimator."""
     # Connect the first hedden layer to input layer
     # (features["watched"]) with relu activation
+    num_first = 512
     first_hidden_layer = tf.layers.dense(
         inputs=mean_input,
-        units=512,
+        units=num_first,
         activation=tf.nn.relu6,
-        kernel_initializer=tf.truncated_normal_initializer(0, 0.1),
+        kernel_initializer=tf.truncated_normal_initializer(
+            0, np.sqrt(1.0/num_first)),
         kernel_regularizer=tf.contrib.layers.l1_regularizer(0.01),
         name='fc1'
     )
@@ -53,7 +56,8 @@ def model_fn(features, labels, mode, params):
         units=num_output,
         # activation=tf.nn.relu6,
         activation=tf.nn.sigmoid,
-        kernel_initializer=tf.truncated_normal_initializer(0, 0.1),
+        kernel_initializer=tf.truncated_normal_initializer(
+            0, np.sqrt(1.0/num_output)),
         kernel_regularizer=tf.contrib.layers.l1_regularizer(0.01),
         name='fc2'
     )
