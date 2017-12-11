@@ -80,7 +80,8 @@ def model_fn(features, labels, mode, params):
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(
             mode=mode,
-            predictions={"predictions": predictions}
+            predictions={"indeces": predictions.indices,
+                         "values": predictions.values}
         )
 
     one_hot_labels = tf.reshape(labels, [-1])

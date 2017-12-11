@@ -65,15 +65,21 @@ def run_model():
         nn.train(input_fn=train_input_fn)
     elif mode == "eval":
         eval_input_fn = tf.estimator.inputs.numpy_input_fn(
-            x={"watched": data_sets.train.watched_videos[-500000:]},
-            y=data_sets.train.predicts[-500000:],
+            x={"watched": data_sets.train.watched_videos[-50000:]},
+            y=data_sets.train.predicts[-50000:],
             batch_size=FLAGS.batch_size,
             num_epochs=FLAGS.epoches,
             shuffle=True
         )
         nn.evaluate(input_fn=eval_input_fn)
-    elif mode == "test":
-        pass
+    elif mode == "predict":
+        predict_input_fn = tf.estimator.inputs.numpy_input_fn(
+            x={"watched": data_sets.train.watched_videos[-2:]},
+            # y=data_sets.train.predicts[-2:],
+            shuffle=True
+        )
+        predictions = nn.predict(input_fn=predict_input_fn)
+        print(list(predictions))
     else:
         raise Exception("unkown run mode: {}".format(mode))
 
