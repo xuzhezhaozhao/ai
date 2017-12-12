@@ -7,6 +7,7 @@ from model import model_fn
 import tensorflow as tf
 import argparse
 import sys
+import numpy as np
 
 
 tf.logging.set_verbosity(tf.logging.INFO)
@@ -18,7 +19,7 @@ FLAGS = None
 def serving_input_receiver_fn():
     """An input receiver that expects a serialized tf.Example."""
     feature_spec = {"watched":
-                    tf.FixedLenFeature(dtype=tf.int64,
+                    tf.FixedLenFeature(dtype=tf.string,
                                        shape=[FLAGS.watched_size])}
     default_batch_size = None
     serialized_tf_example = tf.placeholder(dtype=tf.string,
@@ -77,8 +78,8 @@ def run_model():
         nn.train(input_fn=train_input_fn)
     elif mode == "eval":
         eval_input_fn = tf.estimator.inputs.numpy_input_fn(
-            x={"watched": data_sets.train.watched_videos[-50000:]},
-            y=data_sets.train.predicts[-50000:],
+            x={"watched": data_sets.train.watched_videos[-500000:]},
+            y=data_sets.train.predicts[-500000:],
             batch_size=FLAGS.batch_size,
             num_epochs=FLAGS.epoches,
             shuffle=True
@@ -86,15 +87,20 @@ def run_model():
         nn.evaluate(input_fn=eval_input_fn)
     elif mode == "predict":
         predict_input_fn = tf.estimator.inputs.numpy_input_fn(
-            x={"watched": data_sets.train.watched_videos[-2:]},
+            # x={"watched": data_sets.train.watched_videos[-2:]},
+            x={"watched": np.array([[1,2,3,4,5,6,7,8,9,10]])},
             shuffle=False
         )
         predictions = nn.predict(input_fn=predict_input_fn)
         print(list(predictions))
+
     elif mode == "export":
+        features = {'watched': tf.placeholder(tf.int64, [1, 10])}
+        fn = tf.estimator.export.build_raw_serving_input_receiver_fn(features)
+
         export_name = nn.export_savedmodel(
             export_dir_base=FLAGS.model_dir,
-            serving_input_receiver_fn=serving_input_receiver_fn,
+            serving_input_receiver_fn=fn,
         )
         print("export_name: {}".format(export_name))
     else:
@@ -236,7 +242,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--k',
         type=int,
-        default=1,
+        default=10,
         help='Predicts top k items.'
     )
 
