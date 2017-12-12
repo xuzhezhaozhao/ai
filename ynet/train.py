@@ -18,18 +18,18 @@ FLAGS = None
 def serving_input_receiver_fn():
     """An input receiver that expects a serialized tf.Example."""
     feature_spec = {"watched":
-                    tf.FixedLenFeature(dtype=tf.string,
+                    tf.FixedLenFeature(dtype=tf.int64,
                                        shape=[FLAGS.watched_size])}
     default_batch_size = None
     serialized_tf_example = tf.placeholder(dtype=tf.string,
                                            shape=[default_batch_size],
                                            name='input_example_tensor')
-    receiver_tensors = {'examples': serialized_tf_example}
+    receiver_tensors = {'watched': serialized_tf_example}
     features = tf.parse_example(serialized_tf_example, feature_spec)
 
     # TODO convert rowkey to indices
-    watched_indices = tf.cast(features["watched"], tf.int64)
-    features = {"watched": watched_indices}
+    # watched_indices = tf.cast(features["watched"], tf.int64)
+    # features = {"watched": watched_indices}
 
     return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
 

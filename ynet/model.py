@@ -88,7 +88,7 @@ def model_fn(features, labels, mode, params):
                 # TODO indices to rowkey
                 'predicts': tf.estimator.export.PredictOutput(
                     outputs={
-                        'classes': tf.as_string(predictions.indices),
+                        'predicts': tf.as_string(predictions.indices),
                         'scores': tf.exp(predictions.values)
                     }
                 )
