@@ -80,8 +80,16 @@ def model_fn(features, labels, mode, params):
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(
             mode=mode,
-            predictions={"indeces": predictions.indices,
-                         "values": tf.exp(predictions.values)}
+            predictions={
+                "indices": predictions.indices,
+                "values": tf.exp(predictions.values)
+            },
+            export_outputs={
+                # TODO indices to rowkey
+                'class': tf.estimator.export.ClassificationOutput(
+                    classes=tf.as_string(predictions.indices),
+                    scores=tf.exp(predictions.values)),
+            },
         )
 
     one_hot_labels = tf.reshape(labels, [-1])

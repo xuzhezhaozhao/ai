@@ -15,6 +15,20 @@ tf.logging.set_verbosity(tf.logging.INFO)
 FLAGS = None
 
 
+feature_spec = {"watched": tf.FixedLenFeature(dtype=tf.int64, shape=[10])}
+default_batch_size = 1
+
+
+def serving_input_receiver_fn():
+    """An input receiver that expects a serialized tf.Example."""
+    serialized_tf_example = tf.placeholder(dtype=tf.string,
+                                           shape=[default_batch_size],
+                                           name='input_example_tensor')
+    receiver_tensors = {'examples': serialized_tf_example}
+    features = tf.parse_example(serialized_tf_example, feature_spec)
+    return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
+
+
 def run_model():
     data_sets = read_data_sets_from_binary(
         FLAGS.train_watched_file,
@@ -38,18 +52,18 @@ def run_model():
         "embeddings_trainable": FLAGS.embeddings_trainable
     }
 
-    config = tf.estimator.RunConfig(
-        save_summary_steps=50,
-        save_checkpoints_secs=600,
-        keep_checkpoint_max=3,
-        log_step_count_steps=50
-    )
+    # config = tf.estimator.RunConfig(
+        # save_summary_steps=50,
+        # save_checkpoints_secs=600,
+        # keep_checkpoint_max=3,
+        # log_step_count_steps=50
+    # )
 
     # Instantiate Estimator
     nn = tf.estimator.Estimator(
         model_fn=model_fn,
         model_dir=FLAGS.model_dir,
-        config=config,
+        # config=config,
         params=model_params,
     )
     mode = FLAGS.run_mode
@@ -79,6 +93,11 @@ def run_model():
         )
         predictions = nn.predict(input_fn=predict_input_fn)
         print(list(predictions))
+    elif mode == "export":
+        nn.export_savedmodel(
+            export_dir_base=FLAGS.model_dir,
+            serving_input_receiver_fn=serving_input_receiver_fn,
+        )
     else:
         raise Exception("unkown run mode: {}".format(mode))
 
