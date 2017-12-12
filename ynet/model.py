@@ -86,9 +86,12 @@ def model_fn(features, labels, mode, params):
             },
             export_outputs={
                 # TODO indices to rowkey
-                'class': tf.estimator.export.ClassificationOutput(
-                    classes=tf.as_string(predictions.indices),
-                    scores=tf.exp(predictions.values)),
+                'predicts': tf.estimator.export.PredictOutput(
+                    outputs={
+                        'classes': tf.as_string(predictions.indices),
+                        'scores': tf.exp(predictions.values)
+                    }
+                )
             },
         )
 
