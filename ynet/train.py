@@ -95,7 +95,8 @@ def run_model():
         print(list(predictions))
 
     elif mode == "export":
-        features = {'watched': tf.placeholder(tf.int64, [1, 10])}
+        features = {'watched': tf.placeholder(tf.int64,
+                                              [1, FLAGS.watched_size])}
         fn = tf.estimator.export.build_raw_serving_input_receiver_fn(features)
 
         export_name = nn.export_savedmodel(
