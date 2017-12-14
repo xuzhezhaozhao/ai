@@ -65,7 +65,7 @@ class PredictionClient {
 
 int main(int argc, char *argv[]) {
   PredictionClient client(grpc::CreateChannel(
-        "localhost:9000", grpc::InsecureChannelCredentials()));
+        argv[1], grpc::InsecureChannelCredentials()));
   client.Predict();
 
   return 0;
