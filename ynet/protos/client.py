@@ -15,7 +15,9 @@ def run():
     request.model_spec.name = 'default'
     request.model_spec.signature_name = 'predicts'
     request.inputs['watched'].CopyFrom(
-        tf.contrib.util.make_tensor_proto(range(10), dtype=tf.int64, shape=[1, 10])
+        tf.contrib.util.make_tensor_proto(range(10),
+                                          dtype=tf.int64,
+                                          shape=[1, 10])
     )
 
     response = stub.Predict(request)
