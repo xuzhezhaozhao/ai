@@ -226,13 +226,13 @@ class PredictRequest : public ::google::protobuf::Message /* @@protoc_insertion_
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   public:
-  class PredictRequest_InputsEntry : public ::google::protobuf::internal::MapEntry<PredictRequest_InputsEntry,
+  class PredictRequest_InputsEntry : public ::google::protobuf::internal::MapEntry<PredictRequest_InputsEntry, 
       ::std::string, ::tensorflow::TensorProto,
       ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
       ::google::protobuf::internal::WireFormatLite::TYPE_MESSAGE,
       0 > {
   public:
-    typedef ::google::protobuf::internal::MapEntry<PredictRequest_InputsEntry,
+    typedef ::google::protobuf::internal::MapEntry<PredictRequest_InputsEntry, 
       ::std::string, ::tensorflow::TensorProto,
       ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
       ::google::protobuf::internal::WireFormatLite::TYPE_MESSAGE,
@@ -373,13 +373,13 @@ class PredictResponse : public ::google::protobuf::Message /* @@protoc_insertion
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   public:
-  class PredictResponse_OutputsEntry : public ::google::protobuf::internal::MapEntry<PredictResponse_OutputsEntry,
+  class PredictResponse_OutputsEntry : public ::google::protobuf::internal::MapEntry<PredictResponse_OutputsEntry, 
       ::std::string, ::tensorflow::TensorProto,
       ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
       ::google::protobuf::internal::WireFormatLite::TYPE_MESSAGE,
       0 > {
   public:
-    typedef ::google::protobuf::internal::MapEntry<PredictResponse_OutputsEntry,
+    typedef ::google::protobuf::internal::MapEntry<PredictResponse_OutputsEntry, 
       ::std::string, ::tensorflow::TensorProto,
       ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
       ::google::protobuf::internal::WireFormatLite::TYPE_MESSAGE,
@@ -431,7 +431,7 @@ inline const ::tensorflow::serving::ModelSpec& PredictRequest::model_spec() cons
       &::tensorflow::serving::_ModelSpec_default_instance_);
 }
 inline ::tensorflow::serving::ModelSpec* PredictRequest::mutable_model_spec() {
-
+  
   if (model_spec_ == NULL) {
     _slow_mutable_model_spec();
   }
@@ -440,7 +440,7 @@ inline ::tensorflow::serving::ModelSpec* PredictRequest::mutable_model_spec() {
 }
 inline ::tensorflow::serving::ModelSpec* PredictRequest::release_model_spec() {
   // @@protoc_insertion_point(field_release:tensorflow.serving.PredictRequest.model_spec)
-
+  
   if (GetArenaNoVirtual() != NULL) {
     return _slow_release_model_spec();
   } else {
@@ -459,9 +459,9 @@ inline  void PredictRequest::set_allocated_model_spec(::tensorflow::serving::Mod
   }
   model_spec_ = model_spec;
   if (model_spec) {
-
+    
   } else {
-
+    
   }
   // @@protoc_insertion_point(field_set_allocated:tensorflow.serving.PredictRequest.model_spec)
 }
