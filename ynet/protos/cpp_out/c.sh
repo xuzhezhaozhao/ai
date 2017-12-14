@@ -1,0 +1,1 @@
+g++ -I. client.cc tensorflow/core/example/*.cc tensorflow/core/framework/*.cc tensorflow/core/protobuf/*.cc -L/usr/local/lib -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -ldl -lprotobuf -lgrpc -lgrpc++ -lpthread -pthread -L/usr/local/lib tensorflow/core/lib/core/*.cc tensorflow_serving/apis/*.cc -o client
