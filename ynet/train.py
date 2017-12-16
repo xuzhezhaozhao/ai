@@ -8,6 +8,7 @@ import tensorflow as tf
 import argparse
 import sys
 import numpy as np
+import os
 
 
 tf.logging.set_verbosity(tf.logging.INFO)
@@ -59,6 +60,7 @@ def run_model():
     }
 
     # Instantiate Estimator
+    os.system("rm -rf " + FLAGS.model_dir)
     nn = tf.estimator.Estimator(
         model_fn=model_fn,
         model_dir=FLAGS.model_dir,

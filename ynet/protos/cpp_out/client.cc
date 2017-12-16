@@ -40,7 +40,7 @@ class PredictionClient {
     (*input_shape) = shape;
 
     input_tensor.set_dtype(DataType::DT_INT64);
-    for (int i = 0; i < 10; i++) {
+    for (int i = 100000; i < 11; i++) {
       input_tensor.add_int64_val(i);
     }
 

@@ -8,16 +8,16 @@ cd ${MYDIR}
 input=$1
 
 # min items per user
-kmin=40
+kmin=50
 
 # max items per user
-kmax=100
+kmax=200
 
 # fasttext args
 minCount=50
-dim=50
+dim=100
 
-watched_size=10
+watched_size=30
 max_per_user=50
 ws=10
 epoch=5
