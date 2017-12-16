@@ -81,14 +81,15 @@ def model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(
             mode=mode,
             predictions={
-                "indices": predictions.indices,
-                "values": tf.exp(predictions.values)
+                "predicts": predictions.indices,
+                # "scores": tf.exp(predictions.values),
+                "scores": predictions.values,
+                "probs": probs
             },
             export_outputs={
-                # TODO indices to rowkey
                 'predicts': tf.estimator.export.PredictOutput(
                     outputs={
-                        'predicts': tf.as_string(predictions.indices),
+                        'predicts': predictions.indices,
                         'scores': tf.exp(predictions.values)
                     }
                 )
