@@ -47,10 +47,10 @@ def convertfile(fout, inputfile, taginfo):
                 fout.write(taginfo[tag].encode('utf-8'))
             fout.write(' ')
         fout.write('\n')
-        if index % 2000000 == 0:
+        if index % 500000 == 0:
             print("{}: {} lines processed".format(inputfile, index))
 
-    print("lack info of labels [{}]: {}".format(nwarning, lack_labels))
+    # print("lack info of labels [{}]: {}".format(nwarning, lack_labels))
 
 
 def convert():
