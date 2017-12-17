@@ -17,7 +17,9 @@ def load_tag_info_dict():
             continue
         tokens = line.strip().split('/')
         try:
-            taginfo[int(tokens[0])] = tokens[1].replace(' ', '_')
+            tagid = int(tokens[0])
+            tagname = reduce(lambda x, y: x+y, tokens[1:-1])
+            taginfo[tagid] = tagname.replace(' ', '_')
         except Exception:
             pass
 
