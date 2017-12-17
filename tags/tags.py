@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 # -*-coding:utf-8 -*-
 
-import struct
 import argparse
 
 
@@ -9,63 +8,81 @@ import argparse
 FLAGS = None
 
 
-def vec2binary(vecfile, targetfile, dictfile):
-    with open(targetfile, "wb") as fout:
-        with open(dictfile, "w") as fdict:
-            for index, line in enumerate(open(vecfile)):
-                tokens = line.strip().split(' ')
-                if index == 0:
-                    nums = map(int, tokens)
-                    ff = '<i'
-                else:
-                    fdict.write(tokens[0] + '\n')
-                    nums = map(float, tokens[1:])
-                    ff = '<f'
-                for num in nums:
-                    fout.write(struct.pack(ff, num))
+def load_tag_info_dict():
+    taginfo = {}
+    for index, line in enumerate(open(FLAGS.input_tag_info_file, 'r')):
+        if index == 0:
+            # skip header
+            continue
+        tokens = line.strip().split('/')
+        try:
+            taginfo[int(tokens[0])] = tokens[1]
+        except Exception:
+            pass
+
+    return taginfo
 
 
-def binary2vec(binaryfile, vecfile, dictfile):
-    with open(binaryfile, 'rb') as fbinary:
-        with open(vecfile, 'w') as fvec:
-            with open(dictfile, 'r') as fdict:
-                databytes = fbinary.read()
-                total = struct.unpack('<i', databytes[0:4])[0]
-                dim = struct.unpack('<i', databytes[4:8])[0]
-                fvec.write(str(total))
-                fvec.write(' ')
-                fvec.write(str(dim))
-                fvec.write('\n')
-                for x in xrange(total):
-                    rowkey = fdict.readline().strip()
-                    fvec.write(rowkey + ' ')
-                    for y in xrange(dim):
-                        offset = 8 + (x * dim + y) * 4
-                        num = struct.unpack('<f',
-                                            databytes[offset:offset+4])[0]
-                        fvec.write(str(num))
-                        fvec.write(' ')
-                    fvec.write('\n')
+def convertfile(fout, inputfile, taginfo):
+    nwarning = 0
+    lack_labels = set()
+    for index, line in enumerate(open(inputfile, 'r')):
+        if index == 0:
+            continue
+        tokens = line.strip().replace('/', ',').split(',')
+        tokens = filter(lambda x: x != '', tokens)
+        tokens = map(int, tokens)
+        tokens = list(set(tokens))
+        tokens.sort()
+        if len(tokens) < FLAGS.min_labels:
+            continue
+        for tag in tokens:
+            if tag not in taginfo:
+                nwarning += 1
+                lack_labels.add(tag)
+                continue
+            fout.write(taginfo[tag])
+            fout.write(' ')
+        fout.write('\n')
+
+    print("lack info of labels [{}]: {}".format(nwarning, lack_labels))
+
+
+def convert():
+    taginfo = load_tag_info_dict()
+    with open(FLAGS.output, 'w') as fout:
+        if FLAGS.input_video_tags_file != '':
+            convertfile(fout, FLAGS.input_video_tags_file, taginfo)
+        if FLAGS.input_article_tags_file != '':
+            convertfile(fout, FLAGS.input_article_tags_file, taginfo)
 
 
 def main():
-    pass
+    convert()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--input_video',
+        '--input_video_tags_file',
         type=str,
         default='',
         help='input video tags file.'
     )
 
+    parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--input_article',
+        '--input_article_tags_file',
         type=str,
         default='',
         help='input article tags file.'
+    )
+
+    parser.add_argument(
+        '--input_tag_info_file',
+        type=str,
+        default='',
+        help='input tag info file.'
     )
 
     parser.add_argument(
@@ -73,6 +90,13 @@ if __name__ == "__main__":
         type=str,
         default='',
         help='Output fasttext format.'
+    )
+
+    parser.add_argument(
+        '--min_labels',
+        type=int,
+        default=1,
+        help=''
     )
 
     FLAGS, unparsed = parser.parse_known_args()
