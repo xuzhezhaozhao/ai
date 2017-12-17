@@ -11,12 +11,13 @@ FLAGS = None
 def load_tag_info_dict():
     taginfo = {}
     for index, line in enumerate(open(FLAGS.input_tag_info_file, 'r')):
+        line = unicode(line, 'utf-8')
         if index == 0:
             # skip header
             continue
         tokens = line.strip().split('/')
         try:
-            taginfo[int(tokens[0])] = tokens[1]
+            taginfo[int(tokens[0])] = tokens[1].replace(' ', '_')
         except Exception:
             pass
 
@@ -27,6 +28,7 @@ def convertfile(fout, inputfile, taginfo):
     nwarning = 0
     lack_labels = set()
     for index, line in enumerate(open(inputfile, 'r')):
+        line = unicode(line, 'utf-8')
         if index == 0:
             continue
         tokens = line.strip().replace('/', ',').split(',')
@@ -40,8 +42,9 @@ def convertfile(fout, inputfile, taginfo):
             if tag not in taginfo:
                 nwarning += 1
                 lack_labels.add(tag)
-                continue
-            fout.write(taginfo[tag])
+                fout.write(str(tag))
+            else:
+                fout.write(taginfo[tag])
             fout.write(' ')
         fout.write('\n')
 
@@ -70,7 +73,6 @@ if __name__ == "__main__":
         help='input video tags file.'
     )
 
-    parser = argparse.ArgumentParser()
     parser.add_argument(
         '--input_article_tags_file',
         type=str,
