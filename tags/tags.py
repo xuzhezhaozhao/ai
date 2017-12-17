@@ -24,7 +24,7 @@ def load_tag_info_dict():
     return taginfo
 
 
-def convertfile(fout, inputfile, taginfo):
+def convertfile(finfo, fraw, inputfile, taginfo):
     nwarning = 0
     lack_labels = set()
     for index, line in enumerate(open(inputfile, 'r')):
@@ -42,11 +42,14 @@ def convertfile(fout, inputfile, taginfo):
             if tag not in taginfo:
                 nwarning += 1
                 lack_labels.add(tag)
-                fout.write(str(tag))
+                finfo.write(str(tag))
             else:
-                fout.write(taginfo[tag].encode('utf-8'))
-            fout.write(' ')
-        fout.write('\n')
+                finfo.write(taginfo[tag].encode('utf-8'))
+            fraw.write(str(tag))
+            finfo.write(' ')
+            fraw.write(' ')
+        finfo.write('\n')
+        fraw.write('\n')
         if index % 500000 == 0:
             print("{}: {} lines processed".format(inputfile, index))
 
@@ -55,11 +58,13 @@ def convertfile(fout, inputfile, taginfo):
 
 def convert():
     taginfo = load_tag_info_dict()
-    with open(FLAGS.output, 'w') as fout:
-        if FLAGS.input_video_tags_file != '':
-            convertfile(fout, FLAGS.input_video_tags_file, taginfo)
-        if FLAGS.input_article_tags_file != '':
-            convertfile(fout, FLAGS.input_article_tags_file, taginfo)
+    with open(FLAGS.output_info, 'w') as finfo:
+        with open(FLAGS.output_raw, 'w') as fraw:
+            if FLAGS.input_video_tags_file != '':
+                convertfile(finfo, fraw, FLAGS.input_video_tags_file, taginfo)
+            if FLAGS.input_article_tags_file != '':
+                convertfile(finfo, fraw,
+                            FLAGS.input_article_tags_file, taginfo)
 
 
 def main():
@@ -90,10 +95,17 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        '--output',
+        '--output_info',
         type=str,
         default='',
-        help='Output fasttext format.'
+        help='Output fasttext format, tag id converts to tag info.'
+    )
+
+    parser.add_argument(
+        '--output_raw',
+        type=str,
+        default='',
+        help='Output fasttext format, tag id unchanged.'
     )
 
     parser.add_argument(
