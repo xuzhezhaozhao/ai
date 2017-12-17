@@ -1,9 +1,9 @@
 
-ft_in=tags.ft.in
+ft_in=data/tags.ft.in
 
-python tags.py --input_video_tags_file data/video_tags.csv --input_tag_info_file data/taginfo.csv --input_article_tags_file data/article_tags.csv --output ${ft_in} > log
+python tags.py --input_video_tags_file data/video_tags.csv --input_tag_info_file data/taginfo.csv --input_article_tags_file data/article_tags.csv --output ${ft_in}
 
-ft_prefix=tag.ft
+ft_prefix=data/tag.ft
 minCount=3
 minn=0
 maxn=0

@@ -44,9 +44,11 @@ def convertfile(fout, inputfile, taginfo):
                 lack_labels.add(tag)
                 fout.write(str(tag))
             else:
-                fout.write(taginfo[tag])
+                fout.write(taginfo[tag].encode('utf-8'))
             fout.write(' ')
         fout.write('\n')
+        if index % 2000000 == 0:
+            print("{}: {} lines processed".format(inputfile, index))
 
     print("lack info of labels [{}]: {}".format(nwarning, lack_labels))
 
