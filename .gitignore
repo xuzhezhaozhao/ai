@@ -19,3 +19,4 @@ ynet/model_dir
 *.out
 ynet/model
 *.tgz
+tags/data
