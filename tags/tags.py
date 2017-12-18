@@ -37,7 +37,8 @@ def convertfile(finfo, fraw, inputfile, taginfo):
         tokens = filter(lambda x: x != '', tokens)
         tokens = map(int, tokens)
         tokens = list(set(tokens))
-        tokens.sort()
+        if FLAGS.sort_tags:
+            tokens.sort()
         if len(tokens) < FLAGS.min_labels:
             continue
         for tag in tokens:
@@ -114,6 +115,13 @@ if __name__ == "__main__":
         '--min_labels',
         type=int,
         default=1,
+        help=''
+    )
+
+    parser.add_argument(
+        '--sort_tags',
+        type=bool,
+        default=True,
         help=''
     )
 
