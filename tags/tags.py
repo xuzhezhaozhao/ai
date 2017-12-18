@@ -34,6 +34,7 @@ def convertfile(finfo, fraw, inputfile, taginfo):
         if index == 0:
             continue
         tokens = line.strip().replace('/', ',').split(',')
+        tokens = tokens[1:] # skip rowkey
         tokens = filter(lambda x: x != '', tokens)
         tokens = map(int, tokens)
         tokens = list(set(tokens))
