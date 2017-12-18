@@ -4,6 +4,7 @@
 import argparse
 from tags import delteduplicated
 from tags import load_tag_info_dict
+import gc
 
 # Basic model parameters as external flags.
 FLAGS = None
@@ -13,13 +14,16 @@ def load_rowkey2tagids_info(inputfile, rowkey2tagids):
     """
     rowkey2tagids: python dict
     """
+    ndup = 0
     for index, line in enumerate(open(inputfile, 'r')):
         if index == 0:
             continue
         tokens = line.strip().split('/')
         rowkey = tokens[0]
         if rowkey in rowkey2tagids:
-            print("[W] duplicated rowkey")
+            # print("[W] duplicated rowkey")
+            print("dup: " + rowkey)
+            ndup += 1
             continue
         tagids = tokens[1].split(',') + tokens[2].split(',')
         tagids = filter(lambda x: x != '', tagids)
@@ -28,6 +32,7 @@ def load_rowkey2tagids_info(inputfile, rowkey2tagids):
         if FLAGS.sort_tags:
             tagids.sort()
         rowkey2tagids[rowkey] = tagids
+    print("duplicated rowkey: {}".format(ndup))
 
 
 def convert2histories():
@@ -51,6 +56,7 @@ def convert2histories():
         if index % 2000000 == 0:
             print(str(index) + " lines processed ...")
 
+    gc.collect()
     return histories
 
 
@@ -68,6 +74,7 @@ def write_histories_raw(histories):
 
             if index % 500000 == 0:
                 print(str(index) + " lines writen ...")
+    gc.collect()
 
 
 def write_histories_tagsid(histories):
@@ -75,6 +82,7 @@ def write_histories_tagsid(histories):
     load_rowkey2tagids_info(FLAGS.input_article_tags_file, rowkey2tagids)
     load_rowkey2tagids_info(FLAGS.input_video_tags_file, rowkey2tagids)
     taginfo = load_tag_info_dict(FLAGS.input_tag_info_file)
+    nonexists = 0
     with open(FLAGS.output_history_tags, "w") as fout:
         for index, uin in enumerate(histories):
             history = histories[uin]
@@ -84,18 +92,21 @@ def write_histories_tagsid(histories):
             fout.write("__label__" + uin + " ")
             for rowkey in history:
                 if rowkey not in rowkey2tagids:
-                    print("[W] rowken not in rowkey2tagids")
+                    # print("[W] rowken not in rowkey2tagids")
+                    nonexists += 1
                     continue
                 tagids = rowkey2tagids[rowkey]
                 for tagid in tagids:
                     if tagid in taginfo:
-                        fout.write(taginfo[tagid] + " ")
+                        fout.write(taginfo[tagid].encode('utf-8') + " ")
                     else:
                         fout.write(str(tagid) + " ")
             fout.write("\n")
 
             if index % 500000 == 0:
                 print(str(index) + " lines writen ...")
+
+    print("no taginfo rowkey: {}".format(nonexists))
 
 
 def main():
