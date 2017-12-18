@@ -2,17 +2,32 @@
 # -*- coding=utf8 -*-
 
 import argparse
+from tags import delteduplicated
+from tags import load_tag_info_dict
 
 # Basic model parameters as external flags.
 FLAGS = None
 
 
-def load_rowkey2tagids_info(inputfile):
-    rowkey2tagids = dict()
+def load_rowkey2tagids_info(inputfile, rowkey2tagids):
+    """
+    rowkey2tagids: python dict
+    """
     for index, line in enumerate(open(inputfile, 'r')):
-        pass
-
-    return rowkey2tagids
+        if index == 0:
+            continue
+        tokens = line.strip().split('/')
+        rowkey = tokens[0]
+        if rowkey in rowkey2tagids:
+            print("[W] duplicated rowkey")
+            continue
+        tagids = tokens[1].split(',') + tokens[2].split(',')
+        tagids = filter(lambda x: x != '', tagids)
+        tagids = map(int, tagids)
+        tagids = delteduplicated(tagids)
+        if FLAGS.sort_tags:
+            tagids.sort()
+        rowkey2tagids[rowkey] = tagids
 
 
 def convert2histories():
@@ -47,8 +62,8 @@ def write_histories_raw(histories):
             if sz < FLAGS.min_items or sz > FLAGS.max_items:
                 continue
             fout.write("__label__" + uin + " ")
-            for item in history:
-                fout.write(item + " ")
+            for rowkey in history:
+                fout.write(rowkey + " ")
             fout.write("\n")
 
             if index % 500000 == 0:
@@ -56,13 +71,40 @@ def write_histories_raw(histories):
 
 
 def write_histories_tagsid(histories):
-    pass
+    rowkey2tagids = dict()
+    load_rowkey2tagids_info(FLAGS.input_article_tags_file, rowkey2tagids)
+    load_rowkey2tagids_info(FLAGS.input_video_tags_file, rowkey2tagids)
+    taginfo = load_tag_info_dict(FLAGS.input_tag_info_file)
+    with open(FLAGS.output_history_tags, "w") as fout:
+        for index, uin in enumerate(histories):
+            history = histories[uin]
+            sz = len(history)
+            if sz < FLAGS.min_items or sz > FLAGS.max_items:
+                continue
+            fout.write("__label__" + uin + " ")
+            for rowkey in history:
+                if rowkey not in rowkey2tagids:
+                    print("[W] rowken not in rowkey2tagids")
+                    continue
+                tagids = rowkey2tagids[rowkey]
+                for tagid in tagids:
+                    if tagid in taginfo:
+                        fout.write(taginfo[tagid] + " ")
+                    else:
+                        fout.write(str(tagid) + " ")
+            fout.write("\n")
+
+            if index % 500000 == 0:
+                print(str(index) + " lines writen ...")
 
 
 def main():
     histories = convert2histories()
+
     if FLAGS.output_history_raw != "":
         write_histories_raw(histories)
+
+    write_histories_tagsid(histories)
 
 
 if __name__ == "__main__":
@@ -121,6 +163,20 @@ if __name__ == "__main__":
         type=str,
         default="",
         help='history in tags format.'
+    )
+
+    parser.add_argument(
+        '--sort_tags',
+        type=bool,
+        default=True,
+        help=''
+    )
+
+    parser.add_argument(
+        '--input_tag_info_file',
+        type=str,
+        default='',
+        help='input tag info file.'
     )
 
     FLAGS, unparsed = parser.parse_known_args()

@@ -8,9 +8,16 @@ import argparse
 FLAGS = None
 
 
-def load_tag_info_dict():
+def delteduplicated(iterable):
+    uniq = list()
+    for x in iterable:
+        if x not in uniq:
+            uniq.append(x)
+    return uniq
+
+def load_tag_info_dict(inputfile):
     taginfo = {}
-    for index, line in enumerate(open(FLAGS.input_tag_info_file, 'r')):
+    for index, line in enumerate(open(inputfile, 'r')):
         line = unicode(line, 'utf-8')
         if index == 0:
             # skip header
@@ -37,7 +44,7 @@ def convertfile(finfo, fraw, inputfile, taginfo):
         tokens = tokens[1:] # skip rowkey
         tokens = filter(lambda x: x != '', tokens)
         tokens = map(int, tokens)
-        tokens = list(set(tokens))
+        tokens = delteduplicated(tokens)
         if FLAGS.sort_tags:
             tokens.sort()
         if len(tokens) < FLAGS.min_labels:
@@ -61,7 +68,7 @@ def convertfile(finfo, fraw, inputfile, taginfo):
 
 
 def convert():
-    taginfo = load_tag_info_dict()
+    taginfo = load_tag_info_dict(FLAGS.input_tag_info_file)
     with open(FLAGS.output_info, 'w') as finfo:
         with open(FLAGS.output_raw, 'w') as fraw:
             if FLAGS.input_video_tags_file != '':
