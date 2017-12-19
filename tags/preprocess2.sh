@@ -6,10 +6,11 @@ MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
 input=$1
-output=data/$2
 
 rawdata_dir=raw_data
 data_dir=data
+
+output=${data_dir}/$2
 
 echo 'uniq ...'
 sort -n ${rawdata_dir}/article_tags.csv | uniq > ${data_dir}/article_tags.csv.uniq

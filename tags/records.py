@@ -22,7 +22,7 @@ def load_rowkey2tagids_info(inputfile, rowkey2tagids):
         rowkey = tokens[0]
         if rowkey in rowkey2tagids:
             # print("[W] duplicated rowkey")
-            print("dup: " + rowkey)
+            # print("dup: " + rowkey)
             ndup += 1
             continue
         tagids = tokens[1].split(',') + tokens[2].split(',')
@@ -40,10 +40,13 @@ def convert2histories():
     for index, line in enumerate(open(FLAGS.input, "r")):
         if FLAGS.max_lines != -1 and index >= FLAGS.max_lines:
             break
-        tokens = line.strip().split(',')
-        time = tokens[0]
-        uin = tokens[1]
-        rowkey = tokens[2]
+        try:
+            tokens = line.strip().split(',')
+            time = tokens[0]
+            uin = tokens[1]
+            rowkey = tokens[2]
+        except Exception:
+            print line
 
         if time == "" or uin == "" or rowkey == "":
             continue

@@ -3,6 +3,7 @@
 ft_in=data/tags.in
 ft_in_raw=data/tags.raw.in
 
+echo "uniq..."
 sort -n data/article_tags.csv | uniq > data/article_tags.csv.uniq
 sort -n data/video_tags.csv | uniq > data/video_tags.csv.uniq
 sort -n data/taginfo.csv | uniq > data/taginfo.csv.uniq
