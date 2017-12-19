@@ -23,8 +23,8 @@ mkdir -p tmp_sort/
 sort -T tmp_sort/ -t ',' -k 1 --parallel=4 ${input}.uniq -o ${sorted_file}
 rm -rf tmp_sort/
 
-output_tags=data/records_tags.in
-output_raw=data/records_raw.in
+output_tags=data/record_tags.in
+output_raw=data/record_raw.in
 
 python records.py --input ${input}.sorted --input_article_tags_file data/article_tags.csv.uniq --input_video_tags_file data/video_tags.csv.uniq --output_history_raw ${output_raw} --output_history_tags ${output_tags} --sort_tags true --input_tag_info_file data/taginfo.csv.uniq --max_lines 10000000
 
