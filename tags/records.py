@@ -68,7 +68,7 @@ def load_rowkey2tagids_info(inputfile, rowkey2tagids):
 
 def convert2histories():
     rowkeycount, total = rowkey_count()
-    mean_freq = (float(total) / (len(rowkeycount))) / float(total)
+    mean_freq = 1.0 / len(rowkeycount)
     print("mean_freq = {}".format(mean_freq))
     print("len(rowkeycount) = {}".format(len(rowkeycount)))
 
@@ -96,10 +96,11 @@ def convert2histories():
 
         # filter
         freq = float(rowkeycount[rowkey]) / total
-        if freq > 6.0*mean_freq:
+        if freq > 2.0*mean_freq:
             noverfreq += 1
-            if random.random() > (3.0 * mean_freq / freq):
+            if random.random() > (mean_freq / freq):
                 continue
+
         histories[uin].append(rowkey)
 
         if index % 2000000 == 0:
