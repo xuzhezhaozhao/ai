@@ -5,9 +5,40 @@ import argparse
 from tags import delteduplicated
 from tags import load_tag_info_dict
 import gc
+import random
 
 # Basic model parameters as external flags.
 FLAGS = None
+
+
+def rowkey_count():
+    """统计 rowkey 频率"""
+    rowkeycount = dict()
+    total = 0
+    for index, line in enumerate(open(FLAGS.input, 'r')):
+        if index == 0:
+            continue
+        if FLAGS.max_lines != -1 and index >= FLAGS.max_lines:
+            break
+        try:
+            tokens = line.strip().split(',')
+            rowkey = tokens[2]
+        except Exception:
+            print line
+            continue
+
+        if rowkey == "":
+            continue
+
+        if rowkey not in rowkeycount:
+            rowkeycount[rowkey] = 0
+        rowkeycount[rowkey] += 1
+        total += 1
+
+        if index % 2000000 == 0:
+            print(str(index) + " lines processed [countrowkey] ...")
+
+    return rowkeycount, total
 
 
 def load_rowkey2tagids_info(inputfile, rowkey2tagids):
@@ -36,6 +67,10 @@ def load_rowkey2tagids_info(inputfile, rowkey2tagids):
 
 
 def convert2histories():
+    rowkeycount, total = rowkey_count()
+    mean_freq = float(total) / (len(rowkeycount))
+    print("mean_freq = {}".format(mean_freq))
+
     histories = dict()
     for index, line in enumerate(open(FLAGS.input, "r")):
         if FLAGS.max_lines != -1 and index >= FLAGS.max_lines:
@@ -47,14 +82,22 @@ def convert2histories():
             rowkey = tokens[2]
         except Exception:
             print line
+            continue
 
         if time == "" or uin == "" or rowkey == "":
             continue
 
         if uin not in histories:
             histories[uin] = []
-        if rowkey not in histories[uin]:
-            histories[uin].append(rowkey)
+        if rowkey in histories[uin]:
+            continue
+
+        # filter
+        freq = float(rowkeycount[rowkey]) / total
+        if freq > 5 * mean_freq:
+            if random.random() > (2*mean_freq / freq):
+                continue
+        histories[uin].append(rowkey)
 
         if index % 2000000 == 0:
             print(str(index) + " lines processed ...")

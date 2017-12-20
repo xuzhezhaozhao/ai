@@ -12,14 +12,8 @@ data_dir=data
 
 output=${data_dir}/$2
 
-echo 'uniq ...'
-sort -n ${rawdata_dir}/article_tags.csv | uniq > ${data_dir}/article_tags.csv.uniq
-sort -n ${rawdata_dir}/video_tags.csv | uniq > ${data_dir}/video_tags.csv.uniq
-sort -n ${rawdata_dir}/taginfo.csv | uniq > ${data_dir}/taginfo.csv.uniq
-sort -n ${input} | uniq > ${output}.uniq
-
 echo 'delete csv file header ...'
-sed "1d" ${output}.uniq > ${output}.noheader
+sed "1d" ${output} > ${output}.noheader
 
 echo "sort csv file with 1st field ..."
 sorted_file=${output}.sorted
@@ -29,7 +23,14 @@ rm -rf tmp_sort/
 
 output_tags=${data_dir}/record_tags.in
 
-python records.py --input ${output}.sorted --input_article_tags_file ${data_dir}/article_tags.csv.uniq --input_video_tags_file ${data_dir}/video_tags.csv.uniq --output_history_tags ${output_tags} --sort_tags true --input_tag_info_file ${data_dir}/taginfo.csv.uniq --max_lines 20000000
+python records.py \
+    --input ${output}.sorted \
+    --input_article_tags_file ${rawdata_dir}/article_tags.csv \
+    --input_video_tags_file ${rawdata_dir}/video_tags.csv \
+    --input_tag_info_file ${rawdata_dir}/taginfo.csv \
+    --output_history_tags ${output_tags} \
+    --sort_tags true \
+    --max_lines 20000000
 
 echo 'shuf ...'
 shuf -o ${output_tags}.shuf ${output_tags}
