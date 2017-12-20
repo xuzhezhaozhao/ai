@@ -193,5 +193,12 @@ if __name__ == "__main__":
         help='input tag info file.'
     )
 
+    parser.add_argument(
+        '--max_count',
+        type=int,
+        default=-1,
+        help=''
+    )
+
     FLAGS, unparsed = parser.parse_known_args()
     main()
