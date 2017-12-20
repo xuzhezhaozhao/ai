@@ -12,17 +12,20 @@ data_dir=data
 
 output=${data_dir}/`basename $1`
 
-echo 'delete csv file header ...'
-sed "1d" ${input} > ${output}.noheader
+if [ ! -f ${output}.noheader ]; then
+    echo 'delete csv file header ...'
+    sed "1d" ${input} > ${output}.noheader
+fi
 
-echo "sort csv file with 1st field ..."
-sorted_file=${output}.sorted
-mkdir -p tmp_sort/
-sort -T tmp_sort/ -t ',' -k 1 --parallel=4 ${output}.noheader -o ${sorted_file}
-rm -rf tmp_sort/
+if [ ! -f ${output}.sorted ]; then
+    echo "sort csv file with 1st field ..."
+    sorted_file=${output}.sorted
+    mkdir -p tmp_sort/
+    sort -T tmp_sort/ -t ',' -k 1 --parallel=4 ${output}.noheader -o ${sorted_file}
+    rm -rf tmp_sort/
+fi
 
 output_tags=${data_dir}/record_tags.in
-
 python records.py \
     --input ${output}.sorted \
     --input_article_tags_file ${rawdata_dir}/article_tags.csv \
@@ -37,7 +40,6 @@ shuf -o ${output_tags}.shuf ${output_tags}
 
 
 # fasttext
-
 ft_in=${output_tags}.shuf
 minCount=50
 minn=0
