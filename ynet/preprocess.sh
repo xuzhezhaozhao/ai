@@ -14,8 +14,8 @@ kmin=21
 kmax=200
 
 # fasttext args
-minCount=50
-dim=100
+minCount=10
+dim=200
 
 watched_size=20
 max_per_user=50
@@ -23,7 +23,6 @@ ws=10
 epoch=5
 neg=5
 thread=4
-
 
 #echo 'delete csv file header ...'
 sed "1d" ${input} > ${input}.noheader

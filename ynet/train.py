@@ -66,11 +66,10 @@ def run_model():
     )
 
     mode = FLAGS.run_mode
-    # TODO magic 500000
     if mode == "train":
         train_input_fn = tf.estimator.inputs.numpy_input_fn(
-            x={"watched": data_sets.train.watched_videos[:-500000]},
-            y=data_sets.train.predicts[:-500000],
+            x={"watched": data_sets.train.watched_videos},
+            y=data_sets.train.predicts,
             batch_size=FLAGS.batch_size,
             num_epochs=FLAGS.epoches,
             shuffle=True
@@ -78,8 +77,8 @@ def run_model():
         nn.train(input_fn=train_input_fn)
     elif mode == "eval":
         eval_input_fn = tf.estimator.inputs.numpy_input_fn(
-            x={"watched": data_sets.train.watched_videos[-500000:]},
-            y=data_sets.train.predicts[-500000:],
+            x={"watched": data_sets.train.watched_videos[-50000:]},
+            y=data_sets.train.predicts[-50000:],
             batch_size=FLAGS.batch_size,
             num_epochs=FLAGS.epoches,
             shuffle=True
@@ -87,8 +86,7 @@ def run_model():
         nn.evaluate(input_fn=eval_input_fn)
     elif mode == "predict":
         predict_input_fn = tf.estimator.inputs.numpy_input_fn(
-            # x={"watched": data_sets.train.watched_videos[-2:]},
-            x={"watched": np.array([[1,2,3,4,5,6,7,8,9,10]])},
+            x={"watched": data_sets.train.watched_videos[-2:]},
             shuffle=False
         )
         predictions = nn.predict(input_fn=predict_input_fn)
