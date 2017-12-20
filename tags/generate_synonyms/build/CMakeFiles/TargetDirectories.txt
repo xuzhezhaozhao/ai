@@ -1,0 +1,7 @@
+/home/xzz/ai/tags/generate_synonyms/build/deps/fastText/src/CMakeFiles/fasttext.dir
+/home/xzz/ai/tags/generate_synonyms/build/src/CMakeFiles/generate_synonyms.dir
+/home/xzz/ai/tags/generate_synonyms/build/deps/fastText/src/CMakeFiles/libfasttext.dir
+/home/xzz/ai/tags/generate_synonyms/build/deps/fastText/tests/CMakeFiles/test_fasttext_api.dir
+/home/xzz/ai/tags/generate_synonyms/build/deps/fastText/tests/CMakeFiles/test_get_sentence_vector.dir
+/home/xzz/ai/tags/generate_synonyms/build/deps/fastText/tests/CMakeFiles/test_jieba.dir
+/home/xzz/ai/tags/generate_synonyms/build/deps/fastText/tests/CMakeFiles/test_nn.dir

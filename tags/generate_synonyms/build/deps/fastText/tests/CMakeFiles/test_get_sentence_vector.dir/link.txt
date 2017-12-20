@@ -1,0 +1,1 @@
+/usr/bin/c++   -g -O2 -Wall -std=c++11 -std=c++11 -O3 -funroll-loops -pthread    CMakeFiles/test_get_sentence_vector.dir/test_get_sentence_vector.cc.o  -o test_get_sentence_vector -rdynamic ../src/liblibfasttext.a 

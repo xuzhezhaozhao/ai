@@ -1,0 +1,3 @@
+
+add_executable(generate_synonyms generate_synonyms.cpp)
+target_link_libraries(generate_synonyms libfasttext)

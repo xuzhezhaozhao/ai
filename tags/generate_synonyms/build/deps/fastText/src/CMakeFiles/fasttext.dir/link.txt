@@ -1,0 +1,1 @@
+/usr/bin/c++   -g -O2 -Wall -std=c++11 -std=c++11 -O3 -funroll-loops -pthread    CMakeFiles/fasttext.dir/main.cc.o  -o fasttext -rdynamic liblibfasttext.a 
