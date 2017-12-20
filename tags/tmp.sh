@@ -42,11 +42,11 @@ echo 'shuf ...'
 # fasttext
 ft_in=${output_tags}.shuf
 minCount=100
-minn=0
-maxn=0
+minn=1
+maxn=6
 thread=4
 dim=100
-ws=40
+ws=20
 epoch=5
 neg=5
 lr=0.025
