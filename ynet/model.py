@@ -38,7 +38,7 @@ def model_fn(features, labels, mode, params):
         activation=tf.nn.relu6,
         kernel_initializer=tf.truncated_normal_initializer(
             0, np.sqrt(1.0/num_first)),
-        # kernel_regularizer=tf.contrib.layers.l1_regularizer(0.01),
+        # kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
         name='fc1'
     )
     first_hidden_layer = tf.nn.dropout(first_hidden_layer, keep_prob)
@@ -54,11 +54,11 @@ def model_fn(features, labels, mode, params):
     output_layer = tf.layers.dense(
         inputs=first_hidden_layer,
         units=num_output,
-        activation=tf.nn.relu,
-        # activation=tf.nn.sigmoid,
+        # activation=tf.nn.relu,
+        activation=tf.nn.sigmoid,
         kernel_initializer=tf.truncated_normal_initializer(
             0, np.sqrt(1.0/num_output)),
-        # kernel_regularizer=tf.contrib.layers.l1_regularizer(0.01),
+        # kernel_regularizer=tf.contrib.layers.l2_regularizer(0.01),
         name='fc2'
     )
 
@@ -90,7 +90,7 @@ def model_fn(features, labels, mode, params):
                 'predicts': tf.estimator.export.PredictOutput(
                     outputs={
                         'predicts': predictions.indices,
-                        'scores': tf.exp(predictions.values)
+                        'scores': predictions.values
                     }
                 )
             },
