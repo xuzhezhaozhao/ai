@@ -8,7 +8,7 @@ cd ${MYDIR}
 input=$1
 
 # min items per user
-kmin=50
+kmin=21
 
 # max items per user
 kmax=200
@@ -17,7 +17,7 @@ kmax=200
 minCount=50
 dim=100
 
-watched_size=30
+watched_size=20
 max_per_user=50
 ws=10
 epoch=5
@@ -26,14 +26,14 @@ thread=4
 
 
 #echo 'delete csv file header ...'
-#sed -n '1p' ${input} > ${input}.header
-#sed -i "1d" ${input}
+sed "1d" ${input} > ${input}.noheader
+input=${input}.noheader
 
 echo "sort csv file with 1st field ..."
 sorted_file=${input}.sorted
-#mkdir -p tmp_sort/
-#sort -T tmp_sort/ -t ',' -k 1 --parallel=4 ${input} -o ${sorted_file}
-#rm -rf tmp_sort/
+mkdir -p tmp_sort/
+sort -T tmp_sort/ -t ',' -k 1 --parallel=4 ${input} -o ${sorted_file}
+rm -rf tmp_sort/
 
 preprocessed=${input}.preprocessed
 echo "transform sorted file to fastText format ..."

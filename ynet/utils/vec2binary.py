@@ -17,6 +17,11 @@ def vec2binary(vecfile, targetfile, dictfile):
                 if index == 0:
                     nums = map(int, tokens)
                     ff = '<i'
+                elif index == 1:
+                    # write 0
+                    ff = '<f'
+                    dim = len(tokens) - 1
+                    nums = [0.0 for _ in xrange(dim)]
                 else:
                     fdict.write(tokens[0] + '\n')
                     nums = map(float, tokens[1:])
