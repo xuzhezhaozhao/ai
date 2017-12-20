@@ -22,3 +22,4 @@ ynet/model
 *.tgz
 tags/data
 tags/raw_data
+build
