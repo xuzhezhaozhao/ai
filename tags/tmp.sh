@@ -26,17 +26,17 @@ if [ ! -f ${output}.sorted ]; then
 fi
 
 output_tags=${data_dir}/record_tags.in
-python records.py \
-    --input ${output}.sorted \
-    --input_article_tags_file ${rawdata_dir}/article_tags.csv \
-    --input_video_tags_file ${rawdata_dir}/video_tags.csv \
-    --input_tag_info_file ${rawdata_dir}/taginfo.csv \
-    --output_history_tags ${output_tags} \
-    --sort_tags false \
-    --max_lines 20000000
+#python records.py \
+    #--input ${output}.sorted \
+    #--input_article_tags_file ${rawdata_dir}/article_tags.csv \
+    #--input_video_tags_file ${rawdata_dir}/video_tags.csv \
+    #--input_tag_info_file ${rawdata_dir}/taginfo.csv \
+    #--output_history_tags ${output_tags} \
+    #--sort_tags false \
+    #--max_lines 20000000
 
 echo 'shuf ...'
-shuf -o ${output_tags}.shuf ${output_tags}
+#shuf -o ${output_tags}.shuf ${output_tags}
 
 
 # fasttext
@@ -45,7 +45,7 @@ minCount=200
 minn=0
 maxn=0
 thread=4
-dim=100
+dim=200
 ws=60
 epoch=5
 neg=5

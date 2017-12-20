@@ -96,9 +96,9 @@ def convert2histories():
 
         # filter
         freq = float(rowkeycount[rowkey]) / total
-        if freq > 5 * mean_freq:
+        if freq > 6.0*mean_freq:
             noverfreq += 1
-            if random.random() > (2*mean_freq / freq):
+            if random.random() > (3.0 * mean_freq / freq):
                 continue
         histories[uin].append(rowkey)
 
