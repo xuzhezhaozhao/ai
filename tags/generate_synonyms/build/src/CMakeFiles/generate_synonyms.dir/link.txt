@@ -1,1 +1,0 @@
-/usr/bin/c++   -g -O2 -Wall -std=c++11    CMakeFiles/generate_synonyms.dir/generate_synonyms.cpp.o  -o generate_synonyms -rdynamic ../deps/fastText/src/liblibfasttext.a 
