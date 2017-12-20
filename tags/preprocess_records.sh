@@ -10,10 +10,10 @@ input=$1
 rawdata_dir=raw_data
 data_dir=data
 
-output=${data_dir}/$2
+output=${data_dir}/`basename $1`
 
 echo 'delete csv file header ...'
-sed "1d" ${output} > ${output}.noheader
+sed "1d" ${input} > ${output}.noheader
 
 echo "sort csv file with 1st field ..."
 sorted_file=${output}.sorted
@@ -34,3 +34,35 @@ python records.py \
 
 echo 'shuf ...'
 shuf -o ${output_tags}.shuf ${output_tags}
+
+
+# fasttext
+
+ft_in=${output_tags}.shuf
+minCount=50
+minn=0
+maxn=0
+thread=4
+dim=100
+ws=5
+epoch=5
+neg=5
+lr=0.025
+
+utils/fasttext skipgram \
+    -input ${input} \
+    -output ${input} \
+    -lr ${lr} \
+    -dim ${dim} \
+    -ws ${ws} \
+    -epoch ${epoch} \
+    -minCount ${minCount} \
+    -neg ${neg} \
+    -loss ns \
+    -bucket 2000000 \
+    -minn ${minn} \
+    -maxn ${maxn} \
+    -thread ${thread} \
+    -t 1e-4 \
+    -lrUpdateRate 100  \
+    && awk 'NR>2{print $1}' ${input}.vec > ${input}.dict

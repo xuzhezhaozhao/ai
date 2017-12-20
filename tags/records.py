@@ -24,7 +24,7 @@ def rowkey_count():
             tokens = line.strip().split(',')
             rowkey = tokens[2]
         except Exception:
-            print line
+            print("format error, line in {}, line = {}".format(index, line))
             continue
 
         if rowkey == "":
@@ -68,10 +68,12 @@ def load_rowkey2tagids_info(inputfile, rowkey2tagids):
 
 def convert2histories():
     rowkeycount, total = rowkey_count()
-    mean_freq = float(total) / (len(rowkeycount))
+    mean_freq = (float(total) / (len(rowkeycount))) / float(total)
     print("mean_freq = {}".format(mean_freq))
+    print("len(rowkeycount) = {}".format(len(rowkeycount)))
 
     histories = dict()
+    noverfreq = 0
     for index, line in enumerate(open(FLAGS.input, "r")):
         if FLAGS.max_lines != -1 and index >= FLAGS.max_lines:
             break
@@ -81,7 +83,7 @@ def convert2histories():
             uin = tokens[1]
             rowkey = tokens[2]
         except Exception:
-            print line
+            print("format error, line in {}, line = {}".format(index, line))
             continue
 
         if time == "" or uin == "" or rowkey == "":
@@ -95,6 +97,7 @@ def convert2histories():
         # filter
         freq = float(rowkeycount[rowkey]) / total
         if freq > 5 * mean_freq:
+            noverfreq += 1
             if random.random() > (2*mean_freq / freq):
                 continue
         histories[uin].append(rowkey)
@@ -102,6 +105,7 @@ def convert2histories():
         if index % 2000000 == 0:
             print(str(index) + " lines processed ...")
 
+    print("noverfreq = {}".format(noverfreq))
     gc.collect()
     return histories
 
