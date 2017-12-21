@@ -20,12 +20,12 @@ shuf -o ${ft_in}.shuf ${ft_in}
 
 
 # fasttext
-minCount=5
+minCount=10
 minn=0
 maxn=0
 thread=4
 dim=100
-ws=5
+ws=15
 epoch=5
 neg=5
 lr=0.025

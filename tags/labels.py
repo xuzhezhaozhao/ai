@@ -57,7 +57,7 @@ def convertfile(finfo, inputfile, taginfo, labeldict1, labeldict2):
 
         if class1_name != "":
             class1_id = int(tokens[-4])
-            finfo.write("__label__" + class1_name.encode('utf-8') + " ")
+            # finfo.write("__label__" + class1_name.encode('utf-8') + " ")
             labeldict1[class1_name] = class1_id
 
         if class2_name != "":

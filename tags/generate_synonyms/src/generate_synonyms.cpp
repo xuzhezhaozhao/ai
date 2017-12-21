@@ -31,13 +31,14 @@ static void printUsage() {
 }
 
 // size of predictions must be at least 2
+// TODO yaaf_fasttext_extent_tag 也有此函数，需要保持一致
 static std::string generate_key(
     const std::vector<std::pair<float, std::string>> &predictions) {
   std::string key;
   std::string label0 = predictions[0].second.substr(9);
   std::string label1 = predictions[1].second.substr(9);
 
-  if (predictions[1].first < 0.01) {
+  if (predictions[0].first > 0.9) {
     key = label0;
   } else {
     key = std::min(label0, label1) + '#' + std::max(label0, label1);
