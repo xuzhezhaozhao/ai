@@ -2,7 +2,7 @@
 # -*-coding:utf-8 -*-
 
 import argparse
-from tags import load_tag_info_dict
+from tags import load_taginfo_dict
 
 """
 只对二级分类做标签分类处理， 添加二级分类到一级分类的映射关系处理
@@ -73,7 +73,7 @@ def convertfile(finfo, inputfile, taginfo, labeldict1, labeldict2, classmap):
 
 
 def convert():
-    taginfo = load_tag_info_dict(FLAGS.input_tag_info_file)
+    taginfo = load_taginfo_dict(FLAGS.input_tag_info_file)
     labeldict1 = dict()
     labeldict2 = dict()
     classmap = dict()

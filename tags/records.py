@@ -3,7 +3,7 @@
 
 import argparse
 from tags import delteduplicated
-from tags import load_tag_info_dict
+from tags import load_taginfo_dict
 import gc
 import random
 
@@ -132,7 +132,7 @@ def write_histories_tagsid(histories):
     rowkey2tagids = dict()
     load_rowkey2tagids_info(FLAGS.input_article_tags_file, rowkey2tagids)
     load_rowkey2tagids_info(FLAGS.input_video_tags_file, rowkey2tagids)
-    taginfo = load_tag_info_dict(FLAGS.input_tag_info_file)
+    taginfo = load_taginfo_dict(FLAGS.input_tag_info_file)
     nonexists = 0
     with open(FLAGS.output_history_tags, "w") as fout:
         for index, uin in enumerate(histories):

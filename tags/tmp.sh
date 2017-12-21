@@ -4,31 +4,30 @@
 rawdata_dir=raw_data
 data_dir=data
 
-ft_in=${data_dir}/labels.in
-
-# --input_article_tags_file ${rawdata_dir}/article_tags.csv \
-
-#python labels.py \
+ft_in=${data_dir}/classifier.in
+#python classifier.py \
     #--input_video_tags_file ${rawdata_dir}/video_tags.csv \
     #--input_tag_info_file ${rawdata_dir}/taginfo.csv \
     #--min_labels 1 \
     #--sort_tags true \
     #--output_info ${ft_in} \
-    #--output_label_dict_file ${data_dir}/labelinfo.csv
+    #--output_label_dict_file ${data_dir}/classinfo.in \
+    #--output_classmap_file ${data_dir}/classmap.in
+
 
 #shuf -o ${ft_in}.shuf ${ft_in}
 
 
-## fasttext
-#minCount=5
-#minn=0
-#maxn=0
-#thread=4
-#dim=100
-#ws=5
-#epoch=5
-#neg=5
-#lr=0.025
+# fasttext
+minCount=10
+minn=0
+maxn=0
+thread=4
+dim=100
+ws=15
+epoch=5
+neg=5
+lr=0.025
 
 input=${ft_in}.shuf
 

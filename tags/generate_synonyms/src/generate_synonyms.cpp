@@ -38,7 +38,7 @@ static std::string generate_key(
   std::string label0 = predictions[0].second.substr(9);
   std::string label1 = predictions[1].second.substr(9);
 
-  if (predictions[0].first > 0.9) {
+  if (predictions[0].first > 0.9 || predictions[1].first < 0.1) {
     key = label0;
   } else {
     key = std::min(label0, label1) + '#' + std::max(label0, label1);
