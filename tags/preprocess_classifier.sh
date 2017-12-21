@@ -1,9 +1,10 @@
 #! /usr/bin/env bash
 
-ft_in=data/labels.in
 
 rawdata_dir=raw_data
 data_dir=data
+
+ft_in=${data_dir}/labels.in
 
 # --input_article_tags_file ${rawdata_dir}/article_tags.csv \
 
@@ -19,7 +20,7 @@ shuf -o ${ft_in}.shuf ${ft_in}
 
 
 # fasttext
-minCount=1
+minCount=5
 minn=0
 maxn=0
 thread=4
@@ -48,3 +49,14 @@ utils/fasttext supervised \
     -t 1e-4 \
     -lrUpdateRate 100  \
     && awk 'NR>2{print $1}' ${input}.vec > ${input}.dict
+
+cd ./generate_synonyms/
+mkdir -p build
+cd build
+cmake ..
+make
+cd ../../
+./generate_synonyms/build/src/generate_synonyms \
+    ${input}.bin \
+    ${input}.dict \
+    ${input}.classindex

@@ -55,31 +55,34 @@ int main(int argc, char *argv[]) {
   classifier.LoadModel(argv[1]);
   auto tags = LoadTags(argv[2]);
 
-  std::map<std::string, std::vector<std::string>> tagindex;
+  std::map<std::string, std::vector<std::string>> classindex;
   for (auto &tagname : tags) {
     auto predictions = classifier.Predict(tagname, 2, false);
     if (predictions.size() < 2) {
       continue;
     }
     std::string key = generate_key(predictions);
-    tagindex[key].push_back(tagname);
+    classindex[key].push_back(tagname);
   }
 
-  std::cout << "tagindex size: " << tagindex.size() << std::endl;
+  std::cout << "classindex size: " << classindex.size() << std::endl;
 
-  // write tagindex to file
+  // write classindex to file
   std::ofstream ofs(argv[3], std::ios_base::out | std::ios_base::trunc);
   if (!ofs.is_open()) {
     std::cerr << "open output file [" << argv[3] << "] failed." << std::endl;
     exit(-1);
   }
 
-  for (auto &p : tagindex) {
+  for (auto &p : classindex) {
     ofs.write(p.first.data(), p.first.size());
     ofs.write(" ", 1);
-    for (auto &tagname : p.second) {
-      ofs.write("#", 1);
+    for (size_t i = 0; i < p.second.size(); ++i) {
+      const std::string &tagname = p.second[i];
       ofs.write(tagname.data(), tagname.size());
+      if (i != p.second.size() - 1) {
+        ofs.write(" ", 1);
+      }
     }
     ofs.write("\n", 1);
   }
