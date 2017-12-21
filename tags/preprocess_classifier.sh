@@ -8,13 +8,13 @@ ft_in=${data_dir}/labels.in
 
 # --input_article_tags_file ${rawdata_dir}/article_tags.csv \
 
-python labels.py \
+python classifier.py \
     --input_video_tags_file ${rawdata_dir}/video_tags.csv \
     --input_tag_info_file ${rawdata_dir}/taginfo.csv \
     --min_labels 1 \
     --sort_tags true \
     --output_info ${ft_in} \
-    --output_label_dict_file ${data_dir}/labelinfo.csv
+    --output_label_dict_file ${data_dir}/labelinfo.in
 
 shuf -o ${ft_in}.shuf ${ft_in}
 

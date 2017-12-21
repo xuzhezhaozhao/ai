@@ -3,6 +3,9 @@
 
 import argparse
 
+"""
+只对二级分类做标签分类处理， 添加二级分类到一级分类的映射关系处理
+"""
 
 # Basic model parameters as external flags.
 FLAGS = None
