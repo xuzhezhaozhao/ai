@@ -2,6 +2,7 @@
 # -*-coding:utf-8 -*-
 
 import argparse
+from tags import load_tag_info_dict
 
 """
 只对二级分类做标签分类处理， 添加二级分类到一级分类的映射关系处理
@@ -19,25 +20,7 @@ def delteduplicated(iterable):
     return uniq
 
 
-def load_tag_info_dict(inputfile):
-    taginfo = {}
-    for index, line in enumerate(open(inputfile, 'r')):
-        line = unicode(line, 'utf-8')
-        if index == 0:
-            # skip header
-            continue
-        tokens = line.strip().split('/')
-        try:
-            tagid = int(tokens[0])
-            tagname = reduce(lambda x, y: x+y, tokens[1:-1])
-            taginfo[tagid] = tagname.replace(' ', '_')
-        except Exception:
-            pass
-
-    return taginfo
-
-
-def convertfile(finfo, inputfile, taginfo, labeldict1, labeldict2):
+def convertfile(finfo, inputfile, taginfo, labeldict1, labeldict2, classmap):
     lack_labels = set()
 
     for index, line in enumerate(open(inputfile, 'r')):
@@ -58,18 +41,24 @@ def convertfile(finfo, inputfile, taginfo, labeldict1, labeldict2):
         if len(tagids) < FLAGS.min_tags:
             continue
 
-        if class1_name != "":
-            class1_id = int(tokens[-4])
-            # finfo.write("__label__" + class1_name.encode('utf-8') + " ")
-            labeldict1[class1_name] = class1_id
-
         if class2_name != "":
             class2_id = int(tokens[-2])
             finfo.write("__label__" + class2_name.encode('utf-8') + " ")
             labeldict2[class2_name] = class2_id
-
-        if class1_name == "" and class2_name == "":
+        else:
             continue
+
+        if class1_name != "":
+            # 二级标签到一级标签的映射
+            class1_id = int(tokens[-4])
+            labeldict1[class1_name] = class1_id
+            if class2_name in classmap and \
+                    classmap[class2_name] != class1_name:
+                print(
+                    "[W] class2 {} belong to multi class1".
+                    format(class2_name.encode('utf-8'))
+                )
+            classmap[class2_name] = class1_name
 
         for tag in tagids:
             if tag not in taginfo:
@@ -87,14 +76,15 @@ def convert():
     taginfo = load_tag_info_dict(FLAGS.input_tag_info_file)
     labeldict1 = dict()
     labeldict2 = dict()
+    classmap = dict()
 
     with open(FLAGS.output_info, 'w') as finfo:
         if FLAGS.input_video_tags_file != '':
             convertfile(finfo, FLAGS.input_video_tags_file, taginfo,
-                        labeldict1, labeldict2)
+                        labeldict1, labeldict2, classmap)
         if FLAGS.input_article_tags_file != '':
             convertfile(finfo, FLAGS.input_article_tags_file, taginfo,
-                        labeldict1, labeldict2)
+                        labeldict1, labeldict2, classmap)
 
     print("write label dict ...")
     with open(FLAGS.output_label_dict_file, 'w') as f:
@@ -105,6 +95,14 @@ def convert():
         for k in labeldict2:
             f.write(str(labeldict2[k]) + ' ')
             f.write(k.encode('utf-8') + ' 2')
+            f.write('\n')
+
+    print("write classmap ...")
+    with open(FLAGS.output_classmap_file, 'w') as f:
+        for class1 in classmap:
+            f.write(class1.encode('utf-8') + ' ')
+            class2 = classmap[class1]
+            f.write(class2.encode('utf-8'))
             f.write('\n')
 
 
@@ -158,6 +156,12 @@ if __name__ == "__main__":
 
     parser.add_argument(
         '--output_label_dict_file',
+        type=str,
+        default="",
+        help=''
+    )
+    parser.add_argument(
+        '--output_classmap_file',
         type=str,
         default="",
         help=''
