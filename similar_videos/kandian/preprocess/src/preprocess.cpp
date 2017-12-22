@@ -103,6 +103,11 @@ int main(int argc, char *argv[]) {
 
   std::cerr << "write user watched to file ..." << std::endl;
   std::ofstream ofs(FLAGS_output_user_watched_file);
+  if (!ofs.is_open()) {
+    std::cerr << "open output user watched file failed. filename = "
+              << FLAGS_output_user_watched_file << std::endl;
+    exit(-1);
+  }
   size_t i = 0;
   for (auto &p : histories) {
     auto suin = std::to_string(p.first);
