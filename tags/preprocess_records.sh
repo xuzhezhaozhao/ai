@@ -33,6 +33,8 @@ python records.py \
     --input_tag_info_file ${rawdata_dir}/taginfo.csv \
     --output_history_tags ${output_tags} \
     --sort_tags false \
+    --min_items 3 \
+    --max_items 1024 \
     --max_lines 20000000
 
 echo 'shuf ...'
@@ -41,12 +43,12 @@ shuf -o ${output_tags}.shuf ${output_tags}
 
 # fasttext
 ft_in=${output_tags}.shuf
-minCount=200
+minCount=100
 minn=0
 maxn=0
 thread=4
 dim=100
-ws=40
+ws=15
 epoch=5
 neg=5
 lr=0.025

@@ -1,61 +1,72 @@
 #! /usr/bin/env bash
 
+set -e
+
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd ${MYDIR}
+
+input=$1
 
 rawdata_dir=raw_data
 data_dir=data
 
-ft_in=${data_dir}/classifier.in
-#python classifier.py \
+output=${data_dir}/`basename $1`
+
+if [ ! -f ${output}.noheader ]; then
+    echo 'delete csv file header ...'
+    sed "1d" ${input} > ${output}.noheader
+fi
+
+if [ ! -f ${output}.sorted ]; then
+    echo "sort csv file with 1st field ..."
+    sorted_file=${output}.sorted
+    mkdir -p tmp_sort/
+    sort -T tmp_sort/ -t ',' -k 1 --parallel=4 ${output}.noheader -o ${sorted_file}
+    rm -rf tmp_sort/
+fi
+
+output_tags=${data_dir}/record_tags.in
+#python records.py \
+    #--input ${output}.sorted \
+    #--input_article_tags_file ${rawdata_dir}/article_tags.csv \
     #--input_video_tags_file ${rawdata_dir}/video_tags.csv \
     #--input_tag_info_file ${rawdata_dir}/taginfo.csv \
-    #--min_labels 1 \
-    #--sort_tags true \
-    #--output_info ${ft_in} \
-    #--output_label_dict_file ${data_dir}/classinfo.in \
-    #--output_classmap_file ${data_dir}/classmap.in
+    #--output_history_tags ${output_tags} \
+    #--sort_tags false \
+    #--min_items 3 \
+    #--max_items 1024 \
+    #--max_lines 20000000
 
-
-#shuf -o ${ft_in}.shuf ${ft_in}
+echo 'shuf ...'
+#shuf -o ${output_tags}.shuf ${output_tags}
 
 
 # fasttext
-minCount=10
+ft_in=${output_tags}.shuf
+minCount=100
 minn=0
 maxn=0
 thread=4
 dim=100
-ws=15
+ws=20
 epoch=5
 neg=5
 lr=0.025
 
-input=${ft_in}.shuf
-
-#utils/fasttext supervised \
-    #-input ${input} \
-    #-output ${input} \
-    #-lr ${lr} \
-    #-dim ${dim} \
-    #-ws ${ws} \
-    #-epoch ${epoch} \
-    #-minCount ${minCount} \
-    #-neg ${neg} \
-    #-loss ns \
-    #-bucket 2000000 \
-    #-minn ${minn} \
-    #-maxn ${maxn} \
-    #-thread ${thread} \
-    #-t 1e-4 \
-    #-lrUpdateRate 100  \
-    #&& awk 'NR>2{print $1}' ${input}.vec > ${input}.dict
-
-cd ./generate_synonyms/
-mkdir -p build
-cd build
-cmake ..
-make
-cd ../../
-./generate_synonyms/build/src/generate_synonyms \
-    ${input}.bin \
-    ${input}.dict \
-    ${input}.classindex
+utils/fasttext skipgram \
+    -input ${ft_in} \
+    -output ${ft_in} \
+    -lr ${lr} \
+    -dim ${dim} \
+    -ws ${ws} \
+    -epoch ${epoch} \
+    -minCount ${minCount} \
+    -neg ${neg} \
+    -loss ns \
+    -bucket 2000000 \
+    -minn ${minn} \
+    -maxn ${maxn} \
+    -thread ${thread} \
+    -t 1e-4 \
+    -lrUpdateRate 100  \
+    && awk 'NR>2{print $1}' ${ft_in}.vec > ${ft_in}.dict
