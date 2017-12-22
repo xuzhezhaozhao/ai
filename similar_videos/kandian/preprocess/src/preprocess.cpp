@@ -1,5 +1,6 @@
 
 #include <gflags/gflags.h>
+#include <assert.h>
 
 #include <fstream>
 #include <iostream>
@@ -56,6 +57,7 @@ int main(int argc, char *argv[]) {
 
   std::string line;
   int lineprocessed = 0;
+  int ndirty = 0;
   while (!ifs.eof()) {
     std::getline(ifs, line);
     ++lineprocessed;
@@ -69,6 +71,7 @@ int main(int argc, char *argv[]) {
     if (tokens.size() < 6) {
       std::cerr << "tokens size is less than 6. line number " << lineprocessed
                 << std::endl;
+      ++ndirty;
       continue;
     }
     bool isempty = false;
@@ -79,7 +82,10 @@ int main(int argc, char *argv[]) {
       }
     }
     if (isempty) {
-      std::cerr << "token is empty." << std::endl;
+      //std::cerr << "token is empty. lineprocessed = " << lineprocessed
+                //<< ", line = " << line << std::endl;
+
+      ++ndirty;
       continue;
     }
 
@@ -92,7 +98,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (id2int.find(rowkey) == id2int.end()) {
-      id2int[rowkey] = static_cast<int>(id2int.size());
+      id2int[rowkey] = static_cast<int>(ids.size());
       ids.push_back(rowkey);
     }
     int id = id2int[rowkey];
@@ -104,6 +110,9 @@ int main(int argc, char *argv[]) {
       std::cerr << lineprocessed << "lines processed.";
     }
   }
+
+  std::cerr << "user number: " << histories.size() << std::endl;
+  std::cerr << "dirty lines number: " << ndirty << std::endl;
 
   std::cerr << "write user watched to file ..." << std::endl;
   std::ofstream ofs(FLAGS_output_user_watched_file);
@@ -120,6 +129,7 @@ int main(int argc, char *argv[]) {
     ofs.write(" ", 1);
     size_t j = 0;
     for (auto &id : p.second) {
+      assert((size_t)id < ids.size());
       auto &s = ids[id];
       ofs.write(s.data(), s.size());
       if (j != p.second.size() - 1) {
@@ -131,6 +141,10 @@ int main(int argc, char *argv[]) {
       ofs.write("\n", 1);
     }
     ++i;
+
+    if (i % FLAGS_interval == 0) {
+      std::cerr << i << " user's watched have been writedn." << std::endl;
+    }
   }
 
   return 0;
