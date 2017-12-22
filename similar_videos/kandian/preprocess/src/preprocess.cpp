@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
     histories[uin].push_back(id);
 
     if (lineprocessed % FLAGS_interval == 0) {
-      std::cerr << lineprocessed << "lines processed.";
+      std::cerr << lineprocessed << " lines processed." << std::endl;
     }
   }
 
