@@ -8,6 +8,7 @@
 #include <vector>
 
 DEFINE_string(raw_input, "", "raw input data, user pv from tdw");
+DEFINE_bool(with_header, true, "raw input data with header");
 DEFINE_bool(only_video, true, "only user video pv, exclude article pv.");
 DEFINE_int32(interval, 1000000, "interval steps to print info");
 
@@ -58,6 +59,9 @@ int main(int argc, char *argv[]) {
   while (!ifs.eof()) {
     std::getline(ifs, line);
     ++lineprocessed;
+    if (FLAGS_with_header && lineprocessed == 1) {
+      continue;
+    }
     if (line.empty()) {
       continue;
     }
