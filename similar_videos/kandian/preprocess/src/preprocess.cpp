@@ -11,9 +11,15 @@ DEFINE_string(raw_input, "", "raw input data, user pv from tdw");
 DEFINE_bool(only_video, true, "only user video pv, exclude article pv.");
 DEFINE_int32(interval, 1000000, "interval steps to print info");
 
-DEFINE_string(output_int2id_file, "int2id.out", "output int to id map file");
 DEFINE_string(output_user_watched_file, "user_watched.out",
               "output user watched file");
+
+DEFINE_int32(user_min_watched, 20, "");
+// 截断至此大小
+DEFINE_int32(user_max_watched, 512, "");
+
+// 超过这个值的记录直接丢弃
+DEFINE_int32(user_abnormal_watched_thr, 2048, "");
 
 static std::vector<std::string> split(const std::string &s,
                                       const std::string &delim) {
@@ -62,8 +68,8 @@ int main(int argc, char *argv[]) {
       continue;
     }
     bool isempty = false;
-    for (auto &token : tokens) {
-      if (token == "") {
+    for (int i = 0; i < 6; ++i) {
+      if (tokens[i] == "") {
         isempty = true;
         break;
       }
@@ -99,12 +105,13 @@ int main(int argc, char *argv[]) {
   std::ofstream ofs(FLAGS_output_user_watched_file);
   size_t i = 0;
   for (auto &p : histories) {
-    auto s = std::to_string(p.first);
-    ofs.write(s.data(), s.size());
+    auto suin = std::to_string(p.first);
+    suin = "__label__" + suin;
+    ofs.write(suin.data(), suin.size());
     ofs.write(" ", 1);
     size_t j = 0;
-    for (auto &w : p.second) {
-      auto s = std::to_string(w);
+    for (auto &id : p.second) {
+      auto &s = ids[id];
       ofs.write(s.data(), s.size());
       if (j != p.second.size() - 1) {
         ofs.write(" ", 1);
@@ -115,15 +122,6 @@ int main(int argc, char *argv[]) {
       ofs.write("\n", 1);
     }
     ++i;
-  }
-
-  std::cerr << "write int2id map to file ..." << std::endl;
-  std::ofstream ofs2(FLAGS_output_int2id_file);
-  for (size_t index = 0; index < ids.size(); ++index) {
-    ofs2.write(ids[index].data(), ids[index].size());
-    if (index != ids.size() - 1) {
-      ofs2.write("\n", 1);
-    }
   }
 
   return 0;
