@@ -25,8 +25,8 @@ DEFINE_int32(user_max_watched, 512, "");
 // 超过这个值的记录直接丢弃
 DEFINE_int32(user_abnormal_watched_thr, 2048, "");
 
-DEFINE_int32(supress_hot_arg1, 10, "");
-DEFINE_int32(supress_hot_arg2, 3, "");
+DEFINE_int32(supress_hot_arg1, 5, "");
+DEFINE_int32(supress_hot_arg2, 2, "");
 
 static std::vector<std::string> split(const std::string &s,
                                       const std::string &delim) {
