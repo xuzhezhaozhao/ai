@@ -1,6 +1,8 @@
 
 #include <gflags/gflags.h>
 #include <assert.h>
+#include <time.h>
+#include <stdlib.h>
 
 #include <fstream>
 #include <iostream>
@@ -23,6 +25,9 @@ DEFINE_int32(user_max_watched, 512, "");
 // 超过这个值的记录直接丢弃
 DEFINE_int32(user_abnormal_watched_thr, 2048, "");
 
+DEFINE_int32(supress_hot_arg1, 10, "");
+DEFINE_int32(supress_hot_arg2, 3, "");
+
 static std::vector<std::string> split(const std::string &s,
                                       const std::string &delim) {
   std::vector<std::string> result;
@@ -44,6 +49,8 @@ static std::vector<std::string> split(const std::string &s,
 int main(int argc, char *argv[]) {
   google::ParseCommandLineFlags(&argc, &argv, false);
 
+  srand((uint32_t)time(NULL));
+
   std::ifstream ifs(FLAGS_raw_input);
   if (!ifs.is_open()) {
     std::cerr << "open raw input data file [" << FLAGS_raw_input << "] failed."
@@ -58,6 +65,9 @@ int main(int argc, char *argv[]) {
   std::string line;
   int lineprocessed = 0;
   int ndirty = 0;
+  std::map<std::string, uint32_t> rowkeycount;
+  uint64_t total = 0;
+
   while (!ifs.eof()) {
     std::getline(ifs, line);
     ++lineprocessed;
@@ -69,8 +79,6 @@ int main(int argc, char *argv[]) {
     }
     auto tokens = split(line, ",");
     if (tokens.size() < 6) {
-      std::cerr << "tokens size is less than 6. line number " << lineprocessed
-                << std::endl;
       ++ndirty;
       continue;
     }
@@ -82,9 +90,6 @@ int main(int argc, char *argv[]) {
       }
     }
     if (isempty) {
-      //std::cerr << "token is empty. lineprocessed = " << lineprocessed
-                //<< ", line = " << line << std::endl;
-
       ++ndirty;
       continue;
     }
@@ -102,9 +107,9 @@ int main(int argc, char *argv[]) {
       ids.push_back(rowkey);
     }
     int id = id2int[rowkey];
-
-    // TODO(zhezhaoxu) supress hot
     histories[uin].push_back(id);
+    ++rowkeycount[rowkey];
+    ++total;
 
     if (lineprocessed % FLAGS_interval == 0) {
       std::cerr << lineprocessed << " lines processed." << std::endl;
@@ -122,6 +127,10 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
   size_t i = 0;
+  double mean_freq = 1.0 / rowkeycount.size();
+  std::cerr << "mean_freq = " << mean_freq << std::endl;
+
+  int noverfrep = 0;
   for (auto &p : histories) {
     auto suin = std::to_string(p.first);
     suin = "__label__" + suin;
@@ -130,8 +139,19 @@ int main(int argc, char *argv[]) {
     size_t j = 0;
     for (auto &id : p.second) {
       assert((size_t)id < ids.size());
-      auto &s = ids[id];
-      ofs.write(s.data(), s.size());
+      auto &rowkey = ids[id];
+
+      // supress hot
+      double freq = static_cast<double>(rowkeycount[rowkey]) / total;
+      if (freq > FLAGS_supress_hot_arg1 * mean_freq) {
+        ++noverfrep;
+        double r = rand() / static_cast<double>(RAND_MAX);
+        if (r > (FLAGS_supress_hot_arg2 * mean_freq / freq)) {
+          continue;
+        }
+      }
+
+      ofs.write(rowkey.data(), rowkey.size());
       if (j != p.second.size() - 1) {
         ofs.write(" ", 1);
       }
