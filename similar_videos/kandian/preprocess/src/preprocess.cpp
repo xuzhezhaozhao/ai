@@ -25,8 +25,10 @@ DEFINE_int32(user_max_watched, 512, "");
 // 超过这个值的记录直接丢弃
 DEFINE_int32(user_abnormal_watched_thr, 2048, "");
 
-DEFINE_int32(supress_hot_arg1, 5, "");
-DEFINE_int32(supress_hot_arg2, 2, "");
+DEFINE_int32(supress_hot_arg1, 2, "");
+DEFINE_int32(supress_hot_arg2, 1, "");
+
+DEFINE_int32(threads, 1, "");
 
 static std::vector<std::string> split(const std::string &s,
                                       const std::string &delim) {
@@ -46,11 +48,7 @@ static std::vector<std::string> split(const std::string &s,
   return result;
 }
 
-int main(int argc, char *argv[]) {
-  google::ParseCommandLineFlags(&argc, &argv, false);
-
-  srand((uint32_t)time(NULL));
-
+void precess(int tid) {
   std::ifstream ifs(FLAGS_raw_input);
   if (!ifs.is_open()) {
     std::cerr << "open raw input data file [" << FLAGS_raw_input << "] failed."
@@ -65,7 +63,7 @@ int main(int argc, char *argv[]) {
   std::string line;
   int lineprocessed = 0;
   int ndirty = 0;
-  std::map<std::string, uint32_t> rowkeycount;
+  std::map<int, uint32_t> rowkeycount;
   uint64_t total = 0;
 
   while (!ifs.eof()) {
@@ -107,8 +105,91 @@ int main(int argc, char *argv[]) {
       ids.push_back(rowkey);
     }
     int id = id2int[rowkey];
+
+    if (!histories[uin].empty() && histories[uin].back() == id) {
+      // duplicate watched or error reported
+      continue;
+    }
+
     histories[uin].push_back(id);
-    ++rowkeycount[rowkey];
+    ++rowkeycount[id];
+    ++total;
+
+    if (lineprocessed % FLAGS_interval == 0) {
+      std::cerr << lineprocessed << " lines processed." << std::endl;
+    }
+  }
+}
+
+int main(int argc, char *argv[]) {
+  google::ParseCommandLineFlags(&argc, &argv, false);
+
+  srand((uint32_t)time(NULL));
+
+  std::ifstream ifs(FLAGS_raw_input);
+  if (!ifs.is_open()) {
+    std::cerr << "open raw input data file [" << FLAGS_raw_input << "] failed."
+              << std::endl;
+    exit(-1);
+  }
+
+  std::map<unsigned long, std::vector<int>> histories;
+  std::map<std::string, int> id2int;
+  std::vector<std::string> ids;
+
+  std::string line;
+  int lineprocessed = 0;
+  int ndirty = 0;
+  std::map<int, uint32_t> rowkeycount;
+  uint64_t total = 0;
+
+  while (!ifs.eof()) {
+    std::getline(ifs, line);
+    ++lineprocessed;
+    if (FLAGS_with_header && lineprocessed == 1) {
+      continue;
+    }
+    if (line.empty()) {
+      continue;
+    }
+    auto tokens = split(line, ",");
+    if (tokens.size() < 6) {
+      ++ndirty;
+      continue;
+    }
+    bool isempty = false;
+    for (int i = 0; i < 6; ++i) {
+      if (tokens[i] == "") {
+        isempty = true;
+        break;
+      }
+    }
+    if (isempty) {
+      ++ndirty;
+      continue;
+    }
+
+    unsigned long uin = std::stoul(tokens[1]);
+    const std::string &rowkey = tokens[2];
+    int isvideo = std::stoi(tokens[3]);
+
+    if (!isvideo && FLAGS_only_video) {
+      continue;
+    }
+
+    if (id2int.find(rowkey) == id2int.end()) {
+      id2int[rowkey] = static_cast<int>(ids.size());
+      ids.push_back(rowkey);
+    }
+    int id = id2int[rowkey];
+
+    if (!histories[uin].empty() && histories[uin].back() == id) {
+      // duplicate watched or error reported
+      continue;
+    }
+
+    histories[uin].push_back(id);
+    ++rowkeycount[id];
     ++total;
 
     if (lineprocessed % FLAGS_interval == 0) {
@@ -142,7 +223,7 @@ int main(int argc, char *argv[]) {
       auto &rowkey = ids[id];
 
       // supress hot
-      double freq = static_cast<double>(rowkeycount[rowkey]) / total;
+      double freq = static_cast<double>(rowkeycount[id]) / total;
       if (freq > FLAGS_supress_hot_arg1 * mean_freq) {
         ++noverfrep;
         double r = rand() / static_cast<double>(RAND_MAX);
