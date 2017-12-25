@@ -45,4 +45,5 @@ mv ${rawdata_dir}/${sosodictname} ${rawdata_dir}/soso_tagdict.csv
 
 echo "train classifier ..."
 ./preprocess_classifier.sh
+./preprocess_classifier_with_article.sh
 ./preprocess_records.sh

@@ -17,7 +17,7 @@ if [ ! -f ${output}.sorted ]; then
     echo "sort csv file with 1st field ..."
     sorted_file=${output}.sorted
     mkdir -p tmp_sort/
-    sort -T tmp_sort/ -t ',' -k 1 --parallel=44 ${input} -o ${sorted_file}
+    sort -T tmp_sort/ -t ',' -k 1 --parallel=47 ${input} -o ${sorted_file}
     rm -rf tmp_sort/
 fi
 
@@ -42,7 +42,7 @@ ft_in=${output_tags}.shuf
 minCount=300
 minn=0
 maxn=0
-thread=4
+thread=47
 dim=100
 ws=20
 epoch=5
