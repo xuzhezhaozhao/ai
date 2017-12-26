@@ -5,7 +5,7 @@ set -e
 MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
-input=data/data.in
+input=data/mini.in
 
 echo "sort csv file with 1st field ..."
 sorted_file=${input}.sorted
@@ -15,6 +15,7 @@ rm -rf tmp_sort/
 
 preprocessed=${input}.preprocessed
 echo "transform sorted file to fastText format ..."
+min_count=5
 ./preprocess/build/src/preprocess \
     -raw_input=${sorted_file} \
     -with_header=false \
@@ -27,25 +28,53 @@ echo "transform sorted file to fastText format ..."
     -supress_hot_arg1=8 \
     -supress_hot_arg2=3 \
     -user_effective_watched_time_thr=20 \
-    -user_effective_watched_ratio_thr=0.3
-
+    -user_effective_watched_ratio_thr=0.3 \
+    -min_count=${min_count}
 
 echo "fastText train ..."
 # fasttext args
-minCount=50
+minCount=${min_count}
 dim=100
-watched_size=20
-max_per_user=100
-ws=10
+ws=20
 epoch=5
 neg=5
 thread=4
 fast_output=${input}
-utils/fasttext skipgram -input ${preprocessed} -output ${fast_output} -lr 0.025\
-  -dim ${dim} -ws ${ws} -epoch ${epoch} -minCount ${minCount} -neg ${neg} -loss ns -bucket 2000000\
-  -minn 0 -maxn 0 -thread ${thread} -t 1e-4 -lrUpdateRate 100
+utils/fasttext \
+    skipgram \
+    -input ${preprocessed} \
+    -output ${fast_output} \
+    -lr 0.025 \
+    -dim ${dim} \
+    -ws ${ws} \
+    -epoch ${epoch} \
+    -minCount ${minCount} \
+    -neg ${neg} \
+    -loss ns \
+    -bucket 2000000 \
+    -minn 0 \
+    -maxn 0 \
+    -thread ${thread} \
+    -t 1e-4 \
+    -lrUpdateRate 100
 
+watched_size=5
+max_per_user=100
 tf_input=${input}.tf
-python utils/vec2binary.py --input ${fast_output}.vec --output ${tf_input}.vec --output_dict_file ${tf_input}.dict
-python utils/filter_transform.py --input ${preprocessed} --output ${tf_input}.records --dictfile ${tf_input}.dict
-python utils/records2binary.py --input_records ${tf_input}.records --output_watched ${tf_input}.watched --output_predicts ${tf_input}.predicts --input_dict_file ${tf_input}.dict --watched_size ${watched_size} --max_per_user ${max_per_user}
+python utils/vec2binary.py \
+    --input ${fast_output}.vec \
+    --output ${tf_input}.vec \
+    --output_dict_file ${tf_input}.dict
+
+#python utils/filter_transform.py \
+    #--input ${preprocessed} \
+    #--output ${tf_input}.filterd \
+    #--dictfile ${tf_input}.dict
+
+python utils/records2binary.py \
+    --input_records ${preprocessed} \
+    --output_watched ${tf_input}.watched \
+    --output_predicts ${tf_input}.predicts \
+    --input_dict_file ${tf_input}.dict \
+    --watched_size ${watched_size} \
+    --max_per_user ${max_per_user}

@@ -33,6 +33,9 @@ DEFINE_int32(supress_hot_arg2, 1, "");
 
 DEFINE_int32(threads, 1, "");
 
+// 出现次数小于该值则丢弃
+DEFINE_int32(min_count, 0, "");
+
 static std::vector<std::string> split(const std::string &s,
                                       const std::string &delim) {
   std::vector<std::string> result;
@@ -168,6 +171,11 @@ int main(int argc, char *argv[]) {
     valid.clear();
     for (auto id : p.second) {
       assert((size_t)id < ids.size());
+
+      if (rowkeycount[id] < FLAGS_min_count) {
+        continue;
+      }
+
       // supress hot
       double freq = static_cast<double>(rowkeycount[id]) / total;
       if (freq > FLAGS_supress_hot_arg1 * mean_freq) {
