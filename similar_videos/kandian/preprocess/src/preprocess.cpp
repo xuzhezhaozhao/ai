@@ -157,21 +157,16 @@ int main(int argc, char *argv[]) {
               << FLAGS_output_user_watched_file << std::endl;
     exit(-1);
   }
-  size_t i = 0;
   double mean_freq = 1.0 / rowkeycount.size();
   std::cerr << "mean_freq = " << mean_freq << std::endl;
 
   int noverfrep = 0;
+  std::vector<int> valid;
+  size_t i = 0;
   for (auto &p : histories) {
-    auto suin = std::to_string(p.first);
-    suin = "__label__" + suin;
-    ofs.write(suin.data(), suin.size());
-    ofs.write(" ", 1);
-    size_t j = 0;
-    for (auto &id : p.second) {
+    valid.clear();
+    for (auto id : p.second) {
       assert((size_t)id < ids.size());
-      auto &rowkey = ids[id];
-
       // supress hot
       double freq = static_cast<double>(rowkeycount[id]) / total;
       if (freq > FLAGS_supress_hot_arg1 * mean_freq) {
@@ -181,13 +176,29 @@ int main(int argc, char *argv[]) {
           continue;
         }
       }
+      valid.push_back(id);
+    }
 
+    if (valid.size() < FLAGS_user_min_watched ||
+        valid.size() > FLAGS_user_abnormal_watched_thr) {
+      continue;
+    }
+
+    auto suin = std::to_string(p.first);
+    suin = "__label__" + suin;
+    ofs.write(suin.data(), suin.size());
+    ofs.write(" ", 1);
+
+    size_t j = 0;
+    for (auto id : valid) {
+      auto &rowkey = ids[id];
       ofs.write(rowkey.data(), rowkey.size());
       if (j != p.second.size() - 1) {
         ofs.write(" ", 1);
       }
       ++j;
     }
+
     if (i != histories.size() - 1) {
       ofs.write("\n", 1);
     }
@@ -197,6 +208,8 @@ int main(int argc, char *argv[]) {
       std::cerr << i << " user's watched have been writedn." << std::endl;
     }
   }
+
+  std::cerr << "noverfrep: " << noverfrep << std::endl;
 
   return 0;
 }
