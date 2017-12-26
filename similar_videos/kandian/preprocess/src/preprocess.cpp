@@ -51,6 +51,10 @@ static std::vector<std::string> split(const std::string &s,
   return result;
 }
 
+void precess(int tid) {
+
+}
+
 int main(int argc, char *argv[]) {
   google::ParseCommandLineFlags(&argc, &argv, false);
 
@@ -163,6 +167,7 @@ int main(int argc, char *argv[]) {
   int noverfrep = 0;
   std::vector<int> valid;
   size_t i = 0;
+  size_t total_valid = 0;
   for (auto &p : histories) {
     valid.clear();
     for (auto id : p.second) {
@@ -184,6 +189,7 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
+    total_valid += valid.size();
     auto suin = std::to_string(p.first);
     suin = "__label__" + suin;
     ofs.write(suin.data(), suin.size());
@@ -210,6 +216,7 @@ int main(int argc, char *argv[]) {
   }
 
   std::cerr << "noverfrep: " << noverfrep << std::endl;
+  std::cerr << "total valid: " << total_valid << std::endl;
 
   return 0;
 }
