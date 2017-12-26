@@ -75,7 +75,7 @@ def records2binary_pctr(recordsfile, dictfile, watchedfile, predictsfile, watche
         watched_ratio_line = fwatched_ratio.readline()
 
         records = line.strip().split(' ')[1:]
-        watched_ratios = watched_ratio_line.split(' ')[1:]
+        watched_ratios = watched_ratio_line.strip().split(' ')[1:]
         watched_ratios = map(float, watched_ratios)
 
         # generate binary records
@@ -98,7 +98,7 @@ def records2binary_pctr(recordsfile, dictfile, watchedfile, predictsfile, watche
                 for index in indexs:
                     fwatched.write(struct.pack('<i', index))
 
-                ratio = watched_ratios[begin+cnt-1]
+                ratio = watched_ratios[begin-1]
                 label_class = get_label_class(ratio, FLAGS.class_num_pctr)
                 fpredicts.write(struct.pack('<i', label_class))
 
