@@ -72,11 +72,15 @@ python utils/vec2binary.py \
 
 max_per_user=100
 watched_size=5
+watched_size_pctr=20
 python utils/records2binary.py \
     --input_records ${preprocessed} \
     --input_dict_file ${tf_input}.dict \
-    --input_watched_raito_file ${preprocessed}.watched_ratio \
+    --input_watched_ratio_file ${preprocessed}.watched_ratio \
     --output_watched ${tf_input}.watched \
+    --output_watched_pctr ${tf_input}.watched.pctr \
     --output_predicts ${tf_input}.predicts \
+    --output_predicts_pctr ${tf_input}.predicts.pctr \
     --watched_size ${watched_size} \
+    --watched_size_pctr ${watched_size_pctr} \
     --max_per_user ${max_per_user}

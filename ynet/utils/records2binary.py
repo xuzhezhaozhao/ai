@@ -12,31 +12,98 @@ import numpy as np
 FLAGS = None
 
 
-def records2binary(recordsfile, dictfile, watchedfile, predictsfile):
+def get_label_class(radio, class_num):
+    # watch_duration_class
+    if radio >= 1:
+        # print("dirty data or protect")
+        radio = 0.9
+    y = np.floor(class_num * (1 / np.log(2) * np.log(0.999 + radio)))
+    if y < 0:
+        y = 0
+    return y
+
+
+def records2binary(recordsfile, dictfile, watchedfile, predictsfile, watched_size):
     D = dict()
     # load dict
     for index, line in enumerate(open(dictfile, "r")):
         D[line.strip()] = index
 
-    watched_size = FLAGS.watched_size
-    with open(watchedfile, "wb") as fwatched:
-        with open(predictsfile, "wb") as fpredicts:
-            for index, line in enumerate(open(recordsfile, "r")):
-                tokens = line.strip().split(' ')
-                records = tokens[1:]  # skip __label__
+    fwatched = open(watchedfile, "wb")
+    fpredicts = open(predictsfile, "wb")
 
-                # generate binary records
-                max_start = len(records) - watched_size - 1
-                if max_start < 0:
+    for index, line in enumerate(open(recordsfile, "r")):
+        tokens = line.strip().split(' ')
+        records = tokens[1:]  # skip __label__
+
+        # generate binary records
+        records_len = len(records)
+        begin = 0
+        while begin <= records_len - watched_size:
+            cnt = 0
+            indexs = []
+            for item in records[begin:]:
+                cnt += 1
+                if item not in D:
                     continue
-                num_sampled = min(max_start + 1, FLAGS.max_per_user)
-                sampled = random.sample(range(max_start + 1), num_sampled)
-                for start in sampled:
-                    for r in xrange(start, start + watched_size):
-                        index = D[records[r]]
-                        fwatched.write(struct.pack('<i', index))
-                    predict_index = D[records[start + watched_size]]
-                    fpredicts.write(struct.pack('<i', predict_index))
+
+                indexs.append(D[item])
+                if len(indexs) == watched_size + 1:
+                    break
+            begin += cnt
+            if len(indexs) == watched_size + 1:
+                # 写入 indexs
+                for index in indexs[:-1]:
+                    fwatched.write(struct.pack('<i', index))
+                fpredicts.write(struct.pack('<i', indexs[-1]))
+
+    fwatched.close()
+    fpredicts.close()
+
+
+def records2binary_pctr(recordsfile, dictfile, watchedfile, predictsfile, watched_size, watched_ratio_file):
+    D = dict()
+    # load dict
+    for index, line in enumerate(open(dictfile, "r")):
+        D[line.strip()] = index
+
+    fwatched = open(watchedfile, "wb")
+    fpredicts = open(predictsfile, "wb")
+    fwatched_ratio = open(watched_ratio_file, "r")
+
+    for index, line in enumerate(open(recordsfile, "r")):
+        watched_ratio_line = fwatched_ratio.readline()
+
+        records = line.strip().split(' ')[1:]
+        watched_ratios = watched_ratio_line.split(' ')[1:]
+        watched_ratios = map(float, watched_ratios)
+
+        # generate binary records
+        records_len = len(records)
+        begin = 0
+        while begin <= records_len - watched_size:
+            cnt = 0
+            indexs = []
+            for item in records[begin:]:
+                cnt += 1
+                if item not in D:
+                    continue
+
+                indexs.append(D[item])
+                if len(indexs) == watched_size:
+                    break
+            begin += cnt
+            if len(indexs) == watched_size:
+                # 写入 indexs
+                for index in indexs:
+                    fwatched.write(struct.pack('<i', index))
+
+                ratio = watched_ratios[begin+cnt-1]
+                label_class = get_label_class(ratio, FLAGS.class_num_pctr)
+                fpredicts.write(struct.pack('<i', label_class))
+
+    fwatched.close()
+    fpredicts.close()
 
 
 def binary2records(recordsfile, dictfile, watchedfile, predictsfile):
@@ -76,7 +143,15 @@ def main():
         records2binary(FLAGS.input_records,
                        FLAGS.input_dict_file,
                        FLAGS.output_watched,
-                       FLAGS.output_predicts)
+                       FLAGS.output_predicts,
+                       FLAGS.watched_size)
+        records2binary_pctr(FLAGS.input_records,
+                            FLAGS.input_dict_file,
+                            FLAGS.output_watched_pctr,
+                            FLAGS.output_predicts_pctr,
+                            FLAGS.watched_size_pctr,
+                            FLAGS.input_watched_ratio_file,
+                           )
 
 
 if __name__ == "__main__":
@@ -103,6 +178,13 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        '--output_watched_pctr',
+        type=str,
+        default='',
+        help='Binary form of watched records pctr.'
+    )
+
+    parser.add_argument(
         '--input_watched',
         type=str,
         default='',
@@ -115,6 +197,14 @@ if __name__ == "__main__":
         default='output.fasttext.predicts',
         help='Binary form of predicts for watched records.'
     )
+
+    parser.add_argument(
+        '--output_predicts_pctr',
+        type=str,
+        default='output.fasttext.predicts.pctr',
+        help='Binary form of predicts for watched records for pctr.'
+    )
+
     parser.add_argument(
         '--input_predicts',
         type=str,
@@ -130,7 +220,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        '--input_watched_raito_file',
+        '--input_watched_ratio_file',
         type=str,
         default='',
         help='Input watched ratio file for PCTR.'
@@ -151,10 +241,24 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        '--watched_size_pctr',
+        type=int,
+        default=20,
+        help='Watched size for pctr.'
+    )
+
+    parser.add_argument(
         '--max_per_user',
         type=int,
         default=5,
         help='Max number of watched windows selected per user.'
+    )
+
+    parser.add_argument(
+        '--class_num_pctr',
+        type=int,
+        default=10,
+        help=''
     )
 
     FLAGS, unparsed = parser.parse_known_args()
