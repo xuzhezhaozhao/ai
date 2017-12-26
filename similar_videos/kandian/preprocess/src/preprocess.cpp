@@ -51,10 +51,6 @@ static std::vector<std::string> split(const std::string &s,
   return result;
 }
 
-void precess(int tid) {
-
-}
-
 int main(int argc, char *argv[]) {
   google::ParseCommandLineFlags(&argc, &argv, false);
 
