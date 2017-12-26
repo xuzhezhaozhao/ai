@@ -25,8 +25,6 @@ def convertfile(finfo, inputfile, taginfo, labeldict1, labeldict2, classmap):
 
     for index, line in enumerate(open(inputfile, 'r')):
         line = unicode(line, 'utf-8')
-        if index == 0:
-            continue
         tokens = line.strip().replace('/', ',').split(',')
         tagids = tokens[1:-4]
         tagids = filter(lambda x: x != '', tagids)

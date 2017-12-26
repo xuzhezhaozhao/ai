@@ -12,8 +12,10 @@ python classifier.py \
     --min_labels 1 \
     --sort_tags true \
     --output_info ${ft_in} \
-    --output_label_dict_file ${ft_in}.classinfo \
+    --output_label_dict_file ${ft_in}.classinfo.cms \
     --output_classmap_file ${ft_in}.classmap
+
+cat ${rawdata_dir}/only_article_class1.info ${rawdata_dir}/only_article_class2.info > ${ft_in}.classinfo
 
 
 shuf -o ${ft_in}.shuf ${ft_in}

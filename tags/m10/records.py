@@ -16,8 +16,6 @@ def rowkey_count():
     rowkeycount = dict()
     total = 0
     for index, line in enumerate(open(FLAGS.input, 'r')):
-        if index == 0:
-            continue
         if FLAGS.max_lines != -1 and index >= FLAGS.max_lines:
             break
         try:
@@ -47,8 +45,6 @@ def load_rowkey2tagids_info(inputfile, rowkey2tagids):
     """
     ndup = 0
     for index, line in enumerate(open(inputfile, 'r')):
-        if index == 0:
-            continue
         tokens = line.strip().split('/')
         rowkey = tokens[0]
         if rowkey in rowkey2tagids:

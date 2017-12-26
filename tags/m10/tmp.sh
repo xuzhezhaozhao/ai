@@ -5,45 +5,51 @@ set -e
 MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
-
 rawdata_dir=raw_data
 data_dir=data
+fetch_dir=kandian_tag_extent
 
-input=${rawdata_dir}/records.csv
+rm -rf ${data_dir}.bak
+rm -rf ${rawdata_dir}.bak
+rm -rf ${fetch_dir}.bak
+if [ -d ${rawdata_dir} ]; then
+  echo "backup ${rawdata_dir} ..."
+  mv ${rawdata_dir} ${rawdata_dir}.bak
+fi
+if [ -d ${data_dir} ]; then
+  echo "backup ${data_dir} ..."
+  mv ${data_dir} ${data_dir}.bak
+fi
+if [ -d ${fetch_dir} ]; then
+  echo "backup ${fetch_dir} ..."
+  mv ${fetch_dir} ${fetch_dir}.bak
+fi
 
-output=${data_dir}/`basename ${input}`
 
-output_tags=${data_dir}/records_tags.in
+echo "fetch kandian_tag_extent from hdfs ..."
+/data/hadoop_client/new/tdwdfsclient/bin/hadoop fs -Dhadoop.job.ugi=tdw_zhezhaoxu:zhao2017,g_sng_im_sng_imappdev_tribe -get hdfs://ss-sng-dc-v2/stage/outface/SNG/g_sng_im_sng_imappdev_tribe/zhezhaoxu/kandian_tag_extent/ .
+mkdir -p ${rawdata_dir}
+mkdir -p ${data_dir}
+cat ${fetch_dir}/article_info/part* > ${rawdata_dir}/article_tags.csv
+cat ${fetch_dir}/video_info/part* > ${rawdata_dir}/video_tags.csv
+cat ${fetch_dir}/tag_info/part* > ${rawdata_dir}/taginfo.csv
+cat ${fetch_dir}/records/part* > ${rawdata_dir}/records.csv
 
-echo 'shuf ...'
+cat ${fetch_dir}/class1_info/part* > ${rawdata_dir}/only_article_class1.info
+sed -i 's/$/ 1/' ${rawdata_dir}/only_article_class1.info
+cat ${fetch_dir}/class2_info/part* > ${rawdata_dir}/only_article_class2.info
+sed -i 's/$/ 2/' ${rawdata_dir}/only_article_class2.info
+
+echo "fetch soso tag dict from hdfs ..."
+sosodictaddr=`/data/hadoop_client/new/tdwdfsclient/bin/hadoop fs -Dhadoop.job.ugi=tdw_zhezhaoxu:zhao2017 -ls  hdfs://tl-if-nn-tdw.tencent-distribute.com:54310/stage/outface/TEG/g_teg_ainlp_ainlp/tag/tagid/tag_dict.* 2>/dev/null | awk '{print $8}' | sort | tail -n1`
+sosodictname=`basename ${sosodictaddr}`
+/data/hadoop_client/new/tdwdfsclient/bin/hadoop fs -Dhadoop.job.ugi=tdw_zhezhaoxu:zhao2017,g_sng_im_sng_imappdev_tribe -get ${sosodictaddr} ${rawdata_dir}/
+# mv ${rawdata_dir}/${sosodictname} ${rawdata_dir}/soso_tagdict.csv
+iconv -f gb18030 -t utf-8 ${rawdata_dir}/${sosodictname} > ${data_dir}/soso_tagdict.csv.utf8
 
 
-# fasttext
-ft_in=${output_tags}.shuf
-minCount=300
-minn=0
-maxn=0
-thread=47
-dim=100
-ws=20
-epoch=5
-neg=5
-lr=0.025
-
-utils/fasttext skipgram \
-    -input ${ft_in} \
-    -output ${ft_in} \
-    -lr ${lr} \
-    -dim ${dim} \
-    -ws ${ws} \
-    -epoch ${epoch} \
-    -minCount ${minCount} \
-    -neg ${neg} \
-    -loss ns \
-    -bucket 2000000 \
-    -minn ${minn} \
-    -maxn ${maxn} \
-    -thread ${thread} \
-    -t 1e-4 \
-    -lrUpdateRate 100  \
-    && awk 'NR>2{print $1}' ${ft_in}.vec > ${ft_in}.dict
+echo "train classifier ..."
+./preprocess_records.sh
+./preprocess_classifier.sh
+./preprocess_classifier_only_article.sh
+# ./preprocess_classifier_with_article.sh

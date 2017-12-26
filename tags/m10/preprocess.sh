@@ -35,6 +35,10 @@ cat ${fetch_dir}/video_info/part* > ${rawdata_dir}/video_tags.csv
 cat ${fetch_dir}/tag_info/part* > ${rawdata_dir}/taginfo.csv
 cat ${fetch_dir}/records/part* > ${rawdata_dir}/records.csv
 
+cat ${fetch_dir}/class1_info/part* > ${rawdata_dir}/only_article_class1.info
+sed -i 's/$/ 1/' ${rawdata_dir}/only_article_class1.info
+cat ${fetch_dir}/class2_info/part* > ${rawdata_dir}/only_article_class2.info
+sed -i 's/$/ 2/' ${rawdata_dir}/only_article_class2.info
 
 echo "fetch soso tag dict from hdfs ..."
 sosodictaddr=`/data/hadoop_client/new/tdwdfsclient/bin/hadoop fs -Dhadoop.job.ugi=tdw_zhezhaoxu:zhao2017 -ls  hdfs://tl-if-nn-tdw.tencent-distribute.com:54310/stage/outface/TEG/g_teg_ainlp_ainlp/tag/tagid/tag_dict.* 2>/dev/null | awk '{print $8}' | sort | tail -n1`
@@ -48,7 +52,7 @@ echo "train classifier ..."
 ./preprocess_records.sh
 ./preprocess_classifier.sh
 ./preprocess_classifier_only_article.sh
-./preprocess_classifier_with_article.sh
+# ./preprocess_classifier_with_article.sh
 
 echo "send udp ..."
 ./utils/sendupdate -modid=900481 -cmdid=65536

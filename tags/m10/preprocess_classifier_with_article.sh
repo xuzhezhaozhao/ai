@@ -13,8 +13,8 @@ python classifier.py \
     --min_labels 1 \
     --sort_tags true \
     --output_info ${ft_in} \
-    --output_label_dict_file ${data_dir}/classinfo.in \
-    --output_classmap_file ${data_dir}/classmap.in
+    --output_label_dict_file ${ft_in}.classinfo \
+    --output_classmap_file ${ft_in}.classmap
 
 
 shuf -o ${ft_in}.shuf ${ft_in}

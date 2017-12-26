@@ -14,9 +14,6 @@ def load_taginfo_dict(inputfile):
     taginfo = {}
     for index, line in enumerate(open(inputfile, 'r')):
         line = unicode(line, 'utf-8')
-        if index == 0:
-            # skip header
-            continue
         tokens = line.strip().split('/')
         try:
             tagid = int(tokens[0])
