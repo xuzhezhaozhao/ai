@@ -18,6 +18,9 @@ DEFINE_int32(interval, 1000000, "interval steps to print info");
 DEFINE_string(output_user_watched_file, "user_watched.out",
               "output user watched file");
 
+DEFINE_string(output_user_watched_ratio_file, "",
+              "output user watched time ratio file for PCTR");
+
 DEFINE_int32(user_min_watched, 20, "");
 // 截断至此大小
 DEFINE_int32(user_max_watched, 512, "");
@@ -66,7 +69,8 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
 
-  std::map<unsigned long, std::vector<int>> histories;
+  std::map<unsigned long, std::vector<std::pair<int, float>>> histories;
+
   std::map<std::string, int> id2int;
   std::vector<std::string> ids;
 
@@ -121,9 +125,10 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
+    double r = 0;
     if (isvideo && video_duration != 0.0) {
       // 过滤出有效观看视频
-      double r = watched_time / video_duration;
+      r = watched_time / video_duration;
       if (watched_time < FLAGS_user_effective_watched_time_thr &&
           r < FLAGS_user_effective_watched_ratio_thr) {
         continue;
@@ -136,12 +141,12 @@ int main(int argc, char *argv[]) {
     }
     int id = id2int[rowkey];
 
-    if (!histories[uin].empty() && histories[uin].back() == id) {
+    if (!histories[uin].empty() && histories[uin].back().first == id) {
       // duplicate watched or error reported
       continue;
     }
 
-    histories[uin].push_back(id);
+    histories[uin].push_back({id, r});
     ++rowkeycount[id];
     ++total;
 
@@ -155,21 +160,31 @@ int main(int argc, char *argv[]) {
 
   std::cerr << "write user watched to file ..." << std::endl;
   std::ofstream ofs(FLAGS_output_user_watched_file);
+  std::ofstream ofs_ratio(FLAGS_output_user_watched_ratio_file);
   if (!ofs.is_open()) {
     std::cerr << "open output user watched file failed. filename = "
               << FLAGS_output_user_watched_file << std::endl;
     exit(-1);
   }
+
+  if (!ofs_ratio.is_open()) {
+    std::cerr << "open output user watched ratio file failed. filename = "
+              << FLAGS_output_user_watched_ratio_file << std::endl;
+    exit(-1);
+  }
+
   double mean_freq = 1.0 / rowkeycount.size();
   std::cerr << "mean_freq = " << mean_freq << std::endl;
 
   int noverfrep = 0;
-  std::vector<int> valid;
+  std::vector<std::pair<int, float>> valid;
   size_t i = 0;
   size_t total_valid = 0;
   for (auto &p : histories) {
     valid.clear();
-    for (auto id : p.second) {
+    for (auto &x : p.second) {
+      int id = x.first;
+
       assert((size_t)id < ids.size());
 
       if (rowkeycount[id] < FLAGS_min_count) {
@@ -185,7 +200,7 @@ int main(int argc, char *argv[]) {
           continue;
         }
       }
-      valid.push_back(id);
+      valid.push_back(x);
     }
 
     if (valid.size() < FLAGS_user_min_watched ||
@@ -199,18 +214,27 @@ int main(int argc, char *argv[]) {
     ofs.write(suin.data(), suin.size());
     ofs.write(" ", 1);
 
+    ofs_ratio.write(suin.data(), suin.size());
+    ofs_ratio.write(" ", 1);
+
     size_t j = 0;
-    for (auto id : valid) {
+    for (auto &x : valid) {
+      int id = x.first;
       auto &rowkey = ids[id];
       ofs.write(rowkey.data(), rowkey.size());
+      auto sr = std::to_string(x.second);
+      ofs_ratio.write(sr.data(), sr.size());
+
       if (j != p.second.size() - 1) {
         ofs.write(" ", 1);
+        ofs_ratio.write(" ", 1);
       }
       ++j;
     }
 
     if (i != histories.size() - 1) {
       ofs.write("\n", 1);
+      ofs_ratio.write("\n", 1);
     }
     ++i;
 

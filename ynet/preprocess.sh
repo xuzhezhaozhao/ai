@@ -22,6 +22,7 @@ min_count=5
     -only_video=true \
     -interval=1000000 \
     -output_user_watched_file=${preprocessed} \
+    -output_user_watched_ratio_file=${preprocessed}.watched_ratio \
     -user_min_watched=10 \
     -user_max_watched=1024 \
     -user_abnormal_watched_thr=2048 \
@@ -58,8 +59,6 @@ utils/fasttext \
     -t 1e-4 \
     -lrUpdateRate 100
 
-watched_size=5
-max_per_user=100
 tf_input=${input}.tf
 python utils/vec2binary.py \
     --input ${fast_output}.vec \
@@ -71,10 +70,13 @@ python utils/vec2binary.py \
     #--output ${tf_input}.filterd \
     #--dictfile ${tf_input}.dict
 
+max_per_user=100
+watched_size=5
 python utils/records2binary.py \
     --input_records ${preprocessed} \
+    --input_dict_file ${tf_input}.dict \
+    --input_watched_raito_file ${preprocessed}.watched_ratio \
     --output_watched ${tf_input}.watched \
     --output_predicts ${tf_input}.predicts \
-    --input_dict_file ${tf_input}.dict \
     --watched_size ${watched_size} \
     --max_per_user ${max_per_user}

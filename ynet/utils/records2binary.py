@@ -130,6 +130,13 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        '--input_watched_raito_file',
+        type=str,
+        default='',
+        help='Input watched ratio file for PCTR.'
+    )
+
+    parser.add_argument(
         '--binary',
         type=bool,
         default=False,
