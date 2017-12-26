@@ -18,7 +18,7 @@ DEFINE_int32(interval, 1000000, "interval steps to print info");
 DEFINE_string(output_user_watched_file, "user_watched.out",
               "output user watched file");
 
-DEFINE_string(output_user_watched_ratio_file, "",
+DEFINE_string(output_user_watched_ratio_file, "user_watched_ratio.out",
               "output user watched time ratio file for PCTR");
 
 DEFINE_int32(user_min_watched, 20, "");
