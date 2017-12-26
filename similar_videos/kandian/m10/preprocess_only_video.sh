@@ -8,12 +8,9 @@ cd ${MYDIR}
 raw_data_dir=raw_data1
 data_dir=data1
 
+rm -rf ${raw_data_dir}
+
 rm -rf ${data_dir}.bak
-rm -rf ${raw_data_dir}.bak
-if [ -d ${raw_data_dir} ]; then
-  echo "backup ${raw_data_dir} ..."
-  mv ${raw_data_dir} ${raw_data_dir}.bak
-fi
 if [ -d ${data_dir} ]; then
   echo "backup ${data_dir} ..."
   mv ${data_dir} ${data_dir}.bak
@@ -40,6 +37,9 @@ echo "transform sorted file ..."
 user_min_watched=20
 user_max_watched=512
 user_abnormal_watched_thr=2048
+user_effective_watched_time_thr=20
+user_effective_watched_ratio_thr=0.3
+
 preprocessed=${input}.preprocessed
 ./preprocess/build/src/preprocess \
 	-raw_input=${sorted_file} \
@@ -49,7 +49,11 @@ preprocessed=${input}.preprocessed
 	-output_user_watched_file=${preprocessed} \
 	-user_min_watched=${user_min_watched} \
 	-user_max_watched=${user_max_watched} \
-	-user_abnormal_watched_thr=${user_abnormal_watched_thr}
+	-user_abnormal_watched_thr=${user_abnormal_watched_thr} \
+	-supress_hot_arg1=8 \
+	-supress_hot_arg2=3 \
+        -user_effective_watched_time_thr=${user_effective_watched_time_thr} \
+        -user_effective_watched_ratio_thr=${user_effective_watched_ratio_thr}
 
 shuf -o ${preprocessed}.shuf ${preprocessed}
 
@@ -58,19 +62,19 @@ fast_model=${preprocessed}.shuf
 minCount=50
 lr=0.025
 dim=100
-ws=40
+ws=15
 epoch=5
 neg=5
 bucket=2000000
 minn=0
 maxn=0
-thread=44
+thread=47
 ./utils/fasttext skipgram \
 	-input ${preprocessed}.shuf \
 	-output ${fast_model} \
 	-lr ${lr} \
   	-dim ${dim} \
-	 -ws ${ws} \
+	-ws ${ws} \
 	-epoch ${epoch} \
 	-minCount ${minCount} \
 	-neg ${neg} \
@@ -80,7 +84,9 @@ thread=44
 	-maxn ${maxn} \
 	-thread ${thread} \
 	-t 1e-4 \
-	-lrUpdateRate 100
+	-lrUpdateRate 100 >fasttext.log 2>&1
 
 echo "generate fasttext dict ..."
 awk 'NR>2{print $1}' ${fast_model}.vec > ${fast_model}.dict
+
+./utils/sendupdate -modid=907457 -cmdid=65536

@@ -5,28 +5,7 @@ set -e
 MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
-input=$1
-
-# min items per user
-kmin=31
-
-# max items per user
-kmax=300
-
-# fasttext args
-minCount=30
-dim=200
-
-watched_size=20
-max_per_user=100
-ws=10
-epoch=5
-neg=5
-thread=4
-
-#echo 'delete csv file header ...'
-sed "1d" ${input} > ${input}.noheader
-input=${input}.noheader
+input=data/data.in
 
 echo "sort csv file with 1st field ..."
 sorted_file=${input}.sorted
@@ -36,9 +15,31 @@ rm -rf tmp_sort/
 
 preprocessed=${input}.preprocessed
 echo "transform sorted file to fastText format ..."
-python utils/transform.py ${sorted_file} ${preprocessed} ${kmin} ${kmax}
+./preprocess/build/src/preprocess \
+    -raw_input=${sorted_file} \
+    -with_header=false \
+    -only_video=true \
+    -interval=1000000 \
+    -output_user_watched_file=${preprocessed} \
+    -user_min_watched=10 \
+    -user_max_watched=1024 \
+    -user_abnormal_watched_thr=2048 \
+    -supress_hot_arg1=8 \
+    -supress_hot_arg2=3 \
+    -user_effective_watched_time_thr=20 \
+    -user_effective_watched_ratio_thr=0.3
+
 
 echo "fastText train ..."
+# fasttext args
+minCount=50
+dim=100
+watched_size=20
+max_per_user=100
+ws=10
+epoch=5
+neg=5
+thread=4
 fast_output=${input}
 utils/fasttext skipgram -input ${preprocessed} -output ${fast_output} -lr 0.025\
   -dim ${dim} -ws ${ws} -epoch ${epoch} -minCount ${minCount} -neg ${neg} -loss ns -bucket 2000000\
