@@ -40,10 +40,15 @@ echo "fetch soso tag dict from hdfs ..."
 sosodictaddr=`/data/hadoop_client/new/tdwdfsclient/bin/hadoop fs -Dhadoop.job.ugi=tdw_zhezhaoxu:zhao2017 -ls  hdfs://tl-if-nn-tdw.tencent-distribute.com:54310/stage/outface/TEG/g_teg_ainlp_ainlp/tag/tagid/tag_dict.* 2>/dev/null | awk '{print $8}' | sort | tail -n1`
 sosodictname=`basename ${sosodictaddr}`
 /data/hadoop_client/new/tdwdfsclient/bin/hadoop fs -Dhadoop.job.ugi=tdw_zhezhaoxu:zhao2017,g_sng_im_sng_imappdev_tribe -get ${sosodictaddr} ${rawdata_dir}/
-mv ${rawdata_dir}/${sosodictname} ${rawdata_dir}/soso_tagdict.csv
+# mv ${rawdata_dir}/${sosodictname} ${rawdata_dir}/soso_tagdict.csv
+iconv -f gb18030 -t utf-8 ${rawdata_dir}/${sosodictname} > ${data_dir}/soso_tagdict.csv.utf8
 
 
 echo "train classifier ..."
-./preprocess_classifier.sh
-./preprocess_classifier_with_article.sh
 ./preprocess_records.sh
+./preprocess_classifier.sh
+./preprocess_classifier_only_article.sh
+./preprocess_classifier_with_article.sh
+
+echo "send udp ..."
+./utils/sendupdate -modid=900481 -cmdid=65536

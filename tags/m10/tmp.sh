@@ -2,39 +2,37 @@
 
 set -e
 
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd ${MYDIR}
+
+
 rawdata_dir=raw_data
 data_dir=data
 
-ft_in=${data_dir}/classifier_only_article.in
-python classifier.py \
-    --input_video_tags_file ${rawdata_dir}/article_tags.csv \
-    --input_tag_info_file ${rawdata_dir}/taginfo.csv \
-    --min_labels 1 \
-    --sort_tags true \
-    --output_info ${ft_in} \
-    --output_label_dict_file ${data_dir}/classinfo.in \
-    --output_classmap_file ${data_dir}/classmap.in
+input=${rawdata_dir}/records.csv
 
+output=${data_dir}/`basename ${input}`
 
-shuf -o ${ft_in}.shuf ${ft_in}
+output_tags=${data_dir}/records_tags.in
+
+echo 'shuf ...'
 
 
 # fasttext
-minCount=10
+ft_in=${output_tags}.shuf
+minCount=300
 minn=0
 maxn=0
-thread=4
+thread=47
 dim=100
-ws=15
+ws=20
 epoch=5
 neg=5
 lr=0.025
 
-input=${ft_in}.shuf
-
-utils/fasttext supervised \
-    -input ${input} \
-    -output ${input} \
+utils/fasttext skipgram \
+    -input ${ft_in} \
+    -output ${ft_in} \
     -lr ${lr} \
     -dim ${dim} \
     -ws ${ws} \
@@ -48,15 +46,4 @@ utils/fasttext supervised \
     -thread ${thread} \
     -t 1e-4 \
     -lrUpdateRate 100  \
-    && awk 'NR>2{print $1}' ${input}.vec > ${input}.dict
-
-# cd ./generate_synonyms/
-# mkdir -p build
-# cd build
-# cmake ..
-# make
-# cd ../../
-./generate_synonyms/build/src/generate_synonyms \
-    ${input}.bin \
-    ${input}.dict \
-    ${input}.classindex
+    && awk 'NR>2{print $1}' ${ft_in}.vec > ${ft_in}.dict

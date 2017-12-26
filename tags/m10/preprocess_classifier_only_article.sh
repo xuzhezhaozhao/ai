@@ -5,15 +5,16 @@ set -e
 rawdata_dir=raw_data
 data_dir=data
 
-ft_in=${data_dir}/classifier.in
+ft_in=${data_dir}/classifier_only_article.in
 python classifier.py \
-    --input_video_tags_file ${rawdata_dir}/video_tags.csv \
+    --input_article_tags_file ${rawdata_dir}/article_tags.csv \
     --input_tag_info_file ${rawdata_dir}/taginfo.csv \
     --min_labels 1 \
     --sort_tags true \
     --output_info ${ft_in} \
     --output_label_dict_file ${ft_in}.classinfo \
     --output_classmap_file ${ft_in}.classmap
+
 
 shuf -o ${ft_in}.shuf ${ft_in}
 

@@ -1,8 +1,8 @@
 
-#include <gflags/gflags.h>
 #include <assert.h>
-#include <time.h>
+#include <gflags/gflags.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include <fstream>
 #include <iostream>
@@ -21,6 +21,9 @@ DEFINE_string(output_user_watched_file, "user_watched.out",
 DEFINE_int32(user_min_watched, 20, "");
 // 截断至此大小
 DEFINE_int32(user_max_watched, 512, "");
+
+DEFINE_double(user_effective_watched_time_thr, 20.0, "");
+DEFINE_double(user_effective_watched_ratio_thr, 0.3, "");
 
 // 超过这个值的记录直接丢弃
 DEFINE_int32(user_abnormal_watched_thr, 2048, "");
@@ -46,79 +49,6 @@ static std::vector<std::string> split(const std::string &s,
     result.push_back(s.substr(pos1));
   }
   return result;
-}
-
-void precess(int tid) {
-  std::ifstream ifs(FLAGS_raw_input);
-  if (!ifs.is_open()) {
-    std::cerr << "open raw input data file [" << FLAGS_raw_input << "] failed."
-              << std::endl;
-    exit(-1);
-  }
-
-  std::map<unsigned long, std::vector<int>> histories;
-  std::map<std::string, int> id2int;
-  std::vector<std::string> ids;
-
-  std::string line;
-  int lineprocessed = 0;
-  int ndirty = 0;
-  std::map<int, uint32_t> rowkeycount;
-  uint64_t total = 0;
-
-  while (!ifs.eof()) {
-    std::getline(ifs, line);
-    ++lineprocessed;
-    if (FLAGS_with_header && lineprocessed == 1) {
-      continue;
-    }
-    if (line.empty()) {
-      continue;
-    }
-    auto tokens = split(line, ",");
-    if (tokens.size() < 6) {
-      ++ndirty;
-      continue;
-    }
-    bool isempty = false;
-    for (int i = 0; i < 6; ++i) {
-      if (tokens[i] == "") {
-        isempty = true;
-        break;
-      }
-    }
-    if (isempty) {
-      ++ndirty;
-      continue;
-    }
-
-    unsigned long uin = std::stoul(tokens[1]);
-    const std::string &rowkey = tokens[2];
-    int isvideo = std::stoi(tokens[3]);
-
-    if (!isvideo && FLAGS_only_video) {
-      continue;
-    }
-
-    if (id2int.find(rowkey) == id2int.end()) {
-      id2int[rowkey] = static_cast<int>(ids.size());
-      ids.push_back(rowkey);
-    }
-    int id = id2int[rowkey];
-
-    if (!histories[uin].empty() && histories[uin].back() == id) {
-      // duplicate watched or error reported
-      continue;
-    }
-
-    histories[uin].push_back(id);
-    ++rowkeycount[id];
-    ++total;
-
-    if (lineprocessed % FLAGS_interval == 0) {
-      std::cerr << lineprocessed << " lines processed." << std::endl;
-    }
-  }
 }
 
 int main(int argc, char *argv[]) {
@@ -169,12 +99,32 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-    unsigned long uin = std::stoul(tokens[1]);
+    unsigned long uin = 0;
+    int isvideo = 0;
     const std::string &rowkey = tokens[2];
-    int isvideo = std::stoi(tokens[3]);
+    double video_duration = 0.0;
+    double watched_time = 0.0;
+    try {
+      isvideo = std::stoi(tokens[3]);
+      uin = std::stoul(tokens[1]);
+      video_duration = std::stod(tokens[4]);
+      watched_time = std::stod(tokens[5]);
+    } catch (const std::exception &e) {
+      ++ndirty;
+      continue;
+    }
 
     if (!isvideo && FLAGS_only_video) {
       continue;
+    }
+
+    if (isvideo && video_duration != 0.0) {
+      // 过滤出有效观看视频
+      double r = watched_time / video_duration;
+      if (watched_time < FLAGS_user_effective_watched_time_thr &&
+          r < FLAGS_user_effective_watched_ratio_thr) {
+        continue;
+      }
     }
 
     if (id2int.find(rowkey) == id2int.end()) {
