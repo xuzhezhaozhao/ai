@@ -5,32 +5,31 @@ set -e
 MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
-raw_data_dir=raw_data1
-data_dir=data1
+raw_data_dir=tmp_hdfs/data1
+data_dir=data1_ing
+final_data_dir=data1
 
-rm -rf ${raw_data_dir}
-
-rm -rf ${data_dir}.bak
-if [ -d ${data_dir} ]; then
-  echo "backup ${data_dir} ..."
-  mv ${data_dir} ${data_dir}.bak
-fi
-
+parallel=47
 
 echo "fetch data from hdfs ..."
-/data/hadoop_client/new/tdwdfsclient/bin/hadoop fs -Dhadoop.job.ugi=tdw_zhezhaoxu:zhao2017,g_sng_im_sng_imappdev_tribe -get hdfs://ss-sng-dc-v2/stage/outface/SNG/g_sng_im_sng_imappdev_tribe/zhezhaoxu/kandian_similar_videos_csv/data1 .
+rm -rf tmp_hdfs
+mkdir -p tmp_hdfs
+/data/hadoop_client/new/tdwdfsclient/bin/hadoop fs -Dhadoop.job.ugi=tdw_zhezhaoxu:zhao2017,g_sng_im_sng_imappdev_tribe -get hdfs://ss-sng-dc-v2/stage/outface/SNG/g_sng_im_sng_imappdev_tribe/zhezhaoxu/kandian_similar_videos_csv/data1 tmp_hdfs
 
-mv data1 ${raw_data_dir}
+let sz=`du -sh tmp_hdfs/ | awk -F 'G' '{print $1}'`
+if [ $sz -le 30 ]; then
+   echo "fetch hdfs may be failed, size = ${sz}G"
+   exit 1
+fi
+
 mkdir -p ${data_dir}
-
 input=${data_dir}/data.in
 cat ${raw_data_dir}/part* > ${input}
-
 
 sorted_file=${input}.sorted
 echo "sort input file ..."
 mkdir -p tmp_sort/
-sort -T tmp_sort/ -t ',' -k 1 --parallel=44 ${input} -o ${sorted_file}
+sort -T tmp_sort/ -t ',' -k 1 --parallel=${parallel} ${input} -o ${sorted_file}
 rm -rf tmp_sort/
 
 echo "transform sorted file ..."
@@ -38,7 +37,7 @@ user_min_watched=20
 user_max_watched=512
 user_abnormal_watched_thr=2048
 user_effective_watched_time_thr=20
-user_effective_watched_ratio_thr=0.3
+user_effective_watched_ratio_thr=0.8
 
 preprocessed=${input}.preprocessed
 ./preprocess/build/src/preprocess \
@@ -68,7 +67,8 @@ neg=5
 bucket=2000000
 minn=0
 maxn=0
-thread=47
+thread=${parallel}
+ts=`date '+%s'`
 ./utils/fasttext skipgram \
 	-input ${preprocessed}.shuf \
 	-output ${fast_model} \
@@ -84,9 +84,42 @@ thread=47
 	-maxn ${maxn} \
 	-thread ${thread} \
 	-t 1e-4 \
-	-lrUpdateRate 100 >fasttext.log 2>&1
+	-lrUpdateRate 100 >fasttext.log.${ts} 2>&1
 
 echo "generate fasttext dict ..."
 awk 'NR>2{print $1}' ${fast_model}.vec > ${fast_model}.dict
+
+
+rm -rf ${fast_model}.query.*
+echo "split query list ..."
+split -d -n l/${parallel} ${fast_model}.dict ${fast_model}.query.
+
+echo "fasttext nn ..."
+nn_cnt=100
+FASTTEST=./utils/fasttext
+
+rm -rf ${fast_model}.query.*.result
+rm -rf ${fast_model}.result
+queryfiles=`ls ${fast_model}.query.*`
+for queryfile in ${queryfiles[@]}
+do
+    echo ${queryfile}
+    ${FASTTEST} nn ${fast_model}.bin ${nn_cnt} < ${queryfile} > ${queryfile}.result &
+done
+
+for queryfile in ${queryfiles[@]}
+do
+    echo "${queryfile} wait ..."
+    wait
+done
+
+cat ${fast_model}.query.*.result > ${fast_model}.result
+rm -rf ${fast_model}.query.*
+
+rm -rf ${final_data_dir}.bak
+if [ -d ${final_data_dir} ]; then
+    mv ${final_data_dir} ${final_data_dir}.bak
+fi
+mv ${data_dir} ${final_data_dir}
 
 ./utils/sendupdate -modid=907457 -cmdid=65536
