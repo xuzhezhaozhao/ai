@@ -9,7 +9,7 @@ ft_in=${data_dir}/classifier.in
 python classifier.py \
     --input_video_tags_file ${rawdata_dir}/video_tags.csv \
     --input_tag_info_file ${rawdata_dir}/taginfo.csv \
-    --min_labels 1 \
+    --min_tags 3 \
     --sort_tags true \
     --output_info ${ft_in} \
     --output_label_dict_file ${ft_in}.classinfo \
@@ -19,7 +19,7 @@ shuf -o ${ft_in}.shuf ${ft_in}
 
 
 # fasttext
-minCount=10
+minCount=1
 minn=0
 maxn=0
 thread=47

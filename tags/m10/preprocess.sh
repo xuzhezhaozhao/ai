@@ -47,7 +47,6 @@ sosodictname=`basename ${sosodictaddr}`
 # mv ${rawdata_dir}/${sosodictname} ${rawdata_dir}/soso_tagdict.csv
 iconv -f gb18030 -t utf-8 ${rawdata_dir}/${sosodictname} > ${data_dir}/soso_tagdict.csv.utf8
 
-
 echo "train classifier ..."
 ./preprocess_records.sh
 ./preprocess_classifier.sh
