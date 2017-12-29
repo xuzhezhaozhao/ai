@@ -19,7 +19,7 @@ def main():
             except Exception:
                 print("Exception: {}".format(line.encode('utf-8')))
 
-            if index % 500000:
+            if index % 500000 == 0:
                 print("{} lines processed".format(index))
 
 
