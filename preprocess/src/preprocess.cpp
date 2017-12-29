@@ -3,6 +3,8 @@
 #include <gflags/gflags.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
+#include <stdio.h>
 
 #include <fstream>
 #include <iostream>
@@ -40,20 +42,12 @@ DEFINE_int32(threads, 1, "");
 // 出现次数小于该值则丢弃
 DEFINE_int32(min_count, 0, "");
 
-static std::vector<std::string> split(const std::string &s,
-                                      const std::string &delim) {
+static std::vector<std::string> split(char *s, const char *sep) {
   std::vector<std::string> result;
-
-  size_t pos1 = 0;
-  size_t pos2 = s.find(delim);
-  while (std::string::npos != pos2) {
-    result.push_back(s.substr(pos1, pos2 - pos1));
-
-    pos1 = pos2 + delim.size();
-    pos2 = s.find(delim, pos1);
-  }
-  if (pos1 != s.length()) {
-    result.push_back(s.substr(pos1));
+  char *p = strtok(s, sep);
+  while (p) {
+    result.push_back(p);
+    p = strtok(NULL, sep);
   }
   return result;
 }
@@ -78,7 +72,6 @@ int main(int argc, char *argv[]) {
   std::map<std::string, int> id2int;
   std::vector<std::string> ids;
 
-  std::string line;
   int64_t lineprocessed = 0;
   int ndirty = 0;
   std::map<int, uint32_t> rowkeycount;
@@ -86,15 +79,18 @@ int main(int argc, char *argv[]) {
 
   std::map<int, std::pair<double, double>> video_play_ratios;
 
+  const int BUFFSIZE = 256;
+  char line[BUFFSIZE];
   while (!ifs.eof()) {
-    std::getline(ifs, line);
+    ifs.getline(line, BUFFSIZE);
     ++lineprocessed;
     if (FLAGS_with_header && lineprocessed == 1) {
       continue;
     }
-    if (line.empty()) {
+    if (line[0] == '\0') {
       continue;
     }
+
     auto tokens = split(line, ",");
     if (tokens.size() < 6) {
       ++ndirty;

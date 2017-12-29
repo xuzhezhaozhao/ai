@@ -1,7 +1,7 @@
 
 sorted_file=mini.in
 min_count=50
-preprocessed=mini.in.preprocessed
+preprocessed=mini.in.preprocessed.2
 ./build/src/preprocess \
     -raw_input=${sorted_file} \
     -with_header=false \
