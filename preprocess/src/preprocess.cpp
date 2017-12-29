@@ -58,6 +58,10 @@ static std::vector<std::string> split(const std::string &s,
   return result;
 }
 
+void processthread() {
+
+}
+
 int main(int argc, char *argv[]) {
   google::ParseCommandLineFlags(&argc, &argv, false);
 
@@ -71,7 +75,6 @@ int main(int argc, char *argv[]) {
   }
 
   std::map<uint64_t, std::vector<std::pair<int, float>>> histories;
-
   std::map<std::string, int> id2int;
   std::vector<std::string> ids;
 
