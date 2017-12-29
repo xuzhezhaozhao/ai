@@ -9,9 +9,12 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <atomic>
+#include <mutex>
+#include <thread>
 
 DEFINE_string(raw_input, "", "raw input data, user pv from tdw");
-DEFINE_bool(with_header, true, "raw input data with header");
+DEFINE_bool(with_header, false, "raw input data with header");
 DEFINE_bool(only_video, true, "only user video pv, exclude article pv.");
 DEFINE_int32(interval, 1000000, "interval steps to print info");
 
@@ -40,6 +43,18 @@ DEFINE_int32(threads, 1, "");
 // 出现次数小于该值则丢弃
 DEFINE_int32(min_count, 0, "");
 
+
+std::map<uint64_t, std::vector<std::pair<int, float>>> histories;
+std::map<std::string, int> id2int;
+std::vector<std::string> ids;
+std::map<int, int> rowkeycount;
+std::map<int, std::pair<double, double>> video_play_ratios;
+
+std::mutex mtx;
+
+std::atomic<uint64_t> total;
+std::atomic<int> ndirty;
+
 static std::vector<std::string> split(const std::string &s,
                                       const std::string &delim) {
   std::vector<std::string> result;
@@ -58,34 +73,15 @@ static std::vector<std::string> split(const std::string &s,
   return result;
 }
 
-void processthread() {
-
-}
-
-int main(int argc, char *argv[]) {
-  google::ParseCommandLineFlags(&argc, &argv, false);
-
-  srand((uint32_t)time(NULL));
-
+static void processthread(int tid) {
   std::ifstream ifs(FLAGS_raw_input);
   if (!ifs.is_open()) {
     std::cerr << "open raw input data file [" << FLAGS_raw_input << "] failed."
               << std::endl;
     exit(-1);
   }
-
-  std::map<uint64_t, std::vector<std::pair<int, float>>> histories;
-  std::map<std::string, int> id2int;
-  std::vector<std::string> ids;
-
   std::string line;
   int64_t lineprocessed = 0;
-  int ndirty = 0;
-  std::map<int, uint32_t> rowkeycount;
-  uint64_t total = 0;
-
-  std::map<int, std::pair<double, double>> video_play_ratios;
-
   while (!ifs.eof()) {
     std::getline(ifs, line);
     ++lineprocessed;
@@ -96,21 +92,6 @@ int main(int argc, char *argv[]) {
       continue;
     }
     auto tokens = split(line, ",");
-    if (tokens.size() < 6) {
-      ++ndirty;
-      continue;
-    }
-    bool isempty = false;
-    for (int i = 0; i < 6; ++i) {
-      if (tokens[i] == "") {
-        isempty = true;
-        break;
-      }
-    }
-    if (isempty) {
-      ++ndirty;
-      continue;
-    }
 
     unsigned long uin = 0;
     int isvideo = 0;
@@ -118,8 +99,19 @@ int main(int argc, char *argv[]) {
     double video_duration = 0.0;
     double watched_time = 0.0;
     try {
-      isvideo = std::stoi(tokens[3]);
       uin = std::stoul(tokens[1]);
+    } catch (const std::exception &e) {
+      ++ndirty;
+      continue;
+    }
+
+    int mid = (uin / 1000) % FLAGS_threads;
+    if (mid != tid) {
+      continue;
+    }
+
+    try {
+      isvideo = std::stoi(tokens[3]);
       video_duration = std::stod(tokens[4]);
       watched_time = std::stod(tokens[5]);
     } catch (const std::exception &e) {
@@ -131,17 +123,21 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
+    mtx.lock();
     if (id2int.find(rowkey) == id2int.end()) {
       id2int[rowkey] = static_cast<int>(ids.size());
       ids.push_back(rowkey);
     }
     int id = id2int[rowkey];
+    mtx.unlock();
 
     double r = 0;
     if (isvideo && video_duration != 0.0) {
       // 统计视频播放比率
+      mtx.lock();
       video_play_ratios[id].first += watched_time;
       video_play_ratios[id].second += video_duration;
+      mtx.unlock();
 
       // 过滤出有效观看视频
       r = watched_time / video_duration;
@@ -151,24 +147,45 @@ int main(int argc, char *argv[]) {
       }
     }
 
+    mtx.lock();
     if (!histories[uin].empty() && histories[uin].back().first == id) {
       // duplicate watched or error reported
+      mtx.unlock();
       continue;
     }
 
     histories[uin].push_back({id, r});
     ++rowkeycount[id];
+    mtx.unlock();
     ++total;
 
     if (lineprocessed % FLAGS_interval == 0) {
       std::cerr << lineprocessed << " lines processed." << std::endl;
     }
   }
+}
+
+static void read_raw_data() {
+  std::vector<std::thread> threads;
+  for (int i = 0; i < FLAGS_threads; ++i) {
+    threads.push_back(std::thread(processthread, i));
+  }
+
+  for (int i = 0; i < FLAGS_threads; ++i) {
+    threads[i].join();
+  }
 
   std::cerr << "user number: " << histories.size() << std::endl;
   std::cerr << "dirty lines number: " << ndirty << std::endl;
-  std::cerr << "write user watched to file ..." << std::endl;
+}
 
+int main(int argc, char *argv[]) {
+  google::ParseCommandLineFlags(&argc, &argv, false);
+  srand((uint32_t)time(NULL));
+
+  read_raw_data();
+
+  std::cerr << "write user watched to file ..." << std::endl;
   std::ofstream ofs(FLAGS_output_user_watched_file);
   std::ofstream ofs_ratio(FLAGS_output_user_watched_ratio_file);
   std::ofstream ofs_video_play_ratio(FLAGS_output_video_play_ratio_file);
@@ -220,8 +237,8 @@ int main(int argc, char *argv[]) {
       valid.push_back(x);
     }
 
-    if (valid.size() < FLAGS_user_min_watched ||
-        valid.size() > FLAGS_user_abnormal_watched_thr) {
+    if ((int)valid.size() < FLAGS_user_min_watched ||
+        (int)valid.size() > FLAGS_user_abnormal_watched_thr) {
       continue;
     }
 
