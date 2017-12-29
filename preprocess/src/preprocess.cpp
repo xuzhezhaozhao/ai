@@ -20,6 +20,7 @@ DEFINE_string(output_user_watched_file, "user_watched.out",
 
 DEFINE_string(output_user_watched_ratio_file, "user_watched_ratio.out",
               "output user watched time ratio file for PCTR");
+DEFINE_string(output_video_play_ratio_file, "", "used for similar videos");
 
 DEFINE_int32(user_min_watched, 20, "");
 // 截断至此大小
@@ -69,16 +70,18 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
 
-  std::map<unsigned long, std::vector<std::pair<int, float>>> histories;
+  std::map<uint64_t, std::vector<std::pair<int, float>>> histories;
 
   std::map<std::string, int> id2int;
   std::vector<std::string> ids;
 
   std::string line;
-  int lineprocessed = 0;
+  int64_t lineprocessed = 0;
   int ndirty = 0;
   std::map<int, uint32_t> rowkeycount;
   uint64_t total = 0;
+
+  std::map<int, std::pair<double, double>> video_play_ratios;
 
   while (!ifs.eof()) {
     std::getline(ifs, line);
@@ -125,8 +128,18 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
+    if (id2int.find(rowkey) == id2int.end()) {
+      id2int[rowkey] = static_cast<int>(ids.size());
+      ids.push_back(rowkey);
+    }
+    int id = id2int[rowkey];
+
     double r = 0;
     if (isvideo && video_duration != 0.0) {
+      // 统计视频播放比率
+      video_play_ratios[id].first += watched_time;
+      video_play_ratios[id].second += video_duration;
+
       // 过滤出有效观看视频
       r = watched_time / video_duration;
       if (watched_time < FLAGS_user_effective_watched_time_thr &&
@@ -134,12 +147,6 @@ int main(int argc, char *argv[]) {
         continue;
       }
     }
-
-    if (id2int.find(rowkey) == id2int.end()) {
-      id2int[rowkey] = static_cast<int>(ids.size());
-      ids.push_back(rowkey);
-    }
-    int id = id2int[rowkey];
 
     if (!histories[uin].empty() && histories[uin].back().first == id) {
       // duplicate watched or error reported
@@ -157,10 +164,11 @@ int main(int argc, char *argv[]) {
 
   std::cerr << "user number: " << histories.size() << std::endl;
   std::cerr << "dirty lines number: " << ndirty << std::endl;
-
   std::cerr << "write user watched to file ..." << std::endl;
+
   std::ofstream ofs(FLAGS_output_user_watched_file);
   std::ofstream ofs_ratio(FLAGS_output_user_watched_ratio_file);
+  std::ofstream ofs_video_play_ratio(FLAGS_output_video_play_ratio_file);
   if (!ofs.is_open()) {
     std::cerr << "open output user watched file failed. filename = "
               << FLAGS_output_user_watched_file << std::endl;
@@ -170,6 +178,12 @@ int main(int argc, char *argv[]) {
   if (!ofs_ratio.is_open()) {
     std::cerr << "open output user watched ratio file failed. filename = "
               << FLAGS_output_user_watched_ratio_file << std::endl;
+    exit(-1);
+  }
+
+  if (!ofs_video_play_ratio.is_open()) {
+    std::cerr << "open output video play ratio file failed. filename = "
+              << FLAGS_output_video_play_ratio_file << std::endl;
     exit(-1);
   }
 
@@ -243,8 +257,33 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  std::cerr << "write video play ratios, size = " << video_play_ratios.size()
+            << std::endl;
+
+  for (auto &p : video_play_ratios) {
+    auto &rowkey = ids[p.first];
+    ofs_video_play_ratio.write(rowkey.data(), rowkey.size());
+
+    double total_watched_time = p.second.first;
+    double total_duration = p.second.second;
+
+    double ratio = 0;
+    if (total_duration != 0.0) {
+      ratio = total_watched_time / total_duration;
+    }
+
+    auto sratio = std::to_string(ratio);
+    ofs_video_play_ratio.write(" ", 1);
+    ofs_video_play_ratio.write(sratio.data(), sratio.size());
+    ofs_video_play_ratio.write("\n", 1);
+  }
+
   std::cerr << "noverfrep: " << noverfrep << std::endl;
   std::cerr << "total valid: " << total_valid << std::endl;
+
+  ofs.close();
+  ofs_ratio.close();
+  ofs_video_play_ratio.close();
 
   return 0;
 }
