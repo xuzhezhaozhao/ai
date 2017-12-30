@@ -52,13 +52,8 @@ static std::vector<std::string> split(char *s, const char *sep) {
   return result;
 }
 
-void processthread() {
-
-}
-
 int main(int argc, char *argv[]) {
   google::ParseCommandLineFlags(&argc, &argv, false);
-
   srand((uint32_t)time(NULL));
 
   std::ifstream ifs(FLAGS_raw_input);
@@ -69,12 +64,12 @@ int main(int argc, char *argv[]) {
   }
 
   std::map<uint64_t, std::vector<std::pair<int, float>>> histories;
-  std::map<std::string, int> id2int;
-  std::vector<std::string> ids;
+  std::map<std::string, int> id2int;  // rowkey 到 index
+  std::vector<std::string> ids;       // index 到 rowkey
+  std::map<int, uint32_t> rowkeycount; // 统计 rowkey 出现的次数
 
   int64_t lineprocessed = 0;
   int ndirty = 0;
-  std::map<int, uint32_t> rowkeycount;
   uint64_t total = 0;
 
   std::map<int, std::pair<double, double>> video_play_ratios;
