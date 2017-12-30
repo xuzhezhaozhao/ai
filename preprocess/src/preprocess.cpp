@@ -11,6 +11,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <set>
 
 DEFINE_string(raw_input, "", "raw input data, user pv from tdw");
 DEFINE_bool(with_header, true, "raw input data with header");
@@ -42,6 +43,9 @@ DEFINE_int32(threads, 1, "");
 // 出现次数小于该值则丢弃
 DEFINE_int32(min_count, 0, "");
 
+DEFINE_string(ban_algo_ids, "", ", sep");
+DEFINE_double(ban_algo_watched_ratio_thr, 0.8, "");
+
 static std::vector<std::string> split(char *s, const char *sep) {
   std::vector<std::string> result;
   char *p = strtok(s, sep);
@@ -56,6 +60,7 @@ int main(int argc, char *argv[]) {
   google::ParseCommandLineFlags(&argc, &argv, false);
   srand((uint32_t)time(NULL));
 
+  // open raw input
   std::ifstream ifs(FLAGS_raw_input);
   if (!ifs.is_open()) {
     std::cerr << "open raw input data file [" << FLAGS_raw_input << "] failed."
@@ -63,62 +68,56 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
 
-  std::map<uint64_t, std::vector<std::pair<int, float>>> histories;
+  std::map<uint64_t, std::vector<std::pair<int, float>>> histories; // uin -> {rowkey, watch_ratio}
   std::map<std::string, int> id2int;  // rowkey 到 index
   std::vector<std::string> ids;       // index 到 rowkey
   std::map<int, uint32_t> rowkeycount; // 统计 rowkey 出现的次数
+  std::map<int, std::pair<double, double>> video_play_ratios;
+
+  // generate ban algo ids
+  std::set<int> ban_algo_ids;
+  if (!FLAGS_ban_algo_ids.empty()) {
+    char buf[1024];
+    memcpy(buf, FLAGS_ban_algo_ids.data(), FLAGS_ban_algo_ids.size());
+    buf[FLAGS_ban_algo_ids.size()] = '\0';
+    auto algo_ids = split(buf, ",");
+    for (auto &algo_id : algo_ids) {
+      ban_algo_ids.insert(std::stoi(algo_id));
+    }
+  }
+
 
   int64_t lineprocessed = 0;
   int ndirty = 0;
   uint64_t total = 0;
-
-  std::map<int, std::pair<double, double>> video_play_ratios;
 
   const int BUFFSIZE = 256;
   char line[BUFFSIZE];
   while (!ifs.eof()) {
     ifs.getline(line, BUFFSIZE);
     ++lineprocessed;
-    if (FLAGS_with_header && lineprocessed == 1) {
-      continue;
-    }
-    if (line[0] == '\0') {
-      continue;
-    }
-
     auto tokens = split(line, ",");
-    if (tokens.size() < 6) {
-      ++ndirty;
-      continue;
-    }
-    bool isempty = false;
-    for (int i = 0; i < 6; ++i) {
-      if (tokens[i] == "") {
-        isempty = true;
-        break;
-      }
-    }
-    if (isempty) {
-      ++ndirty;
-      continue;
-    }
-
     unsigned long uin = 0;
     int isvideo = 0;
     const std::string &rowkey = tokens[2];
     double video_duration = 0.0;
     double watched_time = 0.0;
+    int algo_id = -123456;
     try {
       isvideo = std::stoi(tokens[3]);
       uin = std::stoul(tokens[1]);
-      video_duration = std::stod(tokens[4]);
-      watched_time = std::stod(tokens[5]);
+      if (isvideo) {
+        video_duration = std::stod(tokens[4]);
+        watched_time = std::stod(tokens[5]);
+        algo_id = std::stoi(tokens[8]);
+      }
     } catch (const std::exception &e) {
       ++ndirty;
       continue;
     }
 
     if (!isvideo && FLAGS_only_video) {
+      // 过滤图文
       continue;
     }
 
@@ -128,7 +127,7 @@ int main(int argc, char *argv[]) {
     }
     int id = id2int[rowkey];
 
-    double r = 0;
+    double r = 0.0;
     if (isvideo && video_duration != 0.0) {
       // 统计视频播放比率
       video_play_ratios[id].first += watched_time;
@@ -138,6 +137,13 @@ int main(int argc, char *argv[]) {
       r = watched_time / video_duration;
       if (watched_time < FLAGS_user_effective_watched_time_thr &&
           r < FLAGS_user_effective_watched_ratio_thr) {
+        continue;
+      }
+    }
+
+    if (ban_algo_ids.find(algo_id) != ban_algo_ids.end()) {
+      // 播放比必须大于一个阈值才不过滤
+      if (r < FLAGS_ban_algo_watched_ratio_thr) {
         continue;
       }
     }
