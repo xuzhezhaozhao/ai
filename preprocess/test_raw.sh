@@ -1,7 +1,7 @@
 
 sorted_file=mini.in
 min_count=50
-preprocessed=mini.in.preprocessed.ban
+preprocessed=mini.in.preprocessed
 ./build/src/preprocess \
     -raw_input=${sorted_file} \
     -with_header=false \
@@ -18,5 +18,4 @@ preprocessed=mini.in.preprocessed.ban
     -user_effective_watched_time_thr=5 \
     -user_effective_watched_ratio_thr=0.05 \
     -min_count=${min_count} \
-    -ban_algo_watched_ratio_thr=2.8 \
-    -ban_algo_ids='3323,3321,3313,3312,3311,3310,3309,3308,3307,3306,3305,3304,3303,3302,3301'
+    -ban_algo_watched_ratio_thr=0

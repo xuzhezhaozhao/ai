@@ -1,17 +1,17 @@
 
 #include <assert.h>
 #include <gflags/gflags.h>
-#include <stdlib.h>
-#include <time.h>
-#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
 
 DEFINE_string(raw_input, "", "raw input data, user pv from tdw");
 DEFINE_bool(with_header, true, "raw input data with header");
@@ -26,7 +26,7 @@ DEFINE_string(output_user_watched_ratio_file, "user_watched_ratio.out",
 DEFINE_string(output_video_play_ratio_file, "", "used for similar videos");
 
 DEFINE_int32(user_min_watched, 20, "");
-// 截断至此大小
+// TODO 截断至此大小
 DEFINE_int32(user_max_watched, 512, "");
 
 DEFINE_double(user_effective_watched_time_thr, 20.0, "");
@@ -44,7 +44,7 @@ DEFINE_int32(threads, 1, "");
 DEFINE_int32(min_count, 0, "");
 
 DEFINE_string(ban_algo_ids, "", ", sep");
-DEFINE_double(ban_algo_watched_ratio_thr, 0.8, "");
+DEFINE_double(ban_algo_watched_ratio_thr, 0, "");
 
 static std::vector<std::string> split(const std::string &s, char sep) {
   std::vector<std::string> result;
@@ -75,10 +75,11 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
 
-  std::map<uint64_t, std::vector<std::pair<int, float>>> histories; // uin -> {rowkey, watch_ratio}
-  std::map<std::string, int> id2int;  // rowkey 到 index
-  std::vector<std::string> ids;       // index 到 rowkey
-  std::map<int, uint32_t> rowkeycount; // 统计 rowkey 出现的次数
+  std::map<uint64_t, std::vector<std::pair<int, float>>>
+      histories;                        // uin -> {rowkey, watch_ratio}
+  std::map<std::string, int> id2int;    // rowkey 到 index
+  std::vector<std::string> ids;         // index 到 rowkey
+  std::map<int, uint32_t> rowkeycount;  // 统计 rowkey 出现的次数
   std::map<int, std::pair<double, double>> video_play_ratios;
 
   // generate ban algo ids
@@ -156,7 +157,6 @@ int main(int argc, char *argv[]) {
       }
     }
 
-
     if (!histories[uin].empty() && histories[uin].back().first == id) {
       // duplicate watched or error reported
       continue;
@@ -214,9 +214,10 @@ int main(int argc, char *argv[]) {
         continue;
       }
 
-      // supress hot
+      // 打压热门视频
       double freq = static_cast<double>(rowkeycount[id]) / total;
-      if (freq > FLAGS_supress_hot_arg1 * mean_freq) {
+      if (FLAGS_supress_hot_arg1 != -1 &&
+          freq > FLAGS_supress_hot_arg1 * mean_freq) {
         ++noverfrep;
         double r = rand() / static_cast<double>(RAND_MAX);
         if (r > (FLAGS_supress_hot_arg2 * mean_freq / freq)) {
