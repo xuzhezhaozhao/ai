@@ -46,12 +46,19 @@ DEFINE_int32(min_count, 0, "");
 DEFINE_string(ban_algo_ids, "", ", sep");
 DEFINE_double(ban_algo_watched_ratio_thr, 0.8, "");
 
-static std::vector<std::string> split(char *s, const char *sep) {
+static std::vector<std::string> split(const std::string &s, char sep) {
   std::vector<std::string> result;
-  char *p = strtok(s, sep);
-  while (p) {
-    result.push_back(p);
-    p = strtok(NULL, sep);
+
+  size_t pos1 = 0;
+  size_t pos2 = s.find(sep);
+  while (std::string::npos != pos2) {
+    result.push_back(s.substr(pos1, pos2 - pos1));
+
+    pos1 = pos2 + 1;
+    pos2 = s.find(sep, pos1);
+  }
+  if (pos1 != s.length()) {
+    result.push_back(s.substr(pos1));
   }
   return result;
 }
@@ -77,32 +84,33 @@ int main(int argc, char *argv[]) {
   // generate ban algo ids
   std::set<int> ban_algo_ids;
   if (!FLAGS_ban_algo_ids.empty()) {
-    char buf[1024];
-    memcpy(buf, FLAGS_ban_algo_ids.data(), FLAGS_ban_algo_ids.size());
-    buf[FLAGS_ban_algo_ids.size()] = '\0';
-    auto algo_ids = split(buf, ",");
+    auto algo_ids = split(FLAGS_ban_algo_ids, ',');
     for (auto &algo_id : algo_ids) {
       ban_algo_ids.insert(std::stoi(algo_id));
     }
   }
 
+  std::cout << "ban size: " << ban_algo_ids.size() << std::endl;
 
   int64_t lineprocessed = 0;
   int ndirty = 0;
   uint64_t total = 0;
 
-  const int BUFFSIZE = 256;
-  char line[BUFFSIZE];
+  std::string line;
   while (!ifs.eof()) {
-    ifs.getline(line, BUFFSIZE);
+    std::getline(ifs, line);
     ++lineprocessed;
-    auto tokens = split(line, ",");
+    auto tokens = split(line, ',');
     unsigned long uin = 0;
     int isvideo = 0;
     const std::string &rowkey = tokens[2];
     double video_duration = 0.0;
     double watched_time = 0.0;
     int algo_id = -123456;
+    if (tokens.size() < 9) {
+      ++ndirty;
+      continue;
+    }
     try {
       isvideo = std::stoi(tokens[3]);
       uin = std::stoul(tokens[1]);
@@ -147,6 +155,7 @@ int main(int argc, char *argv[]) {
         continue;
       }
     }
+
 
     if (!histories[uin].empty() && histories[uin].back().first == id) {
       // duplicate watched or error reported
