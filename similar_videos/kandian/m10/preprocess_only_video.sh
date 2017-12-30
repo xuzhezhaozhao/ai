@@ -14,12 +14,14 @@ sorted_file=${input}.sorted
 parallel=47
 
 echo "transform sorted file ..."
-user_min_watched=20
+user_min_watched=10
 user_max_watched=512
 user_abnormal_watched_thr=2048
 user_effective_watched_time_thr=20
 user_effective_watched_ratio_thr=0.3
 min_count=50
+ban_algo_ids='3323,3321,3313,3312,3311,3310,3309,3308,3307,3306,3305,3304,3303,3302,3301'
+ban_algo_watched_ratio_thr=1.1
 
 preprocessed=${input}.preprocessed
 /data/preprocess/build/src/preprocess \
@@ -37,7 +39,9 @@ preprocessed=${input}.preprocessed
 	-supress_hot_arg2=3 \
         -user_effective_watched_time_thr=${user_effective_watched_time_thr} \
         -user_effective_watched_ratio_thr=${user_effective_watched_ratio_thr} \
-        -min_count=${min_count}
+        -min_count=${min_count} \
+        -ban_algo_watched_ratio_thr=${ban_algo_watched_ratio_thr} \
+        -ban_algo_ids=${ban_algo_ids}
 
 
 echo "fastText train ..."
