@@ -24,6 +24,7 @@ DEFINE_string(output_user_watched_file, "user_watched.out",
 DEFINE_string(output_user_watched_ratio_file, "user_watched_ratio.out",
               "output user watched time ratio file for PCTR");
 DEFINE_string(output_video_play_ratio_file, "", "used for similar videos");
+DEFINE_double(video_play_ratio_bias, 0.0, "");
 
 DEFINE_int32(user_min_watched, 20, "");
 // TODO 截断至此大小
@@ -140,7 +141,7 @@ int main(int argc, char *argv[]) {
     if (isvideo && video_duration != 0.0) {
       // 统计视频播放比率
       video_play_ratios[id].first += watched_time;
-      video_play_ratios[id].second += video_duration;
+      video_play_ratios[id].second += video_duration + FLAGS_video_play_ratio_bias;
 
       // 过滤出有效观看视频
       r = watched_time / video_duration;
