@@ -37,7 +37,8 @@ def main():
                 ratio * (1 - FLAGS.nn_score_weight)
 
             weighted_nn.append((weighted_score, rowkey))
-            if index != 0 and index % FLAGS.nn_k == 0:
+            if index != 0 and (index+1) % FLAGS.nn_k == 0:
+                weighted_nn.sort(reverse=True)
                 for item in weighted_nn:
                     weighted_score = item[0]
                     rowkey = item[1]
