@@ -31,8 +31,10 @@ def main():
                 ratio = '0.0'
             else:
                 ratio = play_ratios[rowkey]
-            fout.write(rowkey + ' ' + score + ' ' + ratio)
-            fout.write('\n')
+
+            mean = score * FLAGS.nn_score_weight + \
+                ratio * (1 - FLAGS.nn_score_weight)
+            fout.write(rowkey + ' ' + str(mean))
 
 
 if __name__ == "__main__":
@@ -54,6 +56,20 @@ if __name__ == "__main__":
         '--output_result_file',
         type=str,
         default='',
+        help=''
+    )
+
+    parser.add_argument(
+        '--nn_k',
+        type=int,
+        default=0,
+        help=''
+    )
+
+    parser.add_argument(
+        '--nn_score_weight',
+        type=float,
+        default=0.5,
         help=''
     )
 
