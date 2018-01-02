@@ -21,7 +21,7 @@ user_effective_watched_time_thr=20
 user_effective_watched_ratio_thr=0.3
 min_count=50
 ban_algo_ids='3323,3321,3313,3312,3311,3310,3309,3308,3307,3306,3305,3304,3303,3302,3301'
-ban_algo_watched_ratio_thr=1.1
+ban_algo_watched_ratio_thr=0.8
 
 preprocessed=${input}.preprocessed
 /data/preprocess/build/src/preprocess \
@@ -35,13 +35,14 @@ preprocessed=${input}.preprocessed
 	-user_min_watched=${user_min_watched} \
 	-user_max_watched=${user_max_watched} \
 	-user_abnormal_watched_thr=${user_abnormal_watched_thr} \
-	-supress_hot_arg1=8 \
+	-supress_hot_arg1=-1 \
 	-supress_hot_arg2=3 \
         -user_effective_watched_time_thr=${user_effective_watched_time_thr} \
         -user_effective_watched_ratio_thr=${user_effective_watched_ratio_thr} \
         -min_count=${min_count} \
         -ban_algo_watched_ratio_thr=${ban_algo_watched_ratio_thr} \
-        -ban_algo_ids=${ban_algo_ids}
+        -ban_algo_ids=${ban_algo_ids} \
+        -video_play_ratio_bias=30
 
 
 echo "fastText train ..."
@@ -72,7 +73,7 @@ ts=`date +%Y%m%d%H%M%S`
 	-maxn ${maxn} \
 	-thread ${thread} \
 	-t 1e-4 \
-	-lrUpdateRate 100 >fasttext.log.${ts} 2>&1
+	-lrUpdateRate 100 >log/fasttext.log.${ts} 2>&1
 
 echo "generate fasttext dict ..."
 awk 'NR>2{print $1}' ${fast_model}.vec > ${fast_model}.dict
@@ -83,7 +84,7 @@ echo "split query list ..."
 split -d -n l/${parallel} ${fast_model}.dict ${fast_model}.query.
 
 echo "fasttext nn ..."
-nn_cnt=100
+nn_k=100
 FASTTEST=./utils/fasttext
 
 rm -rf ${fast_model}.query.*.result
@@ -92,7 +93,7 @@ queryfiles=`ls ${fast_model}.query.*`
 for queryfile in ${queryfiles[@]}
 do
     echo ${queryfile}
-    ${FASTTEST} nn ${fast_model}.bin ${nn_cnt} < ${queryfile} > ${queryfile}.result &
+    ${FASTTEST} nn ${fast_model}.bin ${nn_k} < ${queryfile} > ${queryfile}.result &
 done
 
 for queryfile in ${queryfiles[@]}
@@ -101,8 +102,10 @@ do
     wait
 done
 
-cat ${fast_model}.query.*.result > ${fast_model}.result
+cat ${fast_model}.query.*.result > ${fast_model}.result.raw
 rm -rf ${fast_model}.query.*
+
+python add_play_ratio.py --input_play_ratio_file ${preprocessed}.play_raito --input_nn_result_file ${fast_model}.result.raw --output_result_file ${fast_model}.result --nn_k ${nn_k} --nn_score_weight 0.5
 
 rm -rf ${final_data_dir}.bak
 if [ -d ${final_data_dir} ]; then
