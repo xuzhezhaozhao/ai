@@ -43,9 +43,7 @@ def model_fn(features, labels, mode, params):
             mode=mode,
             predictions={
                 "predicts": predictions.indices,
-                # "scores": tf.exp(predictions.values),
-                "scores": predictions.values,
-                "probs": probs
+                "scores": predictions.values
             },
             export_outputs={
                 'predicts': tf.estimator.export.PredictOutput(
