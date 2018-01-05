@@ -50,6 +50,23 @@ DEFINE_int32(min_count, 0, "");
 DEFINE_string(ban_algo_ids, "", ", sep");
 DEFINE_double(ban_algo_watched_ratio_thr, 0, "");
 
+struct VideoInfo {
+  double total_watched_time;
+  double total_duration;
+
+  uint64_t click_times;
+  uint64_t effective_click_times;
+};
+
+// uin ==> {rowkey, watch_ratio}
+static std::map<uint64_t, std::vector<std::pair<int, float>>> histories;
+static std::map<std::string, int> rowkey2int;    // rowkey 到 index
+static std::vector<std::string> rowkeys;         // index 到 rowkey
+static std::map<int, uint32_t> rowkeycount;  // 统计 rowkey 出现的次数
+static std::map<int, VideoInfo> video_info;
+static std::set<int> ban_algo_ids;
+static uint64_t total = 0;
+
 static std::vector<std::string> split(const std::string &s, char sep) {
   std::vector<std::string> result;
 
@@ -67,32 +84,14 @@ static std::vector<std::string> split(const std::string &s, char sep) {
   return result;
 }
 
-struct VideoInfo {
-  double total_watched_time;
-  double total_duration;
-
-  uint64_t click_times;
-  uint64_t effective_click_times;
-};
-
-// uin -> {rowkey, watch_ratio}
-static std::map<uint64_t, std::vector<std::pair<int, float>>> histories;
-static std::map<std::string, int> id2int;    // rowkey 到 index
-static std::vector<std::string> ids;         // index 到 rowkey
-static std::map<int, uint32_t> rowkeycount;  // 统计 rowkey 出现的次数
-static std::map<int, VideoInfo> video_info;
-static std::set<int> ban_algo_ids;
-static uint64_t total = 0;
-
 static void GenerateBanAlgoIds() {
-  // generate ban algo ids
   if (!FLAGS_ban_algo_ids.empty()) {
     auto algo_ids = split(FLAGS_ban_algo_ids, ',');
     for (auto &algo_id : algo_ids) {
       ban_algo_ids.insert(std::stoi(algo_id));
     }
   }
-  std::cout << "ban algo ids size: " << ban_algo_ids.size() << std::endl;
+  std::cerr << "ban algo ids size: " << ban_algo_ids.size() << std::endl;
 }
 
 static void OpenFileRead(const std::string &file, std::ifstream &ifs) {
@@ -123,16 +122,16 @@ static void ProcessRawInput() {
     std::getline(ifs, line);
     ++lineprocessed;
     auto tokens = split(line, ',');
+    if (tokens.size() < 9) {
+      ++ndirty;
+      continue;
+    }
     unsigned long uin = 0;
     int isvideo = 0;
     const std::string &rowkey = tokens[2];
     double video_duration = 0.0;
     double watched_time = 0.0;
     int algo_id = -123456;
-    if (tokens.size() < 9) {
-      ++ndirty;
-      continue;
-    }
     try {
       isvideo = std::stoi(tokens[3]);
       uin = std::stoul(tokens[1]);
@@ -151,11 +150,11 @@ static void ProcessRawInput() {
       continue;
     }
 
-    if (id2int.find(rowkey) == id2int.end()) {
-      id2int[rowkey] = static_cast<int>(ids.size());
-      ids.push_back(rowkey);
+    if (rowkey2int.find(rowkey) == rowkey2int.end()) {
+      rowkey2int[rowkey] = static_cast<int>(rowkeys.size());
+      rowkeys.push_back(rowkey);
     }
-    int id = id2int[rowkey];
+    int id = rowkey2int[rowkey];
 
     double r = 0.0;
     if (isvideo && video_duration != 0.0) {
@@ -215,7 +214,7 @@ static void WriteUserWatchedInfoFile() {
     for (auto &x : p.second) {
       int id = x.first;
 
-      assert((size_t)id < ids.size());
+      assert((size_t)id < rowkeys.size());
 
       if (rowkeycount[id] < FLAGS_min_count) {
         continue;
@@ -251,7 +250,7 @@ static void WriteUserWatchedInfoFile() {
     size_t j = 0;
     for (auto &x : valid) {
       int id = x.first;
-      auto &rowkey = ids[id];
+      auto &rowkey = rowkeys[id];
       ofs.write(rowkey.data(), rowkey.size());
       auto sr = std::to_string(x.second);
       ofs_ratio.write(sr.data(), sr.size());
@@ -287,7 +286,7 @@ static void WriteVideoPlayRatiosFile() {
   std::cerr << "write video play ratios, size = " << video_info.size() << std::endl;
 
   for (auto &p : video_info) {
-    auto &rowkey = ids[p.first];
+    auto &rowkey = rowkeys[p.first];
     ofs_video_play_ratio.write(rowkey.data(), rowkey.size());
 
     double total_watched_time = p.second.total_watched_time;
