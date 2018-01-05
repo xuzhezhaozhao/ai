@@ -36,7 +36,7 @@ def records2binary(recordsfile,
     fwatched = open(watchedfile, "wb")
     fpredicts = open(predictsfile, "wb")
 
-    for index, line in enumerate(open(recordsfile, "r")):
+    for lineindex, line in enumerate(open(recordsfile, "r")):
         tokens = line.strip().split(' ')
         records = tokens[1:]  # skip __label__
 
@@ -56,8 +56,8 @@ def records2binary(recordsfile,
             for index in indexs:
                 fwatched.write(struct.pack('<i', index))
             fpredicts.write(struct.pack('<i', D[records[w]]))
-            if index % 1000000 == 0:
-                print("{} lines processed ...".format(index))
+        if lineindex % 1000000 == 0:
+            print("{} lines processed ...".format(lineindex))
 
     fwatched.close()
     fpredicts.close()
