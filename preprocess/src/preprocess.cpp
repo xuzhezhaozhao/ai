@@ -67,12 +67,20 @@ static std::vector<std::string> split(const std::string &s, char sep) {
   return result;
 }
 
+struct VideoInfo {
+  double total_watched_time;
+  double total_duration;
+
+  uint64_t click_times;
+  uint64_t effective_click_times;
+};
+
 // uin -> {rowkey, watch_ratio}
 static std::map<uint64_t, std::vector<std::pair<int, float>>> histories;
 static std::map<std::string, int> id2int;    // rowkey 到 index
 static std::vector<std::string> ids;         // index 到 rowkey
 static std::map<int, uint32_t> rowkeycount;  // 统计 rowkey 出现的次数
-static std::map<int, std::pair<double, double>> video_play_ratios;
+static std::map<int, VideoInfo> video_info;
 static std::set<int> ban_algo_ids;
 static uint64_t total = 0;
 
@@ -152,8 +160,8 @@ static void ProcessRawInput() {
     double r = 0.0;
     if (isvideo && video_duration != 0.0) {
       // 统计视频播放比率
-      video_play_ratios[id].first += watched_time;
-      video_play_ratios[id].second += video_duration + FLAGS_video_play_ratio_bias;
+      video_info[id].total_watched_time += watched_time;
+      video_info[id].total_duration += video_duration + FLAGS_video_play_ratio_bias;
 
       // 过滤出有效观看视频
       r = watched_time / video_duration;
@@ -276,14 +284,14 @@ static void WriteUserWatchedInfoFile() {
 static void WriteVideoPlayRatiosFile() {
   std::ofstream ofs_video_play_ratio;
   OpenFileWrite(FLAGS_output_video_play_ratio_file, ofs_video_play_ratio);
-  std::cerr << "write video play ratios, size = " << video_play_ratios.size() << std::endl;
+  std::cerr << "write video play ratios, size = " << video_info.size() << std::endl;
 
-  for (auto &p : video_play_ratios) {
+  for (auto &p : video_info) {
     auto &rowkey = ids[p.first];
     ofs_video_play_ratio.write(rowkey.data(), rowkey.size());
 
-    double total_watched_time = p.second.first;
-    double total_duration = p.second.second;
+    double total_watched_time = p.second.total_watched_time;
+    double total_duration = p.second.total_duration;
 
     double ratio = 0;
     if (total_duration != 0.0) {
