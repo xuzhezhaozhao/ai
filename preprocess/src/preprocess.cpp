@@ -187,7 +187,7 @@ static void ProcessRawInput() {
 
     if (!histories[uin].empty() && histories[uin].back().first == id) {
       // duplicate watched or error reported
-      if (r != 0.0) {
+      if (r > histories[uin].back().second) {
         // 主 feeds 点击进来的视频会被报成图文
         // update watched ratio
         histories[uin].back().second = (float)r;

@@ -5,13 +5,6 @@ set -e
 MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
-rm -rf data.bak
-if [ -d 'data' ]; then
-  mv data data.bak
-fi
-
-/data/hadoop_client/new/tdwdfsclient/bin/hadoop fs -Dhadoop.job.ugi=tdw_zhezhaoxu:zhao2017,g_sng_im_sng_imappdev_tribe -get hdfs://ss-sng-dc-v2/stage/outface/SNG/g_sng_im_sng_imappdev_tribe/zhezhaoxu/similar_videos_csv/data .
-
 input=data.in
 output=${input}.fasttext
 
@@ -19,16 +12,13 @@ cat data/* > ${input}
 
 
 # max items per user
-klimit=1000
+klimit=5000
 # fasttext min count
-minCount=50
+minCount=100
 
 sorted_file=${input}.sorted
 
 echo "sort input file ..."
-mkdir -p tmp_sort/
-sort -T tmp_sort/ -t ',' -k 4 --parallel=24 ${input} -o ${sorted_file}
-rm -rf tmp_sort/
 
 echo "transform sorted file ..."
 ./transform.py ${sorted_file} ${output} ${klimit}
@@ -36,7 +26,7 @@ echo "transform sorted file ..."
 echo "fastText train ..."
 fast_model=${output}.model
 ./fasttext skipgram -input ${output} -output ${fast_model} -lr 0.025\
-  -dim 100 -ws 15 -epoch 5 -minCount ${minCount} -neg 5 -loss ns -bucket 2000000\
+  -dim 100 -ws 20 -epoch 5 -minCount ${minCount} -neg 5 -loss ns -bucket 2000000\
   -minn 0 -maxn 0 -thread 47 -t 1e-4 -lrUpdateRate 100
 
 echo "generate query list ..."
