@@ -13,19 +13,20 @@
 #include <string>
 #include <vector>
 
-DEFINE_string(raw_input, "", "raw input data, user pv from tdw");
+DEFINE_string(raw_input, "raw_input", "raw input data, user pv from tdw");
 DEFINE_bool(with_header, true, "raw input data with header");
 DEFINE_bool(only_video, true, "only user video pv, exclude article pv.");
 DEFINE_int32(interval, 1000000, "interval steps to print info");
 
-DEFINE_string(output_user_watched_file, "user_watched.out", "output user watched file");
+DEFINE_string(output_user_watched_file, "output_user_watched_file", "output user watched file");
 
-DEFINE_string(output_user_watched_ratio_file, "user_watched_ratio.out", "output user watched time ratio file for PCTR");
-DEFINE_string(output_video_play_ratio_file, "", "used for similar videos");
+DEFINE_string(output_user_watched_ratio_file, "output_user_watched_ratio_file", "output user watched time ratio file for PCTR");
+DEFINE_string(output_video_play_ratio_file, "output_video_play_ratio_file", "used for similar videos");
 
 // 视频和图文的 rowkey 词典文件
-DEFINE_string(output_video_dict_file, "", "");
-DEFINE_string(output_article_dict_file, "", "");
+DEFINE_string(output_video_dict_file, "output_video_dict_file", "");
+DEFINE_string(output_article_dict_file, "output_article_dict_file", "");
+DEFINE_string(output_video_click_file, "output_video_click_file", "");
 
 DEFINE_double(video_play_ratio_bias, 0.0, "");
 
@@ -66,6 +67,8 @@ static std::map<int, uint32_t> rowkeycount;  // 统计 rowkey 出现的次数
 static std::map<int, VideoInfo> video_info;
 static std::set<int> ban_algo_ids;
 static uint64_t total = 0;
+static std::set<int> all_videos;
+static std::set<int> all_articles;
 
 static std::vector<std::string> split(const std::string &s, char sep) {
   std::vector<std::string> result;
@@ -157,10 +160,12 @@ static void ProcessRawInput() {
     int id = rowkey2int[rowkey];
 
     double r = 0.0;
-    if (isvideo && video_duration != 0.0) {
+    if (isvideo && video_duration > 0.0) {
+      all_videos.insert(id);
       // 统计视频播放比率
       video_info[id].total_watched_time += watched_time;
       video_info[id].total_duration += video_duration + FLAGS_video_play_ratio_bias;
+      video_info[id].click_times += 1;
 
       // 过滤出有效观看视频
       r = watched_time / video_duration;
@@ -168,6 +173,9 @@ static void ProcessRawInput() {
           r < FLAGS_user_effective_watched_ratio_thr) {
         continue;
       }
+      video_info[id].effective_click_times += 1;
+    } else {
+      all_articles.insert(id);
     }
 
     if (ban_algo_ids.find(algo_id) != ban_algo_ids.end()) {
@@ -179,6 +187,11 @@ static void ProcessRawInput() {
 
     if (!histories[uin].empty() && histories[uin].back().first == id) {
       // duplicate watched or error reported
+      if (r != 0.0) {
+        // 主 feeds 点击进来的视频会被报成图文
+        // update watched ratio
+        histories[uin].back().second = (float)r;
+      }
       continue;
     }
 
@@ -280,14 +293,18 @@ static void WriteUserWatchedInfoFile() {
   ofs_ratio.close();
 }
 
-static void WriteVideoPlayRatiosFile() {
+static void WriteVideoInfoFile() {
   std::ofstream ofs_video_play_ratio;
+  std::ofstream ofs_click;
   OpenFileWrite(FLAGS_output_video_play_ratio_file, ofs_video_play_ratio);
+  OpenFileWrite(FLAGS_output_video_click_file, ofs_click);
+
   std::cerr << "write video play ratios, size = " << video_info.size() << std::endl;
 
   for (auto &p : video_info) {
     auto &rowkey = rowkeys[p.first];
     ofs_video_play_ratio.write(rowkey.data(), rowkey.size());
+    ofs_click.write(rowkey.data(), rowkey.size());
 
     double total_watched_time = p.second.total_watched_time;
     double total_duration = p.second.total_duration;
@@ -301,9 +318,48 @@ static void WriteVideoPlayRatiosFile() {
     ofs_video_play_ratio.write(" ", 1);
     ofs_video_play_ratio.write(sratio.data(), sratio.size());
     ofs_video_play_ratio.write("\n", 1);
+
+    auto sclick_times = std::to_string(p.second.click_times);
+    auto seffective_click_times = std::to_string(p.second.effective_click_times);
+    ofs_click.write(" ", 1);
+    ofs_click.write(sclick_times.data(), sclick_times.size());
+    ofs_click.write(" ", 1);
+    ofs_click.write(seffective_click_times.data(), seffective_click_times.size());
+    ofs_click.write("\n", 1);
   }
 
   ofs_video_play_ratio.close();
+  ofs_click.close();
+}
+
+static void WriteVideoDictFile() {
+  if (FLAGS_output_video_dict_file.empty()) {
+    return;
+  }
+  std::ofstream ofs;
+  std::cerr << "videos dict size = " << all_videos.size() << std::endl;
+  OpenFileWrite(FLAGS_output_video_dict_file, ofs);
+  for (auto id : all_videos) {
+    auto &rowkey = rowkeys[id];
+    ofs.write(rowkey.data(), rowkey.size());
+    ofs.write("\n", 1);
+  }
+  ofs.close();
+}
+
+static void WriteArticleDictFile() {
+  if (FLAGS_output_article_dict_file.empty()) {
+    return;
+  }
+  std::ofstream ofs;
+  OpenFileWrite(FLAGS_output_article_dict_file, ofs);
+  std::cerr << "articles dict size = " << all_articles.size() << std::endl;
+  for (auto id : all_articles) {
+    auto &rowkey = rowkeys[id];
+    ofs.write(rowkey.data(), rowkey.size());
+    ofs.write("\n", 1);
+  }
+  ofs.close();
 }
 
 int main(int argc, char *argv[]) {
@@ -314,7 +370,9 @@ int main(int argc, char *argv[]) {
   ProcessRawInput();
 
   WriteUserWatchedInfoFile();
-  WriteVideoPlayRatiosFile();
+  WriteVideoInfoFile();
+  WriteVideoDictFile();
+  WriteArticleDictFile();
 
   return 0;
 }
