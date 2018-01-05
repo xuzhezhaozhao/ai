@@ -18,12 +18,15 @@ DEFINE_bool(with_header, true, "raw input data with header");
 DEFINE_bool(only_video, true, "only user video pv, exclude article pv.");
 DEFINE_int32(interval, 1000000, "interval steps to print info");
 
-DEFINE_string(output_user_watched_file, "user_watched.out",
-              "output user watched file");
+DEFINE_string(output_user_watched_file, "user_watched.out", "output user watched file");
 
-DEFINE_string(output_user_watched_ratio_file, "user_watched_ratio.out",
-              "output user watched time ratio file for PCTR");
+DEFINE_string(output_user_watched_ratio_file, "user_watched_ratio.out", "output user watched time ratio file for PCTR");
 DEFINE_string(output_video_play_ratio_file, "", "used for similar videos");
+
+// 视频和图文的 rowkey 词典文件
+DEFINE_string(output_video_dict_file, "", "");
+DEFINE_string(output_article_dict_file, "", "");
+
 DEFINE_double(video_play_ratio_bias, 0.0, "");
 
 DEFINE_int32(user_min_watched, 20, "");
@@ -64,39 +67,48 @@ static std::vector<std::string> split(const std::string &s, char sep) {
   return result;
 }
 
-int main(int argc, char *argv[]) {
-  google::ParseCommandLineFlags(&argc, &argv, false);
-  srand((uint32_t)time(NULL));
+// uin -> {rowkey, watch_ratio}
+static std::map<uint64_t, std::vector<std::pair<int, float>>> histories;
+static std::map<std::string, int> id2int;    // rowkey 到 index
+static std::vector<std::string> ids;         // index 到 rowkey
+static std::map<int, uint32_t> rowkeycount;  // 统计 rowkey 出现的次数
+static std::map<int, std::pair<double, double>> video_play_ratios;
+static std::set<int> ban_algo_ids;
+static uint64_t total = 0;
 
-  // open raw input
-  std::ifstream ifs(FLAGS_raw_input);
-  if (!ifs.is_open()) {
-    std::cerr << "open raw input data file [" << FLAGS_raw_input << "] failed."
-              << std::endl;
-    exit(-1);
-  }
-
-  std::map<uint64_t, std::vector<std::pair<int, float>>>
-      histories;                        // uin -> {rowkey, watch_ratio}
-  std::map<std::string, int> id2int;    // rowkey 到 index
-  std::vector<std::string> ids;         // index 到 rowkey
-  std::map<int, uint32_t> rowkeycount;  // 统计 rowkey 出现的次数
-  std::map<int, std::pair<double, double>> video_play_ratios;
-
+static void GenerateBanAlgoIds() {
   // generate ban algo ids
-  std::set<int> ban_algo_ids;
   if (!FLAGS_ban_algo_ids.empty()) {
     auto algo_ids = split(FLAGS_ban_algo_ids, ',');
     for (auto &algo_id : algo_ids) {
       ban_algo_ids.insert(std::stoi(algo_id));
     }
   }
+  std::cout << "ban algo ids size: " << ban_algo_ids.size() << std::endl;
+}
 
-  std::cout << "ban size: " << ban_algo_ids.size() << std::endl;
+static void OpenFileRead(const std::string &file, std::ifstream &ifs) {
+  ifs.open(file);
+  if (!ifs.is_open()) {
+    std::cerr << "open file [" << file << "] to read failed." << std::endl;
+    exit(-1);
+  }
+}
+
+static void OpenFileWrite(const std::string &file, std::ofstream &ofs) {
+  ofs.open(file);
+  if (!ofs.is_open()) {
+    std::cerr << "open file [" << file << "] to write failed." << std::endl;
+    exit(-1);
+  }
+}
+
+static void ProcessRawInput() {
+  std::ifstream ifs;
+  OpenFileRead(FLAGS_raw_input, ifs);
 
   int64_t lineprocessed = 0;
   int ndirty = 0;
-  uint64_t total = 0;
 
   std::string line;
   while (!ifs.eof()) {
@@ -175,27 +187,13 @@ int main(int argc, char *argv[]) {
   std::cerr << "user number: " << histories.size() << std::endl;
   std::cerr << "dirty lines number: " << ndirty << std::endl;
   std::cerr << "write user watched to file ..." << std::endl;
+}
 
-  std::ofstream ofs(FLAGS_output_user_watched_file);
-  std::ofstream ofs_ratio(FLAGS_output_user_watched_ratio_file);
-  std::ofstream ofs_video_play_ratio(FLAGS_output_video_play_ratio_file);
-  if (!ofs.is_open()) {
-    std::cerr << "open output user watched file failed. filename = "
-              << FLAGS_output_user_watched_file << std::endl;
-    exit(-1);
-  }
-
-  if (!ofs_ratio.is_open()) {
-    std::cerr << "open output user watched ratio file failed. filename = "
-              << FLAGS_output_user_watched_ratio_file << std::endl;
-    exit(-1);
-  }
-
-  if (!ofs_video_play_ratio.is_open()) {
-    std::cerr << "open output video play ratio file failed. filename = "
-              << FLAGS_output_video_play_ratio_file << std::endl;
-    exit(-1);
-  }
+static void WriteUserWatchedInfoFile() {
+  std::ofstream ofs;
+  std::ofstream ofs_ratio;
+  OpenFileWrite(FLAGS_output_user_watched_file, ofs);
+  OpenFileWrite(FLAGS_output_user_watched_ratio_file, ofs_ratio);
 
   double mean_freq = 1.0 / rowkeycount.size();
   std::cerr << "mean_freq = " << mean_freq << std::endl;
@@ -268,8 +266,17 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  std::cerr << "write video play ratios, size = " << video_play_ratios.size()
-            << std::endl;
+  std::cerr << "noverfrep: " << noverfrep << std::endl;
+  std::cerr << "total valid: " << total_valid << std::endl;
+
+  ofs.close();
+  ofs_ratio.close();
+}
+
+static void WriteVideoPlayRatiosFile() {
+  std::ofstream ofs_video_play_ratio;
+  OpenFileWrite(FLAGS_output_video_play_ratio_file, ofs_video_play_ratio);
+  std::cerr << "write video play ratios, size = " << video_play_ratios.size() << std::endl;
 
   for (auto &p : video_play_ratios) {
     auto &rowkey = ids[p.first];
@@ -289,12 +296,18 @@ int main(int argc, char *argv[]) {
     ofs_video_play_ratio.write("\n", 1);
   }
 
-  std::cerr << "noverfrep: " << noverfrep << std::endl;
-  std::cerr << "total valid: " << total_valid << std::endl;
-
-  ofs.close();
-  ofs_ratio.close();
   ofs_video_play_ratio.close();
+}
+
+int main(int argc, char *argv[]) {
+  google::ParseCommandLineFlags(&argc, &argv, false);
+  srand((uint32_t)time(NULL));
+
+  GenerateBanAlgoIds();
+  ProcessRawInput();
+
+  WriteUserWatchedInfoFile();
+  WriteVideoPlayRatiosFile();
 
   return 0;
 }
