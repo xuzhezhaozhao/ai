@@ -43,16 +43,21 @@ def records2binary(recordsfile,
         # generate binary records
         records_len = len(records)
         for w in xrange(1, records_len):
+            if records[w] not in D:
+                continue
+
             indexs = []
             boundary = random.randint(1, watched_size)
             for c in xrange(1, boundary + 1):
-                if w-c >= 0:
+                if w-c >= 0 and records[w-c] in D:
                     indexs.append(D[records[w-c]])
             while len(indexs) < watched_size:
                 indexs.append(0)
             for index in indexs:
                 fwatched.write(struct.pack('<i', index))
             fpredicts.write(struct.pack('<i', D[records[w]]))
+            if index % 1000000 == 0:
+                print("{} lines processed ...".format(index))
 
     fwatched.close()
     fpredicts.close()
