@@ -119,6 +119,7 @@ static void ProcessRawInput() {
 
   int64_t lineprocessed = 0;
   int ndirty = 0;
+  int nalgoiderror = 0;
 
   std::string line;
   while (!ifs.eof()) {
@@ -145,6 +146,11 @@ static void ProcessRawInput() {
       }
     } catch (const std::exception &e) {
       ++ndirty;
+      continue;
+    }
+
+    if (algo_id == -1) {
+      ++nalgoiderror;
       continue;
     }
 
@@ -206,6 +212,7 @@ static void ProcessRawInput() {
 
   std::cerr << "user number: " << histories.size() << std::endl;
   std::cerr << "dirty lines number: " << ndirty << std::endl;
+  std::cerr << "algo id -1 lines number: " << nalgoiderror << std::endl;
   std::cerr << "write user watched to file ..." << std::endl;
 }
 
