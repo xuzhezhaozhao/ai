@@ -10,6 +10,8 @@
 #include <iostream>
 #include <map>
 #include <set>
+#include <unordered_map>
+#include <unordered_set>
 #include <string>
 #include <vector>
 
@@ -43,6 +45,9 @@ DEFINE_int32(user_abnormal_watched_thr, 2048, "");
 DEFINE_int32(supress_hot_arg1, 2, "");
 DEFINE_int32(supress_hot_arg2, 1, "");
 
+DEFINE_int32(article_supress_hot_arg1, 2, "");
+DEFINE_int32(article_supress_hot_arg2, 1, "");
+
 DEFINE_int32(threads, 1, "");
 
 // 出现次数小于该值则丢弃
@@ -50,6 +55,8 @@ DEFINE_int32(min_count, 0, "");
 
 DEFINE_string(ban_algo_ids, "", ", sep");
 DEFINE_double(ban_algo_watched_ratio_thr, 0, "");
+
+DEFINE_bool(ban_unknow_algo_id, false, "ban unknow algo id -1");
 
 struct VideoInfo {
   double total_watched_time;
@@ -60,15 +67,15 @@ struct VideoInfo {
 };
 
 // uin ==> {rowkey, watch_ratio}
-static std::map<uint64_t, std::vector<std::pair<int, float>>> histories;
-static std::map<std::string, int> rowkey2int;    // rowkey 到 index
+static std::unordered_map<uint64_t, std::vector<std::pair<int, float>>> histories;
+static std::unordered_map<std::string, int> rowkey2int;    // rowkey 到 index
 static std::vector<std::string> rowkeys;         // index 到 rowkey
-static std::map<int, uint32_t> rowkeycount;  // 统计 rowkey 出现的次数
-static std::map<int, VideoInfo> video_info;
-static std::set<int> ban_algo_ids;
+static std::unordered_map<int, uint32_t> rowkeycount;  // 统计 rowkey 出现的次数
+static std::unordered_map<int, VideoInfo> video_info;
+static std::unordered_set<int> ban_algo_ids;
 static uint64_t total = 0;
-static std::set<int> all_videos;
-static std::set<int> all_articles;
+static std::unordered_set<int> all_videos;
+static std::unordered_set<int> all_articles;
 
 static std::vector<std::string> split(const std::string &s, char sep) {
   std::vector<std::string> result;
@@ -149,7 +156,7 @@ static void ProcessRawInput() {
       continue;
     }
 
-    if (algo_id == -1) {
+    if (FLAGS_ban_unknow_algo_id && algo_id == -1) {
       ++nalgoiderror;
       continue;
     }
