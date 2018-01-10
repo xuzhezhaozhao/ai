@@ -146,10 +146,14 @@ static void ProcessRawInput() {
     try {
       isvideo = std::stoi(tokens[3]);
       uin = std::stoul(tokens[1]);
-      if (isvideo) {
-        video_duration = std::stod(tokens[4]);
-        watched_time = std::stod(tokens[5]);
-        algo_id = std::stoi(tokens[8]);
+      video_duration = std::stod(tokens[4]);
+      watched_time = std::stod(tokens[5]);
+      algo_id = std::stoi(tokens[8]);
+
+      if (video_duration > 0.1 && watched_time > 0) {
+        isvideo = 1;
+      } else {
+        isvideo = 0;
       }
     } catch (const std::exception &e) {
       ++ndirty;
