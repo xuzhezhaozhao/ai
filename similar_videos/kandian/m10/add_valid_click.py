@@ -11,7 +11,7 @@ FLAGS = None
 
 def main():
     valid_click_ratios = dict()
-    for index, line in enumerate(open(FLAGS.input_play_ratio_file)):
+    for index, line in enumerate(open(FLAGS.input_click_file)):
         tokens = line.strip().split(' ')
         if len(tokens) < 3:
             print("[ratio file] line in {}: {}".format(index, line))

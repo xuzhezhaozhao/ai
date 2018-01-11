@@ -5,6 +5,7 @@ set -e
 MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
+rm -rf log
 mkdir -p log
 
 ts=`date +%Y%m%d%H%M%S`

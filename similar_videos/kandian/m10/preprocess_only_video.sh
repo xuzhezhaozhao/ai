@@ -22,7 +22,7 @@ user_effective_watched_ratio_thr=0.3
 min_count=50
 ban_algo_ids='3323,3321,3313,3312,3311,3310,3309,3308,3307,3306,3305,3304,3303,3302,3301'
 ban_algo_watched_ratio_thr=0.8
-video_play_ratio_bias=60
+video_play_ratio_bias=10
 
 preprocessed=${input}.preprocessed
 /data/preprocess/build/src/preprocess \
@@ -82,32 +82,11 @@ ts=`date +%Y%m%d%H%M%S`
 echo "generate fasttext dict ..."
 awk 'NR>2{print $1}' ${fast_model}.vec > ${fast_model}.dict
 
-
-rm -rf ${fast_model}.query.*
-echo "split query list ..."
-split -d -n l/${parallel} ${fast_model}.dict ${fast_model}.query.
-
 echo "fasttext nn ..."
 nn_k=100
 FASTTEST=/data/utils/fasttext
-
-rm -rf ${fast_model}.query.*.result
-rm -rf ${fast_model}.result
-queryfiles=`ls ${fast_model}.query.*`
-for queryfile in ${queryfiles[@]}
-do
-    echo ${queryfile}
-    ${FASTTEST} nn ${fast_model}.bin ${nn_k} < ${queryfile} > ${queryfile}.result &
-done
-
-for queryfile in ${queryfiles[@]}
-do
-    echo "${queryfile} wait ..."
-    wait
-done
-
-cat ${fast_model}.query.*.result > ${fast_model}.result.raw
-rm -rf ${fast_model}.query.*
+${FASTTEST} multi-nn ${fast_model}.bin ${fast_model}.dict ${parallel} ${nn_k}
+mv ${fast_model}.dict.result ${fast_model}.result.raw
 
 rm -rf ${final_data_dir}.bak
 if [ -d ${final_data_dir} ]; then
