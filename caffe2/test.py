@@ -21,7 +21,7 @@ IMAGE_LOCATION = "flower-631765_1280.jpg"
 # format below is the model's:
 # folder, INIT_NET, predict_net, mean, input image size
 # you can switch the comments on MODEL to try out different model conversions
-MODEL = 'squeezenet', 'init_net.pb', 'predict_net.pb', 'ilsvrc_2012_mean.npy', 227
+MODEL = 'squeezenet', 'exec_net.pb', 'predict_net.pb', 'ilsvrc_2012_mean.npy', 227
 
 # codes - these help decypher the output and source from a list from AlexNet's object codes to provide an result like "tabby cat" or "lemon" depending on what's in the picture you submit to the neural network.
 # The list of output codes for the AlexNet models (also squeezenet)
