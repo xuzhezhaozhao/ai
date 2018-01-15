@@ -82,9 +82,13 @@ ts=`date +%Y%m%d%H%M%S`
 echo "generate fasttext dict ..."
 awk 'NR>2{print $1}' ${fast_model}.vec > ${fast_model}.dict
 
+# call newman's disable interface
+/data/utils/enable_filter -input ${fast_model}.dict -output_valid ${fast_model}.dict.valid -output_filtered ${fast_model}.dict.filtered
+
 echo "fasttext nn ..."
 nn_k=100
 FASTTEST=/data/utils/fasttext
+#${FASTTEST} multi-nnsubset ${fast_model}.bin ${fast_model}.dict ${fast_model}.dict.valid ${parallel} ${nn_k}
 ${FASTTEST} multi-nn ${fast_model}.bin ${fast_model}.dict ${parallel} ${nn_k}
 mv ${fast_model}.dict.result ${fast_model}.result.raw
 
