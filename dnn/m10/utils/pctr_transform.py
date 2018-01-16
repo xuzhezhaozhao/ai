@@ -16,7 +16,7 @@ def get_label_class(radio, class_num):
     if radio >= 1:
         # print("dirty data or protect")
         radio = 0.9
-    y = np.floor(class_num * (1 / (1 + np.exp(6 - 10 * radio))))
+    y = int(np.floor(class_num * (1 / (1 + np.exp(6 - 10 * radio)))))
     if y < 0:
         y = 0
     return y
@@ -42,7 +42,7 @@ def records2binary_pctr(recordsfile,
             boundary = random.randint(1, watched_size)
             score = watched_ratios[w]
             label = get_label_class(score, FLAGS.class_num_pctr)
-            fwatched.write("__label__" + label + ' ')
+            fwatched.write("__label__" + str(label) + ' ')
             # 第一个词是当前词
             for c in xrange(0, boundary + 1):
                 if w-c >= 0:
