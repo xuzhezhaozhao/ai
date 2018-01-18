@@ -22,7 +22,13 @@ def main():
     # normalize
     data = normalize(data, axis=1)
 
-    y = KMeans(n_clusters=FLAGS.ncluster).fit_predict(data)
+    y = KMeans(n_clusters=FLAGS.ncluster,
+               max_iter=FLAGS.max_iter,
+               tol=FLAGS.tol,
+               precompute_distances=FLAGS.precompute_distances,
+               n_jobs=FLAGS.njobs,
+               verbose=1
+               ).fit_predict(data)
     # y = DBSCAN(eps=0.1, metric='euclidean', n_jobs=-1).fit_predict(data)
 
     num = y.shape[0]
@@ -67,6 +73,32 @@ if __name__ == "__main__":
         '--output_cluster_file',
         type=str,
         required=True,
+        help=''
+    )
+
+    parser.add_argument(
+        '--njobs',
+        type=int,
+        default=1,
+        help=''
+    )
+
+    parser.add_argument(
+        '--max_iter',
+        type=int,
+        default=300,
+        help=''
+    )
+    parser.add_argument(
+        '--tol',
+        type=float,
+        default=1e-4,
+        help=''
+    )
+    parser.add_argument(
+        '--precompute_distances',
+        type=bool,
+        default=True,
         help=''
     )
 
