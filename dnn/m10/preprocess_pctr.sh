@@ -17,15 +17,17 @@ mkdir -p ${ynet_data_dir}
 
 
 echo "transform sorted file to fastText format ..."
-min_count=50
+min_count=10
 user_min_watched=10
 user_max_watched=1024
 user_abnormal_watched_thr=2048
-user_effective_watched_time_thr=20
-user_effective_watched_ratio_thr=0.25
+user_effective_watched_time_thr=15
+user_effective_watched_ratio_thr=0.2
 ban_algo_ids='3323,3321,3313,3312,3311,3310,3309,3308,3307,3306,3305,3304,3303,3302,3301'
-ban_algo_watched_ratio_thr=0.8
+ban_algo_watched_ratio_thr=1.8
 video_play_ratio_bias=30
+supress_hot_arg1=-1
+supress_hot_arg2=3
 
 /data/preprocess/build/src/preprocess \
     -raw_input=${sorted_file} \
@@ -38,7 +40,7 @@ video_play_ratio_bias=30
     -user_min_watched=${user_min_watched} \
     -user_max_watched=${user_max_watched} \
     -user_abnormal_watched_thr=${user_abnormal_watched_thr} \
-    -supress_hot_arg1=20 \
+    -supress_hot_arg1=${supress_hot_arg1} \
     -supress_hot_arg2=3 \
     -user_effective_watched_time_thr=${user_effective_watched_time_thr} \
     -user_effective_watched_ratio_thr=${user_effective_watched_ratio_thr} \
@@ -59,7 +61,7 @@ dim=100
 ws=10
 epoch=5
 neg=5
-bucket=2000000
+bucket=10
 minn=0
 maxn=0
 thread=${parallel}
@@ -103,6 +105,17 @@ python utils/records2binary.py \
     --watched_size_pctr ${watched_size_pctr} \
     --max_per_user ${max_per_user} \
     --calculate_recall_inputs 0 
+
+python utils/pctr_transform.py \
+    --input_records ${preprocessed} \
+    --input_watched_ratio_file ${preprocessed}.watched_ratio \
+    --output_watched_pctr ${preprocessed}.pctr.out \
+    --watched_size_pctr 10 \
+    --class_num_pctr 10 \
+    --pctr_step 2
+shuf -o ${preprocessed}.pctr.out.shuf ${preprocessed}.pctr.out
+/data/utils/fasttext pctr -input ${preprocessed}.pctr.out.shuf -output ${fast_model}.pctr -minCount 10 -minn 0 -maxn 0 -lr 0.05 -ws 10 -epoch 5 -thread 44
+awk 'NR>2{print $1}' ${fast_model}.pctr.vec > ${fast_model}.pctr.dict
 
 
 rm -rf ${final_data_dir}.bak

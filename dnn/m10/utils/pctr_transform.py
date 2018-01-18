@@ -11,12 +11,14 @@ import numpy as np
 FLAGS = None
 
 
-def get_label_class(radio, class_num):
+def get_label_class(ratio, class_num):
     # watch_duration_class
-    if radio >= 1:
+    ratio = ratio - 0.01
+    if ratio >= 1:
         # print("dirty data or protect")
-        radio = 0.9
-    y = int(np.floor(class_num * (1 / (1 + np.exp(6 - 10 * radio)))))
+        ratio = 0.9
+    # y = int(np.floor(class_num * (1 / (1 + np.exp(6 - 10 * radio)))))
+    y = int(np.floor(ratio*10))
     if y < 0:
         y = 0
     return y
@@ -39,16 +41,18 @@ def records2binary_pctr(recordsfile,
         # generate binary records
         records_len = len(records)
         for w in xrange(1, records_len, FLAGS.pctr_step):
-            boundary = random.randint(1, watched_size)
+            boundary = random.randint(watched_size // 2, watched_size)
             score = watched_ratios[w]
             label = get_label_class(score, FLAGS.class_num_pctr)
+            if w-boundary < 0:
+                continue
             fwatched.write("__label__" + str(label) + ' ')
             # 第一个词是当前词
             for c in xrange(0, boundary + 1):
                 if w-c >= 0:
                     fwatched.write(records[w-c] + ' ')
             fwatched.write('\n')
-        if lineindex % 1000000 == 0:
+        if lineindex % 100000 == 0:
             print("{} lines processed ...".format(lineindex))
 
     fwatched.close()
