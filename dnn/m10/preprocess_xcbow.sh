@@ -82,7 +82,8 @@ ts=`date +%Y%m%d%H%M%S`
 	-maxn ${maxn} \
 	-thread ${thread} \
 	-t 1e-4 \
-	-lrUpdateRate 100 >log/fasttext.xcbow.log.${ts} 2>&1
+	-lrUpdateRate 100 \
+        -saveOutput 1 >log/fasttext.xcbow.log.${ts} 2>&1
 
 echo "generate fasttext dict ..."
 awk 'NR>2{print $1}' ${fast_model}.vec > ${fast_model}.dict
@@ -93,10 +94,18 @@ python filter_dict.py \
         --input_video_dict_file ${preprocessed}.video_dict \
         --output_fasttext_subset_dict_file ${fast_model}.subset
 
+python filter_vec.py \
+        --input_fasttext_vec_file ${fast_model}.output \
+        --input_fasttext_subset_dict_file ${fast_model}.subset \
+        --output_fasttext_subset_vec_file ${fast_model}.subset.vec
+
+/data/utils/lsh_build_tree ${fast_model}.subset.vec ${fast_model}.subset.lsh 200
+
 rm -rf ${final_data_dir}.bak
 if [ -d ${final_data_dir} ]; then
     mv ${final_data_dir} ${final_data_dir}.bak
 fi
 mv ${xcbow_data_dir} ${final_data_dir}
+
 
 ./sendupdate_dnn.sh
