@@ -28,6 +28,9 @@ video_play_ratio_bias=30
 supress_hot_arg1=-1
 supress_hot_arg2=3
 
+
+
+
 mkdir -p log
 echo "fastText train ..."
 fast_model=${preprocessed}.xcbow

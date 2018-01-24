@@ -94,12 +94,12 @@ python filter_dict.py \
         --input_video_dict_file ${preprocessed}.video_dict \
         --output_fasttext_subset_dict_file ${fast_model}.subset
 
-python filter_vec.py \
-        --input_fasttext_vec_file ${fast_model}.output \
-        --input_fasttext_subset_dict_file ${fast_model}.subset \
-        --output_fasttext_subset_vec_file ${fast_model}.subset.vec
+# python filter_vec.py \
+#        --input_fasttext_vec_file ${fast_model}.output \
+#        --input_fasttext_subset_dict_file ${fast_model}.subset \
+#        --output_fasttext_subset_vec_file ${fast_model}.subset.vec
 
-/data/utils/lsh_build_tree ${fast_model}.subset.vec ${fast_model}.subset.lsh 200
+# /data/utils/lsh_build_tree ${fast_model}.subset.vec ${fast_model}.subset.lsh 200
 
 rm -rf ${final_data_dir}.bak
 if [ -d ${final_data_dir} ]; then
