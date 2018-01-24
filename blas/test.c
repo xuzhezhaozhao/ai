@@ -1,7 +1,7 @@
 
 #include <stdlib.h>
 
-#include "/home/xzz/OpenBLAS/cblas.h"
+#include "cblas.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
   long long start = stv.tv_sec * 1000 + stv.tv_usec / 1000;
 
   /*int ret = sgemv_(trans, &m, &n, &alpha, a, &lda, x, &incx, &beta, y, &incy);*/
-  /*openblas_set_num_threads(4);*/
+  openblas_set_num_threads(1);
   /*int nthread = openblas_get_num_threads();*/
   /*printf("nthread: %d\n", nthread);*/
   cblas_sgemv(CblasColMajor, CblasNoTrans, m, n, alpha, a, lda, x, incx, beta, y, incy);
