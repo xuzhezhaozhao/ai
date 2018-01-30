@@ -3,6 +3,7 @@
 
 
 from sklearn.cluster import KMeans
+from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import normalize
 import argparse
 import numpy as np
@@ -11,26 +12,7 @@ import time
 FLAGS = None
 
 
-def main():
-    video_data = np.loadtxt(FLAGS.input_video_vec_file,
-                            dtype=np.str,
-                            delimiter=' ',
-                            skiprows=2)
-    video_dict = video_data[:, :1].ravel()
-    video_data = video_data[:, 1:].astype(np.float)
-    video_data = normalize(video_data, axis=1)
-    print(video_data[0])
-    print('video_data shape: {}'.format(video_data.shape))
-
-    all_data = np.loadtxt(FLAGS.input_all_vec_file,
-                          dtype=np.str,
-                          delimiter=' ',
-                          skiprows=2)
-    all_dict = all_data[:, :1].ravel()
-    all_data = all_data[:, 1:-1].astype(np.float)
-    all_data = normalize(all_data, axis=1)
-    print('all_data shape: {}'.format(all_data.shape))
-
+def DoKmeans(video_data, all_data, all_dict):
     kmeans = KMeans(n_clusters=FLAGS.ncluster,
                     max_iter=FLAGS.max_iter,
                     tol=FLAGS.tol,
@@ -44,7 +26,8 @@ def main():
     for idx, label in enumerate(all_labels):
         if label not in clusters:
             clusters[label] = list()
-        clusters[label].append(all_dict[idx])
+        clusters[label].append(idx)
+
     with open(FLAGS.output_cluster_file, 'w') as f:
         f.write(str(len(clusters)) + '\n')
         for label in clusters:
@@ -53,10 +36,50 @@ def main():
         f.write('\n')
         fomat_time = time.strftime("%Y%m%d%H", time.localtime())
         for label in clusters:
+            dists = []
             f.write('__label__' + fomat_time + '__' + str(label) + ' ')
-            for item in clusters[label]:
-                f.write(item + ' ')
+            for idx in clusters[label]:
+                f.write(all_dict[idx] + ' ')
+                dists.append(np.linalg.norm(
+                    kmeans.cluster_centers_[label]-all_data[idx]))
             f.write('\n')
+            for dist in dists:
+                f.write(str(dist) + ' ')
+            f.write('\n')
+
+
+def DoDBSCAN(video_data, all_data, all_dict):
+    dbscan = DBSCAN(eps=0.7,
+                    min_samples=10,
+                    metric='euclidean',
+                    n_jobs=FLAGS.njobs,
+                    verbose=1)
+
+
+def main():
+    video_data = np.loadtxt(FLAGS.input_video_vec_file,
+                            dtype=np.str,
+                            delimiter=' ',
+                            skiprows=2)
+    video_data = video_data[:, 1:].astype(np.float)
+    video_data = normalize(video_data, axis=1)
+    print(video_data[0])
+    print('video_data shape: {}'.format(video_data.shape))
+
+    all_data = np.loadtxt(FLAGS.input_all_vec_file,
+                          dtype=np.str,
+                          delimiter=' ',
+                          skiprows=2)
+    all_dict = all_data[:, :1].ravel()
+    all_data = all_data[:, 1:-1].astype(np.float)
+    # all_data = all_data[:, 1:].astype(np.float)
+    all_data = normalize(all_data, axis=1)
+    print('all_data shape: {}'.format(all_data.shape))
+
+    if FLAGS.clustsering_type == "kmean":
+        DoKmeans(video_data, all_data, all_dict)
+    elif FLAGS.clustsering_type == "dbscan":
+        DoDBSCAN(video_data, all_data, all_dict)
 
 
 if __name__ == "__main__":
@@ -111,6 +134,13 @@ if __name__ == "__main__":
         '--precompute_distances',
         type=bool,
         default=True,
+        help=''
+    )
+
+    parser.add_argument(
+        '--clustsering_type',
+        type=str,
+        default='kmean',
         help=''
     )
 
