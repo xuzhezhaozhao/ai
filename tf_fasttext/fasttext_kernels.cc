@@ -87,13 +87,13 @@ class FasttextOp : public OpKernel {
 
   void PreProcessTrainData(OpKernelConstruction* ctx) {
     LOG(INFO) << "Preprocess train data beginning ...";
-    std::ifstream ifs(args_->train_data);
-    OP_REQUIRES(ctx, ifs.is_open(), errors::Unavailable("File open failed."));
-    dict_->readFromFile(ifs);
-    ifs.close();
+    ifs_.open(args_->train_data);
+    OP_REQUIRES(ctx, ifs_.is_open(), errors::Unavailable("File open failed."));
+    dict_->readFromFile(ifs_);
 
-    Tensor word(DT_STRING, TensorShape({dict_->nwords()}));
-    Tensor freq(DT_INT32, TensorShape({dict_->nwords()}));
+    // plus one for padding id
+    Tensor word(DT_STRING, TensorShape({dict_->nwords() + 1}));
+    Tensor freq(DT_INT32, TensorShape({dict_->nwords() + 1}));
     // xcbow 每次的输入历史记录不固定，但 Tensor 必须指定 shape, 所以
     // Tensor 指定固定 shape, 不足的用 padding id 补足
     word.flat<string>()(kPaddingId) = "</padding>";
@@ -107,8 +107,8 @@ class FasttextOp : public OpKernel {
     }
     word_ = word;
     freq_ = freq;
-    ifs_.open(args_->train_data);
-    OP_REQUIRES(ctx, ifs_.is_open(), errors::Unavailable("File open failed."));
+
+    ifs_.seekg(std::streampos(0));
     LOG(INFO) << "Preprocess train data done.";
   }
 
@@ -125,6 +125,7 @@ class FasttextOp : public OpKernel {
       // Generate batch_size examples
       mutex_lock l(mu_);
       std::uniform_int_distribution<> uniform(1, args_->ws);
+      int example_index = 0;
       for (int i = 0; i < args_->batch_size; ++i) {
         if (next_pos_ >= line_.size()) {
           while (true) {
@@ -140,9 +141,18 @@ class FasttextOp : public OpKernel {
         for (int c = -boundary; c < 0; ++c) {
           if (w + c >= 0) {
             auto& ngrams = dict_->getSubwords(line_[w + c]);
-            bow.insert(bow.end(), ngrams.cbegin(), ngrams.cend());
+            bow_.insert(bow_.end(), ngrams.cbegin(), ngrams.cend());
           }
         }
+        // example: bow_ + padding
+        // label: line_[w]
+        for (int k = 0; k < bow_.size(); ++k) {
+          Texamples(example_index++) = bow_[k];
+        }
+        for (int k = bow_.size(); k < args_->ws; ++k) {
+          Texamples(example_index++) = kPaddingId;
+        }
+        Tlabels(i) = line_[w];
 
         ++next_pos_;
       }
