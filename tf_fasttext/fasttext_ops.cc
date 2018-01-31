@@ -3,15 +3,14 @@
 
 namespace tensorflow {
 
-REGISTER_OP("FirstTest")
-    .Output("lines: string")
-    .SetIsStateful()
-    .Attr("filename: string")
-    .Doc(R"doc(
-First test custome operator
-)doc");
-
 REGISTER_OP("Fasttext")
+    .Output("vocab_word: string")
+    .Output("vocab_freq: int32")
+    .Output("words_per_epoch: int64")
+    .Output("current_epoch: int32")
+    .Output("total_words_processed: int64")
+    .Output("examples: int32")
+    .Output("labels: int32")
     .SetIsStateful()
     .Attr("train_data: string")
     .Attr("lr: float = 0.05")
@@ -29,6 +28,7 @@ REGISTER_OP("Fasttext")
     .Attr("verbose: int = 1")
     .Attr("min_count_label: int = 1")
     .Attr("label: string = '__label__'")
+    .Attr("batch_size: int = 1")
     .Doc(R"doc(
 Fasttext custome operator.
 )doc");

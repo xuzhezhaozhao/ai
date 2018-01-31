@@ -26,11 +26,30 @@ FLAGS = flags.FLAGS
 
 def main(_):
     """Train a fasttext model."""
-    fasttext = fasttext_model.fasttext(train_data=FLAGS.train_data)
+    (vacab_word,
+     vacab_freq,
+     words_per_epoch,
+     current_epoch,
+     total_words_processed,
+     examples,
+     labels) = fasttext_model.fasttext(train_data=FLAGS.train_data)
 
+    print(vacab_word)
+    print(vacab_freq)
     with tf.Session() as sess:
-        sess.run(fasttext)
+        w, f, a, b, c, e, label = sess.run([vacab_word,
+                            vacab_freq,
+                            words_per_epoch,
+                            current_epoch,
+                            total_words_processed,
+                            examples, labels])
 
+        print(len(w))
+        print(len(f))
+        print(w[1])
+        print(f[1])
+        print(e[0][0])
+        print(label[0])
 
 if __name__ == "__main__":
     tf.app.run()

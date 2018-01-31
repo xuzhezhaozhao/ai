@@ -34,6 +34,8 @@ struct Args {
     int verbose = 1;
     int min_count_label = 5;
     std::string label = "__label__";
+
+    int batch_size = 1;
 };
 
 }
