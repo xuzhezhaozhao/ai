@@ -11,6 +11,10 @@
 #include "tensorflow/core/util/guarded_philox_random.h"
 
 #include <fstream>
+#include <memory>
+#include <random>
+#include <utility>
+#include <vector>
 
 #include "args.h"
 #include "dictionary.h"
@@ -82,6 +86,7 @@ class FasttextOp : public OpKernel {
   }
 
   void PreProcessTrainData(OpKernelConstruction* ctx) {
+    LOG(INFO) << "Preprocess train data beginning ...";
     std::ifstream ifs(args_->train_data);
     OP_REQUIRES(ctx, ifs.is_open(), errors::Unavailable("File open failed."));
     dict_->readFromFile(ifs);
@@ -102,6 +107,9 @@ class FasttextOp : public OpKernel {
     }
     word_ = word;
     freq_ = freq;
+    ifs_.open(args_->train_data);
+    OP_REQUIRES(ctx, ifs_.is_open(), errors::Unavailable("File open failed."));
+    LOG(INFO) << "Preprocess train data done.";
   }
 
   void Compute(OpKernelContext* ctx) override {
@@ -114,15 +122,35 @@ class FasttextOp : public OpKernel {
     auto Tlabels = labels.flat<int32>();
 
     {
+      // Generate batch_size examples
       mutex_lock l(mu_);
+      std::uniform_int_distribution<> uniform(1, args_->ws);
       for (int i = 0; i < args_->batch_size; ++i) {
-        // TODO generate a example
+        if (next_pos_ >= line_.size()) {
+          while (true) {
+            total_words_processed_ += dict_->getLine(ifs_, line_, rng_);
+            if (line_.size() >= 2) break;
+          }
+          next_pos_ = 1;
+        }
+
+        int boundary = uniform(rng_);
+        bow_.clear();
+        int w = next_pos_;
+        for (int c = -boundary; c < 0; ++c) {
+          if (w + c >= 0) {
+            auto& ngrams = dict_->getSubwords(line_[w + c]);
+            bow.insert(bow.end(), ngrams.cbegin(), ngrams.cend());
+          }
+        }
+
+        ++next_pos_;
       }
 
       words_per_epoch.scalar<int64>()() = dict_->nwords();
       current_epoch.scalar<int32>()() = current_epoch_;
       total_words_processed.scalar<int64>()() = total_words_processed_;
-    }
+    }  // end mutex_lock guard
 
     ctx->set_output(0, word_);
     ctx->set_output(1, freq_);
@@ -138,6 +166,17 @@ class FasttextOp : public OpKernel {
 
   std::shared_ptr<::fasttext::Args> args_;
   std::shared_ptr<::fasttext::Dictionary> dict_;
+
+  // 一次读取一行，每个词作为 label 生成训练数据, 一次生成 batch_size 个
+  // examples, next_pos_ 为在 line_ 数组中下一个目标词索引
+  std::ifstream ifs_;
+  std::vector<int32_t> line_;
+  std::vector<int32_t> bow_;  // bag of words
+  // target index at least 1
+  int next_pos_ = 1;
+
+  // TODO seed this random engine
+  std::minstd_rand rng_;
 
   Tensor word_;
   Tensor freq_;
