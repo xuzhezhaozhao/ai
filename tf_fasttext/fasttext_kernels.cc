@@ -128,11 +128,11 @@ class FasttextOp : public OpKernel {
       int example_index = 0;
       for (int i = 0; i < args_->batch_size; ++i) {
         if (next_pos_ >= line_.size()) {
-          while (true) {
-            total_words_processed_ += dict_->getLine(ifs_, line_, rng_);
-            if (line_.size() >= 2) break;
+          total_words_processed_ += dict_->getLine(ifs_, line_, rng_);
+          if (line_.size() == 0) {
+            continue;
           }
-          next_pos_ = 1;
+          next_pos_ = 0;
         }
 
         int boundary = uniform(rng_);
@@ -144,6 +144,7 @@ class FasttextOp : public OpKernel {
             bow_.insert(bow_.end(), ngrams.cbegin(), ngrams.cend());
           }
         }
+
         // example: bow_ + padding
         // label: line_[w]
         for (int k = 0; k < bow_.size(); ++k) {
@@ -183,7 +184,7 @@ class FasttextOp : public OpKernel {
   std::vector<int32_t> line_;
   std::vector<int32_t> bow_;  // bag of words
   // target index at least 1
-  int next_pos_ = 1;
+  int next_pos_ = 0;
 
   // TODO seed this random engine
   std::minstd_rand rng_;
