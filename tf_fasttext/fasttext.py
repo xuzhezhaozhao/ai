@@ -31,7 +31,7 @@ flags.DEFINE_integer(
 flags.DEFINE_float("learning_rate", 0.025, "Initial learning rate.")
 flags.DEFINE_integer("num_neg_samples", 25,
                      "Negative samples per training example.")
-flags.DEFINE_integer("batch_size", 500,
+flags.DEFINE_integer("batch_size", 50,
                      "Numbers of training examples each step processes "
                      "(no minibatching).")
 flags.DEFINE_integer("concurrent_steps", 12,
@@ -42,7 +42,7 @@ flags.DEFINE_integer("window_size", 5,
 flags.DEFINE_integer("min_count", 5,
                      "The minimum number of word occurrences for it to be "
                      "included in the vocabulary.")
-flags.DEFINE_float("subsample", 1e-3,
+flags.DEFINE_float("subsample", 1e-4,
                    "Subsample threshold for word occurrence. Words that "
                    "appear with higher frequency will be randomly "
                    "down-sampled. Set to 0 to disable.")
@@ -185,9 +185,10 @@ class Word2Vec(object):
         self._labels = labels
         self._lr = lr
         self._train = train
-        self.global_step = global_step
+        self._global_step = global_step
         self._epoch = current_epoch
         self._words = total_words_processed
+        self._loss = loss
 
         # Properly initialize all variables.
         tf.global_variables_initializer().run()
@@ -199,9 +200,14 @@ class Word2Vec(object):
         initial_epoch, initial_words = self._session.run([self._epoch,
                                                           self._words])
         while True:
-            _, epoch = self._session.run([self._train, self._epoch])
+            _, epoch, global_step, loss = self._session.run([self._train,
+                                                             self._epoch,
+                                                             self._global_step,
+                                                             self._loss])
             if epoch != initial_epoch:
                 break
+            if global_step % 100 == 0:
+                print("loss = {}".format(loss))
 
 
 def main(_):
