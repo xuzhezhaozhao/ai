@@ -113,20 +113,23 @@ class FasttextOp : public OpKernel {
     Tensor words_per_epoch(DT_INT64, TensorShape({}));
     Tensor current_epoch(DT_INT32, TensorShape({}));
     Tensor total_words_processed(DT_INT64, TensorShape({}));
-    OpOutputList examples;
-    OP_REQUIRES_OK(ctx, ctx->output_list("examples", &examples));
-    std::vector<int32> vlabels;
-    Tensor labels;
+    Tensor examples(DT_INT32, TensorShape({args_->batch_size, args_->ws}));
+    auto Texamples = examples.flat<int32>();
+    Tensor labels(DT_INT32, TensorShape({args_->batch_size}));
+    auto Tlabels = labels.flat<int32>();
+    Tensor valid_lengths(DT_INT32, TensorShape({args_->batch_size}));
+    auto Tvalid_lengths = valid_lengths.flat<int32>();
     {
       // Generate batch_size examples
       mutex_lock l(mu_);
       std::uniform_int_distribution<> uniform(1, args_->ws);
-      int example_index = 0;
-      int index = 0;
-      for (int i = 0; i < args_->batch_size; ++i) {
+      for (int batch = 0; batch < args_->batch_size; ++batch) {
         if (next_pos_ >= line_.size()) {
           total_words_processed_ += dict_->getLine(ifs_, line_, rng_);
-          if (line_.size() < 2)  continue;
+          if (line_.size() < 2) {
+            Tvalid_lengths(batch) = 0;
+            continue;
+          }
           next_pos_ = 1;
         }
         bow_.clear();
@@ -139,26 +142,15 @@ class FasttextOp : public OpKernel {
           }
         }
 
-        // label: line_[w]
-        vlabels.push_back(line_[w]);
-
         // example: bow_
-        Tensor example(DT_INT32, TensorShape({bow_.size()}));
-        auto Texample = example.flat<int32>();
-        for (int i = 0; i < bow_.size(); ++i) {
-          Texample(i) = bow_[i];
+        for (int k = 0; k < bow_.size(); ++k) {
+          Texamples(batch * args_->ws + k) = bow_[k];
         }
 
-        // TODO index better name?
-        examples.set(index, example);
-        ++index;
+        // label: line_[w]
+        Tlabels(batch) = line_[w];
+        Tvalid_lengths(batch) = static_cast<int32>(bow_.size());
         ++next_pos_;
-      }
-
-      labels = Tensor(DT_INT32, TensorShape({(int32)vlabels.size()}));
-      auto Tlabels = labels.flat<int32>();
-      for (int i = 0; i < vlabels.size(); ++i) {
-        Tlabels(i) = vlabels[i];
       }
 
       words_per_epoch.scalar<int64>()() = dict_->nwords();
@@ -171,7 +163,9 @@ class FasttextOp : public OpKernel {
     ctx->set_output(2, words_per_epoch);
     ctx->set_output(3, current_epoch);
     ctx->set_output(4, total_words_processed);
+    ctx->set_output(5, examples);
     ctx->set_output(6, labels);
+    ctx->set_output(7, valid_lengths);
   }
 
  private:

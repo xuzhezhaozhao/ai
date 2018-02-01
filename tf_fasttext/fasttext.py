@@ -32,25 +32,28 @@ def main(_):
      current_epoch,
      total_words_processed,
      examples,
-     labels) = fasttext_model.fasttext(train_data=FLAGS.train_data,
-                                       Texamples=[tf.int32])
+     labels,
+     valid_lengths) = fasttext_model.fasttext(train_data=FLAGS.train_data,
+                                              batch_size=10)
 
-    print(vacab_word)
-    print(vacab_freq)
+    result = dict()
     with tf.Session() as sess:
-        w, f, a, b, c, e, label = sess.run([vacab_word,
-                            vacab_freq,
-                            words_per_epoch,
-                            current_epoch,
-                            total_words_processed,
-                            examples, labels])
+        (result['vacab_word'],
+         result['vacab_freq'],
+         result['words_per_epoch'],
+         result['current_epoch'],
+         result['total_words_processed'],
+         result['examples'], result['labels'],
+         result['valid_lengths']) = sess.run([vacab_word, vacab_freq,
+                                             words_per_epoch,
+                                             current_epoch,
+                                             total_words_processed,
+                                             examples,
+                                             labels,
+                                             valid_lengths])
+        for key in result:
+            print("{}: {}".format(key, result[key]))
 
-        print(len(w))
-        print(len(f))
-        print(w[1])
-        print(f[1])
-        print(e[0][0])
-        print(label[0])
 
 if __name__ == "__main__":
     tf.app.run()

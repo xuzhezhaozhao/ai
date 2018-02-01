@@ -9,8 +9,9 @@ REGISTER_OP("Fasttext")
     .Output("words_per_epoch: int64")
     .Output("current_epoch: int32")
     .Output("total_words_processed: int64")
-    .Output("examples: Texamples")
+    .Output("examples: int32")
     .Output("labels: int32")
+    .Output("valid_lengths: int32")
     .SetIsStateful()
     .Attr("train_data: string")
     .Attr("lr: float = 0.05")
@@ -29,7 +30,6 @@ REGISTER_OP("Fasttext")
     .Attr("min_count_label: int = 1")
     .Attr("label: string = '__label__'")
     .Attr("batch_size: int = 1")
-    .Attr("Texamples: list({int32})")
     .Doc(R"doc(
 Fasttext custome operator.
 )doc");
