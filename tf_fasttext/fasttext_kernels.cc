@@ -10,6 +10,8 @@
 #include "tensorflow/core/platform/thread_annotations.h"
 #include "tensorflow/core/util/guarded_philox_random.h"
 
+#include <time.h>
+
 #include <fstream>
 #include <memory>
 #include <random>
@@ -27,6 +29,7 @@ class FasttextOp : public OpKernel {
     args_ = std::make_shared<::fasttext::Args>();
     ParseArgs(ctx);
 
+    rng_.seed(args_->seed);
     dict_ = std::make_shared<::fasttext::Dictionary>(args_);
     PreProcessTrainData(ctx);
   }
@@ -83,6 +86,9 @@ class FasttextOp : public OpKernel {
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("batch_size", &args_->batch_size));
     LOG(INFO) << "batch_size: " << args_->batch_size;
+
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("seed", &args_->seed));
+    LOG(INFO) << "seed: " << args_->seed;
   }
 
   void PreProcessTrainData(OpKernelConstruction* ctx) {
@@ -96,7 +102,7 @@ class FasttextOp : public OpKernel {
     Tensor freq(DT_INT32, TensorShape({dict_->nwords() + 1}));
     for (int i = 0; i < dict_->nwords(); ++i) {
       const string& w = dict_->getWord(i);
-      int64_t cnt = dict_->getWordCount(i);
+      int64 cnt = dict_->getWordCount(i);
       auto id = i;
       word.flat<string>()(id) = w;
       freq.flat<int32>()(id) = cnt;
@@ -180,7 +186,6 @@ class FasttextOp : public OpKernel {
   // target index at least 1
   int next_pos_ = 1;
 
-  // TODO seed this random engine
   std::minstd_rand rng_;
 
   Tensor word_;

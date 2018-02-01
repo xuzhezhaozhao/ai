@@ -30,8 +30,11 @@ REGISTER_OP("Fasttext")
     .Attr("min_count_label: int = 1")
     .Attr("label: string = '__label__'")
     .Attr("batch_size: int = 1")
+    .Attr("seed: int = 1")
     .Doc(R"doc(
 Fasttext custome operator.
 )doc");
+
+
 
 }  // namespace tensorflow

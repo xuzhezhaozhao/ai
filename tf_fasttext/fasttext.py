@@ -34,7 +34,8 @@ def main(_):
      examples,
      labels,
      valid_lengths) = fasttext_model.fasttext(train_data=FLAGS.train_data,
-                                              batch_size=10)
+                                              batch_size=10,
+                                              seed=11)
 
     result = dict()
     with tf.Session() as sess:

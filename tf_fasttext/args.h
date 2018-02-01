@@ -15,6 +15,17 @@
 #include <string>
 #include <vector>
 
+#include "tensorflow/core/framework/op.h"
+#include "tensorflow/core/framework/op_kernel.h"
+#include "tensorflow/core/lib/core/stringpiece.h"
+#include "tensorflow/core/lib/gtl/map_util.h"
+#include "tensorflow/core/lib/random/distribution_sampler.h"
+#include "tensorflow/core/lib/random/philox_random.h"
+#include "tensorflow/core/lib/random/simple_philox.h"
+#include "tensorflow/core/lib/strings/str_util.h"
+#include "tensorflow/core/platform/thread_annotations.h"
+#include "tensorflow/core/util/guarded_philox_random.h"
+
 namespace fasttext {
 
 struct Args {
@@ -34,8 +45,8 @@ struct Args {
     int verbose = 1;
     int min_count_label = 5;
     std::string label = "__label__";
-
     int batch_size = 1;
+    ::tensorflow::int64 seed = 1;
 };
 
 }
