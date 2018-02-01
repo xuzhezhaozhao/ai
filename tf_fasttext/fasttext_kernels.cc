@@ -87,28 +87,25 @@ class FasttextOp : public OpKernel {
 
   void PreProcessTrainData(OpKernelConstruction* ctx) {
     LOG(INFO) << "Preprocess train data beginning ...";
-    ifs_.open(args_->train_data);
-    OP_REQUIRES(ctx, ifs_.is_open(), errors::Unavailable("File open failed."));
-    dict_->readFromFile(ifs_);
+    std::ifstream ifs(args_->train_data);
+    dict_->readFromFile(ifs);
+    ifs.close();
 
     // plus one for padding id
     Tensor word(DT_STRING, TensorShape({dict_->nwords() + 1}));
     Tensor freq(DT_INT32, TensorShape({dict_->nwords() + 1}));
-    // xcbow 每次的输入历史记录不固定，但 Tensor 必须指定 shape, 所以
-    // Tensor 指定固定 shape, 不足的用 padding id 补足
-    word.flat<string>()(kPaddingId) = "</padding>";
-    freq.flat<int32>()(kPaddingId) = 0;
     for (int i = 0; i < dict_->nwords(); ++i) {
       const string& w = dict_->getWord(i);
       int64_t cnt = dict_->getWordCount(i);
-      auto id = i + 1;
+      auto id = i;
       word.flat<string>()(id) = w;
       freq.flat<int32>()(id) = cnt;
     }
     word_ = word;
     freq_ = freq;
 
-    ifs_.seekg(std::streampos(0));
+    ifs_.open(args_->train_data);
+    OP_REQUIRES(ctx, ifs_.is_open(), errors::Unavailable("File open failed."));
     LOG(INFO) << "Preprocess train data done.";
   }
 
@@ -116,10 +113,9 @@ class FasttextOp : public OpKernel {
     Tensor words_per_epoch(DT_INT64, TensorShape({}));
     Tensor current_epoch(DT_INT32, TensorShape({}));
     Tensor total_words_processed(DT_INT64, TensorShape({}));
-    Tensor examples(DT_INT32, TensorShape({args_->batch_size, args_->ws}));
-    auto Texamples = examples.flat<int32>();
-    Tensor labels(DT_INT32, TensorShape({args_->batch_size}));
-    auto Tlabels = labels.flat<int32>();
+    std::vector<Tensor> examples;
+    std::vector<int32> vlabels;
+    Tensor labels;
 
     {
       // Generate batch_size examples
@@ -129,14 +125,11 @@ class FasttextOp : public OpKernel {
       for (int i = 0; i < args_->batch_size; ++i) {
         if (next_pos_ >= line_.size()) {
           total_words_processed_ += dict_->getLine(ifs_, line_, rng_);
-          if (line_.size() == 0) {
-            continue;
-          }
-          next_pos_ = 0;
+          if (line_.size() < 2)  continue;
+          next_pos_ = 1;
         }
-
-        int boundary = uniform(rng_);
         bow_.clear();
+        int boundary = uniform(rng_);
         int w = next_pos_;
         for (int c = -boundary; c < 0; ++c) {
           if (w + c >= 0) {
@@ -145,17 +138,23 @@ class FasttextOp : public OpKernel {
           }
         }
 
-        // example: bow_ + padding
         // label: line_[w]
-        for (int k = 0; k < bow_.size(); ++k) {
-          Texamples(example_index++) = bow_[k];
-        }
-        for (int k = bow_.size(); k < args_->ws; ++k) {
-          Texamples(example_index++) = kPaddingId;
-        }
-        Tlabels(i) = line_[w];
+        vlabels.push_back(line_[w]);
 
+        // example: bow_
+        Tensor example(DT_INT32, TensorShape({bow_.size()}));
+        auto Texample = example.flat<int32>();
+        for (int i = 0; i < bow_.size(); ++i) {
+          Texample(i) = bow_[i];
+        }
+        examples.push_back(example);
         ++next_pos_;
+      }
+
+      labels = Tensor(DT_INT32, TensorShape({(int32)vlabels.size()}));
+      auto Tlabels = labels.flat<int32>();
+      for (int i = 0; i < vlabels.size(); ++i) {
+        Tlabels(i) = vlabels[i];
       }
 
       words_per_epoch.scalar<int64>()() = dict_->nwords();
@@ -173,8 +172,6 @@ class FasttextOp : public OpKernel {
   }
 
  private:
-  static const int32 kPaddingId = 0;
-
   std::shared_ptr<::fasttext::Args> args_;
   std::shared_ptr<::fasttext::Dictionary> dict_;
 
@@ -184,7 +181,7 @@ class FasttextOp : public OpKernel {
   std::vector<int32_t> line_;
   std::vector<int32_t> bow_;  // bag of words
   // target index at least 1
-  int next_pos_ = 0;
+  int next_pos_ = 1;
 
   // TODO seed this random engine
   std::minstd_rand rng_;
