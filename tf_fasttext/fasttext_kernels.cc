@@ -97,6 +97,8 @@ class FasttextOp : public OpKernel {
     dict_->readFromFile(ifs);
     ifs.close();
 
+    total_tokens_ = dict_->ntokens();
+
     // plus one for padding id
     Tensor word(DT_STRING, TensorShape({dict_->nwords() + 1}));
     Tensor freq(DT_INT32, TensorShape({dict_->nwords() + 1}));
@@ -118,7 +120,7 @@ class FasttextOp : public OpKernel {
   void Compute(OpKernelContext* ctx) override {
     Tensor words_per_epoch(DT_INT64, TensorShape({}));
     Tensor current_epoch(DT_INT32, TensorShape({}));
-    Tensor total_words_processed(DT_INT64, TensorShape({}));
+    Tensor total_tokens_processed(DT_INT64, TensorShape({}));
     Tensor examples(DT_INT32, TensorShape({args_->batch_size, args_->ws}));
     auto Texamples = examples.flat<int32>();
     Tensor labels(DT_INT32, TensorShape({args_->batch_size}));
@@ -131,7 +133,9 @@ class FasttextOp : public OpKernel {
       std::uniform_int_distribution<> uniform(1, args_->ws);
       for (int batch = 0; batch < args_->batch_size; ++batch) {
         if (next_pos_ >= line_.size()) {
-          total_words_processed_ += dict_->getLine(ifs_, line_, rng_);
+          total_tokens_processed_ += dict_->getLine(ifs_, line_, rng_);
+          current_epoch_ = total_tokens_processed_ / total_tokens_;
+
           if (line_.size() < 2) {
             Tvalid_lengths(batch) = 0;
             continue;
@@ -159,16 +163,16 @@ class FasttextOp : public OpKernel {
         ++next_pos_;
       }
 
-      words_per_epoch.scalar<int64>()() = dict_->nwords();
+      words_per_epoch.scalar<int64>()() = dict_->ntokens();
       current_epoch.scalar<int32>()() = current_epoch_;
-      total_words_processed.scalar<int64>()() = total_words_processed_;
+      total_tokens_processed.scalar<int64>()() = total_tokens_processed_;
     }  // end mutex_lock guard
 
     ctx->set_output(0, word_);
     ctx->set_output(1, freq_);
     ctx->set_output(2, words_per_epoch);
     ctx->set_output(3, current_epoch);
-    ctx->set_output(4, total_words_processed);
+    ctx->set_output(4, total_tokens_processed);
     ctx->set_output(5, examples);
     ctx->set_output(6, labels);
     ctx->set_output(7, valid_lengths);
@@ -186,14 +190,16 @@ class FasttextOp : public OpKernel {
   // target index at least 1
   int next_pos_ = 1;
 
+  int64 total_tokens_ = 0;
+
   std::minstd_rand rng_;
 
   Tensor word_;
   Tensor freq_;
 
   mutex mu_;
-  int32 current_epoch_ GUARDED_BY(mu_) = -1;
-  int64 total_words_processed_ GUARDED_BY(mu_) = 0;
+  int32 current_epoch_ GUARDED_BY(mu_) = 0;
+  int64 total_tokens_processed_ GUARDED_BY(mu_) = 0;
 };
 
 REGISTER_KERNEL_BUILDER(Name("Fasttext").Device(DEVICE_CPU), FasttextOp);
