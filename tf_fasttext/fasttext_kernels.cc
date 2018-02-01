@@ -132,18 +132,12 @@ class FasttextOp : public OpKernel {
       mutex_lock l(mu_);
       std::uniform_int_distribution<> uniform(1, args_->ws);
       for (int batch = 0; batch < args_->batch_size; ++batch) {
-        for (int k = 0; k < args_->ws; ++k) {
-          Texamples(batch * args_->ws + k) = 0;
-        }
-        Tlabels(batch) = 0;
-
         if (next_pos_ >= line_.size()) {
           total_tokens_processed_ += dict_->getLine(ifs_, line_, rng_);
           current_epoch_ = total_tokens_processed_ / total_tokens_;
-
-          if (line_.size() < 2) {
-            Tvalid_lengths(batch) = 0;
-            continue;
+          while(line_.size() < 2) {
+            total_tokens_processed_ += dict_->getLine(ifs_, line_, rng_);
+            current_epoch_ = total_tokens_processed_ / total_tokens_;
           }
           next_pos_ = 1;
         }

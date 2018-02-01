@@ -116,6 +116,8 @@ class Word2Vec(object):
          total_words_processed, examples, labels,
          valid_lengths) = fasttext_model.fasttext(train_data=opts.train_data,
                                                   batch_size=opts.batch_size,
+                                                  ws=opts.window_size,
+                                                  min_count=opts.min_count,
                                                   seed=11)
 
         (opts.vocab_words, opts.vocab_counts,
@@ -135,34 +137,34 @@ class Word2Vec(object):
         # Input words embedding: [vocab_size, emb_dim]
         w_in = tf.Variable(
             tf.random_uniform([opts.vocab_size, opts.emb_dim],
-                              -0.5 / opts.emb_dim, 0.5 / opts.emb_dim),
+                              -1 / opts.emb_dim, 1 / opts.emb_dim),
             name="w_in")
 
         # TODO valid_lengths
-        embed = tf.nn.embedding_lookup(w_in, examples)
+        valid_length = tf.reshape(valid_lengths, [])
+        ids = tf.slice(examples, [0, 0], [1, valid_length])
+        embed = tf.gather(w_in, ids)
         mean_inputs = tf.reduce_mean(embed, 1)
 
         # Output
         nce_weights = tf.Variable(
             tf.zeros([opts.vocab_size, opts.emb_dim]), name="nce_weights")
 
-        nce_weights = tf.Variable(
-            tf.truncated_normal([opts.vocab_size, opts.emb_dim],
-                                stddev=1.0 / math.sqrt(opts.emb_dim)))
         nce_biases = tf.Variable(tf.zeros([opts.vocab_size]),
+                                 trainable=False,
                                  name="nce_biases")
 
         # Global step: scalar, i.e., shape [].
-        global_step = tf.Variable(0, name="global_step")
+        global_step = tf.Variable(1, name="global_step")
 
         # Linear learning rate decay.
         words_to_train = float(opts.words_per_epoch * opts.epochs_to_train)
-        lr = opts.learning_rate * tf.maximum(
-            0.0001,
+        lr = opts.learning_rate * (
             1.0 - tf.cast(total_words_processed, tf.float32) / words_to_train)
 
         # NCE loss
-        loss = tf.reduce_mean(
+        loss = tf.Variable([0.0], dtype=tf.float32)
+        loss_inc = loss.assign_add(
             tf.nn.nce_loss(
                 weights=nce_weights,
                 biases=nce_biases,
@@ -170,9 +172,12 @@ class Word2Vec(object):
                 inputs=mean_inputs,
                 num_sampled=opts.num_samples,
                 num_classes=opts.vocab_size
-            ),
-            name='loss'
+            )
         )
+        with tf.control_dependencies([loss_inc]):
+            loss = tf.divide(loss, tf.cast(global_step, tf.float32),
+                             name='loss')
+
         optimizer = tf.train.GradientDescentOptimizer(lr)
 
         # Training nodes.
@@ -222,7 +227,7 @@ def main(_):
             model.train()  # Process one epoch
         # Perform a final save.
         model.saver.save(session, os.path.join(opts.save_path, "model.ckpt"),
-                         global_step=model.global_step)
+                         global_step=model._global_step)
 
 
 if __name__ == "__main__":
