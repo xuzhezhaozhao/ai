@@ -123,7 +123,7 @@ class FasttextOp : public OpKernel {
     Tensor total_tokens_processed(DT_INT64, TensorShape({}));
     Tensor examples(DT_INT32, TensorShape({args_->batch_size, args_->ws}));
     auto Texamples = examples.flat<int32>();
-    Tensor labels(DT_INT32, TensorShape({args_->batch_size}));
+    Tensor labels(DT_INT32, TensorShape({args_->batch_size, 1}));
     auto Tlabels = labels.flat<int32>();
     Tensor valid_lengths(DT_INT32, TensorShape({args_->batch_size}));
     auto Tvalid_lengths = valid_lengths.flat<int32>();
@@ -132,6 +132,11 @@ class FasttextOp : public OpKernel {
       mutex_lock l(mu_);
       std::uniform_int_distribution<> uniform(1, args_->ws);
       for (int batch = 0; batch < args_->batch_size; ++batch) {
+        for (int k = 0; k < args_->ws; ++k) {
+          Texamples(batch * args_->ws + k) = 0;
+        }
+        Tlabels(batch) = 0;
+
         if (next_pos_ >= line_.size()) {
           total_tokens_processed_ += dict_->getLine(ifs_, line_, rng_);
           current_epoch_ = total_tokens_processed_ / total_tokens_;
@@ -147,8 +152,7 @@ class FasttextOp : public OpKernel {
         int w = next_pos_;
         for (int c = -boundary; c < 0; ++c) {
           if (w + c >= 0) {
-            auto& ngrams = dict_->getSubwords(line_[w + c]);
-            bow_.insert(bow_.end(), ngrams.cbegin(), ngrams.cend());
+            bow_.push_back(line_[w + c]);
           }
         }
 
