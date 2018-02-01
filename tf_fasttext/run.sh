@@ -1,2 +1,2 @@
 
-python fasttext.py -train_data train_data.in
+python fasttext.py --train_data train_data.in --save_path model
