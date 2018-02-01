@@ -113,15 +113,16 @@ class FasttextOp : public OpKernel {
     Tensor words_per_epoch(DT_INT64, TensorShape({}));
     Tensor current_epoch(DT_INT32, TensorShape({}));
     Tensor total_words_processed(DT_INT64, TensorShape({}));
-    std::vector<Tensor> examples;
+    OpOutputList examples;
+    OP_REQUIRES_OK(ctx, ctx->output_list("examples", &examples));
     std::vector<int32> vlabels;
     Tensor labels;
-
     {
       // Generate batch_size examples
       mutex_lock l(mu_);
       std::uniform_int_distribution<> uniform(1, args_->ws);
       int example_index = 0;
+      int index = 0;
       for (int i = 0; i < args_->batch_size; ++i) {
         if (next_pos_ >= line_.size()) {
           total_words_processed_ += dict_->getLine(ifs_, line_, rng_);
@@ -147,7 +148,10 @@ class FasttextOp : public OpKernel {
         for (int i = 0; i < bow_.size(); ++i) {
           Texample(i) = bow_[i];
         }
-        examples.push_back(example);
+
+        // TODO index better name?
+        examples.set(index, example);
+        ++index;
         ++next_pos_;
       }
 
@@ -167,7 +171,6 @@ class FasttextOp : public OpKernel {
     ctx->set_output(2, words_per_epoch);
     ctx->set_output(3, current_epoch);
     ctx->set_output(4, total_words_processed);
-    ctx->set_output(5, examples);
     ctx->set_output(6, labels);
   }
 

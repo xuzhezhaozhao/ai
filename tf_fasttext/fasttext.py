@@ -32,7 +32,8 @@ def main(_):
      current_epoch,
      total_words_processed,
      examples,
-     labels) = fasttext_model.fasttext(train_data=FLAGS.train_data)
+     labels) = fasttext_model.fasttext(train_data=FLAGS.train_data,
+                                       Texamples=[tf.int32])
 
     print(vacab_word)
     print(vacab_freq)
