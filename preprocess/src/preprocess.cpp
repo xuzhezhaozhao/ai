@@ -142,6 +142,10 @@ static void ProcessRawInput() {
     unsigned long uin = 0;
     int isvideo = 0;
     const std::string &rowkey = tokens[2];
+    if (rowkey.size() < 5) {
+      ++ndirty;
+      continue;
+    }
     double video_duration = 0.0;
     double watched_time = 0.0;
     int algo_id = -123456;
@@ -207,7 +211,6 @@ static void ProcessRawInput() {
     if (!histories[uin].empty() && histories[uin].back().first == id) {
       // duplicate watched or error reported
       if (r > histories[uin].back().second) {
-        // 主 feeds 点击进来的视频会被报成图文
         // update watched ratio
         histories[uin].back().second = (float)r;
       }
