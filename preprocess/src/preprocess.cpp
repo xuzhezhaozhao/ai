@@ -48,6 +48,8 @@ DEFINE_int32(supress_hot_arg2, 1, "");
 DEFINE_int32(article_supress_hot_arg1, 2, "");
 DEFINE_int32(article_supress_hot_arg2, 1, "");
 
+DEFINE_int32(article_read_time_thr, 0, ""); // seconds
+
 DEFINE_int32(threads, 1, "");
 
 // 出现次数小于该值则丢弃
@@ -149,12 +151,6 @@ static void ProcessRawInput() {
       video_duration = std::stod(tokens[4]);
       watched_time = std::stod(tokens[5]);
       algo_id = std::stoi(tokens[8]);
-
-      if (video_duration > 0.1 && watched_time > 0) {
-        isvideo = 1;
-      } else {
-        isvideo = 0;
-      }
     } catch (const std::exception &e) {
       ++ndirty;
       continue;
@@ -177,25 +173,31 @@ static void ProcessRawInput() {
     int id = rowkey2int[rowkey];
 
     double r = 0.0;
-    if (isvideo && video_duration > 0.0) {
-      all_videos.insert(id);
-      // 统计视频播放比率
-      video_info[id].total_watched_time += watched_time;
-      video_info[id].total_duration += video_duration + FLAGS_video_play_ratio_bias;
-      video_info[id].click_times += 1;
+    if (isvideo) {
+      if (video_duration > 0) {
+        all_videos.insert(id);
+        // 统计视频播放比率
+        video_info[id].total_watched_time += watched_time;
+        video_info[id].total_duration += video_duration + FLAGS_video_play_ratio_bias;
+        video_info[id].click_times += 1;
 
-      // 过滤出有效观看视频
-      r = watched_time / video_duration;
-      if (watched_time < FLAGS_user_effective_watched_time_thr &&
-          r < FLAGS_user_effective_watched_ratio_thr) {
+        // 过滤出有效观看视频
+        r = watched_time / video_duration;
+        if (watched_time < FLAGS_user_effective_watched_time_thr &&
+            r < FLAGS_user_effective_watched_ratio_thr) {
+          continue;
+        }
+        video_info[id].effective_click_times += 1;
+      }
+    } else {
+      // 过滤无效图文阅读
+      if (watched_time < FLAGS_article_read_time_thr) {
         continue;
       }
-      video_info[id].effective_click_times += 1;
-    } else {
       all_articles.insert(id);
     }
 
-    if (ban_algo_ids.find(algo_id) != ban_algo_ids.end()) {
+    if (isvideo && ban_algo_ids.find(algo_id) != ban_algo_ids.end()) {
       // 播放比必须大于一个阈值才不过滤
       if (r < FLAGS_ban_algo_watched_ratio_thr) {
         continue;
