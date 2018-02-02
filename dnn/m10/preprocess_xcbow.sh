@@ -28,8 +28,7 @@ video_play_ratio_bias=30
 supress_hot_arg1=-1
 supress_hot_arg2=3
 
-
-/data/preprocess/build/src/preprocess \
+./utils/preprocess \
     -raw_input=${sorted_file} \
     -with_header=false \
     -only_video=false \
@@ -53,7 +52,6 @@ supress_hot_arg2=3
     -output_video_click_file=${preprocessed}.video_click
 
 
-mkdir -p log
 echo "fastText train ..."
 fast_model=${preprocessed}.xcbow
 minCount=${min_count}
@@ -67,7 +65,7 @@ minn=0
 maxn=0
 thread=${parallel}
 ts=`date +%Y%m%d%H%M%S`
-/data/utils/fasttext xcbow \
+./utils/fasttext xcbow \
 	-input ${preprocessed} \
 	-output ${fast_model} \
 	-lr ${lr} \
@@ -83,7 +81,7 @@ ts=`date +%Y%m%d%H%M%S`
 	-thread ${thread} \
 	-t 1e-4 \
 	-lrUpdateRate 100 \
-        -saveOutput 1 >log/fasttext.xcbow.log.${ts} 2>&1
+    -saveOutput 1 >log/fasttext.xcbow.log.${ts} 2>&1
 
 echo "generate fasttext dict ..."
 awk 'NR>2{print $1}' ${fast_model}.vec > ${fast_model}.dict
@@ -99,7 +97,7 @@ python filter_dict.py \
 #        --input_fasttext_subset_dict_file ${fast_model}.subset \
 #        --output_fasttext_subset_vec_file ${fast_model}.subset.vec
 
-# /data/utils/lsh_build_tree ${fast_model}.subset.vec ${fast_model}.subset.lsh 200
+# ./utils/lsh_build_tree ${fast_model}.subset.vec ${fast_model}.subset.lsh 200
 
 rm -rf ${final_data_dir}.bak
 if [ -d ${final_data_dir} ]; then

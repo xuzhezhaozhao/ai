@@ -29,7 +29,7 @@ video_play_ratio_bias=30
 supress_hot_arg1=-1
 supress_hot_arg2=3
 
-/data/preprocess/build/src/preprocess \
+./utils/preprocess \
     -raw_input=${sorted_file} \
     -with_header=false \
     -only_video=true \
@@ -52,7 +52,6 @@ supress_hot_arg2=3
     -output_article_dict_file=${preprocessed}.article_dict \
     -output_video_click_file=${preprocessed}.video_click
 
-mkdir -p log
 echo "fastText train ..."
 fast_model=${ynet_data_dir}/data.in
 minCount=${min_count}
@@ -66,7 +65,7 @@ minn=0
 maxn=0
 thread=${parallel}
 ts=`date +%Y%m%d%H%M%S`
-/data/utils/fasttext \
+./utils/fasttext \
     skipgram \
     -input ${preprocessed} \
     -output ${fast_model} \
@@ -104,7 +103,7 @@ python utils/records2binary.py \
     --watched_size ${watched_size} \
     --watched_size_pctr ${watched_size_pctr} \
     --max_per_user ${max_per_user} \
-    --calculate_recall_inputs 0 
+    --calculate_recall_inputs 0
 
 python utils/pctr_transform.py \
     --input_records ${preprocessed} \
