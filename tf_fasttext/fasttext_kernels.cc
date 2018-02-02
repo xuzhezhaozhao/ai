@@ -99,9 +99,8 @@ class FasttextOp : public OpKernel {
 
     total_tokens_ = dict_->ntokens();
 
-    // plus one for padding id
-    Tensor word(DT_STRING, TensorShape({dict_->nwords() + 1}));
-    Tensor freq(DT_INT32, TensorShape({dict_->nwords() + 1}));
+    Tensor word(DT_STRING, TensorShape({dict_->nwords()}));
+    Tensor freq(DT_INT32, TensorShape({dict_->nwords()}));
     for (int i = 0; i < dict_->nwords(); ++i) {
       const string& w = dict_->getWord(i);
       int64 cnt = dict_->getWordCount(i);
@@ -135,7 +134,7 @@ class FasttextOp : public OpKernel {
         if (next_pos_ >= line_.size()) {
           total_tokens_processed_ += dict_->getLine(ifs_, line_, rng_);
           current_epoch_ = total_tokens_processed_ / total_tokens_;
-          while(line_.size() < 2) {
+          while (line_.size() < 2) {
             total_tokens_processed_ += dict_->getLine(ifs_, line_, rng_);
             current_epoch_ = total_tokens_processed_ / total_tokens_;
           }
@@ -201,5 +200,120 @@ class FasttextOp : public OpKernel {
 };
 
 REGISTER_KERNEL_BUILDER(Name("Fasttext").Device(DEVICE_CPU), FasttextOp);
+
+class NegTrainWord2vecOp : public OpKernel {
+ public:
+  explicit NegTrainWord2vecOp(OpKernelConstruction* ctx) : OpKernel(ctx) {
+    base_.Init(0, 0);
+
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("num_negative_samples", &num_samples_));
+
+    std::vector<int32> vocab_count;
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("vocab_count", &vocab_count));
+
+    std::vector<float> vocab_weights;
+    vocab_weights.reserve(vocab_count.size());
+    for (const auto& f : vocab_count) {
+      float r = std::pow(static_cast<float>(f), 0.75f);
+      vocab_weights.push_back(r);
+    }
+    sampler_ = new random::DistributionSampler(vocab_weights);
+  }
+
+  ~NegTrainWord2vecOp() { delete sampler_; }
+
+  void Compute(OpKernelContext* ctx) override {
+    Tensor w_in = ctx->mutable_input(0, false);
+    OP_REQUIRES(ctx, TensorShapeUtils::IsMatrix(w_in.shape()),
+                errors::InvalidArgument("Must be a matrix"));
+    Tensor w_out = ctx->mutable_input(1, false);
+    OP_REQUIRES(ctx, w_in.shape() == w_out.shape(),
+                errors::InvalidArgument("w_in.shape == w_out.shape"));
+    const Tensor& examples = ctx->input(2);
+    OP_REQUIRES(ctx, TensorShapeUtils::IsVector(examples.shape()),
+                errors::InvalidArgument("Must be a vector"));
+    const Tensor& labels = ctx->input(3);
+    OP_REQUIRES(ctx, examples.shape() == labels.shape(),
+                errors::InvalidArgument("examples.shape == labels.shape"));
+    const Tensor& learning_rate = ctx->input(4);
+    OP_REQUIRES(ctx, TensorShapeUtils::IsScalar(learning_rate.shape()),
+                errors::InvalidArgument("Must be a scalar"));
+
+    auto Tw_in = w_in.matrix<float>();
+    auto Tw_out = w_out.matrix<float>();
+    auto Texamples = examples.flat<int32>();
+    auto Tlabels = labels.flat<int32>();
+    auto lr = learning_rate.scalar<float>()();
+    const int64 vocab_size = w_in.dim_size(0);
+    const int64 dims = w_in.dim_size(1);
+    const int64 batch_size = examples.dim_size(0);
+    OP_REQUIRES(ctx, vocab_size == sampler_->num(),
+                errors::InvalidArgument("vocab_size mismatches: ", vocab_size,
+                                        " vs. ", sampler_->num()));
+
+    // Gradient accumulator for v_in.
+    Tensor buf(DT_FLOAT, TensorShape({dims}));
+    auto Tbuf = buf.flat<float>();
+
+    // Scalar buffer to hold sigmoid(+/- dot).
+    Tensor g_buf(DT_FLOAT, TensorShape({}));
+    auto g = g_buf.scalar<float>();
+
+    // The following loop needs 2 random 32-bit values per negative
+    // sample.  We reserve 8 values per sample just in case the
+    // underlying implementation changes.
+    auto rnd = base_.ReserveSamples32(batch_size * num_samples_ * 8);
+    random::SimplePhilox srnd(&rnd);
+
+    for (int64 i = 0; i < batch_size; ++i) {
+      const int32 example = Texamples(i);
+      DCHECK(0 <= example && example < vocab_size) << example;
+      const int32 label = Tlabels(i);
+      DCHECK(0 <= label && label < vocab_size) << label;
+      auto v_in = Tw_in.chip<0>(example);
+
+      // Positive: example predicts label.
+      //   forward: x = v_in' * v_out
+      //            l = log(sigmoid(x))
+      //   backward: dl/dx = g = sigmoid(-x)
+      //             dl/d(v_in) = g * v_out'
+      //             dl/d(v_out) = v_in' * g
+      {
+        auto v_out = Tw_out.chip<0>(label);
+        auto dot = (v_in * v_out).sum();
+        g = (dot.exp() + 1.f).inverse();
+        Tbuf = v_out * (g() * lr);
+        v_out += v_in * (g() * lr);
+      }
+
+      // Negative samples:
+      //   forward: x = v_in' * v_sample
+      //            l = log(sigmoid(-x))
+      //   backward: dl/dx = g = -sigmoid(x)
+      //             dl/d(v_in) = g * v_out'
+      //             dl/d(v_out) = v_in' * g
+      for (int j = 0; j < num_samples_; ++j) {
+        const int sample = sampler_->Sample(&srnd);
+        if (sample == label) continue;  // Skip.
+        auto v_sample = Tw_out.chip<0>(sample);
+        auto dot = (v_in * v_sample).sum();
+        g = -((-dot).exp() + 1.f).inverse();
+        Tbuf += v_sample * (g() * lr);
+        v_sample += v_in * (g() * lr);
+      }
+
+      // Applies the gradient on v_in.
+      v_in += Tbuf;
+    }
+  }
+
+ private:
+  int32 num_samples_ = 0;
+  random::DistributionSampler* sampler_ = nullptr;
+  GuardedPhiloxRandom base_;
+};
+
+REGISTER_KERNEL_BUILDER(Name("NegTrainWord2vec").Device(DEVICE_CPU),
+                        NegTrainWord2vecOp);
 
 }  // namespace tensorflow

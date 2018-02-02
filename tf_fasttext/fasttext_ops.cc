@@ -36,5 +36,25 @@ Fasttext custome operator.
 )doc");
 
 
+REGISTER_OP("NegTrainWord2vec")
+    .Input("w_in: Ref(float)")
+    .Input("w_out: Ref(float)")
+    .Input("examples: int32")
+    .Input("labels: int32")
+    .Input("lr: float")
+    .Output("loss: float")
+    .SetIsStateful()
+    .Attr("vocab_count: list(int)")
+    .Attr("num_negative_samples: int")
+    .Doc(R"doc(
+Training via negative sampling.
+
+w_in: input word embedding.
+w_out: output word embedding.
+examples: A vector of word ids.
+labels: A vector of word ids.
+vocab_count: Count of words in the vocabulary.
+num_negative_samples: Number of negative samples per example.
+)doc");
 
 }  // namespace tensorflow
