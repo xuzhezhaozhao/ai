@@ -24,3 +24,4 @@ tags/data
 tags/raw_data
 build
 data/
+tf_fasttext/model/

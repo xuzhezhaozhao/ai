@@ -163,8 +163,7 @@ class Word2Vec(object):
             1.0 - tf.cast(total_words_processed, tf.float32) / words_to_train)
 
         # NCE loss
-        loss = tf.Variable([0.0], dtype=tf.float32)
-        loss_inc = loss.assign_add(
+        loss = tf.reduce_mean(
             tf.nn.nce_loss(
                 weights=nce_weights,
                 biases=nce_biases,
@@ -174,9 +173,6 @@ class Word2Vec(object):
                 num_classes=opts.vocab_size
             )
         )
-        with tf.control_dependencies([loss_inc]):
-            loss = tf.divide(loss, tf.cast(global_step, tf.float32),
-                             name='loss')
 
         optimizer = tf.train.GradientDescentOptimizer(lr)
 
