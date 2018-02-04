@@ -49,7 +49,7 @@ DEFINE_int32(article_supress_hot_arg1, 2, "");
 DEFINE_int32(article_supress_hot_arg2, 1, "");
 
 DEFINE_int32(article_read_time_thr, 0, ""); // seconds
-DEFINE_int32(article_read_ratio_thr, 0, ""); // %
+DEFINE_double(article_read_ratio_thr, 0.0, ""); // %
 
 DEFINE_int32(threads, 1, "");
 
