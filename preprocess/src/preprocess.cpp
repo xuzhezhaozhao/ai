@@ -49,6 +49,7 @@ DEFINE_int32(article_supress_hot_arg1, 2, "");
 DEFINE_int32(article_supress_hot_arg2, 1, "");
 
 DEFINE_int32(article_read_time_thr, 0, ""); // seconds
+DEFINE_int32(article_read_ratio_thr, 0, ""); // %
 
 DEFINE_int32(threads, 1, "");
 
@@ -69,7 +70,9 @@ struct VideoInfo {
 };
 
 // uin ==> {rowkey, watch_ratio}
-static std::unordered_map<uint64_t, std::vector<std::pair<int, float>>> histories;
+static std::unordered_map<uint32_t, std::vector<std::pair<int, float>>> histories;
+static std::unordered_map<uint32_t, std::set<int>> histories_set;
+
 static std::unordered_map<std::string, int> rowkey2int;    // rowkey 到 index
 static std::vector<std::string> rowkeys;         // index 到 rowkey
 static std::unordered_map<int, uint32_t> rowkeycount;  // 统计 rowkey 出现的次数
@@ -139,7 +142,7 @@ static void ProcessRawInput() {
       ++ndirty;
       continue;
     }
-    unsigned long uin = 0;
+    uint32_t uin = 0;
     int isvideo = 0;
     const std::string &rowkey = tokens[2];
     if (rowkey.size() < 5) {
@@ -151,7 +154,7 @@ static void ProcessRawInput() {
     int algo_id = -123456;
     try {
       isvideo = std::stoi(tokens[3]);
-      uin = std::stoul(tokens[1]);
+      uin = (uint32_t)std::stoul(tokens[1]);
       video_duration = std::stod(tokens[4]);
       watched_time = std::stod(tokens[5]);
       algo_id = std::stoi(tokens[8]);
@@ -179,7 +182,6 @@ static void ProcessRawInput() {
     double r = 0.0;
     if (isvideo) {
       if (video_duration > 0) {
-        all_videos.insert(id);
         // 统计视频播放比率
         video_info[id].total_watched_time += watched_time;
         video_info[id].total_duration += video_duration + FLAGS_video_play_ratio_bias;
@@ -191,33 +193,43 @@ static void ProcessRawInput() {
             r < FLAGS_user_effective_watched_ratio_thr) {
           continue;
         }
+        if (ban_algo_ids.find(algo_id) != ban_algo_ids.end()) {
+          // 播放比必须大于一个阈值才不过滤
+          if (r < FLAGS_ban_algo_watched_ratio_thr) {
+            continue;
+          }
+        }
         video_info[id].effective_click_times += 1;
+        all_videos.insert(id);
+      } else {
+        ++ndirty;
+        continue;
       }
     } else {
       // 过滤无效图文阅读
-      if (watched_time < FLAGS_article_read_time_thr) {
+      if (watched_time < FLAGS_article_read_time_thr ||
+          video_duration < FLAGS_article_read_ratio_thr) {
         continue;
       }
       all_articles.insert(id);
     }
 
-    if (isvideo && ban_algo_ids.find(algo_id) != ban_algo_ids.end()) {
-      // 播放比必须大于一个阈值才不过滤
-      if (r < FLAGS_ban_algo_watched_ratio_thr) {
-        continue;
-      }
-    }
+    //if (!histories[uin].empty() && histories[uin].back().first == id) {
+      //// duplicate watched or error reported
+      //if (r > histories[uin].back().second) {
+        //// update watched ratio
+        //histories[uin].back().second = (float)r;
+      //}
+      //continue;
+    //}
 
-    if (!histories[uin].empty() && histories[uin].back().first == id) {
-      // duplicate watched or error reported
-      if (r > histories[uin].back().second) {
-        // update watched ratio
-        histories[uin].back().second = (float)r;
-      }
+    if (!histories_set[uin].empty() && histories_set[uin].count(id) > 0) {
+      // duplicate watched, skip
       continue;
     }
 
     histories[uin].push_back({id, r});
+    histories_set[uin].insert(id);
     ++rowkeycount[id];
     ++total;
 
