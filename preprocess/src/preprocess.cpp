@@ -20,9 +20,12 @@ DEFINE_bool(with_header, true, "raw input data with header");
 DEFINE_bool(only_video, true, "only user video pv, exclude article pv.");
 DEFINE_int32(interval, 1000000, "interval steps to print info");
 
-DEFINE_string(output_user_watched_file, "output_user_watched_file", "output user watched file");
+DEFINE_string(output_user_watched_file, "output_user_watched_file",
+    "output user watched file");
 
-DEFINE_string(output_user_watched_ratio_file, "output_user_watched_ratio_file", "output user watched time ratio file for PCTR");
+DEFINE_string(output_user_watched_ratio_file, "output_user_watched_ratio_file",
+    "output user watched time ratio file for PCTR");
+
 DEFINE_string(output_video_play_ratio_file, "output_video_play_ratio_file", "used for similar videos");
 
 // 视频和图文的 rowkey 词典文件
