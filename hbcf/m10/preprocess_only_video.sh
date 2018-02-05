@@ -21,25 +21,25 @@ user_abnormal_watched_thr=2048
 user_effective_watched_time_thr=20
 user_effective_watched_ratio_thr=0.3
 ban_algo_ids='3323,3321,3313,3312,3311,3310,3309,3308,3307,3306,3305,3304,3303,3302,3301'
-ban_algo_watched_ratio_thr=0.9
+ban_algo_watched_ratio_thr=0.8
 video_play_ratio_bias=10
 supress_hot_arg1=-1
 supress_hot_arg2=3
 
 preprocessed=${input}.preprocessed
 /data/preprocess/build/src/preprocess \
-	-raw_input=${sorted_file} \
-	-with_header=false \
-	-only_video=true \
-	-interval=1000000 \
-	-output_user_watched_file=${preprocessed} \
+        -raw_input=${sorted_file} \
+        -with_header=false \
+        -only_video=true \
+        -interval=1000000 \
+        -output_user_watched_file=${preprocessed} \
         -output_user_watched_ratio_file=${preprocessed}.watched_ratio \
         -output_video_play_ratio_file=${preprocessed}.play_raito \
-	-user_min_watched=${user_min_watched} \
-	-user_max_watched=${user_max_watched} \
-	-user_abnormal_watched_thr=${user_abnormal_watched_thr} \
-	-supress_hot_arg1=${supress_hot_arg1} \
-	-supress_hot_arg2=${supress_hot_arg2} \
+        -user_min_watched=${user_min_watched} \
+        -user_max_watched=${user_max_watched} \
+        -user_abnormal_watched_thr=${user_abnormal_watched_thr} \
+        -supress_hot_arg1=${supress_hot_arg1} \
+        -supress_hot_arg2=${supress_hot_arg2} \
         -user_effective_watched_time_thr=${user_effective_watched_time_thr} \
         -user_effective_watched_ratio_thr=${user_effective_watched_ratio_thr} \
         -min_count=${min_count} \
@@ -57,7 +57,7 @@ minCount=${min_count}
 lr=0.025
 dim=100
 ws=15
-epoch=5
+epoch=2
 neg=5
 bucket=10
 minn=0
@@ -85,7 +85,7 @@ echo "generate fasttext dict ..."
 awk 'NR>2{print $1}' ${fast_model}.vec > ${fast_model}.dict
 
 # call newman's disable interface
-/data/utils/enable_filter -input ${fast_model}.dict -output_valid ${fast_model}.dict.valid -output_filtered ${fast_model}.dict.filtered
+# /data/utils/enable_filter -input ${fast_model}.dict -output_valid ${fast_model}.dict.valid -output_filtered ${fast_model}.dict.filtered
 
 echo "fasttext nn ..."
 nn_k=100
