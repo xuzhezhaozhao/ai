@@ -33,6 +33,7 @@ DEFINE_string(output_video_click_file, "output_video_click_file", "");
 DEFINE_double(video_play_ratio_bias, 0.0, "");
 
 DEFINE_int32(user_min_watched, 20, "");
+
 // TODO 截断至此大小
 DEFINE_int32(user_max_watched, 512, "");
 
@@ -40,7 +41,7 @@ DEFINE_double(user_effective_watched_time_thr, 20.0, "");
 DEFINE_double(user_effective_watched_ratio_thr, 0.3, "");
 
 // 超过这个值的记录直接丢弃
-DEFINE_int32(user_abnormal_watched_thr, 2048, "");
+DEFINE_int32(user_abnormal_watched_thr, 512, "");
 
 DEFINE_int32(supress_hot_arg1, 2, "");
 DEFINE_int32(supress_hot_arg2, 1, "");
@@ -71,7 +72,9 @@ struct VideoInfo {
 
 // uin ==> {rowkey, watch_ratio}
 static std::unordered_map<uint32_t, std::vector<std::pair<int, float>>> histories;
-static std::unordered_map<uint32_t, std::set<int>> histories_set;
+
+// will OOM
+//static std::unordered_map<uint32_t, std::set<int>> histories_set;
 
 static std::unordered_map<std::string, int> rowkey2int;    // rowkey 到 index
 static std::vector<std::string> rowkeys;         // index 到 rowkey
@@ -107,6 +110,16 @@ static void GenerateBanAlgoIds() {
     }
   }
   std::cerr << "ban algo ids size: " << ban_algo_ids.size() << std::endl;
+}
+
+static bool IsContain(int id, const std::vector<std::pair<int, float>> &recoreds) {
+  for (const auto &p : recoreds) {
+    if (id == p.first) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 static void OpenFileRead(const std::string &file, std::ifstream &ifs) {
@@ -160,6 +173,11 @@ static void ProcessRawInput() {
       algo_id = std::stoi(tokens[8]);
     } catch (const std::exception &e) {
       ++ndirty;
+      continue;
+    }
+
+    if (!histories[uin].empty() &&
+        histories[uin].size() > FLAGS_user_abnormal_watched_thr) {
       continue;
     }
 
@@ -223,13 +241,19 @@ static void ProcessRawInput() {
       //continue;
     //}
 
-    if (!histories_set[uin].empty() && histories_set[uin].count(id) > 0) {
+    if (IsContain(id, histories[uin])) {
       // duplicate watched, skip
       continue;
     }
 
+    // OOM!!!
+    //if (!histories_set[uin].empty() && histories_set[uin].count(id) > 0) {
+      //// duplicate watched, skip
+      //continue;
+    //}
+
     histories[uin].push_back({id, r});
-    histories_set[uin].insert(id);
+    //histories_set[uin].insert(id);
     ++rowkeycount[id];
     ++total;
 
