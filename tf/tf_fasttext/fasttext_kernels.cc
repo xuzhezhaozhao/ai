@@ -126,6 +126,7 @@ class FasttextOp : public OpKernel {
     auto Tlabels = labels.flat<int32>();
     Tensor valid_lengths(DT_INT32, TensorShape({args_->batch_size}));
     auto Tvalid_lengths = valid_lengths.flat<int32>();
+
     {
       // Generate batch_size examples
       mutex_lock l(mu_);
