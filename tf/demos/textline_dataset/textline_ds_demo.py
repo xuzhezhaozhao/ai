@@ -1,6 +1,5 @@
 
 import tensorflow as tf
-import numpy as np
 import argparse
 import traceback
 import sys
@@ -8,11 +7,16 @@ import sys
 
 FLAGS = None
 
+string_split_v2_module = None
+string_split_v2 = None
+
 
 def main():
     filenames = [FLAGS.input]
+    # TextLineDataset 是流式的, 可以处理大规模数据
     dataset = tf.data.TextLineDataset(filenames)
-
+    dataset = dataset.map(lambda x: string_split_v2(x, FLAGS.delimter))
+    dataset = dataset.padded_batch(5, padded_shapes=[None])
     dataset = dataset.repeat(FLAGS.epoch)
     iterator = dataset.make_one_shot_iterator()
 
@@ -40,7 +44,24 @@ if __name__ == "__main__":
         help=""
     )
 
+    parser.add_argument(
+        "--delimter",
+        type=str,
+        default=" ",
+        help=""
+    )
+
+    parser.add_argument(
+        "--string_split_v2_ops_path",
+        type=str,
+        default="",
+        help=""
+    )
+
     FLAGS, unparsed = parser.parse_known_args()
+    string_split_v2_module = tf.load_op_library(FLAGS.string_split_v2_ops_path)
+    string_split_v2 = string_split_v2_module.string_split_v2
+
     try:
         main()
     except Exception as e:
