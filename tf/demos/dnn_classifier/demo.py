@@ -12,10 +12,10 @@ SPECIES = ['Setosa', 'Versicolor', 'Virginica']
 
 
 def train_decode_line(x):
-    tensors = tf.decode_csv(x, [[] for _ in range(len(CSV_COLUMN_NAMES))])
-    tensors = map(lambda x: tf.reshape(x, [-1]), tensors)
-    label = tf.cast(tensors[-1], tf.int32)
-    features = dict(zip(CSV_COLUMN_NAMES[:-1], tensors[:-1]))
+    CSV_TYPES = [[0.0], [0.0], [0.0], [0.0], [0]]
+    fields = tf.decode_csv(x, CSV_TYPES)
+    features = dict(zip(CSV_COLUMN_NAMES, fields))
+    label = features.pop('Species')
     return (features, label)
 
 
