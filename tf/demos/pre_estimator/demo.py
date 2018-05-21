@@ -14,7 +14,7 @@ SPECIES = ['Setosa', 'Versicolor', 'Virginica']
 DATA_DIR = "../test_data/"
 
 
-def train_decode_line(x):
+def parse_csv(x):
     CSV_TYPES = [[0.0], [0.0], [0.0], [0.0], [0]]
     fields = tf.decode_csv(x, CSV_TYPES)
     features = dict(zip(CSV_COLUMN_NAMES, fields))
@@ -24,14 +24,14 @@ def train_decode_line(x):
 
 def train_input_fn(filename, skip_rows=0):
     ds = tf.data.TextLineDataset(filename).skip(skip_rows)
-    ds = ds.map(train_decode_line)
+    ds = ds.map(parse_csv)
     ds = ds.shuffle(1000).repeat().batch(100)
     return ds
 
 
 def eval_input_fn(filename, skip_rows=0):
     ds = tf.data.TextLineDataset(filename).skip(skip_rows)
-    ds = ds.map(train_decode_line)
+    ds = ds.map(parse_csv)
     ds = ds.batch(100)
     return ds
 
