@@ -8,6 +8,8 @@ import tensorflow_serving.apis.predict_pb2 as predict_pb2
 import tensorflow_serving.apis.prediction_service_pb2_grpc as prediction_service_pb2_grpc
 
 
+MODEL_NAME = "custom_estimator"
+
 def _float32_feature(value):
     return tf.train.Feature(float_list=tf.train.FloatList(value=value))
 
@@ -16,7 +18,7 @@ def run():
     channel = grpc.insecure_channel('localhost:9000')
     stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
     request = predict_pb2.PredictRequest()
-    request.model_spec.name = 'default'
+    request.model_spec.name = MODEL_NAME
     request.model_spec.signature_name = 'predicts'
 
     example1 = tf.train.Example(
