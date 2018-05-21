@@ -18,13 +18,63 @@ from __future__ import print_function
 
 import argparse
 import tensorflow as tf
+import os
 
-import iris_data
+CSV_COLUMN_NAMES = ['SepalLength', 'SepalWidth',
+                    'PetalLength', 'PetalWidth', 'Species']
+SPECIES = ['Setosa', 'Versicolor', 'Virginica']
+
+DATA_DIR = "../test_data/"
+
+
+def parse_csv(x):
+    CSV_TYPES = [[0.0], [0.0], [0.0], [0.0], [0]]
+    fields = tf.decode_csv(x, CSV_TYPES)
+    features = dict(zip(CSV_COLUMN_NAMES, fields))
+    label = features.pop('Species')
+    return (features, label)
+
+
+def train_input_fn(filename, skip_rows=0):
+    ds = tf.data.TextLineDataset(filename).skip(skip_rows)
+    ds = ds.map(parse_csv, num_parallel_calls=4)
+    ds = ds.shuffle(1000).repeat().batch(100)
+    return ds
+
+
+def eval_input_fn(filename, skip_rows=0):
+    ds = tf.data.TextLineDataset(filename).skip(skip_rows)
+    ds = ds.map(parse_csv)
+    ds = ds.batch(100)
+    return ds
+
+
+def predict_input_fn(features, labels, batch_size):
+    """An input function for evaluation or prediction"""
+    features = dict(features)
+    if labels is None:
+        # No labels, use only features.
+        inputs = features
+    else:
+        inputs = (features, labels)
+
+    # Convert the inputs to a Dataset.
+    dataset = tf.data.Dataset.from_tensor_slices(inputs)
+
+    # Batch the examples
+    assert batch_size is not None, "batch_size must not be None"
+    dataset = dataset.batch(batch_size)
+
+    # Return the dataset.
+    return dataset
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', default=100, type=int, help='batch size')
 parser.add_argument('--train_steps', default=1000, type=int,
                     help='number of training steps')
+args = None
+
 
 def my_model(features, labels, mode, params):
     """DNN with three hidden layers, and dropout of 0.1 probability."""
@@ -45,7 +95,17 @@ def my_model(features, labels, mode, params):
             'probabilities': tf.nn.softmax(logits),
             'logits': logits,
         }
-        return tf.estimator.EstimatorSpec(mode, predictions=predictions)
+        export_outputs={
+            'predicts': tf.estimator.export.PredictOutput(
+                outputs={
+                    'class_ids': predicted_classes[:, tf.newaxis],
+                    'probabilities': tf.nn.softmax(logits),
+                    'logits': logits
+                }
+            )
+        }
+        return tf.estimator.EstimatorSpec(mode, predictions=predictions,
+                                          export_outputs=export_outputs)
 
     # Compute loss.
     loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
@@ -69,15 +129,29 @@ def my_model(features, labels, mode, params):
     return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
 
+feature_spec = {
+    'SepalLength': tf.FixedLenFeature(shape=[1], dtype=tf.float32, default_value=0.0),
+    'SepalWidth': tf.FixedLenFeature(shape=[1], dtype=tf.float32, default_value=0.0),
+    'PetalLength': tf.FixedLenFeature(shape=[1], dtype=tf.float32, default_value=0.0),
+    'PetalWidth': tf.FixedLenFeature(shape=[1], dtype=tf.float32, default_value=0.0)
+}
+
+def serving_input_receiver_fn():
+    """An input receiver that expects a serialized tf.Example."""
+    serialized_tf_example = tf.placeholder(dtype=tf.string,
+                                           shape=[1],
+                                           name='input_example_tensor')
+    receiver_tensors = {'examples': serialized_tf_example}
+    features = tf.parse_example(serialized_tf_example, feature_spec)
+    return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
+
+
 def main(argv):
     args = parser.parse_args(argv[1:])
 
-    # Fetch the data
-    (train_x, train_y), (test_x, test_y) = iris_data.load_data()
-
     # Feature columns describe how to use the input.
     my_feature_columns = []
-    for key in train_x.keys():
+    for key in CSV_COLUMN_NAMES[:-1]:
         my_feature_columns.append(tf.feature_column.numeric_column(key=key))
 
     # Build 2 hidden layer DNN with 10, 10 units respectively.
@@ -86,19 +160,21 @@ def main(argv):
         params={
             'feature_columns': my_feature_columns,
             # Two hidden layers of 10 nodes each.
-            'hidden_units': [10, 10],
+            'hidden_units': [10, 10, 10],
             # The model must choose between 3 classes.
             'n_classes': 3,
         })
 
     # Train the Model.
     classifier.train(
-        input_fn=lambda:iris_data.train_input_fn(train_x, train_y, args.batch_size),
+        input_fn=lambda: train_input_fn(
+            os.path.join(DATA_DIR, 'iris_training.csv'), 1),
         steps=args.train_steps)
 
     # Evaluate the model.
     eval_result = classifier.evaluate(
-        input_fn=lambda:iris_data.eval_input_fn(test_x, test_y, args.batch_size))
+        input_fn=lambda: eval_input_fn(
+            os.path.join(DATA_DIR, 'iris_test.csv'), 1))
 
     print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 
@@ -112,9 +188,9 @@ def main(argv):
     }
 
     predictions = classifier.predict(
-        input_fn=lambda:iris_data.eval_input_fn(predict_x,
-                                                labels=None,
-                                                batch_size=args.batch_size))
+        input_fn=lambda: predict_input_fn(predict_x,
+                                          labels=None,
+                                          batch_size=args.batch_size))
 
     for pred_dict, expec in zip(predictions, expected):
         template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
@@ -122,8 +198,11 @@ def main(argv):
         class_id = pred_dict['class_ids'][0]
         probability = pred_dict['probabilities'][class_id]
 
-        print(template.format(iris_data.SPECIES[class_id],
-                              100 * probability, expec))
+        print(template.format(SPECIES[class_id], 100 * probability, expec))
+
+    classifier.export_savedmodel(
+        "model_dir",
+        serving_input_receiver_fn=serving_input_receiver_fn)
 
 
 if __name__ == '__main__':

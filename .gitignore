@@ -25,3 +25,6 @@ tags/raw_data
 build
 data/
 tf_fasttext/model/
+tf/demos/custom_estimator/model_dir/
+tf/demos/custom_estimator/protos/cpp_out
+tf/demos/custom_estimator/protos/python_out
