@@ -21,13 +21,13 @@ def run():
     request = predict_pb2.PredictRequest()
     request.model_spec.name = MODEL_NAME
 
-    # request.model_spec.signature_name = 'predicts'
-    # input_name = 'examples'
+    request.model_spec.signature_name = 'predicts'
+    input_name = 'examples'
 
     # model have another export signature_name, try follows
-    serving_default = tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY
-    request.model_spec.signature_name = serving_default
-    input_name = 'inputs'
+    # serving_default = tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY
+    # request.model_spec.signature_name = serving_default
+    # input_name = 'inputs'
 
     example1 = tf.train.Example(
         features=tf.train.Features(
