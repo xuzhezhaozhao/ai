@@ -4,11 +4,14 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+import os
 
 
 CSV_COLUMN_NAMES = ['SepalLength', 'SepalWidth',
                     'PetalLength', 'PetalWidth', 'Species']
 SPECIES = ['Setosa', 'Versicolor', 'Virginica']
+
+DATA_DIR = "../test_data/"
 
 
 def train_decode_line(x):
@@ -44,13 +47,16 @@ def main(argv):
         n_classes=3
     )
     classifier.train(
-        input_fn=lambda: train_input_fn('iris_training.csv', 1), steps=1000)
+        input_fn=lambda: train_input_fn(
+            os.path.join(DATA_DIR, 'iris_training.csv'), 1), steps=1000)
     train_result = classifier.evaluate(
-        input_fn=lambda: eval_input_fn('iris_training.csv', 1))
+        input_fn=lambda: eval_input_fn(
+            os.path.join(DATA_DIR, 'iris_training.csv'), 1))
     print('\nTraining set accuracy: {accuracy:0.3f}\n'.format(**train_result))
 
     eval_result = classifier.evaluate(
-        input_fn=lambda: eval_input_fn('iris_test.csv', 1))
+        input_fn=lambda: eval_input_fn(
+            os.path.join(DATA_DIR, 'iris_test.csv'), 1))
     print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 
 
