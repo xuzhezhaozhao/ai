@@ -136,13 +136,32 @@ feature_spec = {
     'PetalWidth': tf.FixedLenFeature(shape=[1], dtype=tf.float32, default_value=0.0)
 }
 
+
 def serving_input_receiver_fn():
-    """An input receiver that expects a serialized tf.Example."""
+    """An input receiver that expects a serialized tf.Example.
+    Note: Set serialized_tf_example shape as [None] to handle variable batch size
+    """
     serialized_tf_example = tf.placeholder(dtype=tf.string,
-                                           shape=[1],
+                                           shape=[None],
                                            name='input_example_tensor')
     receiver_tensors = {'examples': serialized_tf_example}
-    features = tf.parse_example(serialized_tf_example, feature_spec)
+    raw_features = tf.parse_example(serialized_tf_example, feature_spec)
+
+    features = raw_features
+
+    # Do anything to raw_features ...
+    # such as
+    # features = {
+        # 'SepalLength': tf.constant([0.0, 0.0]),
+        # 'SepalWidth': tf.constant([0.0, 0.0]),
+        # 'PetalLength': tf.constant([0.0, 0.0]),
+        # 'PetalWidth': tf.constant([0.0, 0.0])
+    # }
+    # or
+    # features = {}
+    # for key in raw_features.keys():
+        # features[key] = tf.constant([0.0, 0.0])
+
     return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
 
 

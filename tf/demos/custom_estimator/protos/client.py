@@ -19,22 +19,42 @@ def run():
     request.model_spec.name = 'default'
     request.model_spec.signature_name = 'predicts'
 
-    example = tf.train.Example(
+    example1 = tf.train.Example(
         features=tf.train.Features(
             feature={
                 'SepalLength': _float32_feature([5.1]),
-                'SepalWidth': _float32_feature([5.1]),
-                'PetalLength': _float32_feature([5.1]),
-                'PetalWidth': _float32_feature([5.1]),
+                'SepalWidth': _float32_feature([3.3]),
+                'PetalLength': _float32_feature([1.7]),
+                'PetalWidth': _float32_feature([0.5]),
+            }
+        )
+    ).SerializeToString()
+
+    example2 = tf.train.Example(
+        features=tf.train.Features(
+            feature={
+                'SepalLength': _float32_feature([5.9]),
+                'SepalWidth': _float32_feature([3.0]),
+                'PetalLength': _float32_feature([4.2]),
+                'PetalWidth': _float32_feature([1.5]),
+            }
+        )
+    ).SerializeToString()
+
+    example3 = tf.train.Example(
+        features=tf.train.Features(
+            feature={
+                'SepalLength': _float32_feature([6.9]),
+                'SepalWidth': _float32_feature([3.1]),
+                'PetalLength': _float32_feature([5.4]),
+                'PetalWidth': _float32_feature([2.1]),
             }
         )
     ).SerializeToString()
 
     request.inputs['examples'].CopyFrom(
-        tf.contrib.util.make_tensor_proto([example],
-                                          dtype=tf.string,
-                                          shape=[1])
-    )
+        tf.contrib.util.make_tensor_proto([example1, example2, example3],
+                                          dtype=tf.string))
 
     response = stub.Predict(request)
     print("Received: {}".format(response))
