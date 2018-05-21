@@ -24,7 +24,7 @@ def parse_csv(x):
 
 def train_input_fn(filename, skip_rows=0):
     ds = tf.data.TextLineDataset(filename).skip(skip_rows)
-    ds = ds.map(parse_csv)
+    ds = ds.map(parse_csv, num_parallel_calls=4)
     ds = ds.shuffle(1000).repeat().batch(100)
     return ds
 
