@@ -88,6 +88,7 @@ def my_model(features, labels, mode, params):
     logits = tf.layers.dense(net, params['n_classes'], activation=None)
 
     # Compute predictions.
+    serving_default = tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY
     predicted_classes = tf.argmax(logits, 1)
     if mode == tf.estimator.ModeKeys.PREDICT:
         predictions = {
@@ -95,7 +96,11 @@ def my_model(features, labels, mode, params):
             'probabilities': tf.nn.softmax(logits),
             'logits': logits,
         }
-        export_outputs={
+        export_outputs = {
+            serving_default: tf.estimator.export.ClassificationOutput(
+                scores=tf.nn.softmax(logits),
+                classes=tf.constant(SPECIES, dtype=tf.string)
+            ),
             'predicts': tf.estimator.export.PredictOutput(
                 outputs={
                     'class_ids': predicted_classes[:, tf.newaxis],
