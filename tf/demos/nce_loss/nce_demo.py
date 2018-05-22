@@ -131,7 +131,8 @@ def my_model(features, labels, mode, params):
                               labels=tf.reshape(labels, [-1, 1]),
                               inputs=net,
                               num_sampled=2,
-                              num_classes=n_classes)
+                              num_classes=n_classes,
+                              partition_strategy="div")
     nce_loss = tf.reduce_mean(nce_loss)
 
     # Compute evaluation metrics.
