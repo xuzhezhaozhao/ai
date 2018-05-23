@@ -116,7 +116,7 @@ def main(argv):
     session_config = tf.ConfigProto(device_count={"CPU": 48},
                                     inter_op_parallelism_threads=0,
                                     intra_op_parallelism_threads=0,
-                                    log_device_placement=True)
+                                    log_device_placement=False)
 
     config = tf.estimator.RunConfig(
         model_dir=opts.model_dir,
