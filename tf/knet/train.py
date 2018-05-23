@@ -15,19 +15,39 @@ import input_data
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--batch_size', default=100, type=int, help='batch size')
-parser.add_argument('--train_steps', default=1000, type=int,
-                    help='number of training steps')
+parser.add_argument('--train_data_path', default='', type=str, help='')
+parser.add_argument('--lr', default=0.25, type=float, help='learning rate')
+parser.add_argument('--dim', default=100, type=float, help='embedding dim')
+parser.add_argument('--maxn', default=0, type=int, help='')
+parser.add_argument('--minn', default=0, type=int, help='')
+parser.add_argument('--word_ngrams', default=1, type=int, help='')
+parser.add_argument('--bucket', default=2000000, type=int, help='')
+parser.add_argument('--ws', default=20, type=int, help='window size')
+parser.add_argument('--min_count', default=50, type=int, help='')
+parser.add_argument('--t', default=0.0001, type=float, help='')
+parser.add_argument('--verbose', default=1, type=int, help='')
+parser.add_argument('--min_count_label', default=1, type=int, help='')
+parser.add_argument('--label', default="__label__", type=str, help='')
+parser.add_argument('--batch_size', default=64, type=int, help='batch size')
+parser.add_argument('--num_sampled', default=5, type=int, help='')
+parser.add_argument('--max_train_steps', default=None, type=int, help='')
+parser.add_argument('--epoch', default=1, type=int, help='')
 
-COLUMN_NAMES = ["records"]
+parser.add_argument('--hidden_units', default="64,64", type=str, help='')
+parser.add_argument('--model_dir', default="model_dir", type=str, help='')
+parser.add_argument('--export_model_dir', default="export_model_dir", type=str, help='')
+
+opts = Options()
+
+records_col = "records"
 
 
 def feature_default():
-    return tf.FixedLenFeature(shape=[5], dtype=tf.int64)
+    return tf.FixedLenFeature(shape=[opts.ws], dtype=tf.int64)
 
 
 feature_spec = {
-    'records': feature_default(),
+    records_col: feature_default(),
 }
 
 
@@ -49,39 +69,41 @@ def serving_input_receiver_fn():
 
 def main(argv):
     args = parser.parse_args(argv[1:])
-    opts = Options()
+    opts.train_data_path = args.train_data_path
+    opts.lr = args.lr
+    opts.dim = args.dim
+    opts.maxn = args.maxn
+    opts.minn = args.minn
+    opts.word_ngrams = args.word_ngrams
+    opts.bucket = args.bucket
+    opts.ws = args.ws
+    opts.min_count = args.min_count
+    opts.t = args.t
+    opts.verbose = args.verbose
+    opts.min_count_label = args.min_count_label
+    opts.label = args.label
     opts.batch_size = args.batch_size
-    opts.train_data_path = '../ops/ftlib/train_data.in'
-    opts.lr = 1.0
-    opts.dim = 100
-    opts.maxn = 0
-    opts.minn = 0
-    opts.word_ngrams = 1
-    opts.bucket = 2000000
-    opts.ws = 20
-    opts.min_count = 50
-    opts.t = 0.0001
-    opts.verbose = 1
-    opts.min_count_label = 1
-    opts.label = "__label__"
-    opts.batch_size = 64
-    opts.num_sampled = 10
-    opts.max_train_steps = None
-    opts.epoch = 25
+    opts.num_sampled = args.num_sampled
+    opts.max_train_steps = args.max_train_steps
+    opts.epoch = args.epoch
+    opts.hidden_units = map(int, filter(lambda x: x != '',
+                                        args.hidden_units.split(',')))
+    opts.model_dir = args.model_dir
+    opts.export_model_dir = args.export_model_dir
+
+    print(opts)
 
     # Feature columns describe how to use the input.
     my_feature_columns = []
     my_feature_columns.append(tf.feature_column.numeric_column(
-        key="records", shape=[opts.ws], dtype=tf.int32))
+        key=records_col, shape=[opts.ws], dtype=tf.int32))
 
     classifier = tf.estimator.Estimator(
         model_fn=my_model,
-        model_dir="model_dir",
+        model_dir=opts.model_dir,
         params={
             'feature_columns': my_feature_columns,
-            # Two hidden layers of 10 nodes each.
-            'hidden_units': [128, 64],
-            # The model must choose between 3 classes.
+            'hidden_units': opts.hidden_units,
             'n_classes': 300000,  # TODO
             'embedding_dim': opts.dim,
             'learning_rate': opts.lr,
@@ -91,7 +113,7 @@ def main(argv):
     classifier.train(input_fn=lambda: input_data.train_input_fn(opts),
                      max_steps=opts.max_train_steps)
     classifier.export_savedmodel(
-        "export_model_dir",
+        opts.export_model_dir,
         serving_input_receiver_fn=serving_input_receiver_fn)
 
 

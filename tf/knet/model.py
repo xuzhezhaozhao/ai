@@ -16,12 +16,8 @@ def my_model(features, labels, mode, params):
     num_sampled = params['num_sampled']
     feature_columns = params['feature_columns']
 
-    # embeddings = tf.Variable(
-        # tf.random_uniform([n_classes, embedding_dim], -1.0, 1.0),
-        # name="embeddings"
-    # )
     embeddings = tf.Variable(
-        tf.ones([n_classes, embedding_dim]),
+        tf.random_uniform([n_classes, embedding_dim], -1.0, 1.0),
         name="embeddings"
     )
 
