@@ -27,7 +27,7 @@ def run():
     example1 = tf.train.Example(
         features=tf.train.Features(
             feature={
-                'records': _int64_feature([1, 2, 3, 4, 5]),
+                'records': _int64_feature([11, 22, 23, 34, 55]),
             }
         )
     ).SerializeToString()
