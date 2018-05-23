@@ -32,8 +32,7 @@ def generate_example(line, options):
         t=options.t,
         verbose=options.verbose,
         min_count_label=options.min_count_label,
-        label=options.label,
-        seed=options.seed
+        label=options.label
     )
     dataset = tf.data.Dataset.from_tensor_slices(
         ({"records": records}, labels)

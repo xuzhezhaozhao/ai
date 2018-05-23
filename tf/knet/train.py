@@ -17,7 +17,7 @@ import input_data
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_data_path', default='', type=str, help='')
 parser.add_argument('--lr', default=0.25, type=float, help='learning rate')
-parser.add_argument('--dim', default=100, type=float, help='embedding dim')
+parser.add_argument('--dim', default=100, type=int, help='embedding dim')
 parser.add_argument('--maxn', default=0, type=int, help='')
 parser.add_argument('--minn', default=0, type=int, help='')
 parser.add_argument('--word_ngrams', default=1, type=int, help='')
@@ -35,10 +35,10 @@ parser.add_argument('--epoch', default=1, type=int, help='')
 
 parser.add_argument('--hidden_units', default="64,64", type=str, help='')
 parser.add_argument('--model_dir', default="model_dir", type=str, help='')
-parser.add_argument('--export_model_dir', default="export_model_dir", type=str, help='')
+parser.add_argument('--export_model_dir', default="export_model_dir",
+                    type=str, help='')
 
 opts = Options()
-
 records_col = "records"
 
 
@@ -46,16 +46,15 @@ def feature_default():
     return tf.FixedLenFeature(shape=[opts.ws], dtype=tf.int64)
 
 
-feature_spec = {
-    records_col: feature_default(),
-}
-
-
 def serving_input_receiver_fn():
     """An input receiver that expects a serialized tf.Example.
     Note: Set serialized_tf_example shape as [None] to handle variable
     batch size
     """
+    feature_spec = {
+        records_col: feature_default(),
+    }
+
     serialized_tf_example = tf.placeholder(dtype=tf.string,
                                            shape=[None],
                                            name='input_example_tensor')
@@ -67,7 +66,7 @@ def serving_input_receiver_fn():
     return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
 
 
-def main(argv):
+def parse_args(argv):
     args = parser.parse_args(argv[1:])
     opts.train_data_path = args.train_data_path
     opts.lr = args.lr
@@ -90,10 +89,12 @@ def main(argv):
                                         args.hidden_units.split(',')))
     opts.model_dir = args.model_dir
     opts.export_model_dir = args.export_model_dir
-
     print(opts)
 
-    # Feature columns describe how to use the input.
+
+def main(argv):
+    parse_args(argv)
+
     my_feature_columns = []
     my_feature_columns.append(tf.feature_column.numeric_column(
         key=records_col, shape=[opts.ws], dtype=tf.int32))

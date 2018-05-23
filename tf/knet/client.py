@@ -27,28 +27,12 @@ def run():
     example1 = tf.train.Example(
         features=tf.train.Features(
             feature={
-                'records': _int64_feature([11, 22, 23, 34, 55]),
+                'records': _int64_feature([i for i in range(20)]),
             }
         )
     ).SerializeToString()
 
-    example2 = tf.train.Example(
-        features=tf.train.Features(
-            feature={
-                'records': _int64_feature([1, 2, 3, 4, 5]),
-            }
-        )
-    ).SerializeToString()
-
-    example3 = tf.train.Example(
-        features=tf.train.Features(
-            feature={
-                'records': _int64_feature([100, 200, 300, 400, 500]),
-            }
-        )
-    ).SerializeToString()
-
-    examples = [example1, example2, example3]
+    examples = [example1]
     request.inputs[input_name].CopyFrom(
         tf.contrib.util.make_tensor_proto(examples, dtype=tf.string))
 
