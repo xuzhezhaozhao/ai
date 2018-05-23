@@ -37,6 +37,13 @@ parser.add_argument('--hidden_units', default="64,64", type=str, help='')
 parser.add_argument('--model_dir', default="model_dir", type=str, help='')
 parser.add_argument('--export_model_dir', default="export_model_dir",
                     type=str, help='')
+parser.add_argument('--nclasses', default=10000, type=int, help='')
+parser.add_argument('--prefetch_size', default=10000, type=int, help='')
+
+parser.add_argument('--save_summary_steps', default=100, type=int, help='')
+parser.add_argument('--save_checkpoints_secs', default=600, type=int, help='')
+parser.add_argument('--keep_checkpoint_max', default=3, type=int, help='')
+parser.add_argument('--log_step_count_steps', default=100, type=int, help='')
 
 opts = Options()
 records_col = "records"
@@ -89,6 +96,13 @@ def parse_args(argv):
                                         args.hidden_units.split(',')))
     opts.model_dir = args.model_dir
     opts.export_model_dir = args.export_model_dir
+    opts.nclasses = args.nclasses
+    opts.prefetch_size = args.prefetch_size
+
+    opts.save_summary_steps = args.save_summary_steps
+    opts.save_checkpoints_secs = args.save_checkpoints_secs
+    opts.keep_checkpoint_max = args.keep_checkpoint_max
+    opts.log_step_count_steps = args.log_step_count_steps
     print(opts)
 
 
@@ -99,13 +113,23 @@ def main(argv):
     my_feature_columns.append(tf.feature_column.numeric_column(
         key=records_col, shape=[opts.ws], dtype=tf.int32))
 
+    config = tf.estimator.RunConfig(
+        model_dir=opts.model_dir,
+        tf_random_seed=None,
+        save_summary_steps=opts.save_summary_steps,
+        save_checkpoints_secs=opts.save_checkpoints_secs,
+        session_config=None,
+        keep_checkpoint_max=opts.keep_checkpoint_max,
+        keep_checkpoint_every_n_hours=10000,
+        log_step_count_steps=opts.log_step_count_steps
+    )
     classifier = tf.estimator.Estimator(
         model_fn=my_model,
-        model_dir=opts.model_dir,
+        config=config,
         params={
             'feature_columns': my_feature_columns,
             'hidden_units': opts.hidden_units,
-            'n_classes': 300000,  # TODO
+            'n_classes': opts.nclasses,  # TODO
             'embedding_dim': opts.dim,
             'learning_rate': opts.lr,
             'num_sampled': opts.num_sampled

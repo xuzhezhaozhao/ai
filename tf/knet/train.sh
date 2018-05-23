@@ -19,4 +19,10 @@ python train.py \
     --epoch 20 \
     --hidden_units "128,64" \
     --model_dir "model_dir" \
-    --export_model_dir "export_model_dir"
+    --export_model_dir "export_model_dir" \
+    --nclasses 10000 \
+    --prefetch_size 100000 \
+    --save_summary_steps 100 \
+    --save_checkpoints_secs 600 \
+    --keep_checkpoint_max 3 \
+    --log_step_count_steps 100
