@@ -16,8 +16,6 @@ def my_model(features, labels, mode, params):
     num_sampled = params['num_sampled']
     feature_columns = params['feature_columns']
 
-    print("n_classes = {}".format(n_classes))
-
     embeddings = tf.Variable(
         tf.random_uniform([n_classes, embedding_dim], -1.0, 1.0),
         name="embeddings"
@@ -30,8 +28,12 @@ def my_model(features, labels, mode, params):
     nce_biases = tf.Variable(tf.zeros([n_classes]))
 
     # construct network
+    PADDING_ID = 0
     net = tf.feature_column.input_layer(features, feature_columns)
-    net = tf.nn.embedding_lookup(embeddings, tf.cast(net, tf.int32))
+    mask_padding_zero_op = tf.scatter_update(
+        embeddings, PADDING_ID, tf.zeros([embedding_dim], dtype=tf.float32))
+    with tf.control_dependencies([mask_padding_zero_op]):
+        net = tf.nn.embedding_lookup(embeddings, tf.cast(net, tf.int32))
     net = tf.reduce_mean(net, 1)
     for units in params['hidden_units']:
         net = tf.layers.dense(net, units=units, activation=tf.nn.relu)

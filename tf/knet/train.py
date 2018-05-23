@@ -43,16 +43,16 @@ def serving_input_receiver_fn():
     raw_features = tf.parse_example(serialized_tf_example, feature_spec)
 
     features = raw_features
-
     # Do anything to raw_features ...
-
     return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
 
 
 def main(argv):
     args = parser.parse_args(argv[1:])
     opts = Options()
+    opts.batch_size = args.batch_size
     opts.train_data_path = '../ops/ftlib/train_data.in'
+    opts.train_steps = 100000
 
     # Feature columns describe how to use the input.
     my_feature_columns = []
@@ -75,7 +75,7 @@ def main(argv):
     # Train the Model.
     classifier.train(
         input_fn=lambda: input_data.train_input_fn(opts),
-        steps=args.train_steps)
+        steps=opts.train_steps)
 
     classifier.export_savedmodel(
         "model_dir",

@@ -26,3 +26,4 @@ class Options(object):
         self.batch_size = 1
         self.seed = 1
         self.num_sampled = 5
+        self.train_steps = 1000
