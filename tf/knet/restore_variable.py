@@ -7,19 +7,19 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-
-tf.reset_default_graph()
-
 MODEL_DIR = './model_dir'
 n_classes = 10000
 dim = 100
 
-embeddings = tf.get_variable(name='embeddings', shape=[n_classes, dim])
-
+""" get_variable 需要在 Saver 定义之前 """
+embeddings = tf.get_variable(name='embeddings', shape=[n_classes, dim],
+                             initializer=tf.zeros_initializer)
 saver = tf.train.Saver()
 
 with tf.Session() as sess:
+    sess.run(embeddings.initializer)
+    print("init embeddings = \n{}\n".format(sess.run(embeddings)))
     module_file = tf.train.latest_checkpoint(MODEL_DIR)
+    print("checkpoint = {}".format(module_file))
     saver.restore(sess, module_file)
-    embeddings = sess.run(embeddings)
-    print("restore embeddings = \n{}\n".format(embeddings))
+    print("restore embeddings = \n{}\n".format(sess.run(embeddings)))
