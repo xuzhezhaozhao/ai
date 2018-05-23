@@ -27,7 +27,7 @@ class FasttextExampleGenerateOp : public OpKernel {
   explicit FasttextExampleGenerateOp(OpKernelConstruction* ctx) : OpKernel(ctx) {
     args_ = std::make_shared<::fasttext::Args>();
     ParseArgs(ctx);
-    rng_.seed(args_->seed);
+    rng_.seed(time(NULL));
 
     dict_ = std::make_shared<::fasttext::Dictionary>(args_);
     PreProcessTrainData(ctx);
@@ -74,9 +74,6 @@ class FasttextExampleGenerateOp : public OpKernel {
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("label", &args_->label));
     LOG(INFO) << "label: " << args_->label;
-
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("seed", &args_->seed));
-    LOG(INFO) << "seed: " << args_->seed;
   }
 
   void PreProcessTrainData(OpKernelConstruction* ctx) {

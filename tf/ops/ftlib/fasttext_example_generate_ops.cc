@@ -20,7 +20,6 @@ REGISTER_OP("FasttextExampleGenerate")
     .Attr("verbose: int = 1")
     .Attr("min_count_label: int = 1")
     .Attr("label: string = '__label__'")
-    .Attr("seed: int = 1")
     .Doc(R"doc(
 Fasttext example generate operator.
 )doc");

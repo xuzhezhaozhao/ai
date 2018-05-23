@@ -21,9 +21,9 @@ class Options(object):
         self.min_count = 5
         self.t = 0.0001
         self.verbose = 1
-        self.min_count_label = 5
+        self.min_count_label = 1
         self.label = "__label__"
         self.batch_size = 1
-        self.seed = 1
         self.num_sampled = 5
-        self.train_steps = 1000
+        self.max_train_steps = None
+        self.epoch = 1

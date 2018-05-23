@@ -21,7 +21,7 @@ def my_model(features, labels, mode, params):
         # name="embeddings"
     # )
     embeddings = tf.Variable(
-        tf.zeros([n_classes, embedding_dim]),
+        tf.ones([n_classes, embedding_dim]),
         name="embeddings"
     )
 

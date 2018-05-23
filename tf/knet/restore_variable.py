@@ -22,4 +22,9 @@ with tf.Session() as sess:
     module_file = tf.train.latest_checkpoint(MODEL_DIR)
     print("checkpoint = {}".format(module_file))
     saver.restore(sess, module_file)
-    print("restore embeddings = \n{}\n".format(sess.run(embeddings)))
+    result = sess.run(embeddings)
+    print("restore embeddings = \n{}\n".format(result))
+
+    print("details")
+    for e in result:
+        print(e)

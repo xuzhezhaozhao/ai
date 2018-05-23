@@ -52,8 +52,22 @@ def main(argv):
     opts = Options()
     opts.batch_size = args.batch_size
     opts.train_data_path = '../ops/ftlib/train_data.in'
-    opts.train_steps = 100000
-    opts.min_count = 20
+    opts.lr = 1.0
+    opts.dim = 100
+    opts.maxn = 0
+    opts.minn = 0
+    opts.word_ngrams = 1
+    opts.bucket = 2000000
+    opts.ws = 20
+    opts.min_count = 50
+    opts.t = 0.0001
+    opts.verbose = 1
+    opts.min_count_label = 1
+    opts.label = "__label__"
+    opts.batch_size = 64
+    opts.num_sampled = 10
+    opts.max_train_steps = None
+    opts.epoch = 25
 
     # Feature columns describe how to use the input.
     my_feature_columns = []
@@ -66,19 +80,16 @@ def main(argv):
         params={
             'feature_columns': my_feature_columns,
             # Two hidden layers of 10 nodes each.
-            'hidden_units': [256, 128, 64],
+            'hidden_units': [128, 64],
             # The model must choose between 3 classes.
-            'n_classes': 10000,  # TODO
+            'n_classes': 300000,  # TODO
             'embedding_dim': opts.dim,
             'learning_rate': opts.lr,
             'num_sampled': opts.num_sampled
         })
 
-    # Train the Model.
-    classifier.train(
-        input_fn=lambda: input_data.train_input_fn(opts),
-        steps=opts.train_steps)
-
+    classifier.train(input_fn=lambda: input_data.train_input_fn(opts),
+                     max_steps=opts.max_train_steps)
     classifier.export_savedmodel(
         "export_model_dir",
         serving_input_receiver_fn=serving_input_receiver_fn)

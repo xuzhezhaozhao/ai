@@ -47,5 +47,5 @@ def train_input_fn(options, skip_rows=0):
 
     ds = tf.data.TextLineDataset(train_data_path).skip(skip_rows)
     ds = ds.flat_map(lambda line: generate_example(line, options))
-    ds = ds.shuffle(1000).repeat().batch(batch_size)
+    ds = ds.shuffle(1000).repeat(options.epoch).batch(batch_size)
     return ds
