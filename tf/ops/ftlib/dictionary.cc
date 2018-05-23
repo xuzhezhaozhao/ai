@@ -225,7 +225,7 @@ void Dictionary::readFromFile(std::istream& in) {
   int64_t minThreshold = 1;
   while (readWord(in, word)) {
     add(word);
-    if (ntokens_ % 1000000 == 0 && args_->verbose > 1) {
+    if (ntokens_ % 10000000 == 0 && args_->verbose > 1) {
       LOG(INFO) << "Read " << ntokens_  / 1000000 << "M words" << std::flush;
     }
     if (size_ > 0.75 * MAX_VOCAB_SIZE) {
