@@ -8,7 +8,7 @@ from __future__ import print_function
 import tensorflow as tf
 
 
-FASTTEXT_MODEL_PATH = '../ops/ftlib/fasttext_example_generate_ops.so'
+FASTTEXT_MODEL_PATH = 'lib/fasttext_example_generate_ops.so'
 fasttext_model = tf.load_op_library(FASTTEXT_MODEL_PATH)
 
 
