@@ -32,7 +32,15 @@ def run():
         )
     ).SerializeToString()
 
-    examples = [example1]
+    example2 = tf.train.Example(
+        features=tf.train.Features(
+            feature={
+                'records': _int64_feature([i + 100 for i in range(20)]),
+            }
+        )
+    ).SerializeToString()
+
+    examples = [example1, example2]
     request.inputs[input_name].CopyFrom(
         tf.contrib.util.make_tensor_proto(examples, dtype=tf.string))
 
