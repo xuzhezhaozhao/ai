@@ -31,6 +31,9 @@ class FasttextExampleGenerateOp : public OpKernel {
 
     dict_ = std::make_shared<::fasttext::Dictionary>(args_);
     PreProcessTrainData(ctx);
+
+    LOG(ERROR) << "nwords = " << dict_->nwords();
+    LOG(ERROR) << "nlabels = " << dict_->nlabels();
   }
 
   void ParseArgs(OpKernelConstruction* ctx) {

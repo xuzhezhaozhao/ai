@@ -53,6 +53,7 @@ def main(argv):
     opts.batch_size = args.batch_size
     opts.train_data_path = '../ops/ftlib/train_data.in'
     opts.train_steps = 100000
+    opts.min_count = 20
 
     # Feature columns describe how to use the input.
     my_feature_columns = []
@@ -61,12 +62,13 @@ def main(argv):
 
     classifier = tf.estimator.Estimator(
         model_fn=my_model,
+        model_dir="model_dir",
         params={
             'feature_columns': my_feature_columns,
             # Two hidden layers of 10 nodes each.
-            'hidden_units': [10, 10, 10],
+            'hidden_units': [256, 128, 64],
             # The model must choose between 3 classes.
-            'n_classes': 300000,  # TODO
+            'n_classes': 10000,  # TODO
             'embedding_dim': opts.dim,
             'learning_rate': opts.lr,
             'num_sampled': opts.num_sampled
@@ -78,7 +80,7 @@ def main(argv):
         steps=opts.train_steps)
 
     classifier.export_savedmodel(
-        "model_dir",
+        "export_model_dir",
         serving_input_receiver_fn=serving_input_receiver_fn)
 
 

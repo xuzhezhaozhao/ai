@@ -26,6 +26,7 @@ build
 data/
 tf_fasttext/model/
 model_dir/
+export_model_dir/
 cpp_out
 python_out
 *.log
