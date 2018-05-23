@@ -16,7 +16,7 @@ python train.py \
     --label "__label__" \
     --batch_size 64 \
     --num_sampled 10 \
-    --epoch 20 \
+    --epoch 100 \
     --hidden_units "128,64" \
     --model_dir "model_dir" \
     --export_model_dir "export_model_dir" \
