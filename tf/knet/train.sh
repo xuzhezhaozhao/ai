@@ -14,7 +14,7 @@ python train.py \
     --verbose 1 \
     --min_count_label 1 \
     --label "__label__" \
-    --batch_size 64 \
+    --batch_size 258 \
     --num_sampled 10 \
     --epoch 100 \
     --hidden_units "128,64" \
