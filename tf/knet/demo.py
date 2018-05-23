@@ -6,9 +6,9 @@ test_line = [
     '5585a28c29d816aj 5745a2ce833852ae 9605a3384bf404ag 5535a2e0a04600aj 22559af71bd295ab 9605a3384bf404ag 8605979ada5056ae 5775a2d00fc256ao 6505a28edf8329ai 51959e1901a729ae'
 ]
 
-fasttext_model = tf.load_op_library('fasttext_example_generate_ops.so')
+fasttext_model = tf.load_op_library('../ops/ftlib/fasttext_example_generate_ops.so')
 (records, labels) = fasttext_model.fasttext_example_generate(
-    train_data_path='train_data.in',
+    train_data_path='../ops/ftlib/train_data.in',
     input=test_line)
 
 

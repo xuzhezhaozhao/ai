@@ -38,12 +38,6 @@ class FasttextExampleGenerateOp : public OpKernel {
                    ctx->GetAttr("train_data_path", &args_->train_data_path));
     LOG(INFO) << "train_data_path: " << args_->train_data_path;
 
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("lr", &args_->lr));
-    LOG(INFO) << "lr: " << args_->lr;
-
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("lr_update_rate", &args_->lr_update_rate));
-    LOG(INFO) << "lr_update_rate: " << args_->lr_update_rate;
-
     OP_REQUIRES_OK(ctx, ctx->GetAttr("dim", &args_->dim));
     LOG(INFO) << "dim: " << args_->dim;
 
@@ -62,14 +56,8 @@ class FasttextExampleGenerateOp : public OpKernel {
     OP_REQUIRES_OK(ctx, ctx->GetAttr("ws", &args_->ws));
     LOG(INFO) << "ws: " << args_->ws;
 
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("epoch", &args_->epoch));
-    LOG(INFO) << "epoch: " << args_->epoch;
-
     OP_REQUIRES_OK(ctx, ctx->GetAttr("min_count", &args_->min_count));
     LOG(INFO) << "min_count: " << args_->min_count;
-
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("neg", &args_->neg));
-    LOG(INFO) << "neg: " << args_->neg;
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("t", &args_->t));
     LOG(INFO) << "t: " << args_->t;
@@ -83,9 +71,6 @@ class FasttextExampleGenerateOp : public OpKernel {
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("label", &args_->label));
     LOG(INFO) << "label: " << args_->label;
-
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("batch_size", &args_->batch_size));
-    LOG(INFO) << "batch_size: " << args_->batch_size;
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("seed", &args_->seed));
     LOG(INFO) << "seed: " << args_->seed;
