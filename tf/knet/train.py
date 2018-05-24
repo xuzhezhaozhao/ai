@@ -107,6 +107,7 @@ def parse_args(argv):
     opts.log_step_count_steps = args.log_step_count_steps
 
     opts.recall_k = args.recall_k
+
     print(opts)
 
 
