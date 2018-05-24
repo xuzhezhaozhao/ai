@@ -5,11 +5,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import sys
 import tensorflow as tf
 
 MODEL_DIR = './model_dir'
-n_classes = 300000
-dim = 100
+n_classes = sys.argv[1]
+dim = sys.argv[2]
 
 """ get_variable 需要在 Saver 定义之前 """
 embeddings = tf.get_variable('embeddings', shape=[n_classes, dim])

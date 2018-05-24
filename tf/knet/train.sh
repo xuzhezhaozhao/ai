@@ -11,12 +11,12 @@ python train.py \
     --ws 20 \
     --min_count 50 \
     --t 0.0001 \
-    --verbose 1 \
+    --verbose 2 \
     --min_count_label 1 \
     --label "__label__" \
-    --batch_size 258 \
+    --batch_size  128 \
     --num_sampled 10 \
-    --epoch 100 \
+    --epoch 10 \
     --hidden_units "128,64" \
     --model_dir "model_dir" \
     --export_model_dir "export_model_dir" \
