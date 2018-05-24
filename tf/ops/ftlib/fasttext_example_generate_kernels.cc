@@ -174,7 +174,7 @@ class FasttextExampleGenerateOp : public OpKernel {
     auto root_dir = args_->dict_dir;
 
     auto file_system = ::tensorflow::PosixFileSystem();
-    if (!file_system.FileExists(root_dir)) {
+    if (file_system.FileExists(root_dir) != Status::OK()) {
       auto status = file_system.CreateDir(root_dir);
       OP_REQUIRES(ctx, status == Status::OK(),
                   errors::Unavailable("Create dir failed."));

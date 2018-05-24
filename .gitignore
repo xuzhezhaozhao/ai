@@ -30,3 +30,4 @@ export_model_dir/
 cpp_out
 python_out
 *.log
+dict_dir
