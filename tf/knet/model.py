@@ -55,8 +55,8 @@ def my_model(features, labels, mode, params):
             'predicts': tf.estimator.export.PredictOutput(
                 outputs={
                     'class_ids': predicted_classes[:, tf.newaxis],
-                    'probabilities': tf.nn.softmax(logits),
-                    'logits': logits
+                    # 'probabilities': tf.nn.softmax(logits),
+                    # 'logits': logits
                 }
             )
         }

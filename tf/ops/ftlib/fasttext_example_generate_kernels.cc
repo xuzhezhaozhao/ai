@@ -90,7 +90,7 @@ class FasttextExampleGenerateOp : public OpKernel {
   void Compute(OpKernelContext* ctx) override {
     ++global_lines_;
     auto x = global_lines_.load(std::memory_order_relaxed);
-    if (x % 100000 == 0) {
+    if (x % 10000 == 0) {
       LOG(INFO) << "global lines = " << x;
     }
 
