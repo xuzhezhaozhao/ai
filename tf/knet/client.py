@@ -24,23 +24,17 @@ def run():
     request.model_spec.signature_name = 'predicts'
     input_name = 'examples'
 
+    x = [0 for i in range(20)]
+    x[0] = 558
     example1 = tf.train.Example(
         features=tf.train.Features(
             feature={
-                'records': _int64_feature([i for i in range(20)]),
+                'records': _int64_feature(x),
             }
         )
     ).SerializeToString()
 
-    example2 = tf.train.Example(
-        features=tf.train.Features(
-            feature={
-                'records': _int64_feature([i + 100 for i in range(20)]),
-            }
-        )
-    ).SerializeToString()
-
-    examples = [example1, example2]
+    examples = [example1]
     request.inputs[input_name].CopyFrom(
         tf.contrib.util.make_tensor_proto(examples, dtype=tf.string))
 
