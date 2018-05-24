@@ -88,6 +88,12 @@ class FasttextExampleGenerateOp : public OpKernel {
   inline int transform_id(int id) { return id + 1; }
 
   void Compute(OpKernelContext* ctx) override {
+    ++global_lines_;
+    auto x = global_lines_.load(std::memory_order_relaxed);
+    if (x % 10000 == 0) {
+      LOG(INFO) << "global lines = " << x;
+    }
+
     const Tensor& input_tensor = ctx->input(0);
     auto input = input_tensor.flat<std::string>();
 
@@ -153,6 +159,7 @@ class FasttextExampleGenerateOp : public OpKernel {
   std::shared_ptr<::fasttext::Dictionary> dict_;
 
   std::minstd_rand rng_;
+  std::atomic<long long> global_lines_;
 };
 
 REGISTER_KERNEL_BUILDER(Name("FasttextExampleGenerate").Device(DEVICE_CPU),
