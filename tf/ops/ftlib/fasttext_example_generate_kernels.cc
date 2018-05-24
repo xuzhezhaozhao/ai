@@ -44,7 +44,6 @@ class FasttextExampleGenerateOp : public OpKernel {
 
     LOG(ERROR) << "nwords = " << dict_->nwords();
     LOG(ERROR) << "nlabels = " << dict_->nlabels();
-
   }
 
   void Compute(OpKernelContext* ctx) override {
@@ -201,6 +200,8 @@ class FasttextExampleGenerateOp : public OpKernel {
       std::ofstream ofs(saved_dict);
       OP_REQUIRES(ctx, ofs.is_open(), errors::Unavailable("file open failed"));
       dict_->save(ofs);
+      OP_REQUIRES(ctx, ofs.good(), errors::Unavailable("Write error"));
+      ofs.close();
       LOG(INFO) << "Save dictionary OK";
     }
 
@@ -233,6 +234,7 @@ class FasttextExampleGenerateOp : public OpKernel {
           ofs.write("\n", 1);
         }
       }
+      OP_REQUIRES(ctx, ofs.good(), errors::Unavailable("Write error!"));
       ofs.close();
       LOG(INFO) << "Write dict words OK";
     }
@@ -246,6 +248,8 @@ class FasttextExampleGenerateOp : public OpKernel {
     std::ifstream ifs(saved_dict);
     OP_REQUIRES(ctx, ifs.is_open(), errors::Unavailable("file open failed"));
     dict_->load(ifs);
+    OP_REQUIRES(ctx, !ifs.bad(), errors::Unavailable("Read error!"));
+    ifs.close();
     LOG(INFO) << "Load dictionary OK";
   }
 
