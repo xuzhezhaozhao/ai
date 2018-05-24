@@ -8,7 +8,7 @@ min_count=50
 batch_size=64
 num_sampled=10
 epoch=10
-hidden_units="128,64"
+hidden_units="64"
 nclasses=10000
 prefetch_size=10000
 
