@@ -22,6 +22,7 @@ def generate_example(line, opts):
     (records, labels) = fasttext_model.fasttext_example_generate(
         input=line,
         train_data_path=opts.train_data_path,
+        dict_dir=opts.dict_dir,
         dim=opts.dim,
         maxn=opts.maxn,
         minn=opts.minn,

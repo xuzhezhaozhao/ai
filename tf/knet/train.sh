@@ -9,7 +9,7 @@ batch_size=64
 num_sampled=10
 epoch=10
 hidden_units="64"
-nclasses=10000
+nclasses=100000
 prefetch_size=10000
 
 save_summary_steps=100
@@ -17,6 +17,7 @@ save_checkpoints_secs=600
 log_step_count_steps=100
 
 recall_k=20
+dict_dir=dict_dir
 
 rm -rf ${MODEL_DIR}
 python train.py \
@@ -45,4 +46,5 @@ python train.py \
     --save_checkpoints_secs ${save_checkpoints_secs} \
     --keep_checkpoint_max 2 \
     --log_step_count_steps ${log_step_count_steps} \
-    --recall_k ${recall_k}
+    --recall_k ${recall_k} \
+    --dict_dir ${dict_dir}

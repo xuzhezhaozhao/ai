@@ -46,6 +46,7 @@ parser.add_argument('--keep_checkpoint_max', default=3, type=int, help='')
 parser.add_argument('--log_step_count_steps', default=100, type=int, help='')
 
 parser.add_argument('--recall_k', default=1, type=int, help='')
+parser.add_argument('--dict_dir', default="dict_dir", type=str, help='')
 
 opts = Options()
 records_col = "records"
@@ -107,14 +108,26 @@ def parse_args(argv):
     opts.log_step_count_steps = args.log_step_count_steps
 
     opts.recall_k = args.recall_k
+    opts.dict_dir = args.dict_dir
 
     print(opts)
+
+
+def Init(opts):
+    dummy1, dummy2 = input_data.fasttext_model.fasttext_example_generate(
+        train_data_path=opts.train_data_path,
+        input="",
+        first_run=True,
+        dict_dir=opts.dict_dir
+    )
+    with tf.Session() as sess:
+        sess.run(dummy1)
 
 
 def main(argv):
     parse_args(argv)
 
-    input_data.fasttext_model.fasttext_example_generate()
+    Init(opts)
 
     my_feature_columns = []
     my_feature_columns.append(tf.feature_column.numeric_column(
