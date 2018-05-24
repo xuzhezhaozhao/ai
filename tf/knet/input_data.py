@@ -44,10 +44,10 @@ def parse_dict_meta(opts):
     for line in open(os.path.join(opts.dict_dir, DICT_META)):
         tokens = line.strip().split('\t')
         if len(tokens) != 2:
-            print("parse dict meta error line: {}".format(line))
+            tf.logging.info("parse dict meta error line: {}".format(line))
             continue
         dict_meta[tokens[0]] = int(tokens[1])
-    print("dict_meta = \n{}\n".format(dict_meta))
+    tf.logging.info("\ndict_meta = \n{}\n".format(dict_meta))
     return dict_meta
 
 

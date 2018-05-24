@@ -110,7 +110,7 @@ def parse_args(argv):
     opts.dict_dir = args.dict_dir
     opts.use_saved_dict = bool(args.use_saved_dict)
 
-    print(opts)
+    tf.logging.info('\n' + str(opts))
 
 
 def main(argv):
