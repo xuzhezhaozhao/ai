@@ -114,6 +114,8 @@ def parse_args(argv):
 def main(argv):
     parse_args(argv)
 
+    input_data.fasttext_model.fasttext_example_generate()
+
     my_feature_columns = []
     my_feature_columns.append(tf.feature_column.numeric_column(
         key=records_col, shape=[opts.ws], dtype=tf.int32))

@@ -41,6 +41,9 @@ struct Args {
     int verbose = 1;
     int min_count_label = 5;
     std::string label = "__label__";
+
+    bool first_run = false;
+    std::string dict_dir = "dict_dir";
 };
 
 }

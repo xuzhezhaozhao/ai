@@ -2,6 +2,7 @@
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/lib/core/stringpiece.h"
 #include "tensorflow/core/lib/gtl/map_util.h"
+#include "tensorflow/core/lib/io/path.h"
 #include "tensorflow/core/lib/random/distribution_sampler.h"
 #include "tensorflow/core/lib/random/philox_random.h"
 #include "tensorflow/core/lib/random/simple_philox.h"
@@ -24,7 +25,9 @@ namespace tensorflow {
 
 class FasttextExampleGenerateOp : public OpKernel {
  public:
-  explicit FasttextExampleGenerateOp(OpKernelConstruction* ctx) : OpKernel(ctx) {
+  explicit FasttextExampleGenerateOp(OpKernelConstruction* ctx)
+      : OpKernel(ctx) {
+    LOG(INFO) << "Init FasttextExampleGenerateOp";
     args_ = std::make_shared<::fasttext::Args>();
     ParseArgs(ctx);
     rng_.seed(time(NULL));
@@ -34,6 +37,12 @@ class FasttextExampleGenerateOp : public OpKernel {
 
     LOG(ERROR) << "nwords = " << dict_->nwords();
     LOG(ERROR) << "nlabels = " << dict_->nlabels();
+
+    if (args_->first_run) {
+      SaveDictionary(ctx);
+    } else {
+      LoadDictionary(ctx);
+    }
   }
 
   void ParseArgs(OpKernelConstruction* ctx) {
@@ -74,6 +83,12 @@ class FasttextExampleGenerateOp : public OpKernel {
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("label", &args_->label));
     LOG(INFO) << "label: " << args_->label;
+
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("first_run", &args_->first_run));
+    LOG(INFO) << "first_run: " << args_->first_run;
+
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("dict_dir", &args_->dict_dir));
+    LOG(INFO) << "dict_dir: " << args_->dict_dir;
   }
 
   void PreProcessTrainData(OpKernelConstruction* ctx) {
@@ -153,8 +168,73 @@ class FasttextExampleGenerateOp : public OpKernel {
     }
   }
 
+  void SaveDictionary(OpKernelConstruction* ctx) {
+    auto root_dir = args_->dict_dir;
+    LOG(INFO) << "SaveDictionary to " << root_dir << " ...";
+    auto saved_dict = ::tensorflow::io::JoinPath(root_dir, SAVED_DICT);
+    auto dict_meta = ::tensorflow::io::JoinPath(root_dir, DICT_META);
+    auto dict_words = ::tensorflow::io::JoinPath(root_dir, DICT_WORDS);
+
+    {
+      // save dictionary
+      LOG(INFO) << "Save dictionary to " << saved_dict << " ...";
+      std::ofstream ofs(saved_dict);
+      OP_REQUIRES(ctx, ofs.is_open(), errors::Unavailable("file open failed"));
+      dict_->save(ofs);
+      LOG(INFO) << "Save dictionary OK";
+    }
+
+    {
+      // save dict meta
+      std::ofstream ofs(dict_meta);
+      LOG(INFO) << "Write dict meta to " << dict_meta << " ...";
+      OP_REQUIRES(ctx, ofs.is_open(), errors::Unavailable("file open failed"));
+      int nwords = dict_->nwords();
+      int nlabels = dict_->nlabels();
+      auto to_write = std::string("nwords\t") + std::to_string(nwords) + "\n";
+      ofs.write(to_write.data(), to_write.size());
+
+      to_write = std::string("nlabels\t" + std::to_string(nlabels) + "\n");
+      ofs.write(to_write.data(), to_write.size());
+
+      OP_REQUIRES(ctx, ofs.good(), errors::Unavailable("Write error!"));
+      ofs.close();
+      LOG(INFO) << "Write dict meta OK";
+    }
+
+    {
+      // save dict words
+      std::ofstream ofs(dict_words);
+      LOG(INFO) << "Write dict words to " << dict_words << " ...";
+      OP_REQUIRES(ctx, ofs.is_open(), errors::Unavailable("file open failed"));
+      for (const auto &entry : dict_->words()) {
+        if (entry.type == ::fasttext::entry_type::word) {
+          ofs.write(entry.word.data(), entry.word.size());
+          ofs.write("\n", 1);
+        }
+      }
+      ofs.close();
+      LOG(INFO) << "Write dict words OK";
+    }
+  }
+
+  void LoadDictionary(OpKernelConstruction* ctx) {
+    // load dictionary
+    auto root_dir = args_->dict_dir;
+    auto saved_dict = ::tensorflow::io::JoinPath(root_dir, SAVED_DICT);
+    LOG(INFO) << "Load dictionary from " << saved_dict << " ...";
+    std::ifstream ifs(saved_dict);
+    OP_REQUIRES(ctx, ifs.is_open(), errors::Unavailable("file open failed"));
+    dict_->load(ifs);
+    LOG(INFO) << "Load dictionary OK";
+  }
+
  private:
   const int PADDING_INDEX = 0;
+  const std::string SAVED_DICT = "saved_dict.bin";
+  const std::string DICT_META = "dict_meta";
+  const std::string DICT_WORDS = "dict_words";
+
   std::shared_ptr<::fasttext::Args> args_;
   std::shared_ptr<::fasttext::Dictionary> dict_;
 
