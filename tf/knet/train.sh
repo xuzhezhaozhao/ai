@@ -17,6 +17,7 @@ log_step_count_steps=100
 
 recall_k=20
 dict_dir=dict_dir
+use_saved_dict=0
 
 rm -rf ${MODEL_DIR}
 python train.py \
@@ -45,4 +46,5 @@ python train.py \
     --keep_checkpoint_max 2 \
     --log_step_count_steps ${log_step_count_steps} \
     --recall_k ${recall_k} \
-    --dict_dir ${dict_dir}
+    --dict_dir ${dict_dir} \
+    --use_saved_dict ${use_saved_dict}

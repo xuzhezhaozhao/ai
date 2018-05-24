@@ -15,6 +15,9 @@ fasttext_model = tf.load_op_library(FASTTEXT_MODEL_PATH)
 
 
 def init_dict(opts):
+    if opts.use_saved_dict:
+        return
+
     dummy1, dummy2 = fasttext_model.fasttext_example_generate(
         train_data_path=opts.train_data_path,
         input="",

@@ -39,6 +39,7 @@ class Options(object):
 
         self.recall_k = 10
         self.dict_dir = 'dict_dir'
+        self.use_saved_dict = False
 
     def __str__(self):
         return \
@@ -70,6 +71,7 @@ class Options(object):
         log_step_count_steps = {} \n \
         recall_k = {} \n \
         dict_dir = {} \n \
+        use_saved_dict = {} \n \
         ".format(
                 self.train_data_path,
                 self.lr,
@@ -97,5 +99,6 @@ class Options(object):
                 self.keep_checkpoint_max,
                 self.log_step_count_steps,
                 self.recall_k,
-                self.dict_dir
+                self.dict_dir,
+                self.use_saved_dict
             )

@@ -46,6 +46,7 @@ parser.add_argument('--log_step_count_steps', default=100, type=int, help='')
 
 parser.add_argument('--recall_k', default=1, type=int, help='')
 parser.add_argument('--dict_dir', default="dict_dir", type=str, help='')
+parser.add_argument('--use_saved_dict', default=0, type=int, help='')
 
 opts = Options()
 records_col = "records"
@@ -107,6 +108,7 @@ def parse_args(argv):
 
     opts.recall_k = args.recall_k
     opts.dict_dir = args.dict_dir
+    opts.use_saved_dict = bool(args.use_saved_dict)
 
     print(opts)
 
