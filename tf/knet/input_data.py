@@ -60,6 +60,17 @@ def generate_example(line, opts):
         train_data_path=opts.train_data_path,
         use_saved_dict=True,
         dict_dir=opts.dict_dir,
+        dim=opts.dim,
+        maxn=opts.maxn,
+        minn=opts.minn,
+        word_ngrams=opts.word_ngrams,
+        bucket=opts.bucket,
+        ws=opts.ws,
+        min_count=opts.min_count,
+        t=opts.t,
+        verbose=opts.verbose,
+        min_count_label=opts.min_count_label,
+        label=opts.label
     )
     dataset = tf.data.Dataset.from_tensor_slices(
         ({"records": records}, labels)
