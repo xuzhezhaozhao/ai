@@ -45,6 +45,8 @@ parser.add_argument('--save_checkpoints_secs', default=600, type=int, help='')
 parser.add_argument('--keep_checkpoint_max', default=3, type=int, help='')
 parser.add_argument('--log_step_count_steps', default=100, type=int, help='')
 
+parser.add_argument('--recall_k', default=1, type=int, help='')
+
 opts = Options()
 records_col = "records"
 
@@ -103,6 +105,8 @@ def parse_args(argv):
     opts.save_checkpoints_secs = args.save_checkpoints_secs
     opts.keep_checkpoint_max = args.keep_checkpoint_max
     opts.log_step_count_steps = args.log_step_count_steps
+
+    opts.recall_k = args.recall_k
     print(opts)
 
 
@@ -137,7 +141,8 @@ def main(argv):
             'n_classes': opts.nclasses,  # TODO
             'embedding_dim': opts.dim,
             'learning_rate': opts.lr,
-            'num_sampled': opts.num_sampled
+            'num_sampled': opts.num_sampled,
+            'recall_k': opts.recall_k
         })
 
     classifier.train(input_fn=lambda: input_data.train_input_fn(opts),

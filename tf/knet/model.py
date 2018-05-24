@@ -15,6 +15,7 @@ def my_model(features, labels, mode, params):
     lr = params['learning_rate']
     num_sampled = params['num_sampled']
     feature_columns = params['feature_columns']
+    recall_k = params['recall_k']
 
     embeddings = tf.Variable(
         tf.random_uniform([n_classes, embedding_dim], -1.0, 1.0),
@@ -44,19 +45,18 @@ def my_model(features, labels, mode, params):
     logits = tf.nn.bias_add(logits, nce_biases)
 
     # Compute predictions.
-    predicted_classes = tf.argmax(logits, 1)
     if mode == tf.estimator.ModeKeys.PREDICT:
+        probabilities = tf.nn.softmax(logits)
+        values, indices = tf.nn.top_k(probabilities, recall_k)
         predictions = {
-            'class_ids': predicted_classes[:, tf.newaxis],
-            'probabilities': tf.nn.softmax(logits),
-            'logits': logits,
+            'class_ids': indices,
+            'scores': values
         }
         export_outputs = {
             'predicts': tf.estimator.export.PredictOutput(
                 outputs={
-                    'class_ids': predicted_classes[:, tf.newaxis],
-                    # 'probabilities': tf.nn.softmax(logits),
-                    # 'logits': logits
+                    'class_ids': indices,
+                    'scores': values
                 }
             )
         }
@@ -74,6 +74,8 @@ def my_model(features, labels, mode, params):
     nce_loss = tf.reduce_mean(nce_loss)
 
     # Compute evaluation metrics.
+    # TODO
+    predicted_classes = tf.argmax(logits, 1)
     accuracy = tf.metrics.accuracy(labels=labels,
                                    predictions=predicted_classes,
                                    name='acc_op')

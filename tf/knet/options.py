@@ -38,6 +38,8 @@ class Options(object):
         self.keep_checkpoint_max = 3
         self.log_step_count_steps = 100
 
+        self.recall_k = 10
+
     def __str__(self):
         return \
             "Option:\n \
@@ -67,6 +69,7 @@ class Options(object):
         save_checkpoints_secs = {} \n \
         keep_checkpoint_max = {} \n \
         log_step_count_steps = {} \n \
+        recall_k = {} \n \
         ".format(
                 self.train_data_path,
                 self.lr,
@@ -93,5 +96,6 @@ class Options(object):
                 self.save_summary_steps,
                 self.save_checkpoints_secs,
                 self.keep_checkpoint_max,
-                self.log_step_count_steps
+                self.log_step_count_steps,
+                self.recall_k
             )
