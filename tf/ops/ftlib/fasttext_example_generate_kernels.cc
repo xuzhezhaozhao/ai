@@ -47,6 +47,15 @@ class FasttextExampleGenerateOp : public OpKernel {
   }
 
   void Compute(OpKernelContext* ctx) override {
+    if (args_->first_run) {
+      TensorShape shape;
+      Tensor* records_tensor = NULL;
+      OP_REQUIRES_OK(ctx, ctx->allocate_output(0, shape, &records_tensor));
+      Tensor* labels_tensor = NULL;
+      OP_REQUIRES_OK(ctx, ctx->allocate_output(1, shape, &labels_tensor));
+
+      return;
+    }
     ++global_lines_;
     auto x = global_lines_.load(std::memory_order_relaxed);
     if (x % 10000 == 0) {
@@ -250,8 +259,8 @@ class FasttextExampleGenerateOp : public OpKernel {
   std::minstd_rand rng_;
   std::atomic<long long> global_lines_;
 };
-
-REGISTER_KERNEL_BUILDER(Name("FasttextExampleGenerate").Device(DEVICE_CPU),
-                        FasttextExampleGenerateOp);
+17752 REGISTER_KERNEL_BUILDER(
+    Name("FasttextExampleGenerate").Device(DEVICE_CPU),
+    FasttextExampleGenerateOp);
 
 }  // namespace tensorflow
