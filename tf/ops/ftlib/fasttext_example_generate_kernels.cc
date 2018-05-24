@@ -27,7 +27,7 @@ namespace tensorflow {
 class FasttextExampleGenerateOp : public OpKernel {
  public:
   explicit FasttextExampleGenerateOp(OpKernelConstruction* ctx)
-      : OpKernel(ctx) {
+      : OpKernel(ctx), global_lines_(0) {
     LOG(INFO) << "Init FasttextExampleGenerateOp";
     args_ = std::make_shared<::fasttext::Args>();
     ParseArgs(ctx);
@@ -259,8 +259,7 @@ class FasttextExampleGenerateOp : public OpKernel {
   std::minstd_rand rng_;
   std::atomic<long long> global_lines_;
 };
-17752 REGISTER_KERNEL_BUILDER(
-    Name("FasttextExampleGenerate").Device(DEVICE_CPU),
-    FasttextExampleGenerateOp);
+REGISTER_KERNEL_BUILDER(Name("FasttextExampleGenerate").Device(DEVICE_CPU),
+                        FasttextExampleGenerateOp);
 
 }  // namespace tensorflow
