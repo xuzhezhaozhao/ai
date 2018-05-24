@@ -34,20 +34,21 @@ class FasttextExampleGenerateOp : public OpKernel {
     rng_.seed(time(NULL));
 
     dict_ = std::make_shared<::fasttext::Dictionary>(args_);
-    PreProcessTrainData(ctx);
 
-    LOG(ERROR) << "nwords = " << dict_->nwords();
-    LOG(ERROR) << "nlabels = " << dict_->nlabels();
-
-    if (args_->first_run) {
+    if (!args_->use_saved_dict) {
+      PreProcessTrainData(ctx);
       SaveDictionary(ctx);
     } else {
       LoadDictionary(ctx);
     }
+
+    LOG(ERROR) << "nwords = " << dict_->nwords();
+    LOG(ERROR) << "nlabels = " << dict_->nlabels();
+
   }
 
   void Compute(OpKernelContext* ctx) override {
-    if (args_->first_run) {
+    if (!args_->use_saved_dict) {
       TensorShape shape;
       Tensor* records_tensor = NULL;
       OP_REQUIRES_OK(ctx, ctx->allocate_output(0, shape, &records_tensor));
@@ -161,8 +162,8 @@ class FasttextExampleGenerateOp : public OpKernel {
     OP_REQUIRES_OK(ctx, ctx->GetAttr("label", &args_->label));
     LOG(INFO) << "label: " << args_->label;
 
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("first_run", &args_->first_run));
-    LOG(INFO) << "first_run: " << args_->first_run;
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("use_saved_dict", &args_->use_saved_dict));
+    LOG(INFO) << "use_saved_dict: " << args_->use_saved_dict;
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("dict_dir", &args_->dict_dir));
     LOG(INFO) << "dict_dir: " << args_->dict_dir;

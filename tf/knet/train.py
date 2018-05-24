@@ -37,7 +37,6 @@ parser.add_argument('--hidden_units', default="64,64", type=str, help='')
 parser.add_argument('--model_dir', default="model_dir", type=str, help='')
 parser.add_argument('--export_model_dir', default="export_model_dir",
                     type=str, help='')
-parser.add_argument('--nclasses', default=10000, type=int, help='')
 parser.add_argument('--prefetch_size', default=10000, type=int, help='')
 
 parser.add_argument('--save_summary_steps', default=100, type=int, help='')
@@ -99,7 +98,6 @@ def parse_args(argv):
                                         args.hidden_units.split(',')))
     opts.model_dir = args.model_dir
     opts.export_model_dir = args.export_model_dir
-    opts.nclasses = args.nclasses
     opts.prefetch_size = args.prefetch_size
 
     opts.save_summary_steps = args.save_summary_steps
@@ -113,21 +111,11 @@ def parse_args(argv):
     print(opts)
 
 
-def Init(opts):
-    dummy1, dummy2 = input_data.fasttext_model.fasttext_example_generate(
-        train_data_path=opts.train_data_path,
-        input="",
-        first_run=True,
-        dict_dir=opts.dict_dir
-    )
-    with tf.Session() as sess:
-        sess.run(dummy1)
-
-
 def main(argv):
     parse_args(argv)
 
-    Init(opts)
+    input_data.init_dict(opts)
+    dict_meta = input_data.parse_dict_meta(opts)
 
     my_feature_columns = []
     my_feature_columns.append(tf.feature_column.numeric_column(
@@ -149,7 +137,7 @@ def main(argv):
         params={
             'feature_columns': my_feature_columns,
             'hidden_units': opts.hidden_units,
-            'n_classes': opts.nclasses,  # TODO
+            'n_classes': dict_meta["nwords"] + 1,
             'embedding_dim': opts.dim,
             'learning_rate': opts.lr,
             'num_sampled': opts.num_sampled,

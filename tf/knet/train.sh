@@ -9,7 +9,6 @@ batch_size=64
 num_sampled=10
 epoch=10
 hidden_units="64"
-nclasses=100000
 prefetch_size=10000
 
 save_summary_steps=100
@@ -40,7 +39,6 @@ python train.py \
     --hidden_units ${hidden_units} \
     --model_dir ${MODEL_DIR} \
     --export_model_dir ${EXPORT_MODEL_DIR} \
-    --nclasses ${nclasses} \
     --prefetch_size ${prefetch_size} \
     --save_summary_steps ${save_summary_steps} \
     --save_checkpoints_secs ${save_checkpoints_secs} \

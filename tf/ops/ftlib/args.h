@@ -42,7 +42,7 @@ struct Args {
     int min_count_label = 5;
     std::string label = "__label__";
 
-    bool first_run = false;
+    bool use_saved_dict = true;
     std::string dict_dir = "dict_dir";
 };
 

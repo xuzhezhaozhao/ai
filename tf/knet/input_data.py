@@ -5,23 +5,20 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
 import tensorflow as tf
 
 
+DICT_META = "dict_meta"
 FASTTEXT_MODEL_PATH = 'lib/fasttext_example_generate_ops.so'
 fasttext_model = tf.load_op_library(FASTTEXT_MODEL_PATH)
 
 
-def generate_example(line, opts):
-    """
-    测试时需要使用 initializable iterator
-        it = ds.make_initializable_iterator()
-        sess.run(it.initializer)
-        sess.run(it.get_next())
-    """
-    (records, labels) = fasttext_model.fasttext_example_generate(
-        input=line,
+def init_dict(opts):
+    dummy1, dummy2 = fasttext_model.fasttext_example_generate(
         train_data_path=opts.train_data_path,
+        input="",
+        use_saved_dict=False,
         dict_dir=opts.dict_dir,
         dim=opts.dim,
         maxn=opts.maxn,
@@ -34,6 +31,35 @@ def generate_example(line, opts):
         verbose=opts.verbose,
         min_count_label=opts.min_count_label,
         label=opts.label
+    )
+    with tf.Session() as sess:
+        sess.run(dummy1)
+
+
+def parse_dict_meta(opts):
+    dict_meta = {}
+    for line in open(os.path.join(opts.dict_dir, DICT_META)):
+        tokens = line.strip().split('\t')
+        if len(tokens) != 2:
+            print("parse dict meta error line: {}".format(line))
+            continue
+        dict_meta[tokens[0]] = int(tokens[1])
+    print("dict_meta = \n{}\n".format(dict_meta))
+    return dict_meta
+
+
+def generate_example(line, opts):
+    """
+    测试时需要使用 initializable iterator
+        it = ds.make_initializable_iterator()
+        sess.run(it.initializer)
+        sess.run(it.get_next())
+    """
+    (records, labels) = fasttext_model.fasttext_example_generate(
+        input=line,
+        train_data_path=opts.train_data_path,
+        use_saved_dict=True,
+        dict_dir=opts.dict_dir,
     )
     dataset = tf.data.Dataset.from_tensor_slices(
         ({"records": records}, labels)

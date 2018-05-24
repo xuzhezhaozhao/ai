@@ -30,7 +30,6 @@ class Options(object):
         self.hidden_units = []
         self.model_dir = 'model_dir'
         self.export_model_dir = 'export_model_dir'
-        self.nclasses = 10000
         self.prefetch_size = 1000
 
         self.save_summary_steps = 100
@@ -64,7 +63,6 @@ class Options(object):
         hidden_units = {} \n \
         model_dir = {} \n \
         export_model_dir = {} \n \
-        nclasses = {} \n \
         prefetch_size = {} \n \
         save_summary_steps = {} \n \
         save_checkpoints_secs = {} \n \
@@ -93,7 +91,6 @@ class Options(object):
                 self.hidden_units,
                 self.model_dir,
                 self.export_model_dir,
-                self.nclasses,
                 self.prefetch_size,
                 self.save_summary_steps,
                 self.save_checkpoints_secs,
