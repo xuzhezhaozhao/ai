@@ -23,7 +23,6 @@ print("records = \n{}\nlabels = \n{}\n".format(records, labels))
 (records, labels) = fasttext_model.fasttext_example_generate(
     train_data_path='train_data.in',
     input=test_line,
-    first_run=False,
     dict_dir="dict_dir"
 )
 
