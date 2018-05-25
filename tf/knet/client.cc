@@ -76,6 +76,19 @@ class PredictionClient {
       std::cout << status.error_code() << ": " << status.error_message()
                 << std::endl;
     }
+    auto& outputs = response.outputs();
+
+    auto& scores = outputs.at("scores");
+    auto& rowkeys = outputs.at("words");
+    std::vector<std::pair<float, std::string>> recalled;
+    for (int i = 0; i < scores.float_val_size(); ++i) {
+      recalled.push_back({ scores.float_val(i), rowkeys.string_val(i) });
+    }
+
+    std::cout << "Predictions: " << std::endl;
+    for (auto& p : recalled) {
+      std::cout << p.first << " : " << p.second << std::endl;
+    }
   }
 
  private:
