@@ -84,4 +84,4 @@ class FasttextDictIdLookupOp : public OpKernel {
 REGISTER_KERNEL_BUILDER(Name("FasttextDictIdLookup").Device(DEVICE_CPU),
                         FasttextDictIdLookupOp);
 
-}  // tensorflow
+}  // namespace tensorflow
