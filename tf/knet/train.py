@@ -53,7 +53,7 @@ records_col = "records"
 
 
 def feature_default():
-    return tf.FixedLenFeature(shape=[opts.ws], dtype=tf.int64)
+    return tf.FixedLenFeature(shape=[opts.ws], dtype=tf.string)
 
 
 def serving_input_receiver_fn():
@@ -71,7 +71,9 @@ def serving_input_receiver_fn():
     receiver_tensors = {'examples': serialized_tf_example}
     raw_features = tf.parse_example(serialized_tf_example, feature_spec)
 
+    # TODO rowkey to id
     features = raw_features
+
     # Do anything to raw_features ...
     return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
 

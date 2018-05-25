@@ -21,6 +21,7 @@
 
 #include "args.h"
 #include "dictionary.h"
+#include "defines.h"
 
 namespace tensorflow {
 
@@ -28,7 +29,7 @@ class FasttextExampleGenerateOp : public OpKernel {
  public:
   explicit FasttextExampleGenerateOp(OpKernelConstruction* ctx)
       : OpKernel(ctx), global_lines_(0) {
-    LOG(INFO) << "Init FasttextExampleGenerateOp";
+    LOG(INFO) << "Init FasttextExampleGenerateOp ...";
     args_ = std::make_shared<::fasttext::Args>();
     ParseArgs(ctx);
     rng_.seed(time(NULL));
@@ -44,6 +45,8 @@ class FasttextExampleGenerateOp : public OpKernel {
 
     LOG(ERROR) << "nwords = " << dict_->nwords();
     LOG(ERROR) << "nlabels = " << dict_->nlabels();
+
+    LOG(INFO) << "Init FasttextExampleGenerateOp OK";
   }
 
   void Compute(OpKernelContext* ctx) override {
@@ -248,15 +251,10 @@ class FasttextExampleGenerateOp : public OpKernel {
     std::ifstream ifs(saved_dict);
     OP_REQUIRES(ctx, ifs.is_open(), errors::Unavailable("file open failed"));
     dict_->load(ifs);
-    OP_REQUIRES(ctx, !ifs.bad(), errors::Unavailable("Read error!"));
+    OP_REQUIRES(ctx, !ifs.fail(), errors::Unavailable("Read error!"));
     ifs.close();
     LOG(INFO) << "Load dictionary OK";
   }
-
-  const int PADDING_INDEX = 0;
-  const std::string SAVED_DICT = "saved_dict.bin";
-  const std::string DICT_META = "dict_meta";
-  const std::string DICT_WORDS = "dict_words";
 
   std::shared_ptr<::fasttext::Args> args_;
   std::shared_ptr<::fasttext::Dictionary> dict_;
