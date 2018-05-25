@@ -2,8 +2,6 @@
 import tensorflow as tf
 
 fasttext_example_generate_ops = tf.load_op_library('fasttext_example_generate_ops.so')
-fasttext_dict_id_lookup_ops = tf.load_op_library('fasttext_dict_id_lookup_ops.so')
-
 
 test_line = [
     '03959e48258956ah 6635a24a17e289ae 2615a3b2c54096aj 0005a21359a912ae',
