@@ -49,36 +49,6 @@ parser.add_argument('--dict_dir', default="dict_dir", type=str, help='')
 parser.add_argument('--use_saved_dict', default=0, type=int, help='')
 
 opts = Options()
-words_col = "words"
-RECORDS_COL = input_data.RECORDS_COL
-
-
-def feature_default():
-    return tf.FixedLenFeature(shape=[opts.ws], dtype=tf.string)
-
-
-def serving_input_receiver_fn():
-    """An input receiver that expects a serialized tf.Example.
-    Note: Set serialized_tf_example shape as [None] to handle variable
-    batch size
-    """
-    feature_spec = {
-        words_col: feature_default(),
-    }
-
-    serialized_tf_example = tf.placeholder(dtype=tf.string,
-                                           shape=[None],
-                                           name='input_example_tensor')
-    receiver_tensors = {'examples': serialized_tf_example}
-    features = tf.parse_example(serialized_tf_example, feature_spec)
-    ids = input_data.fasttext_dict_id_lookup_ops.fasttext_dict_id_lookup(
-        input=features[words_col],
-        dict_dir=opts.dict_dir
-    )
-    print(ids)
-    features[RECORDS_COL] = ids
-    return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
-
 
 def parse_args(argv):
     args = parser.parse_args(argv[1:])
@@ -123,10 +93,7 @@ def main(argv):
     input_data.init_dict(opts)
     dict_meta = input_data.parse_dict_meta(opts)
 
-    my_feature_columns = []
-    my_feature_columns.append(tf.feature_column.numeric_column(
-        key=RECORDS_COL, shape=[opts.ws], dtype=tf.int32))
-
+    my_feature_columns = input_data.feature_columns(opts)
     config = tf.estimator.RunConfig(
         model_dir=opts.model_dir,
         tf_random_seed=None,
@@ -147,14 +114,15 @@ def main(argv):
             'embedding_dim': opts.dim,
             'learning_rate': opts.lr,
             'num_sampled': opts.num_sampled,
-            'recall_k': opts.recall_k
+            'recall_k': opts.recall_k,
+            'dict_dir': opts.dict_dir
         })
 
     classifier.train(input_fn=lambda: input_data.train_input_fn(opts),
                      max_steps=opts.max_train_steps)
     classifier.export_savedmodel(
         opts.export_model_dir,
-        serving_input_receiver_fn=serving_input_receiver_fn)
+        serving_input_receiver_fn=input_data.build_serving_input_receiver_fn(opts))
 
 
 if __name__ == '__main__':

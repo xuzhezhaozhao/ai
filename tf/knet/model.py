@@ -6,7 +6,9 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+import input_data
 import math
+import os
 
 
 def my_model(features, labels, mode, params):
@@ -16,6 +18,7 @@ def my_model(features, labels, mode, params):
     num_sampled = params['num_sampled']
     feature_columns = params['feature_columns']
     recall_k = params['recall_k']
+    dict_dir = params['dict_dir']
 
     embeddings = tf.Variable(
         tf.random_uniform([n_classes, embedding_dim], -1.0, 1.0),
@@ -46,17 +49,28 @@ def my_model(features, labels, mode, params):
 
     # Compute predictions.
     if mode == tf.estimator.ModeKeys.PREDICT:
+        words = [line.strip() for line in
+                 open(os.path.join(dict_dir, input_data.DICT_WORDS))
+                 if line.strip() != '']
+        words.insert(0, '')
+        table = tf.contrib.lookup.index_to_string_table_from_tensor(
+            mapping=words,
+            default_value=''
+        )
+
         probabilities = tf.nn.softmax(logits)
         values, indices = tf.nn.top_k(probabilities, recall_k)
         predictions = {
             'class_ids': indices,
-            'scores': values
+            'scores': values,
+            'words': table.lookup(tf.cast(indices, tf.int64))
         }
         export_outputs = {
             'predicts': tf.estimator.export.PredictOutput(
                 outputs={
                     'class_ids': indices,
-                    'scores': values
+                    'scores': values,
+                    'words': table.lookup(tf.cast(indices, tf.int64))
                 }
             )
         }

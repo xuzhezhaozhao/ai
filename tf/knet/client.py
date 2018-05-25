@@ -1,8 +1,11 @@
+#! /usr/bin/env python
+# -*- coding=utf8 -*-
 
+# from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 
 import grpc
-
 import tensorflow as tf
 import tensorflow_serving.apis.predict_pb2 as predict_pb2
 import tensorflow_serving.apis.prediction_service_pb2_grpc as prediction_service_pb2_grpc

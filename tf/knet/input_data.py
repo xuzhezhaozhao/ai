@@ -10,15 +10,22 @@ import tensorflow as tf
 
 
 RECORDS_COL = "records"
+WORDS_COL = "words"
 
 DICT_META = "dict_meta"
+DICT_WORDS = "dict_words"
+
 FASTTEXT_EXAMPLE_GENERATE_OPS_PATH = 'lib/fasttext_example_generate_ops.so'
-FASTTEXT_DICT_ID_LOOKUP_OPS_PATH = 'lib/fasttext_dict_id_lookup_ops.so'
 
 fasttext_example_generate_ops = tf.load_op_library(
     FASTTEXT_EXAMPLE_GENERATE_OPS_PATH)
-fasttext_dict_id_lookup_ops = tf.load_op_library(
-    FASTTEXT_DICT_ID_LOOKUP_OPS_PATH)
+
+
+def feature_columns(opts):
+    my_feature_columns = []
+    my_feature_columns.append(tf.feature_column.numeric_column(
+        key=RECORDS_COL, shape=[opts.ws], dtype=tf.int32))
+    return my_feature_columns
 
 
 def init_dict(opts):
@@ -95,6 +102,42 @@ def train_input_fn(opts, skip_rows=0):
     ds = tf.data.TextLineDataset(train_data_path).skip(skip_rows)
     ds = ds.flat_map(lambda line: generate_example(line, opts))
     ds = ds.prefetch(opts.prefetch_size)
-#no shuffle
-    ds = ds.repeat(opts.epoch).batch(batch_size)
+    ds = ds.repeat(opts.epoch).batch(batch_size)  # no shuffle
     return ds
+
+
+def build_serving_input_receiver_fn(opts):
+    words_feature = tf.FixedLenFeature(shape=[opts.ws], dtype=tf.string)
+
+    def serving_input_receiver_fn():
+        """An input receiver that expects a serialized tf.Example.
+        Note: Set serialized_tf_example shape as [None] to handle variable
+        batch size
+        """
+        feature_spec = {
+            WORDS_COL: words_feature,
+        }
+
+        serialized_tf_example = tf.placeholder(dtype=tf.string,
+                                               shape=[None],
+                                               name='input_example_tensor')
+        receiver_tensors = {'examples': serialized_tf_example}
+        features = tf.parse_example(serialized_tf_example, feature_spec)
+
+        words = [line.strip() for line in
+                 open(os.path.join(opts.dict_dir, DICT_WORDS))
+                 if line.strip() != '']
+        words.insert(0, '')
+
+        tf.logging.info(
+            "serving_input_receiver_fn words size = {}".format(len(words)))
+
+        table = tf.contrib.lookup.index_table_from_tensor(
+            mapping=words, default_value=0)
+        ids = table.lookup(features[WORDS_COL])
+        features[RECORDS_COL] = ids
+
+        return tf.estimator.export.ServingInputReceiver(features,
+                                                        receiver_tensors)
+
+    return serving_input_receiver_fn
