@@ -49,7 +49,8 @@ parser.add_argument('--dict_dir', default="dict_dir", type=str, help='')
 parser.add_argument('--use_saved_dict', default=0, type=int, help='')
 
 opts = Options()
-records_col = "records"
+words_col = "words"
+RECORDS_COL = input_data.RECORDS_COL
 
 
 def feature_default():
@@ -62,19 +63,20 @@ def serving_input_receiver_fn():
     batch size
     """
     feature_spec = {
-        records_col: feature_default(),
+        words_col: feature_default(),
     }
 
     serialized_tf_example = tf.placeholder(dtype=tf.string,
                                            shape=[None],
                                            name='input_example_tensor')
     receiver_tensors = {'examples': serialized_tf_example}
-    raw_features = tf.parse_example(serialized_tf_example, feature_spec)
-
-    # TODO rowkey to id
-    features = raw_features
-
-    # Do anything to raw_features ...
+    features = tf.parse_example(serialized_tf_example, feature_spec)
+    ids = input_data.fasttext_dict_id_lookup_ops.fasttext_dict_id_lookup(
+        input=features[words_col],
+        dict_dir=opts.dict_dir
+    )
+    print(ids)
+    features[RECORDS_COL] = ids
     return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
 
 
@@ -123,7 +125,7 @@ def main(argv):
 
     my_feature_columns = []
     my_feature_columns.append(tf.feature_column.numeric_column(
-        key=records_col, shape=[opts.ws], dtype=tf.int32))
+        key=RECORDS_COL, shape=[opts.ws], dtype=tf.int32))
 
     config = tf.estimator.RunConfig(
         model_dir=opts.model_dir,

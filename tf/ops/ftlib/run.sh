@@ -1,2 +1,2 @@
 
-python demo.py
+python test.py

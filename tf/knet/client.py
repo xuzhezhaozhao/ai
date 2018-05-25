@@ -11,8 +11,8 @@ import tensorflow_serving.apis.prediction_service_pb2_grpc as prediction_service
 MODEL_NAME = "knet"
 
 
-def _int64_feature(value):
-    return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
+def _bytes_feature(value):
+    return tf.train.Feature(bytes_list=tf.train.BytesList(value=value))
 
 
 def run():
@@ -24,12 +24,12 @@ def run():
     request.model_spec.signature_name = 'predicts'
     input_name = 'examples'
 
-    x = [0 for i in range(20)]
-    x[0] = 558
+    x = ['' for i in range(20)]
+    x[0] = 'aaabbb'
     example1 = tf.train.Example(
         features=tf.train.Features(
             feature={
-                'records': _int64_feature(x),
+                'words': _bytes_feature(x),
             }
         )
     ).SerializeToString()

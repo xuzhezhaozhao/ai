@@ -9,16 +9,23 @@ import os
 import tensorflow as tf
 
 
+RECORDS_COL = "records"
+
 DICT_META = "dict_meta"
-FASTTEXT_MODEL_PATH = 'lib/fasttext_example_generate_ops.so'
-fasttext_model = tf.load_op_library(FASTTEXT_MODEL_PATH)
+FASTTEXT_EXAMPLE_GENERATE_OPS_PATH = 'lib/fasttext_example_generate_ops.so'
+FASTTEXT_DICT_ID_LOOKUP_OPS_PATH = 'lib/fasttext_dict_id_lookup_ops.so'
+
+fasttext_example_generate_ops = tf.load_op_library(
+    FASTTEXT_EXAMPLE_GENERATE_OPS_PATH)
+fasttext_dict_id_lookup_ops = tf.load_op_library(
+    FASTTEXT_DICT_ID_LOOKUP_OPS_PATH)
 
 
 def init_dict(opts):
     if opts.use_saved_dict:
         return
 
-    dummy1, dummy2 = fasttext_model.fasttext_example_generate(
+    dummy1, dummy2 = fasttext_example_generate_ops.fasttext_example_generate(
         train_data_path=opts.train_data_path,
         input="",
         use_saved_dict=False,
@@ -58,7 +65,7 @@ def generate_example(line, opts):
         sess.run(it.initializer)
         sess.run(it.get_next())
     """
-    (records, labels) = fasttext_model.fasttext_example_generate(
+    records, labels = fasttext_example_generate_ops.fasttext_example_generate(
         input=line,
         train_data_path=opts.train_data_path,
         use_saved_dict=True,
@@ -76,7 +83,7 @@ def generate_example(line, opts):
         label=opts.label
     )
     dataset = tf.data.Dataset.from_tensor_slices(
-        ({"records": records}, labels)
+        ({RECORDS_COL: records}, labels)
     )
     return dataset
 
@@ -88,6 +95,6 @@ def train_input_fn(opts, skip_rows=0):
     ds = tf.data.TextLineDataset(train_data_path).skip(skip_rows)
     ds = ds.flat_map(lambda line: generate_example(line, opts))
     ds = ds.prefetch(opts.prefetch_size)
-    # no shuffle
+#no shuffle
     ds = ds.repeat(opts.epoch).batch(batch_size)
     return ds
