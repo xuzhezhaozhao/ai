@@ -1,13 +1,13 @@
-
 #include <iostream>
 #include <memory>
 #include <string>
 
 #include <grpc++/grpc++.h>
+#include <grpc/support/time.h>
 
+#include "tensorflow/core/example/example.pb.h"
 #include "tensorflow_serving/apis/predict.pb.h"
 #include "tensorflow_serving/apis/prediction_service.grpc.pb.h"
-#include "tensorflow/core/example/example.pb.h"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -45,13 +45,11 @@ class PredictionClient {
     std::string serialized;
     example.SerializeToString(&serialized);
 
-
     // Create input tensor
     TensorProto input_tensor;
     TensorShapeProto shape;
     auto* dim = shape.add_dim();
     dim->set_size(1);
-
 
     auto* input_shape = input_tensor.mutable_tensor_shape();
     (*input_shape) = shape;
@@ -65,6 +63,11 @@ class PredictionClient {
     PredictResponse response;
     ClientContext context;
     std::cout << "Predict ..." << std::endl;
+    gpr_timespec timespec;
+    timespec.tv_sec = 0;  //设置阻塞时间为2秒
+    timespec.tv_nsec = 10*1000*1000; // ms
+    timespec.clock_type = GPR_TIMESPAN;
+    context.set_deadline(timespec);
     Status status = stub_->Predict(&context, request, &response);
     if (status.ok()) {
       std::cout << "OK" << std::endl;
@@ -80,6 +83,10 @@ class PredictionClient {
 };
 
 int main(int argc, char* argv[]) {
+  if (argc < 2) {
+    std::cout << "Usage: <ip:port>" << std::endl;
+    exit(-1);
+  }
   PredictionClient client(
       grpc::CreateChannel(argv[1], grpc::InsecureChannelCredentials()));
   client.Predict("knet");

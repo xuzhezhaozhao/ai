@@ -1,4 +1,6 @@
 
+set -e
+
 srcfiles=`find . -name '*.cc'`
 echo ${srcfiles}
 
