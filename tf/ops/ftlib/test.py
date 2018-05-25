@@ -30,8 +30,8 @@ records = sess.run(records)
 labels = sess.run(labels)
 print("records = \n{}\nlabels = \n{}\n".format(records, labels))
 
-test_words = ['03959e48258956ah' '6635a24a17e289ae' '2615a3b2c54096aj' '0005a21359a912ae']
+test_words = ['03959e48258956ah', '6635a24a17e289ae', '2615a3b2c54096aj', '0005a21359a912ae']
 ids = fasttext_dict_id_lookup_ops.fasttext_dict_id_lookup(
-    test_words,
+    input=test_words,
     dict_dir="dict_dir")
 print("ids = \n{}\n".format(sess.run(ids)))

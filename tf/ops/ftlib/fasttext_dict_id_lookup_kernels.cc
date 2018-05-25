@@ -44,7 +44,7 @@ class FasttextDictIdLookupOp : public OpKernel {
         ctx, ctx->allocate_output(0, input_tensor.shape(), &output_tensor));
     auto output = output_tensor->flat<int>();
     for (int i = 0; i < input.size(); ++i) {
-      auto word = input(1);
+      auto word = input(i);
       auto it = word2id_.find(word);
       if (it == word2id_.end()) {
         output(i) = PADDING_INDEX;
@@ -60,7 +60,7 @@ class FasttextDictIdLookupOp : public OpKernel {
     LOG(INFO) << "Parse dict words from " << dict_words << " ...";
 
     std::ifstream ifs(dict_words);
-    OP_REQUIRES_OK(ctx, ifs.is_open(), errors::Unavailable("file open failed"));
+    OP_REQUIRES(ctx, ifs.is_open(), errors::Unavailable("file open failed"));
     std::string line;
     int id = 1;  // id begin with 1 because of PADDING
     while (!ifs.eof()) {
@@ -70,8 +70,8 @@ class FasttextDictIdLookupOp : public OpKernel {
       }
       word2id_[line] = id++;
     }
-    OP_REQUIRES_OK(ctx, !ifs.fail(), errors::Unavailable("Read error"));
-    OP_REQUIRES_OK(ctx, word2id_.size() > 0,
+    OP_REQUIRES(ctx, !ifs.bad(), errors::Unavailable("Read error"));
+    OP_REQUIRES(ctx, word2id_.size() > 0,
                 errors::Unavailable("Empty dict words file"));
     LOG(INFO) << "Dict words size = " << word2id_.size();
     LOG(INFO) << "Parse dict words OK";
