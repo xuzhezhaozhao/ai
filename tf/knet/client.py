@@ -28,7 +28,7 @@ def run():
     input_name = 'examples'
 
     x = ['' for i in range(20)]
-    x[0] = 'aaabbb'
+    x[0] = '6055a60cdbf525ah'
     example1 = tf.train.Example(
         features=tf.train.Features(
             feature={
@@ -37,7 +37,17 @@ def run():
         )
     ).SerializeToString()
 
-    examples = [example1]
+    x = ['' for i in range(20)]
+    x[0] = '9215a52047c920ae'
+    example2 = tf.train.Example(
+        features=tf.train.Features(
+            feature={
+                'words': _bytes_feature(x),
+            }
+        )
+    ).SerializeToString()
+
+    examples = [example1, example2]
     request.inputs[input_name].CopyFrom(
         tf.contrib.util.make_tensor_proto(examples, dtype=tf.string))
 
