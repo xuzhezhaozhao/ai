@@ -16,7 +16,7 @@ save_summary_steps=100
 save_checkpoints_secs=600
 log_step_count_steps=100
 
-recall_k=50
+recall_k=10
 dict_dir=dict_dir
 use_saved_dict=0
 
