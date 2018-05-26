@@ -93,7 +93,7 @@ def parse_args(argv):
     opts.use_profile_hook = bool(args.use_profile_hook)
     opts.profile_steps = args.profile_steps
 
-    tf.logging.info('\n' + str(opts))
+    tf.logging.info(opts)
 
 
 def main(argv):
