@@ -8,7 +8,7 @@ ws=20
 min_count=50
 batch_size=64
 num_sampled=10
-epoch=20
+epoch=2
 hidden_units="64"
 prefetch_size=10000
 
@@ -20,7 +20,7 @@ recall_k=10
 dict_dir=dict_dir
 use_saved_dict=0
 
-use_profile_hook=0
+use_profile_hook=1
 
 rm -rf ${MODEL_DIR}
 python train.py \

@@ -126,7 +126,7 @@ def main(argv):
         })
 
     # train model
-    meta_hook = hook.MetadataHook(save_steps=10, output_dir=opts.model_dir)
+    meta_hook = hook.MetadataHook(save_steps=100, output_dir=opts.model_dir)
     hooks = [meta_hook] if opts.use_profile_hook else None
     classifier.train(input_fn=lambda: input_data.train_input_fn(opts),
                      max_steps=opts.max_train_steps,
