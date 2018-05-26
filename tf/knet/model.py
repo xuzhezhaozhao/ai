@@ -39,8 +39,9 @@ def knet_model(features, labels, mode, params):
         embeddings, PADDING_ID, tf.zeros([embedding_dim], dtype=tf.float32),
         name="mask_padding_zero_op")
     with tf.control_dependencies([mask_padding_zero_op]):
-        net = tf.nn.embedding_lookup(embeddings, tf.cast(net, tf.int32),
-                                     name="embedding_lookup")
+        net = tf.nn.embedding_lookup(
+            embeddings, tf.cast(net, tf.int32, name="lookup_idx_cast"),
+            name="embedding_lookup")
     net = tf.reduce_mean(net, 1, name="mean")
     for units in params['hidden_units']:
         net = tf.layers.dense(net, units=units, activation=tf.nn.relu,
