@@ -21,6 +21,7 @@ dict_dir=dict_dir
 use_saved_dict=0
 
 use_profile_hook=1
+profile_steps=100
 
 rm -rf ${MODEL_DIR}
 python train.py \
@@ -52,4 +53,5 @@ python train.py \
     --recall_k ${recall_k} \
     --dict_dir ${dict_dir} \
     --use_saved_dict ${use_saved_dict} \
-    --use_profile_hook ${use_profile_hook}
+    --use_profile_hook ${use_profile_hook} \
+    --profile_steps ${profile_steps}

@@ -50,6 +50,7 @@ parser.add_argument('--dict_dir', default="dict_dir", type=str, help='')
 parser.add_argument('--use_saved_dict', default=0, type=int, help='')
 
 parser.add_argument('--use_profile_hook', default=0, type=int, help='')
+parser.add_argument('--profile_steps', default=100, type=int, help='')
 
 opts = Options()
 
@@ -90,6 +91,7 @@ def parse_args(argv):
     opts.use_saved_dict = bool(args.use_saved_dict)
 
     opts.use_profile_hook = bool(args.use_profile_hook)
+    opts.profile_steps = args.profile_steps
 
     tf.logging.info('\n' + str(opts))
 
@@ -126,14 +128,10 @@ def main(argv):
         })
 
     # train model
-    save_steps = 100
+    save_steps = opts.profile_steps
     meta_hook = hook.MetadataHook(save_steps=save_steps,
                                   output_dir=opts.model_dir)
-    profile_hook = tf.train.ProfilerHook(save_steps=save_steps,
-                                         output_dir=opts.model_dir,
-                                         show_dataflow=True,
-                                         show_memory=True)
-    hooks = [meta_hook, profile_hook] if opts.use_profile_hook else None
+    hooks = [meta_hook] if opts.use_profile_hook else None
     classifier.train(input_fn=lambda: input_data.train_input_fn(opts),
                      max_steps=opts.max_train_steps,
                      hooks=hooks)

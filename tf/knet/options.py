@@ -41,6 +41,7 @@ class Options(object):
         self.use_saved_dict = False
 
         self.use_profile_hook = False
+        self.profile_steps = 100
 
     def __str__(self):
         return \
@@ -75,6 +76,7 @@ class Options(object):
         dict_dir = {} \n \
         use_saved_dict = {} \n \
         use_profile_hook = {} \n \
+        profile_steps = {} \n \
         ".format(
                 self.train_data_path,
                 self.eval_data_path,
@@ -105,5 +107,5 @@ class Options(object):
                 self.recall_k,
                 self.dict_dir,
                 self.use_saved_dict,
-                self.use_profile_hook
-            )
+                self.use_profile_hook,
+                self.profile_steps)
