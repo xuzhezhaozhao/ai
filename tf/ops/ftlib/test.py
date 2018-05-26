@@ -10,8 +10,9 @@ test_line = [
 
 sess = tf.Session()
 
+train_data_path = '../../../data/train_data.in'
 (dummy1, dummy2) = fasttext_example_generate_ops.fasttext_example_generate(
-    train_data_path='train_data.in',
+    train_data_path=train_data_path,
     input=test_line,
     use_saved_dict=False,
     dict_dir="dict_dir"
@@ -19,7 +20,7 @@ sess = tf.Session()
 sess.run(dummy1)
 
 (records, labels) = fasttext_example_generate_ops.fasttext_example_generate(
-    train_data_path='train_data.in',
+    train_data_path=train_data_path,
     input=test_line,
     use_saved_dict=True,
     dict_dir="dict_dir"
