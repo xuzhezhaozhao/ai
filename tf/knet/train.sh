@@ -8,7 +8,7 @@ ws=20
 min_count=50
 batch_size=64
 num_sampled=10
-epoch=10
+epoch=5
 hidden_units="64"
 prefetch_size=10000
 
