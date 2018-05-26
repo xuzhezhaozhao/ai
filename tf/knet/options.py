@@ -7,8 +7,6 @@ from __future__ import print_function
 
 
 class Options(object):
-    """Options used by our knet model"""
-
     def __init__(self):
         self.train_data_path = ""
         self.lr = 0.05

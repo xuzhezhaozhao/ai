@@ -13,7 +13,7 @@ import os
 PADDING_ID = 0
 
 
-def my_model(features, labels, mode, params):
+def knet_model(features, labels, mode, params):
     n_classes = params['n_classes']
     embedding_dim = params['embedding_dim']
     lr = params['learning_rate']
@@ -50,15 +50,15 @@ def my_model(features, labels, mode, params):
 
     # Compute predictions.
     if mode == tf.estimator.ModeKeys.PREDICT:
-        words = [line.strip() for line in
-                 open(os.path.join(dict_dir, input_data.DICT_WORDS))
-                 if line.strip() != '']
+        dict_words_path = os.path.join(dict_dir, input_data.DICT_WORDS)
+        words = [_ for _ in open(dict_words_path) if _ != '']
         words.insert(0, '')
         table = tf.contrib.lookup.index_to_string_table_from_tensor(
             mapping=words,
             default_value=''
         )
 
+        # TODO(zhezhaoxu) Optimaize, don't calc softmax
         probabilities = tf.nn.softmax(logits)
         values, indices = tf.nn.top_k(probabilities, recall_k)
         predictions = {
@@ -89,7 +89,6 @@ def my_model(features, labels, mode, params):
     nce_loss = tf.reduce_mean(nce_loss)
 
     # Compute evaluation metrics.
-    # TODO
     predicted_classes = tf.argmax(logits, 1)
     accuracy = tf.metrics.accuracy(labels=labels,
                                    predictions=predicted_classes,

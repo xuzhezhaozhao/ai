@@ -14,6 +14,7 @@ WORDS_COL = "words"
 
 DICT_META = "dict_meta"
 DICT_WORDS = "dict_words"
+SAVED_DICT_BIN = "saved_dict.bin"
 
 FASTTEXT_EXAMPLE_GENERATE_OPS_PATH = 'lib/fasttext_example_generate_ops.so'
 
@@ -90,8 +91,7 @@ def generate_example(line, opts):
         label=opts.label
     )
     dataset = tf.data.Dataset.from_tensor_slices(
-        ({RECORDS_COL: records}, labels)
-    )
+        ({RECORDS_COL: records}, labels))
     return dataset
 
 
@@ -106,7 +106,7 @@ def train_input_fn(opts, skip_rows=0):
     return ds
 
 
-def build_serving_input_receiver_fn(opts):
+def build_serving_input_fn(opts):
     words_feature = tf.FixedLenFeature(shape=[opts.ws], dtype=tf.string)
 
     def serving_input_receiver_fn():

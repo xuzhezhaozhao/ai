@@ -6,13 +6,12 @@ from __future__ import division
 from __future__ import print_function
 
 from options import Options
-from model import my_model
+from model import knet_model
 
+import os
 import argparse
 import tensorflow as tf
-
 import input_data
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_data_path', default='', type=str, help='')
@@ -49,6 +48,7 @@ parser.add_argument('--dict_dir', default="dict_dir", type=str, help='')
 parser.add_argument('--use_saved_dict', default=0, type=int, help='')
 
 opts = Options()
+
 
 def parse_args(argv):
     args = parser.parse_args(argv[1:])
@@ -92,8 +92,8 @@ def main(argv):
 
     input_data.init_dict(opts)
     dict_meta = input_data.parse_dict_meta(opts)
+    feature_columns = input_data.feature_columns(opts)
 
-    my_feature_columns = input_data.feature_columns(opts)
     config = tf.estimator.RunConfig(
         model_dir=opts.model_dir,
         tf_random_seed=None,
@@ -105,10 +105,10 @@ def main(argv):
         log_step_count_steps=opts.log_step_count_steps
     )
     classifier = tf.estimator.Estimator(
-        model_fn=my_model,
+        model_fn=knet_model,
         config=config,
         params={
-            'feature_columns': my_feature_columns,
+            'feature_columns': feature_columns,
             'hidden_units': opts.hidden_units,
             'n_classes': dict_meta["nwords"] + 1,
             'embedding_dim': opts.dim,
@@ -118,11 +118,26 @@ def main(argv):
             'dict_dir': opts.dict_dir
         })
 
+    # train model
     classifier.train(input_fn=lambda: input_data.train_input_fn(opts),
                      max_steps=opts.max_train_steps)
+
+    # evaluate model
+    # TODO
+
+    # export model
+    dict_dir = opts.dict_dir
+    dict_words_path = os.path.join(dict_dir, input_data.DICT_WORDS)
+    dict_meta_path = os.path.join(dict_dir, input_data.DICT_META)
+    saved_dict_bin_path = os.path.join(dict_dir, input_data.SAVED_DICT_BIN)
+    assets_extra = {dict_words_path: dict_words_path,
+                    dict_meta_path: dict_meta_path,
+                    saved_dict_bin_path: saved_dict_bin_path}
     classifier.export_savedmodel(
         opts.export_model_dir,
-        serving_input_receiver_fn=input_data.build_serving_input_receiver_fn(opts))
+        serving_input_receiver_fn=input_data.build_serving_input_fn(opts),
+        assets_extra=assets_extra
+    )
 
 
 if __name__ == '__main__':

@@ -4,10 +4,10 @@ train_data_path=../ops/ftlib/train_data.in
 lr=0.5
 dim=100
 ws=20
-min_count=50
+min_count=10
 batch_size=64
 num_sampled=10
-epoch=20
+epoch=2
 hidden_units="64"
 prefetch_size=10000
 
