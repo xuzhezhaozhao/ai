@@ -10,6 +10,8 @@ import input_data
 import math
 import os
 
+PADDING_ID = 0
+
 
 def my_model(features, labels, mode, params):
     n_classes = params['n_classes']
@@ -32,7 +34,6 @@ def my_model(features, labels, mode, params):
     nce_biases = tf.Variable(tf.zeros([n_classes]))
 
     # construct network
-    PADDING_ID = 0
     net = tf.feature_column.input_layer(features, feature_columns)
     mask_padding_zero_op = tf.scatter_update(
         embeddings, PADDING_ID, tf.zeros([embedding_dim], dtype=tf.float32))
