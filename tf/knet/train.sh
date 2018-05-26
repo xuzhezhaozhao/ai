@@ -20,6 +20,8 @@ recall_k=10
 dict_dir=dict_dir
 use_saved_dict=0
 
+use_profile_hook=0
+
 rm -rf ${MODEL_DIR}
 python train.py \
     --train_data_path ${train_data_path} \
@@ -49,4 +51,5 @@ python train.py \
     --log_step_count_steps ${log_step_count_steps} \
     --recall_k ${recall_k} \
     --dict_dir ${dict_dir} \
-    --use_saved_dict ${use_saved_dict}
+    --use_saved_dict ${use_saved_dict} \
+    --use_profile_hook ${use_profile_hook}

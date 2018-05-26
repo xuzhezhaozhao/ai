@@ -1,6 +1,10 @@
 #! /usr/bin/env python
 # -*- coding=utf8 -*-
 
+"""
+From: https://stackoverflow.com/questions/45719176/how-to-display-runtime-statistics-in-tensorboard-using-estimator-api-in-a-distri
+"""
+
 import tensorflow as tf
 from tensorflow.python.training.session_run_hook import SessionRunHook, SessionRunArgs
 from tensorflow.python.training import training_util
@@ -9,10 +13,10 @@ from tensorflow.python.training.basic_session_run_hooks import SecondOrStepTimer
 
 class MetadataHook(SessionRunHook):
     def __init__(self, save_steps=None, save_secs=None, output_dir=""):
-        self._output_tag = "step-{}"
+        self._output_tag = "step_{}"
         self._output_dir = output_dir
-        self._timer = SecondOrStepTimer(
-            every_secs=save_secs, every_steps=save_steps)
+        self._timer = SecondOrStepTimer(every_secs=save_secs,
+                                        every_steps=save_steps)
 
     def begin(self):
         self._next_step = None
@@ -30,8 +34,9 @@ class MetadataHook(SessionRunHook):
             self._timer.should_trigger_for_step(self._next_step)
         )
         requests = {"global_step": self._global_step_tensor}
-        opts = (tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-                if self._request_summary else None)
+        # opts = (tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+                # if self._request_summary else None)
+        opts = (tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE))
         return SessionRunArgs(requests, options=opts)
 
     def after_run(self, run_context, run_values):

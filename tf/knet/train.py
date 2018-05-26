@@ -49,6 +49,8 @@ parser.add_argument('--recall_k', default=1, type=int, help='')
 parser.add_argument('--dict_dir', default="dict_dir", type=str, help='')
 parser.add_argument('--use_saved_dict', default=0, type=int, help='')
 
+parser.add_argument('--use_profile_hook', default=0, type=int, help='')
+
 opts = Options()
 
 
@@ -87,6 +89,8 @@ def parse_args(argv):
     opts.dict_dir = args.dict_dir
     opts.use_saved_dict = bool(args.use_saved_dict)
 
+    opts.use_profile_hook = bool(args.use_profile_hook)
+
     tf.logging.info('\n' + str(opts))
 
 
@@ -122,10 +126,11 @@ def main(argv):
         })
 
     # train model
-    meta_hook = hook.MetadataHook(save_secs=1, output_dir=opts.model_dir)
+    meta_hook = hook.MetadataHook(save_steps=10, output_dir=opts.model_dir)
+    hooks = [meta_hook] if opts.use_profile_hook else None
     classifier.train(input_fn=lambda: input_data.train_input_fn(opts),
                      max_steps=opts.max_train_steps,
-                     hooks=None)
+                     hooks=hooks)
 
     # evaluate model
     classifier.evaluate(input_fn=lambda: input_data.eval_input_fn(opts))

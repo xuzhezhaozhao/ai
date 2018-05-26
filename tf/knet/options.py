@@ -40,6 +40,8 @@ class Options(object):
         self.dict_dir = 'dict_dir'
         self.use_saved_dict = False
 
+        self.use_profile_hook = False
+
     def __str__(self):
         return \
             "Option:\n \
@@ -72,6 +74,7 @@ class Options(object):
         recall_k = {} \n \
         dict_dir = {} \n \
         use_saved_dict = {} \n \
+        use_profile_hook = {} \n \
         ".format(
                 self.train_data_path,
                 self.eval_data_path,
@@ -101,5 +104,6 @@ class Options(object):
                 self.log_step_count_steps,
                 self.recall_k,
                 self.dict_dir,
-                self.use_saved_dict
+                self.use_saved_dict,
+                self.use_profile_hook
             )
