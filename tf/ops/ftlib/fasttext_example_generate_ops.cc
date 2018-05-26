@@ -5,7 +5,7 @@ namespace tensorflow {
 REGISTER_OP("FasttextExampleGenerate")
     .Input("input: string")
     .Output("records: int32")
-    .Output("labels: int32")
+    .Output("labels: int64")
     .SetIsStateful()
     .Attr("use_saved_dict: bool = true")
     .Attr("dict_dir: string")

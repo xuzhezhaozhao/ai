@@ -48,6 +48,10 @@ def knet_model(features, labels, mode, params):
     logits = tf.matmul(net, tf.transpose(nce_weights))
     logits = tf.nn.bias_add(logits, nce_biases)
 
+    # TODO(zhezhaoxu) Optimaize, don't calc softmax
+    probabilities = tf.nn.softmax(logits)
+    scores, ids = tf.nn.top_k(probabilities, recall_k)
+
     # Compute predictions.
     if mode == tf.estimator.ModeKeys.PREDICT:
         dict_words_path = os.path.join(dict_dir, input_data.DICT_WORDS)
@@ -58,20 +62,17 @@ def knet_model(features, labels, mode, params):
             default_value=''
         )
 
-        # TODO(zhezhaoxu) Optimaize, don't calc softmax
-        probabilities = tf.nn.softmax(logits)
-        values, indices = tf.nn.top_k(probabilities, recall_k)
         predictions = {
-            'class_ids': indices,
-            'scores': values,
-            'words': table.lookup(tf.cast(indices, tf.int64))
+            'class_ids': ids,
+            'scores': scores,
+            'words': table.lookup(tf.cast(ids, tf.int64))
         }
         export_outputs = {
             'predicts': tf.estimator.export.PredictOutput(
                 outputs={
-                    'class_ids': indices,
-                    'scores': values,
-                    'words': table.lookup(tf.cast(indices, tf.int64))
+                    'class_ids': ids,
+                    'scores': scores,
+                    'words': table.lookup(tf.cast(ids, tf.int64))
                 }
             )
         }
@@ -81,7 +82,7 @@ def knet_model(features, labels, mode, params):
     # Compute nce_loss.
     nce_loss = tf.nn.nce_loss(weights=nce_weights,
                               biases=nce_biases,
-                              labels=tf.reshape(labels, [-1, 1]),
+                              labels=labels,
                               inputs=net,
                               num_sampled=num_sampled,
                               num_classes=n_classes,
@@ -93,8 +94,18 @@ def knet_model(features, labels, mode, params):
     accuracy = tf.metrics.accuracy(labels=labels,
                                    predictions=predicted_classes,
                                    name='acc_op')
-    metrics = {'accuracy': accuracy}
+
+    recall_at_top_k = tf.metrics.recall_at_top_k(
+        labels=labels,
+        predictions_idx=ids,
+        k=recall_k
+    )
+    metrics = {'accuracy': accuracy,
+               'recall_at_top_k': recall_at_top_k}
+
+    # TODO Don't summary to speedup
     tf.summary.scalar('accuracy', accuracy[1])
+    tf.summary.scalar('recall_at_top_k', recall_at_top_k[1])
 
     if mode == tf.estimator.ModeKeys.EVAL:
         loss = tf.losses.sparse_softmax_cross_entropy(labels, logits)

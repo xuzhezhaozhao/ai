@@ -10,6 +10,7 @@
 #include "tensorflow/core/platform/posix/posix_file_system.h"
 #include "tensorflow/core/platform/thread_annotations.h"
 #include "tensorflow/core/util/guarded_philox_random.h"
+#include "tensorflow/core/platform/default/integral_types.h"
 
 #include <time.h>
 
@@ -105,8 +106,8 @@ class FasttextExampleGenerateOp : public OpKernel {
     Tensor* labels_tensor = NULL;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(1, labels_shape, &labels_tensor));
 
-    auto records = records_tensor->flat<int>();
-    auto labels = labels_tensor->flat<int>();
+    auto records = records_tensor->flat<int32>();
+    auto labels = labels_tensor->flat<int64>();
     int labels_index = 0, records_index = 0;
     for (auto& inst : insts) {
       OP_REQUIRES(ctx, inst.size() > 0,

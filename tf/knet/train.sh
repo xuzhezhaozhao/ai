@@ -5,10 +5,10 @@ eval_data_path=../ops/ftlib/train_data.in
 lr=0.5
 dim=100
 ws=20
-min_count=10
+min_count=50
 batch_size=64
 num_sampled=10
-epoch=2
+epoch=20
 hidden_units="64"
 prefetch_size=10000
 
@@ -16,7 +16,7 @@ save_summary_steps=100
 save_checkpoints_secs=600
 log_step_count_steps=100
 
-recall_k=20
+recall_k=50
 dict_dir=dict_dir
 use_saved_dict=0
 
