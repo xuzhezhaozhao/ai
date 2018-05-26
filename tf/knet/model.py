@@ -37,7 +37,7 @@ def knet_model(features, labels, mode, params):
     net = tf.feature_column.input_layer(features, feature_columns)
     mask_padding_zero_op = tf.scatter_update(
         embeddings, PADDING_ID, tf.zeros([embedding_dim], dtype=tf.float32),
-        name="mast_padding_zero_op")
+        name="mask_padding_zero_op")
     with tf.control_dependencies([mask_padding_zero_op]):
         net = tf.nn.embedding_lookup(embeddings, tf.cast(net, tf.int32),
                                      name="embedding_lookup")
