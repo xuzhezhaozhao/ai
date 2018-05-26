@@ -48,14 +48,15 @@ def knet_model(features, labels, mode, params):
     logits = tf.matmul(net, tf.transpose(nce_weights))
     logits = tf.nn.bias_add(logits, nce_biases)
 
-    # TODO(zhezhaoxu) Optimaize, don't calc softmax
-    probabilities = tf.nn.softmax(logits)
-    scores, ids = tf.nn.top_k(probabilities, recall_k)
+    # Optimaize, don't need calculate softmax
+    # probabilities = tf.nn.softmax(logits)
+    scores, ids = tf.nn.top_k(logits, recall_k)
 
     # Compute predictions.
     if mode == tf.estimator.ModeKeys.PREDICT:
         dict_words_path = os.path.join(dict_dir, input_data.DICT_WORDS)
-        words = [_ for _ in open(dict_words_path) if _ != '']
+        words = [line.strip() for line in open(dict_words_path)
+                 if line.strip() != '']
         words.insert(0, '')
         table = tf.contrib.lookup.index_to_string_table_from_tensor(
             mapping=words,
