@@ -90,22 +90,21 @@ def knet_model(features, labels, mode, params):
     nce_loss = tf.reduce_mean(nce_loss)
 
     # Compute evaluation metrics.
-    predicted_classes = tf.argmax(logits, 1)
-    accuracy = tf.metrics.accuracy(labels=labels,
-                                   predictions=predicted_classes,
-                                   name='acc_op')
-
+    predicted = tf.argmax(logits, 1)
+    accuracy = tf.metrics.accuracy(labels=labels, predictions=predicted)
     recall_at_top_k = tf.metrics.recall_at_top_k(
-        labels=labels,
-        predictions_idx=ids,
-        k=recall_k
-    )
+        labels=labels, predictions_idx=ids, k=recall_k)
+    precision_at_top_k = tf.metrics.precision_at_top_k(
+        labels=labels, predictions_idx=ids, k=recall_k)
     metrics = {'accuracy': accuracy,
-               'recall_at_top_k': recall_at_top_k}
+               'recall_at_top_k': recall_at_top_k,
+               'precision_at_top_k': precision_at_top_k}
 
-    # TODO Don't summary to speedup
+    # Don't summary to speedup?
     tf.summary.scalar('accuracy', accuracy[1])
-    tf.summary.scalar('recall_at_top_k', recall_at_top_k[1])
+    tf.summary.scalar('recall_at_top_{}'.format(recall_k), recall_at_top_k[1])
+    tf.summary.scalar('precision_at_top_{}'.format(recall_k),
+                      precision_at_top_k[1])
 
     if mode == tf.estimator.ModeKeys.EVAL:
         loss = tf.losses.sparse_softmax_cross_entropy(labels, logits)
