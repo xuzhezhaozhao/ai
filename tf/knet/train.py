@@ -127,7 +127,7 @@ def main(argv):
             'dict_dir': opts.dict_dir
         })
 
-    # train model
+    # Create profile hooks
     save_steps = opts.profile_steps
     meta_hook = hook.MetadataHook(save_steps=save_steps,
                                   output_dir=opts.model_dir)
@@ -136,12 +136,15 @@ def main(argv):
                                          show_dataflow=True,
                                          show_memory=True)
     hooks = [meta_hook, profile_hook] if opts.use_profile_hook else None
+
+    # train model
     classifier.train(input_fn=lambda: input_data.train_input_fn(opts),
                      max_steps=opts.max_train_steps,
                      hooks=hooks)
 
     # evaluate model
-    classifier.evaluate(input_fn=lambda: input_data.eval_input_fn(opts))
+    classifier.evaluate(input_fn=lambda: input_data.eval_input_fn(opts),
+                        hooks=hooks)
 
     # export model
     dict_dir = opts.dict_dir
