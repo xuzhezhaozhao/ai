@@ -10,7 +10,7 @@ test_line = [
 
 sess = tf.Session()
 
-train_data_path = '../../../data/train_data.in'
+train_data_path = '../../../../data/train_data.in'
 (dummy1, dummy2) = fasttext_example_generate_ops.fasttext_example_generate(
     train_data_path=train_data_path,
     input=test_line,
