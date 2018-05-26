@@ -1,6 +1,7 @@
 MODEL_DIR=model_dir
 EXPORT_MODEL_DIR=export_model_dir
 train_data_path=../ops/ftlib/train_data.in
+eval_data_path=../ops/ftlib/train_data.in
 lr=0.5
 dim=100
 ws=20
@@ -22,6 +23,7 @@ use_saved_dict=0
 rm -rf ${MODEL_DIR}
 python train.py \
     --train_data_path ${train_data_path} \
+    --eval_data_path ${eval_data_path} \
     --lr ${lr} \
     --dim ${dim} \
     --maxn 0 \

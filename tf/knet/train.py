@@ -15,6 +15,7 @@ import input_data
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_data_path', default='', type=str, help='')
+parser.add_argument('--eval_data_path', default='', type=str, help='')
 parser.add_argument('--lr', default=0.25, type=float, help='learning rate')
 parser.add_argument('--dim', default=100, type=int, help='embedding dim')
 parser.add_argument('--maxn', default=0, type=int, help='')
@@ -53,6 +54,7 @@ opts = Options()
 def parse_args(argv):
     args = parser.parse_args(argv[1:])
     opts.train_data_path = args.train_data_path
+    opts.eval_data_path = args.eval_data_path
     opts.lr = args.lr
     opts.dim = args.dim
     opts.maxn = args.maxn
@@ -123,7 +125,7 @@ def main(argv):
                      max_steps=opts.max_train_steps)
 
     # evaluate model
-    # TODO
+    classifier.evaluate(input_fn=lambda: input_data.eval_input_fn(opts))
 
     # export model
     dict_dir = opts.dict_dir

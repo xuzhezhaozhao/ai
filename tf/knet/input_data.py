@@ -106,6 +106,17 @@ def train_input_fn(opts, skip_rows=0):
     return ds
 
 
+def eval_input_fn(opts, skip_rows=0):
+    eval_data_path = opts.eval_data_path
+    batch_size = opts.batch_size
+
+    ds = tf.data.TextLineDataset(eval_data_path).skip(skip_rows)
+    ds = ds.flat_map(lambda line: generate_example(line, opts))
+    ds = ds.prefetch(opts.prefetch_size)
+    ds = ds.batch(batch_size)
+    return ds
+
+
 def build_serving_input_fn(opts):
     words_feature = tf.FixedLenFeature(shape=[opts.ws], dtype=tf.string)
 

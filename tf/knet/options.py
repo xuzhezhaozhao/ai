@@ -9,6 +9,7 @@ from __future__ import print_function
 class Options(object):
     def __init__(self):
         self.train_data_path = ""
+        self.eval_data_path = ""
         self.lr = 0.05
         self.dim = 100
         self.maxn = 0
@@ -43,6 +44,7 @@ class Options(object):
         return \
             "Option:\n \
         train_data_path = {} \n \
+        eval_data_path = {} \n \
         lr = {} \n \
         dim = {} \n \
         maxn = {} \n \
@@ -72,6 +74,7 @@ class Options(object):
         use_saved_dict = {} \n \
         ".format(
                 self.train_data_path,
+                self.eval_data_path,
                 self.lr,
                 self.dim,
                 self.maxn,
