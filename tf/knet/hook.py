@@ -28,16 +28,17 @@ class MetadataHook(SessionRunHook):
 
         if self.global_step_tensor is None:
             raise RuntimeError(
-                "Global step should be created to use ProfilerHook.")
+                "Global step should be created to use MetadataHook.")
 
         self.should_summary = False
         opts = None
-        if (self.global_step + 1) % self.save_steps == 0:
+        next_step = self.global_step + 1
+        if next_step % self.save_steps == 0:
             opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
             self.should_summary = True
 
-        requests = {}
-        return SessionRunArgs(requests, options=opts)
+        fetches = {}
+        return SessionRunArgs(fetches, options=opts)
 
     def after_run(self, run_context, run_values):
         self.global_step += 1
