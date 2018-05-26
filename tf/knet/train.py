@@ -126,8 +126,14 @@ def main(argv):
         })
 
     # train model
-    meta_hook = hook.MetadataHook(save_steps=100, output_dir=opts.model_dir)
-    hooks = [meta_hook] if opts.use_profile_hook else None
+    save_steps = 100
+    meta_hook = hook.MetadataHook(save_steps=save_steps,
+                                  output_dir=opts.model_dir)
+    profile_hook = tf.train.ProfilerHook(save_steps=save_steps,
+                                         output_dir=opts.model_dir,
+                                         show_dataflow=True,
+                                         show_memory=True)
+    hooks = [meta_hook, profile_hook] if opts.use_profile_hook else None
     classifier.train(input_fn=lambda: input_data.train_input_fn(opts),
                      max_steps=opts.max_train_steps,
                      hooks=hooks)
