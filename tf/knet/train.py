@@ -12,6 +12,7 @@ import os
 import argparse
 import tensorflow as tf
 import input_data
+import hook
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_data_path', default='', type=str, help='')
@@ -121,8 +122,10 @@ def main(argv):
         })
 
     # train model
+    meta_hook = hook.MetadataHook(save_secs=1, output_dir=opts.model_dir)
     classifier.train(input_fn=lambda: input_data.train_input_fn(opts),
-                     max_steps=opts.max_train_steps)
+                     max_steps=opts.max_train_steps,
+                     hooks=None)
 
     # evaluate model
     classifier.evaluate(input_fn=lambda: input_data.eval_input_fn(opts))
