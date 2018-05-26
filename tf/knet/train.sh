@@ -2,13 +2,13 @@ MODEL_DIR=model_dir
 EXPORT_MODEL_DIR=export_model_dir
 train_data_path=../../data/train_data.in
 eval_data_path=../../data/eval_data.in
-lr=0.5
+lr=0.15
 dim=100
 ws=20
 min_count=50
 batch_size=64
 num_sampled=10
-epoch=100
+epoch=20
 hidden_units="64"
 prefetch_size=10000
 
