@@ -175,7 +175,7 @@ class FasttextExampleGenerateOp : public OpKernel {
   void PreProcessTrainData(OpKernelConstruction* ctx) {
     LOG(INFO) << "Preprocess train data beginning ...";
     std::ifstream ifs(args_->train_data_path);
-    OP_REQUIRES(ctx, ifs.is_open(), errors::Unavailable("File open failed."));
+    OP_REQUIRES(ctx, ifs.is_open(), errors::Unavailable(args_->train_data_path + " open failed."));
     dict_->readFromFile(ifs);
     ifs.close();
     LOG(INFO) << "Preprocess train data done.";
@@ -202,7 +202,7 @@ class FasttextExampleGenerateOp : public OpKernel {
       // save dictionary
       LOG(INFO) << "Save dictionary to " << saved_dict << " ...";
       std::ofstream ofs(saved_dict);
-      OP_REQUIRES(ctx, ofs.is_open(), errors::Unavailable("file open failed"));
+      OP_REQUIRES(ctx, ofs.is_open(), errors::Unavailable(saved_dict + " open failed"));
       dict_->save(ofs);
       OP_REQUIRES(ctx, ofs.good(), errors::Unavailable("Write error"));
       ofs.close();
@@ -213,7 +213,7 @@ class FasttextExampleGenerateOp : public OpKernel {
       // save dict meta
       std::ofstream ofs(dict_meta);
       LOG(INFO) << "Write dict meta to " << dict_meta << " ...";
-      OP_REQUIRES(ctx, ofs.is_open(), errors::Unavailable("file open failed"));
+      OP_REQUIRES(ctx, ofs.is_open(), errors::Unavailable(dict_meta + " open failed"));
       int nwords = dict_->nwords();
       int nlabels = dict_->nlabels();
       auto to_write = std::string("nwords\t") + std::to_string(nwords) + "\n";
@@ -231,7 +231,7 @@ class FasttextExampleGenerateOp : public OpKernel {
       // save dict words
       std::ofstream ofs(dict_words);
       LOG(INFO) << "Write dict words to " << dict_words << " ...";
-      OP_REQUIRES(ctx, ofs.is_open(), errors::Unavailable("file open failed"));
+      OP_REQUIRES(ctx, ofs.is_open(), errors::Unavailable(dict_words + " open failed"));
       for (const auto& entry : dict_->words()) {
         if (entry.type == ::fasttext::entry_type::word) {
           ofs.write(entry.word.data(), entry.word.size());
@@ -250,7 +250,7 @@ class FasttextExampleGenerateOp : public OpKernel {
     auto saved_dict = ::tensorflow::io::JoinPath(root_dir, SAVED_DICT);
     LOG(INFO) << "Load dictionary from " << saved_dict << " ...";
     std::ifstream ifs(saved_dict);
-    OP_REQUIRES(ctx, ifs.is_open(), errors::Unavailable("file open failed"));
+    OP_REQUIRES(ctx, ifs.is_open(), errors::Unavailable(saved_dict + " open failed"));
     dict_->load(ifs);
     OP_REQUIRES(ctx, !ifs.fail(), errors::Unavailable("Read error!"));
     ifs.close();

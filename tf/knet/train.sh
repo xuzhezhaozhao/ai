@@ -1,7 +1,7 @@
 MODEL_DIR=model_dir
 EXPORT_MODEL_DIR=export_model_dir
-train_data_path=../ops/ftlib/train_data.in
-eval_data_path=../ops/ftlib/train_data.in
+train_data_path=../../data/train_data.in
+eval_data_path=../../data/eval_data.in
 lr=0.5
 dim=100
 ws=20
