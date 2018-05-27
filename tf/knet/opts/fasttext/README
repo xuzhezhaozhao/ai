@@ -1,0 +1,11 @@
+
+编译有几个点需要注意:
+
+tesla 上的 tensorflow 1.6 版本 ABI 是 1, 所以要保持一致，本机编译的
+tensorflow 也要使用 ABI=1
+
+1. 查看 tensorflow 编译使用的 ABI 版本:
+tf.sysconfig.get_compile_flags()
+
+2. 查看 so 文件 ABI 版本
+readelf -a *.so | grep 'ABI Version'
