@@ -103,6 +103,11 @@ def main(argv):
     dict_meta = input_data.parse_dict_meta(opts)
     feature_columns = input_data.feature_columns(opts)
 
+    session_config = tf.ConfigProto(device_count={"CPU": 1},
+                                    inter_op_parallelism_threads=1,
+                                    intra_op_parallelism_threads=1,
+                                    log_device_placement=False)
+
     config = tf.estimator.RunConfig(
         model_dir=opts.model_dir,
         tf_random_seed=None,
