@@ -173,8 +173,7 @@ def main(argv):
     classifier.export_savedmodel(
         opts.export_model_dir,
         serving_input_receiver_fn=input_data.build_serving_input_fn(opts),
-        assets_extra=assets_extra
-    )
+        assets_extra=assets_extra)
 
 
 if __name__ == '__main__':
