@@ -77,6 +77,7 @@ class Options(object):
         use_saved_dict = {} \n \
         use_profile_hook = {} \n \
         profile_steps = {} \n \
+        root_ops_path = {} \n \
         ".format(
                 self.train_data_path,
                 self.eval_data_path,
@@ -108,4 +109,5 @@ class Options(object):
                 self.dict_dir,
                 self.use_saved_dict,
                 self.use_profile_hook,
-                self.profile_steps)
+                self.profile_steps,
+                self.root_ops_path)

@@ -52,6 +52,8 @@ parser.add_argument('--use_saved_dict', default=0, type=int, help='')
 parser.add_argument('--use_profile_hook', default=0, type=int, help='')
 parser.add_argument('--profile_steps', default=100, type=int, help='')
 
+parser.add_argument('--root_ops_path', default="", type=str, help='')
+
 opts = Options()
 
 
@@ -92,6 +94,8 @@ def parse_args(argv):
 
     opts.use_profile_hook = bool(args.use_profile_hook)
     opts.profile_steps = args.profile_steps
+
+    opts.root_ops_path = args.root_ops_path
 
     tf.logging.info(opts)
 

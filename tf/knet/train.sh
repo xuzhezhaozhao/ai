@@ -23,6 +23,8 @@ use_saved_dict=0
 use_profile_hook=1
 profile_steps=100
 
+root_ops_path=lib/
+
 rm -rf ${MODEL_DIR}
 python train.py \
     --train_data_path ${train_data_path} \
@@ -54,4 +56,5 @@ python train.py \
     --dict_dir ${dict_dir} \
     --use_saved_dict ${use_saved_dict} \
     --use_profile_hook ${use_profile_hook} \
-    --profile_steps ${profile_steps}
+    --profile_steps ${profile_steps} \
+    --root_ops_path ${root_ops_path}
