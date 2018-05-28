@@ -50,6 +50,10 @@ def knet_model(features, labels, mode, params):
     # Compute logits (1 per class).
     net = tf.layers.dense(net, embedding_dim, activation=None,
                           name="knet_output")
+
+    # TODO(zhezhaoxu) It's too slow when used in online serving, write custom
+    # op to  optimize. We can pre-calculate transpose(nce_weights) and use
+    # openblas to calculate matmul when serving
     logits = tf.matmul(net, tf.transpose(nce_weights), name="matmul_logits")
     logits = tf.nn.bias_add(logits, nce_biases, name="bias_add_logits")
 
