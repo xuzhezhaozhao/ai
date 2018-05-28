@@ -39,6 +39,20 @@ def get_embeddings(n_classes, embedding_dim):
     return embeddings
 
 
+def mask_padding_embedding_lookup(embeddings, embedding_dim,
+                                  input, padding_id):
+    """ ref(@ay27): https://github.com/tensorflow/tensorflow/issues/2373 """
+
+    mask_padding_zero_op = tf.scatter_update(
+        embeddings, padding_id, tf.zeros([embedding_dim], dtype=tf.float32),
+        name="mask_padding_zero_op")
+    with tf.control_dependencies([mask_padding_zero_op]):
+        output = tf.nn.embedding_lookup(
+            embeddings, tf.cast(input, tf.int32, name="lookup_idx_cast"),
+            name="embedding_lookup")
+    return output
+
+
 def knet_model(features, labels, mode, params):
     """ build model graph """
 
@@ -56,26 +70,22 @@ def knet_model(features, labels, mode, params):
 
     # construct network
     net = tf.feature_column.input_layer(features, feature_columns)
-    mask_padding_zero_op = tf.scatter_update(
-        embeddings, PADDING_ID, tf.zeros([embedding_dim], dtype=tf.float32),
-        name="mask_padding_zero_op")
-    with tf.control_dependencies([mask_padding_zero_op]):
-        net = tf.nn.embedding_lookup(
-            embeddings, tf.cast(net, tf.int32, name="lookup_idx_cast"),
-            name="embedding_lookup")
+    net = mask_padding_embedding_lookup(embeddings, embedding_dim,
+                                        net, PADDING_ID)
     net = tf.reduce_mean(net, 1, name="mean")
+
     for units in params['hidden_units']:
         net = tf.layers.dense(net, units=units, activation=tf.nn.relu,
                               name="hidden_{}".format(units))
-
-    # Compute logits (1 per class).
     net = tf.layers.dense(net, embedding_dim, activation=None,
                           name="knet_output")
 
     # TODO(zhezhaoxu) It's too slow when used in online serving, write custom
     # op to  optimize. We can pre-calculate transpose(nce_weights) and use
     # openblas to calculate matmul when serving
-    logits = tf.matmul(net, tf.transpose(nce_weights), name="matmul_logits")
+    # Compute logits (1 per class).
+    logits = tf.matmul(net, nce_weights, transpose_b=True,
+                       name="matmul_logits")
     logits = tf.nn.bias_add(logits, nce_biases, name="bias_add_logits")
 
     # Optimaize, don't need calculate softmax
