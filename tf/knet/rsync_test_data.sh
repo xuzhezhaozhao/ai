@@ -3,7 +3,7 @@ rsync -azvcP rsync://user_00@100.115.170.92:49020/data/kd_video_hbcf_offline/hbc
 
 echo "shuf ..."
 shuf data.in.preprocessed -o data.in.shuf
-total_lines=$(wc -l data.in | awk '{print $1}')
+total_lines=$(wc -l data.in.shuf | awk '{print $1}')
 eval_lines=500000
 train_lines=$((total_lines-eval_lines))
 
