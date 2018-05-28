@@ -16,7 +16,8 @@ DICT_META = "dict_meta"
 DICT_WORDS = "dict_words"
 SAVED_DICT_BIN = "saved_dict.bin"
 
-# TODO change to absolute path when using tesla
+# change to absolute path when using tesla
+# ROOT_OPS_PATH = '/cephfs/group/sng-im-sng-imappdev-tribe/zhezhaoxu/knet'
 ROOT_OPS_PATH = ''
 FASTTEXT_EXAMPLE_GENERATE_OPS_PATH = os.path.join(
     ROOT_OPS_PATH, 'fasttext_example_generate_ops.so')
