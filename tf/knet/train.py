@@ -121,6 +121,8 @@ def main(argv):
 
     if opts.remove_model_dir:
         delete_anything(opts.model_dir)
+    else:
+        tf.logging.info("Don't remove model dir, maybe restore checkpoint ...")
 
     input_data.init_dict(opts)
     dict_meta = input_data.parse_dict_meta(opts)
