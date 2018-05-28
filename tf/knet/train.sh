@@ -20,7 +20,7 @@ recall_k=10
 dict_dir=`pwd`/dict_dir
 use_saved_dict=0
 
-use_profile_hook=1
+use_profile_hook=0
 profile_steps=100
 
 root_ops_path=lib/
