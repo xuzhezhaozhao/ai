@@ -16,7 +16,10 @@ DICT_META = "dict_meta"
 DICT_WORDS = "dict_words"
 SAVED_DICT_BIN = "saved_dict.bin"
 
-FASTTEXT_EXAMPLE_GENERATE_OPS_PATH = 'lib/fasttext_example_generate_ops.so'
+# TODO change to absolute path when using tesla
+ROOT_OPS_PATH = ''
+FASTTEXT_EXAMPLE_GENERATE_OPS_PATH = os.path.join(
+    ROOT_OPS_PATH, 'fasttext_example_generate_ops.so')
 
 fasttext_example_generate_ops = tf.load_op_library(
     FASTTEXT_EXAMPLE_GENERATE_OPS_PATH)
