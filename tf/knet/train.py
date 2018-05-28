@@ -103,7 +103,7 @@ def parse_args(argv):
     tf.logging.info(opts)
 
 
-def delete_anything(filename):
+def delete_dir(filename):
     tf.logging.info("To delete file '{}' ...".format(filename))
     if tf.gfile.Exists(filename):
         if tf.gfile.IsDirectory(filename):
@@ -111,16 +111,15 @@ def delete_anything(filename):
             tf.gfile.DeleteRecursively(filename)
             tf.logging.info("delete dir '{}' OK".format(filename))
         else:
-            tf.logging.info("delete file '{}' ...".format(filename))
-            tf.gfile.Remove(filename)
-            tf.logging.info("delete file '{}' OK".format(filename))
+            raise Exception(
+                "'{}' exists and not a directory.".format(filename))
 
 
 def main(argv):
     parse_args(argv)
 
     if opts.remove_model_dir:
-        delete_anything(opts.model_dir)
+        delete_dir(opts.model_dir)
     else:
         tf.logging.info("Don't remove model dir, maybe restore checkpoint ...")
 
