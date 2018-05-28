@@ -157,12 +157,19 @@ def main(argv):
 
     # export model
     dict_dir = opts.dict_dir
-    dict_words_path = os.path.join(dict_dir, input_data.DICT_WORDS)
-    dict_meta_path = os.path.join(dict_dir, input_data.DICT_META)
-    saved_dict_bin_path = os.path.join(dict_dir, input_data.SAVED_DICT_BIN)
-    assets_extra = {dict_words_path: dict_words_path,
-                    dict_meta_path: dict_meta_path,
-                    saved_dict_bin_path: saved_dict_bin_path}
+    dict_words_src = os.path.join(dict_dir, input_data.DICT_WORDS)
+    dict_meta_src = os.path.join(dict_dir, input_data.DICT_META)
+    saved_dict_bin_src = os.path.join(dict_dir, input_data.SAVED_DICT_BIN)
+
+    assets_dict_dir = os.path.join(os.path.basename(dict_dir))
+    dict_words_dest = os.path.join(assets_dict_dir, input_data.DICT_WORDS)
+    dict_meta_dest = os.path.join(assets_dict_dir, input_data.DICT_META)
+    saved_dict_bin_dest = os.path.join(assets_dict_dir,
+                                       input_data.SAVED_DICT_BIN)
+
+    assets_extra = {dict_words_dest: dict_words_src,
+                    dict_meta_dest: dict_meta_src,
+                    saved_dict_bin_dest: saved_dict_bin_src}
     classifier.export_savedmodel(
         opts.export_model_dir,
         serving_input_receiver_fn=input_data.build_serving_input_fn(opts),

@@ -1,5 +1,5 @@
-MODEL_DIR=model_dir
-EXPORT_MODEL_DIR=export_model_dir
+MODEL_DIR=`pwd`/model_dir
+EXPORT_MODEL_DIR=`pwd`/export_model_dir
 train_data_path=../../data/train_data.in
 eval_data_path=../../data/eval_data.in
 lr=0.15
@@ -17,7 +17,7 @@ save_checkpoints_secs=600
 log_step_count_steps=100
 
 recall_k=10
-dict_dir=dict_dir
+dict_dir=`pwd`/dict_dir
 use_saved_dict=0
 
 use_profile_hook=1
