@@ -166,15 +166,20 @@ def main(argv):
     hooks = [meta_hook, profile_hook] if opts.use_profile_hook else None
 
     # train model
+    tf.logging.info("Beginning train model ...")
     classifier.train(input_fn=lambda: input_data.train_input_fn(opts),
                      max_steps=opts.max_train_steps,
                      hooks=hooks)
+    tf.logging.info("Train model OK")
 
     # evaluate model
+    tf.logging.info("Beginning evaluate model ...")
     classifier.evaluate(input_fn=lambda: input_data.eval_input_fn(opts),
                         hooks=hooks)
+    tf.logging.info("Evaluate model OK")
 
     # export model
+    tf.logging.info("Beginning export model ...")
     dict_dir = opts.dict_dir
     dict_words_src = os.path.join(dict_dir, input_data.DICT_WORDS)
     dict_meta_src = os.path.join(dict_dir, input_data.DICT_META)
@@ -193,6 +198,7 @@ def main(argv):
         opts.export_model_dir,
         serving_input_receiver_fn=input_data.build_serving_input_fn(opts),
         assets_extra=assets_extra)
+    tf.logging.info("Export model OK")
 
 
 if __name__ == '__main__':

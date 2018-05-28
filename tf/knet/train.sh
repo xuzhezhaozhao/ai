@@ -16,11 +16,11 @@ save_summary_steps=100
 save_checkpoints_secs=600
 log_step_count_steps=1000
 
-recall_k=10
+recall_k=100
 dict_dir=`pwd`/dict_dir
 use_saved_dict=0
 
-use_profile_hook=0
+use_profile_hook=1
 profile_steps=100
 
 root_ops_path=lib/
