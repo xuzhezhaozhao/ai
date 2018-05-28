@@ -54,6 +54,8 @@ parser.add_argument('--profile_steps', default=100, type=int, help='')
 
 parser.add_argument('--root_ops_path', default="", type=str, help='')
 
+parser.add_argument('--remove_model_dir', default=1, type=int, help='')
+
 opts = Options()
 
 
@@ -96,12 +98,29 @@ def parse_args(argv):
     opts.profile_steps = args.profile_steps
 
     opts.root_ops_path = args.root_ops_path
+    opts.remove_model_dir = bool(args.remove_model_dir)
 
     tf.logging.info(opts)
 
 
+def delete_anything(filename):
+    tf.logging.info("To delete file '{}' ...".format(filename))
+    if tf.gfile.Exists(filename):
+        if tf.gfile.IsDirectory(filename):
+            tf.logging.info("delete dir '{}' ...".format(filename))
+            tf.gfile.DeleteRecursively(filename)
+            tf.logging.info("delete dir '{}' OK".format(filename))
+        else:
+            tf.logging.info("delete file '{}' ...".format(filename))
+            tf.gfile.Remove(filename)
+            tf.logging.info("delete file '{}' OK".format(filename))
+
+
 def main(argv):
     parse_args(argv)
+
+    if opts.remove_model_dir:
+        delete_anything(opts.model_dir)
 
     input_data.init_dict(opts)
     dict_meta = input_data.parse_dict_meta(opts)
@@ -120,8 +139,7 @@ def main(argv):
         session_config=None,
         keep_checkpoint_max=opts.keep_checkpoint_max,
         keep_checkpoint_every_n_hours=10000,
-        log_step_count_steps=opts.log_step_count_steps
-    )
+        log_step_count_steps=opts.log_step_count_steps)
     classifier = tf.estimator.Estimator(
         model_fn=knet_model,
         config=config,

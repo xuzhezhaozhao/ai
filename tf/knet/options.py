@@ -43,6 +43,9 @@ class Options(object):
         self.use_profile_hook = False
         self.profile_steps = 100
 
+        self.root_ops_path = ''
+        self.remove_model_dir = 1
+
     def __str__(self):
         return \
             "Option:\n \
@@ -78,6 +81,7 @@ class Options(object):
         use_profile_hook = {} \n \
         profile_steps = {} \n \
         root_ops_path = {} \n \
+        remove_model_dir = {} \n \
         ".format(
                 self.train_data_path,
                 self.eval_data_path,
@@ -110,4 +114,5 @@ class Options(object):
                 self.use_saved_dict,
                 self.use_profile_hook,
                 self.profile_steps,
-                self.root_ops_path)
+                self.root_ops_path,
+                self.remove_model_dir)

@@ -14,7 +14,7 @@ prefetch_size=10000
 
 save_summary_steps=100
 save_checkpoints_secs=600
-log_step_count_steps=100
+log_step_count_steps=1000
 
 recall_k=10
 dict_dir=`pwd`/dict_dir
@@ -24,8 +24,8 @@ use_profile_hook=0
 profile_steps=100
 
 root_ops_path=lib/
+remove_model_dir=1
 
-rm -rf ${MODEL_DIR}
 python train.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
@@ -57,4 +57,5 @@ python train.py \
     --use_saved_dict ${use_saved_dict} \
     --use_profile_hook ${use_profile_hook} \
     --profile_steps ${profile_steps} \
-    --root_ops_path ${root_ops_path}
+    --root_ops_path ${root_ops_path} \
+    --remove_model_dir ${remove_model_dir}
