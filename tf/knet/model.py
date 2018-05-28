@@ -13,7 +13,35 @@ import os
 PADDING_ID = 0
 
 
+def get_nce_weights_and_biases(n_classes, embedding_dim):
+    """ Construct the variables for the NCE loss """
+
+    with tf.variable_scope("nce_layer", reuse=tf.AUTO_REUSE):
+        # Construct the variables for the NCE loss
+        nce_weights = tf.get_variable(
+            "nce_weights",
+            initializer=tf.truncated_normal(
+                [n_classes, embedding_dim],
+                stddev=1.0 / math.sqrt(embedding_dim)))
+        nce_biases = tf.get_variable("nce_biases",
+                                     initializer=tf.zeros([n_classes]))
+    return nce_weights, nce_biases
+
+
+def get_embeddings(n_classes, embedding_dim):
+    """ Construct the variable for the embeddings """
+
+    with tf.variable_scope("embeddings", reuse=tf.AUTO_REUSE):
+        embeddings = tf.get_variable(
+            "embeddings",
+            initializer=tf.random_uniform([n_classes, embedding_dim],
+                                          -1.0, 1.0))
+    return embeddings
+
+
 def knet_model(features, labels, mode, params):
+    """ build model graph """
+
     n_classes = params['n_classes']
     embedding_dim = params['embedding_dim']
     lr = params['learning_rate']
@@ -22,16 +50,9 @@ def knet_model(features, labels, mode, params):
     recall_k = params['recall_k']
     dict_dir = params['dict_dir']
 
-    embeddings = tf.Variable(
-        tf.random_uniform([n_classes, embedding_dim], -1.0, 1.0),
-        name="word_embeddings"
-    )
-    # Construct the variables for the NCE loss
-    nce_weights = tf.Variable(
-        tf.truncated_normal([n_classes, embedding_dim],
-                            stddev=1.0 / math.sqrt(embedding_dim)),
-        name="nce_weights")
-    nce_biases = tf.Variable(tf.zeros([n_classes]), name="nce_biases")
+    embeddings = get_embeddings(n_classes, embedding_dim)
+    nce_weights, nce_biases = get_nce_weights_and_biases(n_classes,
+                                                         embedding_dim)
 
     # construct network
     net = tf.feature_column.input_layer(features, feature_columns)
