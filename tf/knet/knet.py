@@ -146,15 +146,14 @@ def knet_model(features, labels, mode, params):
             transpose_saved_nce_weights = tf.convert_to_tensor(
                 saved_nce_weights.transpose(), dtype=tf.float32,
                 name='transpose_saved_nce_weights')
-            saved_nce_biases = tf.convert_to_tensor(saved_nce_biases,
-                                                    dtype=tf.float32,
-                                                    name='saved_nce_biases')
-            logits = tf.matmul(net, transpose_saved_nce_weights,
-                               name="matmul_logits")
-            logits = tf.nn.bias_add(logits, saved_nce_biases,
-                                    name="bias_add_logits")
-            scores, ids = tf.nn.top_k(logits, recall_k,
-                                      name="top_k_{}".format(recall_k))
+            saved_nce_biases = tf.convert_to_tensor(
+                saved_nce_biases, dtype=tf.float32, name='saved_nce_biases')
+            logits = tf.matmul(
+                net, transpose_saved_nce_weights, name="matmul_logits")
+            logits = tf.nn.bias_add(
+                logits, saved_nce_biases, name="bias_add_logits")
+            scores, ids = tf.nn.top_k(
+                logits, recall_k, name="top_k_{}".format(recall_k))
         predictions = {
             'class_ids': ids,
             'scores': scores,
@@ -210,7 +209,7 @@ def knet_model(features, labels, mode, params):
                 name='transpose_saved_nce_weights')
             saved_nce_biases = tf.convert_to_tensor(saved_nce_biases,
                                                     dtype=tf.float32,
-                                                    name='nce_biases')
+                                                    name='saved_nce_biases')
             logits = tf.matmul(net, transpose_saved_nce_weights,
                                name='matmul_logits')
             logits = tf.nn.bias_add(logits, saved_nce_biases,
