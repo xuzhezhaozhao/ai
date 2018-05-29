@@ -12,6 +12,9 @@ import time
 
 main_thread_scope = tf.VariableScope(tf.AUTO_REUSE, "main_thread_scope")
 
+v1 = None
+v2 = None
+
 
 def get_constant(captured_scope):
     with tf.variable_scope(captured_scope, reuse=tf.AUTO_REUSE):
@@ -21,10 +24,15 @@ def get_constant(captured_scope):
 
 
 def thread_target_fn(id, captured_scope):
+    global v1, v2
     with tf.Session() as sess:
         c = get_constant(captured_scope)
         if id == 1:
-            sess.run(tf.global_variables_initializer())
+            v1 = c
+        elif id == 2:
+            v2 = c
+        sess.run(tf.global_variables_initializer())
+
         print("thread {} init OK".format(id))
         time.sleep(1.0)
         print("thread {}, name = {}".format(id, c.name))
@@ -33,8 +41,8 @@ def thread_target_fn(id, captured_scope):
         op = sess.run(op)
         c = sess.run(c)
 
-        print("thread {}, op = {}".format(id, op))
-        print("thread {}, c = {}".format(id, c))
+    print("thread {}, op = {}".format(id, op))
+    print("thread {}, c = {}".format(id, c))
 
 
 def main(argv):
@@ -47,6 +55,10 @@ def main(argv):
                            args=(2, main_thread_scope))
     th2.start()
     th2.join()
+
+    print(v1)
+    print(v1)
+    assert v1 == v2
 
 
 if __name__ == '__main__':
