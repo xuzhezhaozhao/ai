@@ -172,6 +172,14 @@ def main(argv):
                      hooks=hooks)
     tf.logging.info("Train model OK")
 
+    variable_names = classifier.get_variable_names()
+    tf.logging.info('estimator variable names = {}'.format(variable_names))
+
+    nce_weights = classifier.get_variable_value('nce_layer/nce_weights')
+    nce_biases = classifier.get_variable_value('nce_layer/nce_biases')
+    tf.logging.info('nce_weights = {}'.format(nce_weights))
+    tf.logging.info('nce_biases = {}'.format(nce_biases))
+
     # evaluate model
     tf.logging.info("Beginning evaluate model ...")
     classifier.evaluate(input_fn=lambda: input_data.eval_input_fn(opts),

@@ -76,9 +76,9 @@ def knet_model(features, labels, mode, params):
 
     for units in params['hidden_units']:
         net = tf.layers.dense(net, units=units, activation=tf.nn.relu,
-                              name="hidden_{}".format(units))
+                              name="fc_{}".format(units))
     net = tf.layers.dense(net, embedding_dim, activation=None,
-                          name="knet_output")
+                          name="fc_output")
 
     # TODO(zhezhaoxu) It's too slow when used in online serving, write custom
     # op to  optimize. We can pre-calculate transpose(nce_weights) and use
