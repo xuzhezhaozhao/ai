@@ -142,7 +142,6 @@ def knet_model(features, labels, mode, params):
 
         # Load pre-saved model nce_weights and nce_biases
         saved_nce_weights, saved_nce_biases = load_model_nce_params(model_dir)
-
         with tf.name_scope("PredictMode"):
             transpose_saved_nce_weights = tf.convert_to_tensor(
                 saved_nce_weights.transpose(), dtype=tf.float32)
@@ -202,7 +201,6 @@ def knet_model(features, labels, mode, params):
     if mode == tf.estimator.ModeKeys.EVAL:
         # Load pre-saved model nce_weights and nce_biases
         saved_nce_weights, saved_nce_biases = load_model_nce_params(model_dir)
-
         with tf.name_scope("EvalMode"):
             transpose_nce_weights = tf.convert_to_tensor(
                 saved_nce_weights.transpose(), dtype=tf.float32)
