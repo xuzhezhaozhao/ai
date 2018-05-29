@@ -6,11 +6,12 @@ from __future__ import division
 from __future__ import print_function
 
 from options import Options
-from model import knet_model
 
 import os
 import argparse
 import tensorflow as tf
+
+import knet
 import input_data
 import hook
 
@@ -142,7 +143,7 @@ def main(argv):
         keep_checkpoint_every_n_hours=10000,
         log_step_count_steps=opts.log_step_count_steps)
     classifier = tf.estimator.Estimator(
-        model_fn=knet_model,
+        model_fn=knet.knet_model,
         config=config,
         params={
             'feature_columns': feature_columns,
@@ -152,7 +153,8 @@ def main(argv):
             'learning_rate': opts.lr,
             'num_sampled': opts.num_sampled,
             'recall_k': opts.recall_k,
-            'dict_dir': opts.dict_dir
+            'dict_dir': opts.dict_dir,
+            'model_dir': opts.model_dir,
         })
 
     # Create profile hooks
@@ -172,13 +174,9 @@ def main(argv):
                      hooks=hooks)
     tf.logging.info("Train model OK")
 
-    variable_names = classifier.get_variable_names()
-    tf.logging.info('estimator variable names = {}'.format(variable_names))
-
-    nce_weights = classifier.get_variable_value('nce_layer/nce_weights')
-    nce_biases = classifier.get_variable_value('nce_layer/nce_biases')
-    tf.logging.info('nce_weights = {}'.format(nce_weights))
-    tf.logging.info('nce_biases = {}'.format(nce_biases))
+    tf.logging.info("Save nce weights and biases ...")
+    knet.save_model_nce_params(classifier)
+    tf.logging.info("Save nce weights and biases OK")
 
     # evaluate model
     tf.logging.info("Beginning evaluate model ...")

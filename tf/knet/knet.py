@@ -6,11 +6,45 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+import numpy as np
 import input_data
 import math
 import os
 
 PADDING_ID = 0
+
+NCE_WEIGHTS_NAME = 'nce_weights'
+NCE_BIASES_NAME = 'nce_biases'
+
+# filename must end with .npy
+SAVE_NCE_WEIGHTS_NAME = 'nce_weights.npy'
+SAVE_NCE_BIASES_NAME = 'nce_biases.npy'
+
+
+def save_model_nce_params(model):
+    """Save model nce weights and biases."""
+
+    nce_weights = model.get_variable_value('nce_layer/' + NCE_WEIGHTS_NAME)
+    nce_biases = model.get_variable_value('nce_layer/' + NCE_BIASES_NAME)
+    tf.logging.info('save nce_weights = \n{}'.format(nce_weights))
+    tf.logging.info('save nce_biases = \n{}'.format(nce_biases))
+    save_weights_path = os.path.join(model.model_dir, SAVE_NCE_WEIGHTS_NAME)
+    save_biases_path = os.path.join(model.model_dir, SAVE_NCE_BIASES_NAME)
+    np.save(save_weights_path, nce_weights)
+    np.save(save_biases_path, nce_biases)
+
+
+def load_model_nce_params(model_dir):
+    """Load pre-saved model nce weights and biases."""
+
+    save_weights_path = os.path.join(model_dir, SAVE_NCE_WEIGHTS_NAME)
+    save_biases_path = os.path.join(model_dir, SAVE_NCE_BIASES_NAME)
+    nce_weights = np.load(save_weights_path)
+    nce_biases = np.load(save_biases_path)
+    tf.logging.info('load nce_weights = \n{}'.format(nce_weights))
+    tf.logging.info('load nce_biases = \n{}'.format(nce_biases))
+
+    return (nce_weights, nce_biases)
 
 
 def get_nce_weights_and_biases(n_classes, embedding_dim):
@@ -19,11 +53,11 @@ def get_nce_weights_and_biases(n_classes, embedding_dim):
     with tf.variable_scope("nce_layer", reuse=tf.AUTO_REUSE):
         # Construct the variables for the NCE loss
         nce_weights = tf.get_variable(
-            "nce_weights",
+            NCE_WEIGHTS_NAME,
             initializer=tf.truncated_normal(
                 [n_classes, embedding_dim],
                 stddev=1.0 / math.sqrt(embedding_dim)))
-        nce_biases = tf.get_variable("nce_biases",
+        nce_biases = tf.get_variable(NCE_BIASES_NAME,
                                      initializer=tf.zeros([n_classes]))
     return nce_weights, nce_biases
 
@@ -63,6 +97,7 @@ def knet_model(features, labels, mode, params):
     feature_columns = params['feature_columns']
     recall_k = params['recall_k']
     dict_dir = params['dict_dir']
+    model_dir = params['model_dir']  # save nce weights and biases
 
     embeddings = get_embeddings(n_classes, embedding_dim)
     nce_weights, nce_biases = get_nce_weights_and_biases(n_classes,
@@ -95,6 +130,7 @@ def knet_model(features, labels, mode, params):
 
     # Compute predictions.
     if mode == tf.estimator.ModeKeys.PREDICT:
+        # Create index to string map
         dict_words_path = os.path.join(dict_dir, input_data.DICT_WORDS)
         words = [line.strip() for line in open(dict_words_path)
                  if line.strip() != '']
@@ -103,6 +139,20 @@ def knet_model(features, labels, mode, params):
             mapping=words,
             default_value='',
             name="index_to_string")
+
+        # Load pre-saved model nce_weights and nce_biases
+        nce_weights, nce_biases = load_model_nce_params(model_dir)
+
+        with tf.name_scope("PredictMode"):
+            transpose_nce_weights = tf.convert_to_tensor(
+                nce_weights.transpose(), dtype=tf.float32)
+            nce_biases = tf.convert_to_tensor(nce_biases, dtype=tf.float32)
+            logits = tf.matmul(net, transpose_nce_weights,
+                               name="matmul_logits")
+            logits = tf.nn.bias_add(logits, nce_biases,
+                                    name="bias_add_logits")
+            scores, ids = tf.nn.top_k(logits, recall_k,
+                                      name="top_k_{}".format(recall_k))
 
         predictions = {
             'class_ids': ids,
