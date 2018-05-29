@@ -144,9 +144,11 @@ def knet_model(features, labels, mode, params):
         saved_nce_weights, saved_nce_biases = load_model_nce_params(model_dir)
         with tf.name_scope("PredictMode"):
             transpose_saved_nce_weights = tf.convert_to_tensor(
-                saved_nce_weights.transpose(), dtype=tf.float32)
+                saved_nce_weights.transpose(), dtype=tf.float32,
+                name='transpose_saved_nce_weights')
             saved_nce_biases = tf.convert_to_tensor(saved_nce_biases,
-                                                    dtype=tf.float32)
+                                                    dtype=tf.float32,
+                                                    name='saved_nce_biases')
             logits = tf.matmul(net, transpose_saved_nce_weights,
                                name="matmul_logits")
             logits = tf.nn.bias_add(logits, saved_nce_biases,
@@ -202,16 +204,19 @@ def knet_model(features, labels, mode, params):
         # Load pre-saved model nce_weights and nce_biases
         saved_nce_weights, saved_nce_biases = load_model_nce_params(model_dir)
         with tf.name_scope("EvalMode"):
-            transpose_nce_weights = tf.convert_to_tensor(
-                saved_nce_weights.transpose(), dtype=tf.float32)
+            transpose_saved_nce_weights = tf.convert_to_tensor(
+                saved_nce_weights.transpose(),
+                dtype=tf.float32,
+                name='transpose_saved_nce_weights')
             saved_nce_biases = tf.convert_to_tensor(saved_nce_biases,
-                                                    dtype=tf.float32)
-            logits = tf.matmul(net, transpose_nce_weights,
-                               name="matmul_logits")
+                                                    dtype=tf.float32,
+                                                    name='nce_biases')
+            logits = tf.matmul(net, transpose_saved_nce_weights,
+                               name='matmul_logits')
             logits = tf.nn.bias_add(logits, saved_nce_biases,
-                                    name="bias_add_logits")
+                                    name='bias_add_logits')
             scores, ids = tf.nn.top_k(logits, recall_k,
-                                      name="top_k_{}".format(recall_k))
+                                      name='top_k_{}'.format(recall_k))
         loss = tf.losses.sparse_softmax_cross_entropy(labels, logits)
         return tf.estimator.EstimatorSpec(mode,
                                           loss=loss,
