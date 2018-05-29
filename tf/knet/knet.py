@@ -115,34 +115,22 @@ def knet_model(features, labels, mode, params):
     net = tf.layers.dense(net, embedding_dim, activation=None,
                           name="fc_output")
 
-    # TODO(zhezhaoxu) It's too slow when used in online serving, write custom
-    # op to  optimize. We can pre-calculate transpose(nce_weights) and use
-    # openblas to calculate matmul when serving
-    # Compute logits (1 per class).
-    logits = tf.matmul(net, nce_weights, transpose_b=True,
-                       name="matmul_logits")
-    logits = tf.nn.bias_add(logits, nce_biases, name="bias_add_logits")
-
-    # Optimaize, don't need calculate softmax
-    # probabilities = tf.nn.softmax(logits)
-    scores, ids = tf.nn.top_k(logits, recall_k,
-                              name="top_k_{}".format(recall_k))
-
     # Compute predictions.
     if mode == tf.estimator.ModeKeys.PREDICT:
-        # Create index to string map
-        dict_words_path = os.path.join(dict_dir, input_data.DICT_WORDS)
-        words = [line.strip() for line in open(dict_words_path)
-                 if line.strip() != '']
-        words.insert(0, '')
-        table = tf.contrib.lookup.index_to_string_table_from_tensor(
-            mapping=words,
-            default_value='',
-            name="index_to_string")
-
-        # Load pre-saved model nce_weights and nce_biases
-        saved_nce_weights, saved_nce_biases = load_model_nce_params(model_dir)
         with tf.name_scope("PredictMode"):
+            # Create index to string map
+            dict_words_path = os.path.join(dict_dir, input_data.DICT_WORDS)
+            words = [line.strip() for line in open(dict_words_path)
+                     if line.strip() != '']
+            words.insert(0, '')
+            table = tf.contrib.lookup.index_to_string_table_from_tensor(
+                mapping=words,
+                default_value='',
+                name="index_to_string")
+
+            # Load pre-saved model nce_weights and nce_biases
+            (saved_nce_weights,
+             saved_nce_biases) = load_model_nce_params(model_dir)
             transpose_saved_nce_weights = tf.convert_to_tensor(
                 saved_nce_weights.transpose(), dtype=tf.float32,
                 name='transpose_saved_nce_weights')
@@ -154,6 +142,7 @@ def knet_model(features, labels, mode, params):
                 logits, saved_nce_biases, name="bias_add_logits")
             scores, ids = tf.nn.top_k(
                 logits, recall_k, name="top_k_{}".format(recall_k))
+
         predictions = {
             'class_ids': ids,
             'scores': scores,
@@ -170,6 +159,16 @@ def knet_model(features, labels, mode, params):
         }
         return tf.estimator.EstimatorSpec(mode, predictions=predictions,
                                           export_outputs=export_outputs)
+
+    # Compute logits (1 per class).
+    logits = tf.matmul(net, nce_weights, transpose_b=True,
+                       name="matmul_logits")
+    logits = tf.nn.bias_add(logits, nce_biases, name="bias_add_logits")
+
+    # Optimaize, don't need calculate softmax
+    # probabilities = tf.nn.softmax(logits)
+    scores, ids = tf.nn.top_k(logits, recall_k,
+                              name="top_k_{}".format(recall_k))
 
     # Compute nce_loss.
     nce_loss = tf.nn.nce_loss(weights=nce_weights,
@@ -200,9 +199,10 @@ def knet_model(features, labels, mode, params):
                       precision_at_top_k[1])
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        # Load pre-saved model nce_weights and nce_biases
-        saved_nce_weights, saved_nce_biases = load_model_nce_params(model_dir)
         with tf.name_scope("EvalMode"):
+            # Load pre-saved model nce_weights and nce_biases
+            (saved_nce_weights,
+             saved_nce_biases) = load_model_nce_params(model_dir)
             transpose_saved_nce_weights = tf.convert_to_tensor(
                 saved_nce_weights.transpose(),
                 dtype=tf.float32,
