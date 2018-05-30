@@ -54,6 +54,10 @@ class Matrix {
 
     void shrinkSubset(const std::vector<int32_t> &subset);
     void convertColMajor();
+
+    int64_t rows() const { return m_; }
+    int64_t cols() const { return n_; }
+    int64_t size() const { return rows() * cols(); }
 };
 
 }

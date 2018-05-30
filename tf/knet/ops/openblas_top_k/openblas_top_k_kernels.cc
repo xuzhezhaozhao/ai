@@ -40,9 +40,8 @@ class OpenblasTopKOp : public OpKernel {
         ctx, weights_in.is_open(),
         errors::Unavailable("'" + weights_path + "'" + " open failed."));
     weights_.load(weights_in);
-    OP_REQUIRES(
-        ctx, weights_in.good(),
-        errors::Unavailable("'" + weights_path + "'" + " read error."));
+    OP_REQUIRES(ctx, weights_in.good(),
+                errors::Unavailable("'" + weights_path + "'" + " read error."));
     weights_.convertColMajor();
     weights_in.close();
 
@@ -50,22 +49,23 @@ class OpenblasTopKOp : public OpKernel {
     OP_REQUIRES(ctx, biases_in.is_open(),
                 errors::Unavailable("'" + biases_path + "'" + " open failed."));
     biases_.load(biases_in);
-    OP_REQUIRES(
-        ctx, biases_in.good(),
-        errors::Unavailable("'" + biases_path + "'" + " read error."));
+    OP_REQUIRES(ctx, biases_in.good(),
+                errors::Unavailable("'" + biases_path + "'" + " read error."));
     biases_in.close();
 
-    LOG(ERROR) << "Load weights shape: " << weights_.m_ << ", " << weights_.n_;
-    for (int i = 0; i < weights_.m_*weights_.n_ && i < 50; ++i) {
+    LOG(ERROR) << "Load weights shape: " << weights_.rows() << ", "
+               << weights_.cols();
+    for (int i = 0; i < weights_.size() && i < 50; ++i) {
       LOG(ERROR) << weights_.data_[i];
     }
 
-    LOG(ERROR) << "Load biases shape: " << biases_.m_;
-    for (int i = 0; i < biases_.m_ && i < 20; ++i) {
+    LOG(ERROR) << "Load biases shape: " << biases_.size();
+    for (int i = 0; i < biases_.size() && i < 20; ++i) {
       LOG(ERROR) << biases_.data_[i];
     }
 
-    OP_REQUIRES(ctx, weights_.m_ == biases_.m_,
+    OP_REQUIRES(
+        ctx, weights_.rows() == biases_.size(),
         errors::InvalidArgument("weights and biases dimension not matched."));
 
     LOG(ERROR) << "Init OpenblasTopKOp OK";
@@ -73,15 +73,22 @@ class OpenblasTopKOp : public OpKernel {
 
   void Compute(OpKernelContext* ctx) override {
     // calculate matmul using openblas
-    // TODO check dimention
     const Tensor& input_tensor = ctx->input(0);
-    const Tensor& k_tensor = ctx->input(1);
-    int32 k = k_tensor.flat<int32>()(0);
-
     const TensorShape& input_shape = input_tensor.shape();
+    OP_REQUIRES(
+        ctx, input_shape.dims() == 1,
+        errors::InvalidArgument("Input tensor's dims must be 1, but is ",
+                                input_shape.dims()));
+
+    const Tensor& k_tensor = ctx->input(1);
+    auto flat_k = k_tensor.flat<int32>();
+    OP_REQUIRES(ctx, flat_k.size() == 1,
+                errors::InvalidArgument("k must be a scalar"));
+    int32 k = flat_k(0);
+
     const float* vec = input_tensor.flat<float>().data();
     int sz = input_tensor.flat<float>().size();
-    int n_classes = weights_.m_;
+    int n_classes = weights_.rows();
     fasttext::Vector logits(n_classes);
     cblas_vec_dot_matrix(vec, sz, weights_, logits);
     logits.addVector(biases_);
@@ -92,8 +99,7 @@ class OpenblasTopKOp : public OpKernel {
     Tensor* values_tensor = NULL;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, output_shape, &values_tensor));
     Tensor* indices_tensor = NULL;
-    OP_REQUIRES_OK(ctx,
-                   ctx->allocate_output(1, output_shape, &indices_tensor));
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(1, output_shape, &indices_tensor));
     auto values = values_tensor->flat<float>();
     auto indices = indices_tensor->flat<int32>();
     std::vector<std::pair<float, int>> heap(n_classes);
