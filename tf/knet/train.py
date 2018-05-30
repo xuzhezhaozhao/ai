@@ -15,7 +15,7 @@ import knet
 import input_data
 import hook
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = '2'
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = '0'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_data_path', default='', type=str, help='')
