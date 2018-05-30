@@ -1,0 +1,2 @@
+# OPENBLAS compile flags
+make USE_THREAD=0 NUM_THREADS=64

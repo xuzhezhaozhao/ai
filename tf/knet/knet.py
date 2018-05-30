@@ -109,6 +109,8 @@ def knet_model(features, labels, mode, params):
                                         net, PADDING_ID)
     net = tf.reduce_mean(net, 1, name="mean")
 
+    # TODO Normalize input?
+
     for units in params['hidden_units']:
         net = tf.layers.dense(net, units=units, activation=tf.nn.relu,
                               name="fc_{}".format(units))
