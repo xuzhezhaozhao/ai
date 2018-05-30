@@ -79,6 +79,10 @@ class OpenblasTopKOp : public OpKernel {
         ctx, input_shape.dims() == 1,
         errors::InvalidArgument("Input tensor's dims must be 1, but is ",
                                 input_shape.dims()));
+    OP_REQUIRES(ctx, input_shape.dim_size(0) == weights_.cols(),
+                errors::InvalidArgument("Expect Input tensor's dim 0 be ",
+                                        weights_.cols(), ", but is ",
+                                        input_shape.dim_size(0)));
 
     const Tensor& k_tensor = ctx->input(1);
     auto flat_k = k_tensor.flat<int32>();
