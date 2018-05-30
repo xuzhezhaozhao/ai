@@ -230,7 +230,7 @@ def knet_model(features, labels, mode, params):
     nce_loss = tf.nn.nce_loss(weights=nce_weights,
                               biases=nce_biases,
                               labels=labels,
-                              inputs=net,
+                              inputs=user_vector,
                               num_sampled=num_sampled,
                               num_classes=n_classes,
                               partition_strategy="div",
