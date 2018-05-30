@@ -63,7 +63,7 @@ class FasttextExampleGenerateOp : public OpKernel {
     ++global_lines_;
     auto x = global_lines_.load(std::memory_order_relaxed);
     if (x % 10000 == 0) {
-      LOG(INFO) << "global lines = " << x;
+      LOG(ERROR) << "global lines = " << x;
     }
 
     const Tensor& input_tensor = ctx->input(0);

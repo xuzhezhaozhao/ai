@@ -199,23 +199,6 @@ def knet_model(features, labels, mode, params):
                       precision_at_top_k[1])
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        with tf.name_scope("EvalMode"):
-            # Load pre-saved model nce_weights and nce_biases
-            (saved_nce_weights,
-             saved_nce_biases) = load_model_nce_params(model_dir)
-            transpose_saved_nce_weights = tf.convert_to_tensor(
-                saved_nce_weights.transpose(),
-                dtype=tf.float32,
-                name='transpose_saved_nce_weights')
-            saved_nce_biases = tf.convert_to_tensor(saved_nce_biases,
-                                                    dtype=tf.float32,
-                                                    name='saved_nce_biases')
-            logits = tf.matmul(net, transpose_saved_nce_weights,
-                               name='matmul_logits')
-            logits = tf.nn.bias_add(logits, saved_nce_biases,
-                                    name='bias_add_logits')
-            scores, ids = tf.nn.top_k(logits, recall_k,
-                                      name='top_k_{}'.format(recall_k))
         loss = tf.losses.sparse_softmax_cross_entropy(labels, logits)
         return tf.estimator.EstimatorSpec(mode,
                                           loss=loss,
