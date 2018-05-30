@@ -26,7 +26,9 @@ OPENBLAS_TOP_K_OPS_PATH = os.path.join(
 
 fasttext_example_generate_ops = tf.load_op_library(
     FASTTEXT_EXAMPLE_GENERATE_OPS_PATH)
+
 openblas_top_k_ops = tf.load_op_library(OPENBLAS_TOP_K_OPS_PATH)
+openblas_top_k = openblas_top_k_ops.openblas_top_k
 
 
 def feature_columns(opts):

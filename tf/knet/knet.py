@@ -160,7 +160,7 @@ def knet_model(features, labels, mode, params):
         net = tf.layers.dense(net, units=units, activation=tf.nn.relu,
                               name="fc_{}".format(units))
     user_vector = tf.layers.dense(net, embedding_dim, activation=None,
-                          name="user_vector")
+                                  name="user_vector")
 
     # Compute logits (1 per class).
     logits = tf.matmul(user_vector, nce_weights, transpose_b=True,
@@ -186,6 +186,7 @@ def knet_model(features, labels, mode, params):
                 name="index_to_string")
 
             if optimize_level == OPTIMIZE_LEVEL_SAVED_NCE_PARAMS:
+                tf.logging.info("Use OPTIMIZE_LEVEL_SAVED_NCE_PARAMS")
                 # Load pre-saved model nce_weights and nce_biases
                 # Optimaize from 200ms to 30ms per requst
                 (saved_nce_weights,
@@ -204,7 +205,8 @@ def knet_model(features, labels, mode, params):
                 scores, ids = tf.nn.top_k(
                     logits, recall_k, name="top_k_{}".format(recall_k))
             elif optimize_level == OPTIMIZE_LEVEL_OPENBLAS_TOP_K:
-                scores, ids = input_data.openblas_top_k_ops(
+                tf.logging.info("Use OPTIMIZE_LEVEL_OPENBLAS_TOP_K")
+                scores, ids = input_data.openblas_top_k(
                     input=user_vector, k=recall_k,
                     weights_path=os.path.join(model_dir, NCE_WEIGHTS_BIN_PATH),
                     biases_path=os.path.join(model_dir, NCE_BIASES_BIN_PATH))

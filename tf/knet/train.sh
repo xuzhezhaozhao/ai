@@ -12,6 +12,8 @@ epoch=5
 hidden_units="64"
 prefetch_size=10000
 
+max_train_steps=-1
+
 save_summary_steps=100
 save_checkpoints_secs=600
 log_step_count_steps=1000
@@ -50,6 +52,7 @@ python train.py \
     --model_dir ${MODEL_DIR} \
     --export_model_dir ${EXPORT_MODEL_DIR} \
     --prefetch_size ${prefetch_size} \
+    --max_train_steps ${max_train_steps} \
     --save_summary_steps ${save_summary_steps} \
     --save_checkpoints_secs ${save_checkpoints_secs} \
     --keep_checkpoint_max 2 \
