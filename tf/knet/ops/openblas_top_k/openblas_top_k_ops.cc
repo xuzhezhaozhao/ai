@@ -4,7 +4,7 @@ namespace tensorflow {
 
 REGISTER_OP("OpenblasTopK")
     .Input("input: float")
-    .Input("k: int32 = 1")
+    .Input("k: int32")
     .Output("values: float")
     .Output("indices: int32")
     .SetIsStateful()

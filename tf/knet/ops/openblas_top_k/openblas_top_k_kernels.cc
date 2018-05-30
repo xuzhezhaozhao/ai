@@ -28,6 +28,7 @@ namespace tensorflow {
 class OpenblasTopKOp : public OpKernel {
  public:
   explicit OpenblasTopKOp(OpKernelConstruction* ctx) : OpKernel(ctx) {
+    LOG(ERROR) << "Init OpenblasTopKOp ...";
     std::string weights_path;
     OP_REQUIRES_OK(ctx, ctx->GetAttr("weights_path", &weights_path));
 
@@ -39,12 +40,35 @@ class OpenblasTopKOp : public OpKernel {
         ctx, weights_in.is_open(),
         errors::Unavailable("'" + weights_path + "'" + " open failed."));
     weights_.load(weights_in);
+    OP_REQUIRES(
+        ctx, weights_in.good(),
+        errors::Unavailable("'" + weights_path + "'" + " read error."));
     weights_.convertColMajor();
+    weights_in.close();
 
     std::ifstream biases_in(biases_path);
     OP_REQUIRES(ctx, biases_in.is_open(),
                 errors::Unavailable("'" + biases_path + "'" + " open failed."));
     biases_.load(biases_in);
+    OP_REQUIRES(
+        ctx, biases_in.good(),
+        errors::Unavailable("'" + biases_path + "'" + " read error."));
+    biases_in.close();
+
+    LOG(ERROR) << "Load weights shape: " << weights_.m_ << ", " << weights_.n_;
+    for (int i = 0; i < weights_.m_*weights_.n_ && i < 50; ++i) {
+      LOG(ERROR) << weights_.data_[i];
+    }
+
+    LOG(ERROR) << "Load biases shape: " << biases_.m_;
+    for (int i = 0; i < biases_.m_ && i < 20; ++i) {
+      LOG(ERROR) << biases_.data_[i];
+    }
+
+    OP_REQUIRES(ctx, weights_.m_ == biases_.m_,
+        errors::InvalidArgument("weights and biases dimension not matched."));
+
+    LOG(ERROR) << "Init OpenblasTopKOp OK";
   }
 
   void Compute(OpKernelContext* ctx) override {
@@ -64,7 +88,7 @@ class OpenblasTopKOp : public OpKernel {
 
     // calculate top k
     TensorShape output_shape;
-    output_shape.AddDim(n_classes);
+    output_shape.AddDim(k);
     Tensor* values_tensor = NULL;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, output_shape, &values_tensor));
     Tensor* indices_tensor = NULL;
