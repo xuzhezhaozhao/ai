@@ -75,8 +75,9 @@ def parse_args(argv):
     opts.label = args.label
     opts.batch_size = args.batch_size
     opts.num_sampled = args.num_sampled
-    opts.max_train_steps = (None if args.max_train_steps < 0
-                            else args.max_train_steps)
+    opts.max_train_steps = args.max_train_steps
+    if opts.max_train_steps is not None and opts.max_train_steps < 0:
+        opts.max_train_steps = None
 
     opts.epoch = args.epoch
     opts.hidden_units = map(int, filter(lambda x: x != '',
