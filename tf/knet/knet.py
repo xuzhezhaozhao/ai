@@ -10,6 +10,7 @@ import numpy as np
 import input_data
 import math
 import os
+import struct
 
 PADDING_ID = 0
 
@@ -20,12 +21,21 @@ NCE_BIASES_NAME = 'nce_biases'
 SAVE_NCE_WEIGHTS_NAME = 'nce_weights.npy'
 SAVE_NCE_BIASES_NAME = 'nce_biases.npy'
 
+# used for openblas_top_k_ops
+NCE_WEIGHTS_BIN_PATH = 'nce_weights.bin'
+NCE_BIASES_BIN_PATH = 'nce_biases.bin'
+
+
+def get_model_nce_weights_and_biases(model):
+    nce_weights = model.get_variable_value('nce_layer/' + NCE_WEIGHTS_NAME)
+    nce_biases = model.get_variable_value('nce_layer/' + NCE_BIASES_NAME)
+    return (nce_weights, nce_biases)
+
 
 def save_model_nce_params(model):
     """Save model nce weights and biases."""
 
-    nce_weights = model.get_variable_value('nce_layer/' + NCE_WEIGHTS_NAME)
-    nce_biases = model.get_variable_value('nce_layer/' + NCE_BIASES_NAME)
+    nce_weights, nce_biases = get_model_nce_weights_and_biases(model)
     tf.logging.info('save nce_weights = \n{}'.format(nce_weights))
     tf.logging.info('save nce_biases = \n{}'.format(nce_biases))
     save_weights_path = os.path.join(model.model_dir, SAVE_NCE_WEIGHTS_NAME)
@@ -45,6 +55,28 @@ def load_model_nce_params(model_dir):
     tf.logging.info('load nce_biases = \n{}'.format(nce_biases))
 
     return (nce_weights, nce_biases)
+
+
+def save_numpy_float_array(array, filename):
+    with open(filename, 'wb') as f:
+        for d in array.shape:
+            f.write(struct.pack('<q', d))
+
+        fl = array.flat
+        for v in fl:
+            f.write(struct.pack('<f', v))
+
+
+def save_model_nce_params_for_openblas_top_k(model):
+    """Save model nce weights and biases for openblas_top_k_ops."""
+
+    nce_weights, nce_biases = get_model_nce_weights_and_biases(model)
+    tf.logging.info('save nce_weights[openblas] = \n{}'.format(nce_weights))
+    tf.logging.info('save nce_biases[openblas] = \n{}'.format(nce_biases))
+    save_weights_path = os.path.join(model.model_dir, NCE_BIASES_BIN_PATH)
+    save_biases_path = os.path.join(model.model_dir, NCE_BIASES_BIN_PATH)
+    save_numpy_float_array(nce_weights, save_weights_path)
+    save_numpy_float_array(nce_biases, save_biases_path)
 
 
 def get_nce_weights_and_biases(n_classes, embedding_dim):
@@ -107,6 +139,8 @@ def knet_model(features, labels, mode, params):
     net = tf.feature_column.input_layer(features, feature_columns)
     net = mask_padding_embedding_lookup(embeddings, embedding_dim,
                                         net, PADDING_ID)
+
+    # TODO shouldn't mean all, should mean #non-zero
     net = tf.reduce_mean(net, 1, name="mean")
 
     # TODO Normalize input?

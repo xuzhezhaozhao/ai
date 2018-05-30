@@ -130,6 +130,7 @@ def main(argv):
     dict_meta = input_data.parse_dict_meta(opts)
     feature_columns = input_data.feature_columns(opts)
 
+    # session_config not used
     session_config = tf.ConfigProto(device_count={"CPU": 1},
                                     inter_op_parallelism_threads=1,
                                     intra_op_parallelism_threads=1,
@@ -179,6 +180,10 @@ def main(argv):
     tf.logging.info("Save nce weights and biases ...")
     knet.save_model_nce_params(classifier)
     tf.logging.info("Save nce weights and biases OK")
+
+    tf.logging.info("Save nce weights and biases for openblas_top_k_ops ...")
+    knet.save_model_nce_params_for_openblas_top_k(classifier)
+    tf.logging.info("Save nce weights and biases for openblas_top_k_ops OK")
 
     # evaluate model
     tf.logging.info("Beginning evaluate model ...")
