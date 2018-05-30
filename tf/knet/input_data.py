@@ -21,9 +21,12 @@ SAVED_DICT_BIN = "saved_dict.bin"
 ROOT_OPS_PATH = ''
 FASTTEXT_EXAMPLE_GENERATE_OPS_PATH = os.path.join(
     ROOT_OPS_PATH, 'fasttext_example_generate_ops.so')
+OPENBLAS_TOP_K_OPS_PATH = os.path.join(
+    ROOT_OPS_PATH, 'openblas_top_k_ops.so')
 
 fasttext_example_generate_ops = tf.load_op_library(
     FASTTEXT_EXAMPLE_GENERATE_OPS_PATH)
+openblas_top_k_ops = tf.load_op_library(OPENBLAS_TOP_K_OPS_PATH)
 
 
 def feature_columns(opts):

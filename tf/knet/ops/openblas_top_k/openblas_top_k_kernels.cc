@@ -76,18 +76,16 @@ class OpenblasTopKOp : public OpKernel {
     const Tensor& input_tensor = ctx->input(0);
     const TensorShape& input_shape = input_tensor.shape();
     OP_REQUIRES(
-        ctx, input_shape.dims() == 1,
-        errors::InvalidArgument("Input tensor's dims must be 1, but is ",
-                                input_shape.dims()));
+        ctx, TensorShapeUtils::IsVector(input_shape),
+        errors::InvalidArgument("Arg input expects a 1-D vector."));
     OP_REQUIRES(ctx, input_shape.dim_size(0) == weights_.cols(),
                 errors::InvalidArgument("Expect Input tensor's dim 0 be ",
                                         weights_.cols(), ", but is ",
                                         input_shape.dim_size(0)));
-
     const Tensor& k_tensor = ctx->input(1);
+    OP_REQUIRES(ctx, TensorShapeUtils::IsScalar(k_tensor.shape()),
+                errors::InvalidArgument("Arg k expects a scalar"));
     auto flat_k = k_tensor.flat<int32>();
-    OP_REQUIRES(ctx, flat_k.size() == 1,
-                errors::InvalidArgument("k must be a scalar"));
     int32 k = flat_k(0);
 
     const float* vec = input_tensor.flat<float>().data();

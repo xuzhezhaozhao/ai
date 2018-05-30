@@ -25,6 +25,16 @@ SAVE_NCE_BIASES_NAME = 'nce_biases.npy'
 NCE_WEIGHTS_BIN_PATH = 'nce_weights.bin'
 NCE_BIASES_BIN_PATH = 'nce_biases.bin'
 
+OPTIMIZE_LEVEL_ZERO = 0
+OPTIMIZE_LEVEL_SAVED_NCE_PARAMS = 1
+OPTIMIZE_LEVEL_OPENBLAS_TOP_K = 2
+
+all_optimize_levels = [
+    OPTIMIZE_LEVEL_ZERO,
+    OPTIMIZE_LEVEL_SAVED_NCE_PARAMS,
+    OPTIMIZE_LEVEL_OPENBLAS_TOP_K,
+]
+
 
 def get_model_nce_weights_and_biases(model):
     nce_weights = model.get_variable_value('nce_layer/' + NCE_WEIGHTS_NAME)
@@ -130,6 +140,7 @@ def knet_model(features, labels, mode, params):
     recall_k = params['recall_k']
     dict_dir = params['dict_dir']
     model_dir = params['model_dir']  # save nce weights and biases
+    optimize_level = params['optimize_level']
 
     embeddings = get_embeddings(n_classes, embedding_dim)
     nce_weights, nce_biases = get_nce_weights_and_biases(n_classes,
@@ -148,8 +159,18 @@ def knet_model(features, labels, mode, params):
     for units in params['hidden_units']:
         net = tf.layers.dense(net, units=units, activation=tf.nn.relu,
                               name="fc_{}".format(units))
-    net = tf.layers.dense(net, embedding_dim, activation=None,
-                          name="fc_output")
+    user_vector = tf.layers.dense(net, embedding_dim, activation=None,
+                          name="user_vector")
+
+    # Compute logits (1 per class).
+    logits = tf.matmul(user_vector, nce_weights, transpose_b=True,
+                       name="matmul_logits")
+    logits = tf.nn.bias_add(logits, nce_biases, name="bias_add_logits")
+
+    # Optimaize, don't need calculate softmax
+    # probabilities = tf.nn.softmax(logits)
+    scores, ids = tf.nn.top_k(logits, recall_k,
+                              name="top_k_{}".format(recall_k))
 
     # Compute predictions.
     if mode == tf.estimator.ModeKeys.PREDICT:
@@ -164,20 +185,29 @@ def knet_model(features, labels, mode, params):
                 default_value='',
                 name="index_to_string")
 
-            # Load pre-saved model nce_weights and nce_biases
-            (saved_nce_weights,
-             saved_nce_biases) = load_model_nce_params(model_dir)
-            transpose_saved_nce_weights = tf.convert_to_tensor(
-                saved_nce_weights.transpose(), dtype=tf.float32,
-                name='transpose_saved_nce_weights')
-            saved_nce_biases = tf.convert_to_tensor(
-                saved_nce_biases, dtype=tf.float32, name='saved_nce_biases')
-            logits = tf.matmul(
-                net, transpose_saved_nce_weights, name="matmul_logits")
-            logits = tf.nn.bias_add(
-                logits, saved_nce_biases, name="bias_add_logits")
-            scores, ids = tf.nn.top_k(
-                logits, recall_k, name="top_k_{}".format(recall_k))
+            if optimize_level == OPTIMIZE_LEVEL_SAVED_NCE_PARAMS:
+                # Load pre-saved model nce_weights and nce_biases
+                # Optimaize from 200ms to 30ms per requst
+                (saved_nce_weights,
+                 saved_nce_biases) = load_model_nce_params(model_dir)
+                transpose_saved_nce_weights = tf.convert_to_tensor(
+                    saved_nce_weights.transpose(), dtype=tf.float32,
+                    name='transpose_saved_nce_weights')
+                saved_nce_biases = tf.convert_to_tensor(
+                    saved_nce_biases, dtype=tf.float32,
+                    name='saved_nce_biases')
+                logits = tf.matmul(
+                    user_vector, transpose_saved_nce_weights,
+                    name="matmul_logits")
+                logits = tf.nn.bias_add(
+                    logits, saved_nce_biases, name="bias_add_logits")
+                scores, ids = tf.nn.top_k(
+                    logits, recall_k, name="top_k_{}".format(recall_k))
+            elif optimize_level == OPTIMIZE_LEVEL_OPENBLAS_TOP_K:
+                scores, ids = input_data.openblas_top_k_ops(
+                    input=user_vector, k=recall_k,
+                    weights_path=os.path.join(model_dir, NCE_WEIGHTS_BIN_PATH),
+                    biases_path=os.path.join(model_dir, NCE_BIASES_BIN_PATH))
 
         predictions = {
             'class_ids': ids,
@@ -195,16 +225,6 @@ def knet_model(features, labels, mode, params):
         }
         return tf.estimator.EstimatorSpec(mode, predictions=predictions,
                                           export_outputs=export_outputs)
-
-    # Compute logits (1 per class).
-    logits = tf.matmul(net, nce_weights, transpose_b=True,
-                       name="matmul_logits")
-    logits = tf.nn.bias_add(logits, nce_biases, name="bias_add_logits")
-
-    # Optimaize, don't need calculate softmax
-    # probabilities = tf.nn.softmax(logits)
-    scores, ids = tf.nn.top_k(logits, recall_k,
-                              name="top_k_{}".format(recall_k))
 
     # Compute nce_loss.
     nce_loss = tf.nn.nce_loss(weights=nce_weights,

@@ -45,6 +45,7 @@ class Options(object):
 
         self.root_ops_path = ''
         self.remove_model_dir = 1
+        self.optimize_level = 1
 
     def __str__(self):
         return \
@@ -82,6 +83,7 @@ class Options(object):
         profile_steps = {} \n \
         root_ops_path = {} \n \
         remove_model_dir = {} \n \
+        optimize_level = {} \n \
         ".format(
                 self.train_data_path,
                 self.eval_data_path,
@@ -115,4 +117,5 @@ class Options(object):
                 self.use_profile_hook,
                 self.profile_steps,
                 self.root_ops_path,
-                self.remove_model_dir)
+                self.remove_model_dir,
+                self.optimize_level)

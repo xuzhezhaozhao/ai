@@ -36,28 +36,23 @@ parser.add_argument('--batch_size', default=64, type=int, help='batch size')
 parser.add_argument('--num_sampled', default=5, type=int, help='')
 parser.add_argument('--max_train_steps', default=None, type=int, help='')
 parser.add_argument('--epoch', default=1, type=int, help='')
-
 parser.add_argument('--hidden_units', default="64,64", type=str, help='')
 parser.add_argument('--model_dir', default="model_dir", type=str, help='')
 parser.add_argument('--export_model_dir', default="export_model_dir",
                     type=str, help='')
 parser.add_argument('--prefetch_size', default=10000, type=int, help='')
-
 parser.add_argument('--save_summary_steps', default=100, type=int, help='')
 parser.add_argument('--save_checkpoints_secs', default=600, type=int, help='')
 parser.add_argument('--keep_checkpoint_max', default=3, type=int, help='')
 parser.add_argument('--log_step_count_steps', default=100, type=int, help='')
-
 parser.add_argument('--recall_k', default=1, type=int, help='')
 parser.add_argument('--dict_dir', default="dict_dir", type=str, help='')
 parser.add_argument('--use_saved_dict', default=0, type=int, help='')
-
 parser.add_argument('--use_profile_hook', default=0, type=int, help='')
 parser.add_argument('--profile_steps', default=100, type=int, help='')
-
 parser.add_argument('--root_ops_path', default="", type=str, help='')
-
 parser.add_argument('--remove_model_dir', default=1, type=int, help='')
+parser.add_argument('--optimize_level', default=1, type=int, help='')
 
 opts = Options()
 
@@ -102,6 +97,7 @@ def parse_args(argv):
 
     opts.root_ops_path = args.root_ops_path
     opts.remove_model_dir = bool(args.remove_model_dir)
+    opts.optimize_level = args.optimize_level
 
     tf.logging.info(opts)
 
@@ -118,8 +114,15 @@ def delete_dir(filename):
                 "'{}' exists and not a directory.".format(filename))
 
 
+def check_args(opts):
+    if opts.optimize_level not in knet.all_optimize_levels:
+        raise ValueError(
+            "optimaize_level {} not surpported.".format(opts.optimize_level))
+
+
 def main(argv):
     parse_args(argv)
+    check_args(opts)
 
     if opts.remove_model_dir:
         delete_dir(opts.model_dir)
@@ -158,6 +161,7 @@ def main(argv):
             'recall_k': opts.recall_k,
             'dict_dir': opts.dict_dir,
             'model_dir': opts.model_dir,
+            'optimize_level': opts.optimize_level
         })
 
     # Create profile hooks
@@ -177,13 +181,14 @@ def main(argv):
                      hooks=hooks)
     tf.logging.info("Train model OK")
 
-    tf.logging.info("Save nce weights and biases ...")
-    knet.save_model_nce_params(classifier)
-    tf.logging.info("Save nce weights and biases OK")
-
-    tf.logging.info("Save nce weights and biases for openblas_top_k_ops ...")
-    knet.save_model_nce_params_for_openblas_top_k(classifier)
-    tf.logging.info("Save nce weights and biases for openblas_top_k_ops OK")
+    if opts.optimize_level == knet.OPTIMIZE_LEVEL_SAVED_NCE_PARAMS:
+        tf.logging.info("Save nce weights and biases ...")
+        knet.save_model_nce_params(classifier)
+        tf.logging.info("Save nce weights and biases OK")
+    elif opts.optimize_level == knet.OPTIMIZE_LEVEL_OPENBLAS_TOP_K:
+        tf.logging.info("Save nce weights and biases ...")
+        knet.save_model_nce_params_for_openblas_top_k(classifier)
+        tf.logging.info("Save nce weights and biases OK")
 
     # evaluate model
     tf.logging.info("Beginning evaluate model ...")

@@ -26,6 +26,8 @@ profile_steps=100
 root_ops_path=lib/
 remove_model_dir=1
 
+optimize_level=1
+
 python train.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
@@ -58,4 +60,5 @@ python train.py \
     --use_profile_hook ${use_profile_hook} \
     --profile_steps ${profile_steps} \
     --root_ops_path ${root_ops_path} \
-    --remove_model_dir ${remove_model_dir}
+    --remove_model_dir ${remove_model_dir} \
+    --optimize_level ${optimize_level}
