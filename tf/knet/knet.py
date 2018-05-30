@@ -83,7 +83,7 @@ def save_model_nce_params_for_openblas_top_k(model):
     nce_weights, nce_biases = get_model_nce_weights_and_biases(model)
     tf.logging.info('save nce_weights[openblas] = \n{}'.format(nce_weights))
     tf.logging.info('save nce_biases[openblas] = \n{}'.format(nce_biases))
-    save_weights_path = os.path.join(model.model_dir, NCE_BIASES_BIN_PATH)
+    save_weights_path = os.path.join(model.model_dir, NCE_WEIGHTS_BIN_PATH)
     save_biases_path = os.path.join(model.model_dir, NCE_BIASES_BIN_PATH)
     save_numpy_float_array(nce_weights, save_weights_path)
     save_numpy_float_array(nce_biases, save_biases_path)

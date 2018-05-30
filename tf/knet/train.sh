@@ -28,7 +28,7 @@ profile_steps=100
 root_ops_path=lib/
 remove_model_dir=1
 
-optimize_level=1
+optimize_level=2
 
 python train.py \
     --train_data_path ${train_data_path} \

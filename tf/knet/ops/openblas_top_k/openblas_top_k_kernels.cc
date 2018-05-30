@@ -75,13 +75,16 @@ class OpenblasTopKOp : public OpKernel {
     // calculate matmul using openblas
     const Tensor& input_tensor = ctx->input(0);
     const TensorShape& input_shape = input_tensor.shape();
+    OP_REQUIRES(ctx, TensorShapeUtils::IsMatrix(input_shape),
+                errors::InvalidArgument("Arg input expects a [batch]xdim Matrix."));
     OP_REQUIRES(
-        ctx, TensorShapeUtils::IsVector(input_shape),
-        errors::InvalidArgument("Arg input expects a 1-D vector."));
-    OP_REQUIRES(ctx, input_shape.dim_size(0) == weights_.cols(),
-                errors::InvalidArgument("Expect Input tensor's dim 0 be ",
+        ctx, input_shape.dim_size(0) == 1,
+        errors::InvalidArgument("Expect Input tensor's dim 0 be 1, but is ",
+                                input_shape.dim_size(0)));
+    OP_REQUIRES(ctx, input_shape.dim_size(1) == weights_.cols(),
+                errors::InvalidArgument("Expect Input tensor's dim 1 be ",
                                         weights_.cols(), ", but is ",
-                                        input_shape.dim_size(0)));
+                                        input_shape.dim_size(1)));
     const Tensor& k_tensor = ctx->input(1);
     OP_REQUIRES(ctx, TensorShapeUtils::IsScalar(k_tensor.shape()),
                 errors::InvalidArgument("Arg k expects a scalar"));
