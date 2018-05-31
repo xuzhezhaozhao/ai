@@ -28,7 +28,7 @@ def run():
     input_name = 'examples'
 
     x = ['' for i in range(20)]
-    x[0] = '6055a60cdbf525ah'
+    x[0] = '6835a4b20ec735ae'
     example1 = tf.train.Example(
         features=tf.train.Features(
             feature={
@@ -38,7 +38,7 @@ def run():
     ).SerializeToString()
 
     x = ['' for i in range(20)]
-    x[0] = '9215a52047c920ae'
+    x[0] = '5955a4f20fd540aa'
     example2 = tf.train.Example(
         features=tf.train.Features(
             feature={
