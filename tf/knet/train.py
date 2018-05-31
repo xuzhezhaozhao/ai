@@ -11,7 +11,7 @@ import os
 import argparse
 import tensorflow as tf
 
-import knet
+import model
 import input_data
 import hook
 
@@ -118,7 +118,7 @@ def delete_dir(filename):
 
 
 def check_args(opts):
-    if opts.optimize_level not in knet.all_optimize_levels:
+    if opts.optimize_level not in model.all_optimize_levels:
         raise ValueError(
             "optimaize_level {} not surpported.".format(opts.optimize_level))
 
@@ -152,7 +152,7 @@ def main(argv):
         keep_checkpoint_every_n_hours=10000,
         log_step_count_steps=opts.log_step_count_steps)
     classifier = tf.estimator.Estimator(
-        model_fn=knet.knet_model,
+        model_fn=model.knet_model,
         config=config,
         params={
             'feature_columns': feature_columns,
@@ -185,11 +185,11 @@ def main(argv):
     tf.logging.info("Train model OK")
 
     tf.logging.info("Save nce weights and biases[1] ...")
-    knet.save_model_nce_params(classifier)
+    model.save_model_nce_params(classifier)
     tf.logging.info("Save nce weights and biases[1] OK")
 
     tf.logging.info("Save nce weights and biases[2] ...")
-    knet.save_model_nce_params_for_openblas_top_k(classifier)
+    model.save_model_nce_params_for_openblas_top_k(classifier)
     tf.logging.info("Save nce weights and biases[2] OK")
 
     # evaluate model

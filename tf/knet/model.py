@@ -110,12 +110,7 @@ def knet_model(features, labels, mode, params):
                                           export_outputs=export_outputs)
 
     train_metrics = get_metrics(labels, train_ids, recall_k)
-
-    tf.summary.scalar('accuracy', train_metrics['accuracy'][1])
-    tf.summary.scalar('recall_at_top_{}'.format(recall_k),
-                      train_metrics['recall_at_top_k'][1])
-    tf.summary.scalar('precision_at_top_{}'.format(recall_k),
-                      train_metrics['precision_at_top_k'][1])
+    add_metrics_summary(train_metrics)
 
     if mode == tf.estimator.ModeKeys.EVAL:
         with tf.name_scope("EvalMode"):
@@ -210,9 +205,16 @@ def get_metrics(labels, ids, recall_k):
     precision_at_top_k = tf.metrics.precision_at_top_k(
         labels=labels, predictions_idx=ids, k=recall_k)
     metrics = {'accuracy': accuracy,
-               'recall_at_top_k': recall_at_top_k,
-               'precision_at_top_k': precision_at_top_k}
+               'recall_at_top_{}'.format(recall_k): recall_at_top_k,
+               'precision_at_top_{}'.format(recall_k): precision_at_top_k}
     return metrics
+
+
+def add_metrics_summary(metrics):
+    """Add metrics to tensorboard."""
+
+    for key in metrics.keys():
+        tf.summary.scalar(key, metrics[key][1])
 
 
 def create_index_to_string_table(dict_dir):
