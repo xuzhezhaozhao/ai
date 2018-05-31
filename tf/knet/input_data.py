@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import os
 import tensorflow as tf
+import custom_ops
 
 
 RECORDS_COL = "records"
@@ -15,20 +16,6 @@ WORDS_COL = "words"
 DICT_META = "dict_meta"
 DICT_WORDS = "dict_words"
 SAVED_DICT_BIN = "saved_dict.bin"
-
-# change to absolute path when using tesla
-# ROOT_OPS_PATH = '/cephfs/group/sng-im-sng-imappdev-tribe/zhezhaoxu/knet'
-ROOT_OPS_PATH = ''
-FASTTEXT_EXAMPLE_GENERATE_OPS_PATH = os.path.join(
-    ROOT_OPS_PATH, 'fasttext_example_generate_ops.so')
-OPENBLAS_TOP_K_OPS_PATH = os.path.join(
-    ROOT_OPS_PATH, 'openblas_top_k_ops.so')
-
-fasttext_example_generate_ops = tf.load_op_library(
-    FASTTEXT_EXAMPLE_GENERATE_OPS_PATH)
-
-openblas_top_k_ops = tf.load_op_library(OPENBLAS_TOP_K_OPS_PATH)
-openblas_top_k = openblas_top_k_ops.openblas_top_k
 
 
 def feature_columns(opts):
@@ -42,7 +29,7 @@ def init_dict(opts):
     if opts.use_saved_dict:
         return
 
-    dummy1, dummy2 = fasttext_example_generate_ops.fasttext_example_generate(
+    dummy1, dummy2 = custom_ops.fasttext_example_generate(
         train_data_path=opts.train_data_path,
         input="",
         use_saved_dict=False,
@@ -82,7 +69,7 @@ def generate_example(line, opts):
         sess.run(it.initializer)
         sess.run(it.get_next())
     """
-    records, labels = fasttext_example_generate_ops.fasttext_example_generate(
+    records, labels = custom_ops.fasttext_example_generate(
         input=line,
         train_data_path=opts.train_data_path,
         use_saved_dict=True,

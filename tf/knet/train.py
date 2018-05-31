@@ -204,13 +204,11 @@ def main(argv):
     dict_words_src = os.path.join(dict_dir, input_data.DICT_WORDS)
     dict_meta_src = os.path.join(dict_dir, input_data.DICT_META)
     saved_dict_bin_src = os.path.join(dict_dir, input_data.SAVED_DICT_BIN)
-
     assets_dict_dir = os.path.join(os.path.basename(dict_dir))
     dict_words_dest = os.path.join(assets_dict_dir, input_data.DICT_WORDS)
     dict_meta_dest = os.path.join(assets_dict_dir, input_data.DICT_META)
     saved_dict_bin_dest = os.path.join(assets_dict_dir,
                                        input_data.SAVED_DICT_BIN)
-
     assets_extra = {dict_words_dest: dict_words_src,
                     dict_meta_dest: dict_meta_src,
                     saved_dict_bin_dest: saved_dict_bin_src}

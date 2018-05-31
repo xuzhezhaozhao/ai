@@ -5,12 +5,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import tensorflow as tf
-import numpy as np
-import input_data
 import math
 import os
 import struct
+import tensorflow as tf
+import numpy as np
+
+import input_data
+import custom_ops
 
 PADDING_ID = 0
 
@@ -207,7 +209,7 @@ def knet_model(features, labels, mode, params):
                     logits, recall_k, name="top_k_{}".format(recall_k))
             elif optimize_level == OPTIMIZE_LEVEL_OPENBLAS_TOP_K:
                 tf.logging.info("Use OPTIMIZE_LEVEL_OPENBLAS_TOP_K")
-                scores, ids = input_data.openblas_top_k(
+                scores, ids = custom_ops.openblas_top_k(
                     input=user_vector, k=recall_k,
                     weights_path=os.path.join(model_dir, NCE_WEIGHTS_BIN_PATH),
                     biases_path=os.path.join(model_dir, NCE_BIASES_BIN_PATH))
