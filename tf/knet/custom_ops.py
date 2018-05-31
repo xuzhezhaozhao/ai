@@ -11,7 +11,7 @@ import tensorflow as tf
 
 # change to absolute path when using tesla
 # ROOT_OPS_PATH = '/cephfs/group/sng-im-sng-imappdev-tribe/zhezhaoxu/knet'
-ROOT_OPS_PATH = ''
+ROOT_OPS_PATH = 'lib/'
 FASTTEXT_EXAMPLE_GENERATE_OPS_PATH = os.path.join(
     ROOT_OPS_PATH, 'fasttext_example_generate_ops.so')
 OPENBLAS_TOP_K_OPS_PATH = os.path.join(
