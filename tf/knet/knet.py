@@ -39,13 +39,14 @@ all_optimize_levels = [
 
 
 def get_model_nce_weights_and_biases(model):
+    """Get nce weights and biases variables from estimator model"""
     nce_weights = model.get_variable_value('nce_layer/' + NCE_WEIGHTS_NAME)
     nce_biases = model.get_variable_value('nce_layer/' + NCE_BIASES_NAME)
     return (nce_weights, nce_biases)
 
 
 def save_model_nce_params(model):
-    """Save model nce weights and biases."""
+    """Save model nce weights and biases variables."""
 
     nce_weights, nce_biases = get_model_nce_weights_and_biases(model)
     tf.logging.info('save nce_weights = \n{}'.format(nce_weights))
@@ -70,6 +71,8 @@ def load_model_nce_params(model_dir):
 
 
 def save_numpy_float_array(array, filename):
+    """Save numpy float array to file."""
+
     with open(filename, 'wb') as f:
         for d in array.shape:
             f.write(struct.pack('<q', d))
@@ -80,7 +83,7 @@ def save_numpy_float_array(array, filename):
 
 
 def save_model_nce_params_for_openblas_top_k(model):
-    """Save model nce weights and biases for openblas_top_k_ops."""
+    """Save model nce weights and biases variables for openblas_top_k_ops."""
 
     nce_weights, nce_biases = get_model_nce_weights_and_biases(model)
     tf.logging.info('save nce_weights[openblas] = \n{}'.format(nce_weights))
@@ -92,7 +95,7 @@ def save_model_nce_params_for_openblas_top_k(model):
 
 
 def get_nce_weights_and_biases(n_classes, embedding_dim):
-    """ Construct the variables for the NCE loss """
+    """Get nce weights and biases variables."""
 
     with tf.variable_scope("nce_layer", reuse=tf.AUTO_REUSE):
         # Construct the variables for the NCE loss
@@ -102,12 +105,13 @@ def get_nce_weights_and_biases(n_classes, embedding_dim):
                 [n_classes, embedding_dim],
                 stddev=1.0 / math.sqrt(embedding_dim)))
         nce_biases = tf.get_variable(NCE_BIASES_NAME,
-                                     initializer=tf.zeros([n_classes]))
+                                     initializer=tf.zeros([n_classes]),
+                                     trainable=False)
     return nce_weights, nce_biases
 
 
 def get_embeddings(n_classes, embedding_dim):
-    """ Construct the variable for the embeddings """
+    """Get embeddings variables."""
 
     with tf.variable_scope("embeddings", reuse=tf.AUTO_REUSE):
         embeddings = tf.get_variable(
@@ -119,7 +123,13 @@ def get_embeddings(n_classes, embedding_dim):
 
 def mask_padding_embedding_lookup(embeddings, embedding_dim,
                                   input, padding_id):
-    """ ref(@ay27): https://github.com/tensorflow/tensorflow/issues/2373 """
+    """ mask padding tf.nn.embedding_lookup.
+    padding_id must be zero.
+
+    ref(@ay27): https://github.com/tensorflow/tensorflow/issues/2373
+    """
+
+    assert padding_id == 0
 
     mask_padding_zero_op = tf.scatter_update(
         embeddings, padding_id, tf.zeros([embedding_dim], dtype=tf.float32),
