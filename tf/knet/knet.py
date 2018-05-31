@@ -147,19 +147,19 @@ def knet_model(features, labels, mode, params):
                                                          embedding_dim)
 
     # construct network
-    net = tf.feature_column.input_layer(features, feature_columns)
-    net = mask_padding_embedding_lookup(embeddings, embedding_dim,
-                                        net, PADDING_ID)
-
-    # TODO shouldn't mean all, should mean #non-zero
-    net = tf.reduce_mean(net, 1, name="mean")
+    input_layer = tf.feature_column.input_layer(features, feature_columns)
+    nonzeros = tf.count_nonzero(input_layer, 1, keepdims=True)
+    embeds = mask_padding_embedding_lookup(embeddings, embedding_dim,
+                                           input_layer, PADDING_ID)
+    embeds_sum = tf.reduce_sum(embeds, 1)
+    embeds_mean = embeds_sum / tf.cast(nonzeros, tf.float32)
 
     # TODO Normalize input?
-
+    hidden = embeds_mean
     for units in params['hidden_units']:
-        net = tf.layers.dense(net, units=units, activation=tf.nn.relu,
-                              name="fc_{}".format(units))
-    user_vector = tf.layers.dense(net, embedding_dim, activation=None,
+        hidden = tf.layers.dense(hidden, units=units, activation=tf.nn.relu,
+                                 name="fc_{}".format(units))
+    user_vector = tf.layers.dense(hidden, embedding_dim, activation=None,
                                   name="user_vector")
 
     # Compute logits (1 per class).
@@ -239,16 +239,17 @@ def knet_model(features, labels, mode, params):
                               name="nce_loss")
     nce_loss = tf.reduce_mean(nce_loss, name="mean_nce_loss")
 
-    # Compute evaluation metrics.
-    predicted = tf.argmax(logits, 1)
-    accuracy = tf.metrics.accuracy(labels=labels, predictions=predicted)
-    recall_at_top_k = tf.metrics.recall_at_top_k(
-        labels=labels, predictions_idx=ids, k=recall_k)
-    precision_at_top_k = tf.metrics.precision_at_top_k(
-        labels=labels, predictions_idx=ids, k=recall_k)
-    metrics = {'accuracy': accuracy,
-               'recall_at_top_k': recall_at_top_k,
-               'precision_at_top_k': precision_at_top_k}
+    with tf.name_scope("TrainEvalMetricsSummary"):
+        # Compute evaluation metrics.
+        predicted = tf.argmax(logits, 1)
+        accuracy = tf.metrics.accuracy(labels=labels, predictions=predicted)
+        recall_at_top_k = tf.metrics.recall_at_top_k(
+            labels=labels, predictions_idx=ids, k=recall_k)
+        precision_at_top_k = tf.metrics.precision_at_top_k(
+            labels=labels, predictions_idx=ids, k=recall_k)
+        metrics = {'accuracy': accuracy,
+                   'recall_at_top_k': recall_at_top_k,
+                   'precision_at_top_k': precision_at_top_k}
 
     # Don't summary to speedup?
     tf.summary.scalar('accuracy', accuracy[1])
@@ -257,7 +258,48 @@ def knet_model(features, labels, mode, params):
                       precision_at_top_k[1])
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        loss = tf.losses.sparse_softmax_cross_entropy(labels, logits)
+        with tf.name_scope("EvalMode"):
+            loss = tf.losses.sparse_softmax_cross_entropy(labels, logits)
+            # Create index to string map
+            dict_words_path = os.path.join(dict_dir, input_data.DICT_WORDS)
+            words = [line.strip() for line in open(dict_words_path)
+                     if line.strip() != '']
+            words.insert(0, '')
+            table = tf.contrib.lookup.index_to_string_table_from_tensor(
+                mapping=words,
+                default_value='',
+                name="index_to_string")
+
+            if optimize_level != OPTIMIZE_LEVEL_ZERO:
+                tf.logging.info("Use OPTIMIZE_LEVEL_SAVED_NCE_PARAMS to eval")
+                (saved_nce_weights,
+                 saved_nce_biases) = load_model_nce_params(model_dir)
+                transpose_saved_nce_weights = tf.convert_to_tensor(
+                    saved_nce_weights.transpose(), dtype=tf.float32,
+                    name='transpose_saved_nce_weights')
+                saved_nce_biases = tf.convert_to_tensor(
+                    saved_nce_biases, dtype=tf.float32,
+                    name='saved_nce_biases')
+                logits = tf.matmul(
+                    user_vector, transpose_saved_nce_weights,
+                    name="matmul_logits")
+                logits = tf.nn.bias_add(
+                    logits, saved_nce_biases, name="bias_add_logits")
+                scores, ids = tf.nn.top_k(
+                    logits, recall_k, name="top_k_{}".format(recall_k))
+
+            # Compute evaluation metrics.
+            predicted = ids[:, :1]
+            accuracy = tf.metrics.accuracy(labels=labels,
+                                           predictions=predicted)
+            recall_at_top_k = tf.metrics.recall_at_top_k(
+                labels=labels, predictions_idx=ids, k=recall_k)
+            precision_at_top_k = tf.metrics.precision_at_top_k(
+                labels=labels, predictions_idx=ids, k=recall_k)
+            metrics = {'accuracy': accuracy,
+                       'recall_at_top_k': recall_at_top_k,
+                       'precision_at_top_k': precision_at_top_k}
+
         return tf.estimator.EstimatorSpec(mode,
                                           loss=loss,
                                           eval_metric_ops=metrics)

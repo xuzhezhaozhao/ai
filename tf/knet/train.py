@@ -184,14 +184,13 @@ def main(argv):
                      hooks=hooks)
     tf.logging.info("Train model OK")
 
-    if opts.optimize_level == knet.OPTIMIZE_LEVEL_SAVED_NCE_PARAMS:
-        tf.logging.info("Save nce weights and biases[1] ...")
-        knet.save_model_nce_params(classifier)
-        tf.logging.info("Save nce weights and biases[1] OK")
-    elif opts.optimize_level == knet.OPTIMIZE_LEVEL_OPENBLAS_TOP_K:
-        tf.logging.info("Save nce weights and biases[2] ...")
-        knet.save_model_nce_params_for_openblas_top_k(classifier)
-        tf.logging.info("Save nce weights and biases[2] OK")
+    tf.logging.info("Save nce weights and biases[1] ...")
+    knet.save_model_nce_params(classifier)
+    tf.logging.info("Save nce weights and biases[1] OK")
+
+    tf.logging.info("Save nce weights and biases[2] ...")
+    knet.save_model_nce_params_for_openblas_top_k(classifier)
+    tf.logging.info("Save nce weights and biases[2] OK")
 
     # evaluate model
     tf.logging.info("Beginning evaluate model ...")
