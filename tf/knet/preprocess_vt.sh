@@ -22,21 +22,21 @@ train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
 lr=0.25
 dim=100
-ws=20
-min_count=50
-batch_size=64
+ws=50
+min_count=100
+batch_size=512
 num_sampled=10
-epoch=5
-hidden_units="64"
+epoch=1
+hidden_units="256,128"
 prefetch_size=10000
 
 max_train_steps=-1
 
-save_summary_steps=100
-save_checkpoints_secs=600
+save_summary_steps=10000
+save_checkpoints_secs=1200
 log_step_count_steps=1000
 
-recall_k=10
+recall_k=300
 use_saved_dict=0
 
 use_profile_hook=0
