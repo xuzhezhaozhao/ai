@@ -18,8 +18,8 @@ model_dir=`pwd`/video_tab/model_dir
 export_model_dir=`pwd`/video_tab/export_model_dir
 dict_dir=`pwd`/video_tab/dict_dir
 
-train_data_path=${raw_data}/train_data.vt.in
-eval_data_path=${raw_data}/eval_data.vt.in
+train_data_path=${raw_data_dir}/train_data.vt.in
+eval_data_path=${raw_data_dir}/eval_data.vt.in
 lr=0.25
 dim=100
 ws=20
