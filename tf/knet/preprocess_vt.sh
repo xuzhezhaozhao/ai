@@ -1,7 +1,25 @@
-MODEL_DIR=`pwd`/model_dir
-EXPORT_MODEL_DIR=`pwd`/export_model_dir
-train_data_path=../../data/train_data.in
-eval_data_path=../../data/eval_data.in
+#! /usr/bin/env bash
+
+set -e
+
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd ${MYDIR}
+
+# add Anaconda2
+export ANACONDA2_ROOT=/usr/local/services/kd_anaconda2-1.0/lib/anaconda2
+export PATH="${ANACONDA2_ROOT}/bin:$PATH"
+export PYTHONPATH="${ANACONDA2_ROOT}/lib/python2.7/site-packages:$PYTHONPATH"
+
+parallel=47
+
+raw_data_dir=raw_data
+
+model_dir=`pwd`/video_tab/model_dir
+export_model_dir=`pwd`/video_tab/export_model_dir
+dict_dir=`pwd`/video_tab/dict_dir
+
+train_data_path=${raw_data}/train_data.vt.in
+eval_data_path=${raw_data}/eval_data.vt.in
 lr=0.25
 dim=100
 ws=20
@@ -19,7 +37,6 @@ save_checkpoints_secs=600
 log_step_count_steps=1000
 
 recall_k=10
-dict_dir=`pwd`/dict_dir
 use_saved_dict=0
 
 use_profile_hook=0
@@ -49,8 +66,8 @@ python train.py \
     --num_sampled ${num_sampled} \
     --epoch ${epoch} \
     --hidden_units ${hidden_units} \
-    --model_dir ${MODEL_DIR} \
-    --export_model_dir ${EXPORT_MODEL_DIR} \
+    --model_dir ${model_dir} \
+    --export_model_dir ${export_model_dir} \
     --prefetch_size ${prefetch_size} \
     --max_train_steps ${max_train_steps} \
     --save_summary_steps ${save_summary_steps} \
