@@ -40,6 +40,7 @@ do
 done
 
 
+rm -rf ${tmp_hdfs_dir}/${base_hdfs_data_path}
 ${hadoop_bin} fs \
     -Dhadoop.job.ugi=tdw_zhezhaoxu:zhao2017,g_sng_im_sng_imappdev_tribe \
     -get ${hdfs_data_path} ${tmp_hdfs_dir}
@@ -51,7 +52,7 @@ if [ $sz -le 10 ]; then
 fi
 
 cat ${tmp_hdfs_dir}/${base_hdfs_data_path}/part* > ${raw_data_dir}/data.vt.in
-rm -rf ${tmp_hdfs_dir}
+rm -rf ${tmp_hdfs_dir}/${base_hdfs_data_path}
 
 echo "shuf ..."
 shuf ${raw_data_dir}/data.vt.in -o ${raw_data_dir}/data.vt.in.shuf
