@@ -209,19 +209,17 @@ def main(argv):
 
     # export model
     tf.logging.info("Beginning export model ...")
-    dict_dir = opts.dict_dir
-    assets_dict_dir = os.path.basename(dict_dir)
+    assets_dict_dir = os.path.basename(opts.dict_dir)
+    assets_nce_params_dir = os.path.basename(opts.nce_params_dir)
     dict_params = {}
+    nce_params = {}
     for name in input_data.DICT_PARAM_NAMES:
-        src = os.path.join(dict_dir, name)
+        src = os.path.join(opts.dict_dir, name)
         dest = os.path.join(assets_dict_dir, name)
         dict_params[dest] = src
-
-    nce_params = {}
-    assets_nce_params_dir = os.path.basename(opts.nce_params_dir)
     for name in model.NCE_PARAM_NAMES:
-        dest = os.path.join(assets_nce_params_dir, name)
         src = os.path.join(opts.nce_params_dir, name)
+        dest = os.path.join(assets_nce_params_dir, name)
         nce_params[dest] = src
 
     assets_extra = dict(dict_params, **nce_params)
