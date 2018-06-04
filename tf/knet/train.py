@@ -210,18 +210,21 @@ def main(argv):
     # export model
     tf.logging.info("Beginning export model ...")
     dict_dir = opts.dict_dir
-    dict_words_src = os.path.join(dict_dir, input_data.DICT_WORDS)
-    dict_meta_src = os.path.join(dict_dir, input_data.DICT_META)
-    saved_dict_bin_src = os.path.join(dict_dir, input_data.SAVED_DICT_BIN)
-    assets_dict_dir = os.path.join(os.path.basename(dict_dir))
-    dict_words_dest = os.path.join(assets_dict_dir, input_data.DICT_WORDS)
-    dict_meta_dest = os.path.join(assets_dict_dir, input_data.DICT_META)
-    saved_dict_bin_dest = os.path.join(assets_dict_dir,
-                                       input_data.SAVED_DICT_BIN)
+    assets_dict_dir = os.path.basename(dict_dir)
+    dict_params = {}
+    for name in input_data.DICT_PARAM_NAMES:
+        src = os.path.join(dict_dir, name)
+        dest = os.path.join(assets_dict_dir, name)
+        dict_params[dest] = src
 
-    assets_extra = {dict_words_dest: dict_words_src,
-                    dict_meta_dest: dict_meta_src,
-                    saved_dict_bin_dest: saved_dict_bin_src}
+    nce_params = {}
+    assets_nce_params_dir = os.path.basename(opts.nce_params_dir)
+    for name in model.NCE_PARAM_NAMES:
+        dest = os.path.join(assets_nce_params_dir, name)
+        src = os.path.join(opts.nce_params_dir, name)
+        nce_params[dest] = src
+
+    assets_extra = dict(dict_params, **nce_params)
 
     classifier.export_savedmodel(
         opts.export_model_dir,

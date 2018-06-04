@@ -17,6 +17,12 @@ DICT_META = "dict_meta"
 DICT_WORDS = "dict_words"
 SAVED_DICT_BIN = "saved_dict.bin"
 
+DICT_PARAM_NAMES = [
+    DICT_META,
+    DICT_WORDS,
+    SAVED_DICT_BIN,
+]
+
 
 def feature_columns(opts):
     my_feature_columns = []
