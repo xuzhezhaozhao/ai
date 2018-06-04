@@ -124,10 +124,12 @@ def knet_model(features, labels, mode, params):
                 scores = train_scores
                 ids = train_ids
 
-            eval_loss = tf.losses.sparse_softmax_cross_entropy(labels, logits)
             eval_metrics = get_metrics(labels, ids, recall_k)
+            eval_loss = tf.losses.sparse_softmax_cross_entropy(labels, logits)
         return tf.estimator.EstimatorSpec(
-            mode, loss=eval_loss, eval_metric_ops=eval_metrics)
+            mode,
+            loss=tf.constant(0),  # don't evaluate loss
+            eval_metric_ops=eval_metrics)
 
     # Create training op.
     nce_loss = tf.nn.nce_loss(weights=nce_weights,
