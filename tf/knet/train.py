@@ -50,9 +50,11 @@ parser.add_argument('--dict_dir', default="dict_dir", type=str, help='')
 parser.add_argument('--use_saved_dict', default=0, type=int, help='')
 parser.add_argument('--use_profile_hook', default=0, type=int, help='')
 parser.add_argument('--profile_steps', default=100, type=int, help='')
-parser.add_argument('--root_ops_path', default="", type=str, help='')
+parser.add_argument('--root_ops_path', default='', type=str, help='')
 parser.add_argument('--remove_model_dir', default=1, type=int, help='')
 parser.add_argument('--optimize_level', default=1, type=int, help='')
+
+parser.add_argument('--nce_params_dir', default='', type=str, help='')
 
 opts = Options()
 
@@ -101,6 +103,8 @@ def parse_args(argv):
     opts.root_ops_path = args.root_ops_path
     opts.remove_model_dir = bool(args.remove_model_dir)
     opts.optimize_level = args.optimize_level
+
+    opts.nce_params_dir = args.nce_params_dir
 
     tf.logging.info(opts)
 
@@ -163,8 +167,8 @@ def main(argv):
             'num_sampled': opts.num_sampled,
             'recall_k': opts.recall_k,
             'dict_dir': opts.dict_dir,
-            'model_dir': opts.model_dir,
-            'optimize_level': opts.optimize_level
+            'optimize_level': opts.optimize_level,
+            'nce_params_dir': opts.nce_params_dir
         })
 
     # Create profile hooks
@@ -184,12 +188,17 @@ def main(argv):
                      hooks=hooks)
     tf.logging.info("Train model OK")
 
+    # save nce params
+    if not os.path.exists(opts.nce_params_dir):
+        os.mkdir(opts.nce_params_dir)
+
     tf.logging.info("Save nce weights and biases[1] ...")
-    model.save_model_nce_params(classifier)
+    model.save_model_nce_params(classifier, opts.nce_params_dir)
     tf.logging.info("Save nce weights and biases[1] OK")
 
     tf.logging.info("Save nce weights and biases[2] ...")
-    model.save_model_nce_params_for_openblas_top_k(classifier)
+    model.save_model_nce_params_for_openblas_top_k(
+        classifier, opts.nce_params_dir)
     tf.logging.info("Save nce weights and biases[2] OK")
 
     # evaluate model
@@ -209,9 +218,11 @@ def main(argv):
     dict_meta_dest = os.path.join(assets_dict_dir, input_data.DICT_META)
     saved_dict_bin_dest = os.path.join(assets_dict_dir,
                                        input_data.SAVED_DICT_BIN)
+
     assets_extra = {dict_words_dest: dict_words_src,
                     dict_meta_dest: dict_meta_src,
                     saved_dict_bin_dest: saved_dict_bin_src}
+
     classifier.export_savedmodel(
         opts.export_model_dir,
         serving_input_receiver_fn=input_data.build_serving_input_fn(opts),

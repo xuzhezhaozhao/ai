@@ -48,8 +48,8 @@ def knet_model(features, labels, mode, params):
     feature_columns = params['feature_columns']
     recall_k = params['recall_k']
     dict_dir = params['dict_dir']
-    model_dir = params['model_dir']  # save nce weights and biases
     optimize_level = params['optimize_level']
+    nce_params_dir = params['nce_params_dir']
 
     embeddings = get_embeddings(n_classes, embedding_dim)
     nce_weights, nce_biases = get_nce_weights_and_biases(n_classes,
@@ -85,11 +85,11 @@ def knet_model(features, labels, mode, params):
             if optimize_level == OPTIMIZE_LEVEL_SAVED_NCE_PARAMS:
                 tf.logging.info("Use OPTIMIZE_LEVEL_SAVED_NCE_PARAMS")
                 scores, ids, _ = optimize_level_saved_nce_params(
-                    model_dir, user_vector, recall_k)
+                    nce_params_dir, user_vector, recall_k)
             elif optimize_level == OPTIMIZE_LEVEL_OPENBLAS_TOP_K:
                 tf.logging.info("Use OPTIMIZE_LEVEL_OPENBLAS_TOP_K")
                 scores, ids = optimize_level_openblas_top_k(
-                    model_dir, user_vector, recall_k)
+                    nce_params_dir, user_vector, recall_k)
 
         table = create_index_to_string_table(dict_dir)
         predictions = {
@@ -118,7 +118,7 @@ def knet_model(features, labels, mode, params):
                 # Eval mode only surpport optimize_level_saved_nce_params
                 tf.logging.info("Use OPTIMIZE_LEVEL_SAVED_NCE_PARAMS to eval")
                 scores, ids, logits = optimize_level_saved_nce_params(
-                    model_dir, user_vector, recall_k)
+                    nce_params_dir, user_vector, recall_k)
             else:
                 # No optimize
                 scores = train_scores
@@ -233,13 +233,13 @@ def create_index_to_string_table(dict_dir):
     return table
 
 
-def optimize_level_saved_nce_params(model_dir, user_vector, recall_k):
+def optimize_level_saved_nce_params(nce_params_dir, user_vector, recall_k):
     """Optimize top-K with pre-saved nce weights and biases. Decrease
     delay from 200ms to 30ms per request.
     """
 
     (saved_nce_weights,
-     saved_nce_biases) = load_model_nce_params(model_dir)
+     saved_nce_biases) = load_model_nce_params(nce_params_dir)
     transpose_saved_nce_weights = tf.convert_to_tensor(
         saved_nce_weights.transpose(), dtype=tf.float32,
         name='transpose_saved_nce_weights')
@@ -256,13 +256,13 @@ def optimize_level_saved_nce_params(model_dir, user_vector, recall_k):
     return (scores, ids, logits)
 
 
-def optimize_level_openblas_top_k(model_dir, user_vector, recall_k):
+def optimize_level_openblas_top_k(nce_params_dir, user_vector, recall_k):
     """Optimize using openblas to calculate top-K."""
 
     scores, ids = custom_ops.openblas_top_k(
         input=user_vector, k=recall_k,
-        weights_path=os.path.join(model_dir, NCE_WEIGHTS_BIN_PATH),
-        biases_path=os.path.join(model_dir, NCE_BIASES_BIN_PATH))
+        weights_path=os.path.join(nce_params_dir, NCE_WEIGHTS_BIN_PATH),
+        biases_path=os.path.join(nce_params_dir, NCE_BIASES_BIN_PATH))
     return scores, ids
 
 
@@ -274,23 +274,23 @@ def get_model_nce_weights_and_biases(model):
     return (nce_weights, nce_biases)
 
 
-def save_model_nce_params(model):
+def save_model_nce_params(model, nce_params_dir):
     """Save model nce weights and biases variables."""
 
     nce_weights, nce_biases = get_model_nce_weights_and_biases(model)
     tf.logging.info('save nce_weights = \n{}'.format(nce_weights))
     tf.logging.info('save nce_biases = \n{}'.format(nce_biases))
-    save_weights_path = os.path.join(model.model_dir, SAVE_NCE_WEIGHTS_NAME)
-    save_biases_path = os.path.join(model.model_dir, SAVE_NCE_BIASES_NAME)
+    save_weights_path = os.path.join(nce_params_dir, SAVE_NCE_WEIGHTS_NAME)
+    save_biases_path = os.path.join(nce_params_dir, SAVE_NCE_BIASES_NAME)
     np.save(save_weights_path, nce_weights)
     np.save(save_biases_path, nce_biases)
 
 
-def load_model_nce_params(model_dir):
+def load_model_nce_params(nce_params_dir):
     """Load pre-saved model nce weights and biases."""
 
-    save_weights_path = os.path.join(model_dir, SAVE_NCE_WEIGHTS_NAME)
-    save_biases_path = os.path.join(model_dir, SAVE_NCE_BIASES_NAME)
+    save_weights_path = os.path.join(nce_params_dir, SAVE_NCE_WEIGHTS_NAME)
+    save_biases_path = os.path.join(nce_params_dir, SAVE_NCE_BIASES_NAME)
     nce_weights = np.load(save_weights_path)
     nce_biases = np.load(save_biases_path)
     tf.logging.info('load nce_weights = \n{}'.format(nce_weights))
@@ -311,13 +311,13 @@ def save_numpy_float_array(array, filename):
             f.write(struct.pack('<f', v))
 
 
-def save_model_nce_params_for_openblas_top_k(model):
+def save_model_nce_params_for_openblas_top_k(model, nce_params_dir):
     """Save model nce weights and biases variables for openblas_top_k_ops."""
 
     nce_weights, nce_biases = get_model_nce_weights_and_biases(model)
     tf.logging.info('save nce_weights[openblas] = \n{}'.format(nce_weights))
     tf.logging.info('save nce_biases[openblas] = \n{}'.format(nce_biases))
-    save_weights_path = os.path.join(model.model_dir, NCE_WEIGHTS_BIN_PATH)
-    save_biases_path = os.path.join(model.model_dir, NCE_BIASES_BIN_PATH)
+    save_weights_path = os.path.join(nce_params_dir, NCE_WEIGHTS_BIN_PATH)
+    save_biases_path = os.path.join(nce_params_dir, NCE_BIASES_BIN_PATH)
     save_numpy_float_array(nce_weights, save_weights_path)
     save_numpy_float_array(nce_biases, save_biases_path)

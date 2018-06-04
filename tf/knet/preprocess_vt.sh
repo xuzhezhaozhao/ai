@@ -17,6 +17,7 @@ raw_data_dir=raw_data
 model_dir=`pwd`/video_tab/model_dir
 export_model_dir=`pwd`/video_tab/export_model_dir
 dict_dir=`pwd`/video_tab/dict_dir
+nce_params_dir=`pwd`/nce_params_dir
 
 train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
@@ -81,4 +82,5 @@ python train.py \
     --profile_steps ${profile_steps} \
     --root_ops_path ${root_ops_path} \
     --remove_model_dir ${remove_model_dir} \
-    --optimize_level ${optimize_level}
+    --optimize_level ${optimize_level} \
+    --nce_params_dir ${nce_params_dir}

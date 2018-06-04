@@ -31,3 +31,4 @@ cpp_out
 python_out
 *.log
 dict_dir
+nce_params_dir
