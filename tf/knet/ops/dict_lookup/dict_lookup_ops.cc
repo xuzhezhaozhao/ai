@@ -8,7 +8,7 @@ REGISTER_OP("DictLookup")
     .Output("num_in_dict: int64")
     .SetIsStateful()
     .Attr("dict: tensor")
-    .Attr("ws: int64")
+    .Attr("ws: int")
     .Doc(R"doc(
 )doc");
 
