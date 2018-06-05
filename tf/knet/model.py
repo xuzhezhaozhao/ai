@@ -91,7 +91,6 @@ def knet_model(features, labels, mode, params):
         with tf.name_scope("PredictMode"):
             if optimize_level == OPTIMIZE_LEVEL_SAVED_NCE_PARAMS:
                 tf.logging.info("Use OPTIMIZE_LEVEL_SAVED_NCE_PARAMS")
-                # TODO use export_model assets nce_params_dir
                 scores, ids, _ = optimize_level_saved_nce_params(
                     nce_params_dir, user_vector, recall_k)
             elif optimize_level == OPTIMIZE_LEVEL_OPENBLAS_TOP_K:
@@ -268,10 +267,15 @@ def optimize_level_saved_nce_params(nce_params_dir, user_vector, recall_k):
 def optimize_level_openblas_top_k(nce_params_dir, user_vector, recall_k):
     """Optimize using openblas to calculate top-K."""
 
+    (saved_nce_weights,
+     saved_nce_biases) = load_model_nce_params(nce_params_dir)
+    saved_nce_weights = tf.make_tensor_proto(saved_nce_weights)
+    saved_nce_biases = tf.make_tensor_proto(saved_nce_biases)
+
     scores, ids = custom_ops.openblas_top_k(
         input=user_vector, k=recall_k,
-        weights_path=os.path.join(nce_params_dir, NCE_WEIGHTS_BIN_PATH),
-        biases_path=os.path.join(nce_params_dir, NCE_BIASES_BIN_PATH))
+        weights=saved_nce_weights,
+        biases=saved_nce_biases)
     return scores, ids
 
 

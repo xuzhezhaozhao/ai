@@ -8,8 +8,8 @@ REGISTER_OP("OpenblasTopK")
     .Output("values: float")
     .Output("indices: int32")
     .SetIsStateful()
-    .Attr("weights_path: string")
-    .Attr("biases_path: string")
+    .Attr("weights: tensor")
+    .Attr("biases: tensor")
     .Doc(R"doc(
 )doc");
 

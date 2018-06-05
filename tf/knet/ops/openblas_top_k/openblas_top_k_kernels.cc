@@ -29,40 +29,13 @@ class OpenblasTopKOp : public OpKernel {
  public:
   explicit OpenblasTopKOp(OpKernelConstruction* ctx) : OpKernel(ctx) {
     LOG(ERROR) << "Init OpenblasTopKOp ...";
-    std::string weights_path;
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("weights_path", &weights_path));
+    Tensor weights_tensor;
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("weights", &weights_tensor));
+    LoadWeights(ctx, weights_tensor);
 
-    std::string biases_path;
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("biases_path", &biases_path));
-
-    std::ifstream weights_in(weights_path);
-    OP_REQUIRES(
-        ctx, weights_in.is_open(),
-        errors::Unavailable("'" + weights_path + "'" + " open failed."));
-    weights_.load(weights_in);
-    OP_REQUIRES(ctx, weights_in.good(),
-                errors::Unavailable("'" + weights_path + "'" + " read error."));
-    weights_.convertColMajor();
-    weights_in.close();
-
-    std::ifstream biases_in(biases_path);
-    OP_REQUIRES(ctx, biases_in.is_open(),
-                errors::Unavailable("'" + biases_path + "'" + " open failed."));
-    biases_.load(biases_in);
-    OP_REQUIRES(ctx, biases_in.good(),
-                errors::Unavailable("'" + biases_path + "'" + " read error."));
-    biases_in.close();
-
-    LOG(ERROR) << "Load weights shape: " << weights_.rows() << ", "
-               << weights_.cols();
-    for (int i = 0; i < weights_.size() && i < 50; ++i) {
-      LOG(ERROR) << weights_.data_[i];
-    }
-
-    LOG(ERROR) << "Load biases shape: " << biases_.size();
-    for (int i = 0; i < biases_.size() && i < 20; ++i) {
-      LOG(ERROR) << biases_.data_[i];
-    }
+    Tensor biases_tensor;
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("biases", &biases_tensor));
+    LoadBiases(ctx, biases_tensor);
 
     OP_REQUIRES(
         ctx, weights_.rows() == biases_.size(),
@@ -131,6 +104,45 @@ class OpenblasTopKOp : public OpKernel {
   }
 
  private:
+  void LoadWeights(OpKernelConstruction* ctx, const Tensor& weights_tensor) {
+    auto& weights_shape = weights_tensor.shape();
+    auto flat_weights = weights_tensor.flat<float>();
+    OP_REQUIRES(ctx, TensorShapeUtils::IsMatrix(weights_shape),
+                errors::InvalidArgument("weights expects a Matrix."));
+    int row = weights_shape.dim_size(0);
+    int cols = weights_shape.dim_size(1);
+
+    weights_ = fasttext::Matrix(row, cols);
+    for (int i = 0; i < flat_weights.size(); ++i) {
+      weights_.data_[i] = flat_weights(i);
+    }
+
+    LOG(ERROR) << "Load weights shape: " << weights_.rows() << ", "
+               << weights_.cols();
+    for (int i = 0; i < weights_.size() && i < 50; ++i) {
+      LOG(ERROR) << weights_.data_[i];
+    }
+
+    weights_.convertColMajor();
+  }
+
+  void LoadBiases(OpKernelConstruction* ctx, const Tensor& biases_tensor) {
+    auto& biases_shape = biases_tensor.shape();
+    auto flat_biases = biases_tensor.flat<float>();
+    OP_REQUIRES(ctx, TensorShapeUtils::IsVector(biases_shape),
+                errors::InvalidArgument("biases expects a Vector."));
+    int sz = flat_biases.size();
+    biases_ = fasttext::Vector(sz);
+    for (int i = 0; i < sz; ++i) {
+      biases_.data_[i] = flat_biases(i);
+    }
+
+    LOG(ERROR) << "Load biases shape: " << biases_.size();
+    for (int i = 0; i < biases_.size() && i < 20; ++i) {
+      LOG(ERROR) << biases_.data_[i];
+    }
+  }
+
   fasttext::Matrix weights_;
   fasttext::Vector biases_;
 };
