@@ -89,7 +89,6 @@ def knet_model(features, labels, mode, params):
                     nce_params_dir, user_vector, recall_k)
             elif optimize_level == OPTIMIZE_LEVEL_OPENBLAS_TOP_K:
                 tf.logging.info("Use OPTIMIZE_LEVEL_OPENBLAS_TOP_K")
-                # TODO use export_model assets nce_params_dir
                 scores, ids = optimize_level_openblas_top_k(
                     nce_params_dir, user_vector, recall_k)
 
