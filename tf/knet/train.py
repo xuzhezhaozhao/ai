@@ -192,14 +192,9 @@ def main(argv):
     if not os.path.exists(opts.nce_params_dir):
         os.mkdir(opts.nce_params_dir)
 
-    tf.logging.info("Save nce weights and biases[1] ...")
+    tf.logging.info("Save nce weights and biases ...")
     model.save_model_nce_params(classifier, opts.nce_params_dir)
-    tf.logging.info("Save nce weights and biases[1] OK")
-
-    tf.logging.info("Save nce weights and biases[2] ...")
-    model.save_model_nce_params_for_openblas_top_k(
-        classifier, opts.nce_params_dir)
-    tf.logging.info("Save nce weights and biases[2] OK")
+    tf.logging.info("Save nce weights and biases OK")
 
     # evaluate model
     tf.logging.info("Beginning evaluate model ...")
