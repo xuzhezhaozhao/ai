@@ -23,15 +23,9 @@ NCE_BIASES_NAME = 'nce_biases'
 SAVE_NCE_WEIGHTS_NAME = 'nce_weights.npy'
 SAVE_NCE_BIASES_NAME = 'nce_biases.npy'
 
-# used for openblas_top_k_ops
-NCE_WEIGHTS_BIN_PATH = 'nce_weights.bin'
-NCE_BIASES_BIN_PATH = 'nce_biases.bin'
-
 NCE_PARAM_NAMES = [
     SAVE_NCE_WEIGHTS_NAME,
     SAVE_NCE_BIASES_NAME,
-    NCE_WEIGHTS_BIN_PATH,
-    NCE_BIASES_BIN_PATH
 ]
 
 OPTIMIZE_LEVEL_ZERO = 0
@@ -322,15 +316,3 @@ def save_numpy_float_array(array, filename):
         fl = array.flat
         for v in fl:
             f.write(struct.pack('<f', v))
-
-
-def save_model_nce_params_for_openblas_top_k(model, nce_params_dir):
-    """Save model nce weights and biases variables for openblas_top_k_ops."""
-
-    nce_weights, nce_biases = get_model_nce_weights_and_biases(model)
-    tf.logging.info('save nce_weights[openblas] = \n{}'.format(nce_weights))
-    tf.logging.info('save nce_biases[openblas] = \n{}'.format(nce_biases))
-    save_weights_path = os.path.join(nce_params_dir, NCE_WEIGHTS_BIN_PATH)
-    save_biases_path = os.path.join(nce_params_dir, NCE_BIASES_BIN_PATH)
-    save_numpy_float_array(nce_weights, save_weights_path)
-    save_numpy_float_array(nce_biases, save_biases_path)
