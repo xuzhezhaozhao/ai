@@ -96,14 +96,16 @@ def knet_model(features, labels, mode, params):
         predictions = {
             'class_ids': ids,
             'scores': scores,
-            'words': table.lookup(tf.cast(ids, tf.int64))
+            'words': table.lookup(tf.cast(ids, tf.int64)),
+            'num_in_dict': features[input_data.NUM_IN_DICT_COL]
         }
         export_outputs = {
             'predicts': tf.estimator.export.PredictOutput(
                 outputs={
                     'class_ids': ids,
                     'scores': scores,
-                    'words': table.lookup(tf.cast(ids, tf.int64))
+                    'words': table.lookup(tf.cast(ids, tf.int64)),
+                    'num_in_dict': features[input_data.NUM_IN_DICT_COL]
                 }
             )
         }

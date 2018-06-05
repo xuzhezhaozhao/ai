@@ -10,12 +10,13 @@ import tensorflow as tf
 import custom_ops
 
 
-RECORDS_COL = "records"
-WORDS_COL = "words"
+RECORDS_COL = 'records'
+WORDS_COL = 'words'
+NUM_IN_DICT_COL = 'num_in_dict'
 
-DICT_META = "dict_meta"
-DICT_WORDS = "dict_words"
-SAVED_DICT_BIN = "saved_dict.bin"
+DICT_META = 'dict_meta'
+DICT_WORDS = 'dict_words'
+SAVED_DICT_BIN = 'saved_dict.bin'
 
 DICT_PARAM_NAMES = [
     DICT_META,
@@ -120,16 +121,15 @@ def eval_input_fn(opts, skip_rows=0):
 
 
 def build_serving_input_fn(opts):
-    words_feature = tf.FixedLenFeature(shape=[opts.receive_ws],
-                                       dtype=tf.string)
-
     def serving_input_receiver_fn():
         """An input receiver that expects a serialized tf.Example.
         Note: Set serialized_tf_example shape as [None] to handle variable
         batch size
         """
+
         feature_spec = {
-            WORDS_COL: words_feature,
+            WORDS_COL: tf.FixedLenFeature(shape=[opts.receive_ws],
+                                          dtype=tf.string)
         }
 
         serialized_tf_example = tf.placeholder(dtype=tf.string,
@@ -142,15 +142,15 @@ def build_serving_input_fn(opts):
                  open(os.path.join(opts.dict_dir, DICT_WORDS))
                  if line.strip() != '']
         words.insert(0, '')
-
         tf.logging.info(
             "serving_input_receiver_fn words size = {}".format(len(words)))
-
-        table = tf.contrib.lookup.index_table_from_tensor(
-            mapping=words, default_value=0)
-        ids = table.lookup(features[WORDS_COL])
-        input_ids = ids[:, :opts.ws]
-        features[RECORDS_COL] = input_ids
+        ids, num_in_dict = custom_ops.dict_lookup(
+            input=features[WORDS_COL],
+            dict=tf.make_tensor_proto(words),
+            output_ws=opts.ws
+        )
+        features[RECORDS_COL] = ids
+        features[NUM_IN_DICT_COL] = num_in_dict
 
         return tf.estimator.export.ServingInputReceiver(features,
                                                         receiver_tensors)
