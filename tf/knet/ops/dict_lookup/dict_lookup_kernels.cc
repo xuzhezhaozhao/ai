@@ -22,7 +22,7 @@ class DictLookupOp : public OpKernel {
     OP_REQUIRES_OK(ctx, ctx->GetAttr("dict", &dict_tensor));
     LoadDict(ctx, dict_tensor);
 
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("ws", &output_ws_));
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("output_ws", &output_ws_));
     OP_REQUIRES(ctx, output_ws_ > 0,
                 errors::InvalidArgument(
                     "ws should larger than 0, received ws = ", output_ws_));
