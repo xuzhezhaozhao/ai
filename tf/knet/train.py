@@ -122,7 +122,7 @@ def delete_dir(filename):
 
 
 def check_args(opts):
-    if opts.optimize_level not in model.all_optimize_levels:
+    if opts.optimize_level not in model.ALL_OPTIMIZE_LEVELS:
         raise ValueError(
             "optimaize_level {} not surpported.".format(opts.optimize_level))
 

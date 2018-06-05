@@ -38,7 +38,7 @@ OPTIMIZE_LEVEL_ZERO = 0
 OPTIMIZE_LEVEL_SAVED_NCE_PARAMS = 1
 OPTIMIZE_LEVEL_OPENBLAS_TOP_K = 2
 
-all_optimize_levels = [
+ALL_OPTIMIZE_LEVELS = [
     OPTIMIZE_LEVEL_ZERO,
     OPTIMIZE_LEVEL_SAVED_NCE_PARAMS,
     OPTIMIZE_LEVEL_OPENBLAS_TOP_K,
@@ -91,10 +91,12 @@ def knet_model(features, labels, mode, params):
         with tf.name_scope("PredictMode"):
             if optimize_level == OPTIMIZE_LEVEL_SAVED_NCE_PARAMS:
                 tf.logging.info("Use OPTIMIZE_LEVEL_SAVED_NCE_PARAMS")
+                # TODO use export_model assets nce_params_dir
                 scores, ids, _ = optimize_level_saved_nce_params(
                     nce_params_dir, user_vector, recall_k)
             elif optimize_level == OPTIMIZE_LEVEL_OPENBLAS_TOP_K:
                 tf.logging.info("Use OPTIMIZE_LEVEL_OPENBLAS_TOP_K")
+                # TODO use export_model assets nce_params_dir
                 scores, ids = optimize_level_openblas_top_k(
                     nce_params_dir, user_vector, recall_k)
 
