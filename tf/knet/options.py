@@ -48,6 +48,7 @@ class Options(object):
         self.optimize_level = 1
 
         self.nce_params_dir = ''
+        self.receive_ws = 5
 
     def __str__(self):
         return \
@@ -87,6 +88,7 @@ class Options(object):
         remove_model_dir = {} \n \
         optimize_level = {} \n \
         nce_params_dir = {} \n \
+        receive_ws = {} \n \
         ".format(
                 self.train_data_path,
                 self.eval_data_path,
@@ -122,4 +124,5 @@ class Options(object):
                 self.root_ops_path,
                 self.remove_model_dir,
                 self.optimize_level,
-                self.nce_params_dir)
+                self.nce_params_dir,
+                self.receive_ws)
