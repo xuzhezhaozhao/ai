@@ -56,8 +56,7 @@ class DictLookupOp : public OpKernel {
       int num_in_dict = 0;
       for (int w = 0; w < input_ws; ++w) {
         auto& key = input(batch, w);
-        auto it = mapping_.find(key);
-        if (it != mapping_.end()) {
+        if (IsInDict(key)) {
           ids(batch, num_in_dict) = mapping_[key];
           ++num_in_dict;
           if (num_in_dict >= output_ws_) {
@@ -90,6 +89,14 @@ class DictLookupOp : public OpKernel {
           errors::InvalidArgument("dict key duplicated, key = ", flat_dict(i)));
     }
     LOG(ERROR) << "Load dict OK, dict size = " << mapping_.size();
+  }
+
+  bool IsInDict(const std::string& key) {
+    auto it = mapping_.find(key);
+    if (it != mapping_.end() && it->second != PADDING_INDEX) {
+      return true;
+    }
+    return false;
   }
 
   std::unordered_map<std::string, int64> mapping_;
