@@ -58,7 +58,7 @@ def knet_model(features, labels, mode, params):
 
     # construct network
     input_layer = tf.feature_column.input_layer(features, feature_columns)
-    nonzeros = tf.count_nonzero(input_layer, 1, keepdims=True)
+    nonzeros = tf.count_nonzero(input_layer, 1, keepdims=True)  # [batch, 1]
     nonzeros = tf.maximum(nonzeros, 1)  # avoid divide zero
     embeds = mask_padding_embedding_lookup(embeddings, embedding_dim,
                                            input_layer, PADDING_ID)
