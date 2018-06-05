@@ -49,7 +49,7 @@ class OpenblasTopKOp : public OpKernel {
     const Tensor& input_tensor = ctx->input(0);
     const TensorShape& input_shape = input_tensor.shape();
     OP_REQUIRES(ctx, TensorShapeUtils::IsMatrix(input_shape),
-                errors::InvalidArgument("Arg input expects a [batch]xdim Matrix."));
+                errors::InvalidArgument("input expects a [batch, dim] Matrix."));
     OP_REQUIRES(
         ctx, input_shape.dim_size(0) == 1,
         errors::InvalidArgument("Expect Input tensor's dim 0 be 1, but is ",
