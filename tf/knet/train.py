@@ -128,7 +128,9 @@ def check_args(opts):
         raise ValueError(
             "optimaize_level {} not surpported.".format(opts.optimize_level))
     if opts.ws > opts.receive_ws:
-        raise ValueError("ws is larger than receive_ws")
+        raise ValueError(
+            "ws[{}] should not be larger than receive_ws[{}]".format(
+                opts.ws, opts.receive_ws))
 
 
 def main(argv):
