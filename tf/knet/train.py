@@ -26,7 +26,7 @@ parser.add_argument('--maxn', default=0, type=int, help='')
 parser.add_argument('--minn', default=0, type=int, help='')
 parser.add_argument('--word_ngrams', default=1, type=int, help='')
 parser.add_argument('--bucket', default=2000000, type=int, help='')
-parser.add_argument('--ws', default=20, type=int, help='window size')
+parser.add_argument('--ws', default=5, type=int, help='window size')
 parser.add_argument('--min_count', default=50, type=int, help='')
 parser.add_argument('--t', default=0.0001, type=float, help='')
 parser.add_argument('--verbose', default=1, type=int, help='')
@@ -53,8 +53,8 @@ parser.add_argument('--profile_steps', default=100, type=int, help='')
 parser.add_argument('--root_ops_path', default='', type=str, help='')
 parser.add_argument('--remove_model_dir', default=1, type=int, help='')
 parser.add_argument('--optimize_level', default=1, type=int, help='')
-
 parser.add_argument('--nce_params_dir', default='', type=str, help='')
+parser.add_argument('--receive_ws', default=5, type=int, help='')
 
 opts = Options()
 
@@ -106,6 +106,8 @@ def parse_args(argv):
 
     opts.nce_params_dir = args.nce_params_dir
 
+    opts.receive_ws = args.receive_ws
+
     tf.logging.info(opts)
 
 
@@ -125,6 +127,8 @@ def check_args(opts):
     if opts.optimize_level not in model.ALL_OPTIMIZE_LEVELS:
         raise ValueError(
             "optimaize_level {} not surpported.".format(opts.optimize_level))
+    if opts.ws > opts.receive_ws:
+        raise ValueError("ws is larger than receive_ws")
 
 
 def main(argv):

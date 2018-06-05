@@ -27,7 +27,9 @@ def run():
     request.model_spec.signature_name = 'predicts'
     input_name = 'examples'
 
-    x = ['' for i in range(20)]
+    ws = 100
+
+    x = ['' for i in range(ws)]
     x[0] = '6835a4b20ec735ae'
     example1 = tf.train.Example(
         features=tf.train.Features(
@@ -37,7 +39,7 @@ def run():
         )
     ).SerializeToString()
 
-    x = ['' for i in range(20)]
+    x = ['' for i in range(ws)]
     x[0] = '5955a4f20fd540aa'
     example2 = tf.train.Example(
         features=tf.train.Features(

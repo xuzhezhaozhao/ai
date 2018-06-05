@@ -120,7 +120,8 @@ def eval_input_fn(opts, skip_rows=0):
 
 
 def build_serving_input_fn(opts):
-    words_feature = tf.FixedLenFeature(shape=[opts.ws], dtype=tf.string)
+    words_feature = tf.FixedLenFeature(shape=[opts.receive_ws],
+                                       dtype=tf.string)
 
     def serving_input_receiver_fn():
         """An input receiver that expects a serialized tf.Example.
@@ -148,7 +149,8 @@ def build_serving_input_fn(opts):
         table = tf.contrib.lookup.index_table_from_tensor(
             mapping=words, default_value=0)
         ids = table.lookup(features[WORDS_COL])
-        features[RECORDS_COL] = ids
+        input_ids = ids[:, :opts.ws]
+        features[RECORDS_COL] = input_ids
 
         return tf.estimator.export.ServingInputReceiver(features,
                                                         receiver_tensors)
