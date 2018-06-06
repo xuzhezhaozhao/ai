@@ -36,10 +36,12 @@ class PredictionClient {
     auto feature = features->mutable_feature();
     ::tensorflow::Feature words;
     auto bytes_list = words.mutable_bytes_list();
-    for (int i = 0; i < 20; ++i) {
+    const int ws = 100;
+
+    for (int i = 0; i < ws; ++i) {
       bytes_list->add_value("");
     }
-    bytes_list->set_value(0, "8575a5732a0234aa");
+    bytes_list->set_value(0, "6215a4e92df895aa");
     (*feature)["words"] = words;
 
     std::string serialized;
@@ -64,8 +66,8 @@ class PredictionClient {
     ClientContext context;
     std::cout << "Predict ..." << std::endl;
     gpr_timespec timespec;
-    timespec.tv_sec = 0;  //设置阻塞时间为2秒
-    timespec.tv_nsec = 10*1000*1000; // ms
+    timespec.tv_sec = 0;
+    timespec.tv_nsec = 10 * 1000 * 1000;  // ms
     timespec.clock_type = GPR_TIMESPAN;
     context.set_deadline(timespec);
     Status status = stub_->Predict(&context, request, &response);
@@ -73,16 +75,21 @@ class PredictionClient {
       std::cout << "OK" << std::endl;
       std::cout << response.DebugString() << std::endl;
     } else {
-      std::cout << status.error_code() << ": " << status.error_message()
-                << std::endl;
+      std::cout << "error: code = " << status.error_code() << ": "
+                << status.error_message() << std::endl;
+      exit(-1);
     }
     auto& outputs = response.outputs();
 
     auto& scores = outputs.at("scores");
     auto& rowkeys = outputs.at("words");
+    auto& num_in_dict = outputs.at("num_in_dict");
+
     std::vector<std::pair<float, std::string>> recalled;
-    for (int i = 0; i < scores.float_val_size(); ++i) {
-      recalled.push_back({ scores.float_val(i), rowkeys.string_val(i) });
+    if (num_in_dict.int64_val_size() > 0 && num_in_dict.int64_val(0) > 0) {
+      for (int i = 0; i < scores.float_val_size(); ++i) {
+        recalled.push_back({scores.float_val(i), rowkeys.string_val(i)});
+      }
     }
 
     std::cout << "Predictions: " << std::endl;
