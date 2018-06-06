@@ -30,8 +30,6 @@ remove_model_dir=1
 
 optimize_level=2
 
-nce_params_dir=`pwd`/nce_params_dir
-
 receive_ws=100
 
 python train.py \
@@ -69,5 +67,4 @@ python train.py \
     --root_ops_path ${root_ops_path} \
     --remove_model_dir ${remove_model_dir} \
     --optimize_level ${optimize_level} \
-    --nce_params_dir ${nce_params_dir} \
     --receive_ws ${receive_ws}

@@ -7,28 +7,15 @@ from __future__ import print_function
 
 import os
 import tensorflow as tf
+
+import model_keys
 import custom_ops
-
-
-RECORDS_COL = 'records'
-WORDS_COL = 'words'
-NUM_IN_DICT_COL = 'num_in_dict'
-
-DICT_META = 'dict_meta'
-DICT_WORDS = 'dict_words'
-SAVED_DICT_BIN = 'saved_dict.bin'
-
-DICT_PARAM_NAMES = [
-    DICT_META,
-    DICT_WORDS,
-    SAVED_DICT_BIN,
-]
 
 
 def feature_columns(opts):
     my_feature_columns = []
     my_feature_columns.append(tf.feature_column.numeric_column(
-        key=RECORDS_COL, shape=[opts.ws], dtype=tf.int32))
+        key=model_keys.RECORDS_COL, shape=[opts.ws], dtype=tf.int32))
     return my_feature_columns
 
 
@@ -59,7 +46,7 @@ def init_dict(opts):
 
 def parse_dict_meta(opts):
     dict_meta = {}
-    for line in open(os.path.join(opts.dict_dir, DICT_META)):
+    for line in open(os.path.join(opts.dict_dir, model_keys.DICT_META)):
         tokens = line.strip().split('\t')
         if len(tokens) != 2:
             tf.logging.info("parse dict meta error line: {}".format(line))
@@ -94,7 +81,7 @@ def generate_example(line, opts):
         label=opts.label
     )
     dataset = tf.data.Dataset.from_tensor_slices(
-        ({RECORDS_COL: records}, labels))
+        ({model_keys.RECORDS_COL: records}, labels))
     return dataset
 
 
@@ -128,8 +115,8 @@ def build_serving_input_fn(opts):
         """
 
         feature_spec = {
-            WORDS_COL: tf.FixedLenFeature(shape=[opts.receive_ws],
-                                          dtype=tf.string)
+            model_keys.WORDS_COL: tf.FixedLenFeature(shape=[opts.receive_ws],
+                                                     dtype=tf.string)
         }
 
         serialized_tf_example = tf.placeholder(dtype=tf.string,
@@ -139,18 +126,18 @@ def build_serving_input_fn(opts):
         features = tf.parse_example(serialized_tf_example, feature_spec)
 
         words = [line.strip() for line in
-                 open(os.path.join(opts.dict_dir, DICT_WORDS))
+                 open(os.path.join(opts.dict_dir, model_keys.DICT_WORDS))
                  if line.strip() != '']
         words.insert(0, '')
         tf.logging.info(
             "serving_input_receiver_fn words size = {}".format(len(words)))
         ids, num_in_dict = custom_ops.dict_lookup(
-            input=features[WORDS_COL],
+            input=features[model_keys.WORDS_COL],
             dict=tf.make_tensor_proto(words),
             output_ws=opts.ws
         )
-        features[RECORDS_COL] = ids
-        features[NUM_IN_DICT_COL] = num_in_dict
+        features[model_keys.RECORDS_COL] = ids
+        features[model_keys.NUM_IN_DICT_COL] = num_in_dict
 
         return tf.estimator.export.ServingInputReceiver(features,
                                                         receiver_tensors)

@@ -11,6 +11,7 @@ import os
 import argparse
 import tensorflow as tf
 
+import model_keys
 import model
 import input_data
 import hook
@@ -53,7 +54,6 @@ parser.add_argument('--profile_steps', default=100, type=int, help='')
 parser.add_argument('--root_ops_path', default='', type=str, help='')
 parser.add_argument('--remove_model_dir', default=1, type=int, help='')
 parser.add_argument('--optimize_level', default=1, type=int, help='')
-parser.add_argument('--nce_params_dir', default='', type=str, help='')
 parser.add_argument('--receive_ws', default=5, type=int, help='')
 
 opts = Options()
@@ -104,8 +104,6 @@ def parse_args(argv):
     opts.remove_model_dir = bool(args.remove_model_dir)
     opts.optimize_level = args.optimize_level
 
-    opts.nce_params_dir = args.nce_params_dir
-
     opts.receive_ws = args.receive_ws
 
     tf.logging.info(opts)
@@ -124,7 +122,7 @@ def delete_dir(filename):
 
 
 def check_args(opts):
-    if opts.optimize_level not in model.ALL_OPTIMIZE_LEVELS:
+    if opts.optimize_level not in model_keys.ALL_OPTIMIZE_LEVELS:
         raise ValueError(
             "optimaize_level {} not surpported.".format(opts.optimize_level))
     if opts.ws > opts.receive_ws:
@@ -174,7 +172,6 @@ def main(argv):
             'recall_k': opts.recall_k,
             'dict_dir': opts.dict_dir,
             'optimize_level': opts.optimize_level,
-            'nce_params_dir': opts.nce_params_dir
         })
 
     # Create profile hooks
@@ -195,11 +192,11 @@ def main(argv):
     tf.logging.info("Train model OK")
 
     # save nce params
-    if not os.path.exists(opts.nce_params_dir):
-        os.mkdir(opts.nce_params_dir)
+    if not os.path.exists(opts.dict_dir):
+        os.mkdir(opts.dict_dir)
 
     tf.logging.info("Save nce weights and biases ...")
-    model.save_model_nce_params(classifier, opts.nce_params_dir)
+    model.save_model_nce_params(classifier, opts.dict_dir)
     tf.logging.info("Save nce weights and biases OK")
 
     # evaluate model
@@ -211,15 +208,15 @@ def main(argv):
     # export model
     tf.logging.info("Beginning export model ...")
     assets_dict_dir = os.path.basename(opts.dict_dir)
-    assets_nce_params_dir = os.path.basename(opts.nce_params_dir)
+    assets_nce_params_dir = os.path.basename(opts.dict_dir)
     dict_params = {}
     nce_params = {}
-    for name in input_data.DICT_PARAM_NAMES:
+    for name in model_keys.DICT_PARAM_NAMES:
         src = os.path.join(opts.dict_dir, name)
         dest = os.path.join(assets_dict_dir, name)
         dict_params[dest] = src
-    for name in model.NCE_PARAM_NAMES:
-        src = os.path.join(opts.nce_params_dir, name)
+    for name in model_keys.NCE_PARAM_NAMES:
+        src = os.path.join(opts.dict_dir, name)
         dest = os.path.join(assets_nce_params_dir, name)
         nce_params[dest] = src
 
