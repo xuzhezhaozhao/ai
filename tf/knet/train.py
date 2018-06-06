@@ -55,6 +55,7 @@ parser.add_argument('--root_ops_path', default='', type=str, help='')
 parser.add_argument('--remove_model_dir', default=1, type=int, help='')
 parser.add_argument('--optimize_level', default=1, type=int, help='')
 parser.add_argument('--receive_ws', default=5, type=int, help='')
+parser.add_argument('--use_subset', default=0, type=int, help='')
 
 opts = Options()
 
@@ -105,6 +106,7 @@ def parse_args(argv):
     opts.optimize_level = args.optimize_level
 
     opts.receive_ws = args.receive_ws
+    opts.use_subset = bool(args.use_subset)
 
     tf.logging.info(opts)
 
@@ -172,6 +174,7 @@ def main(argv):
             'recall_k': opts.recall_k,
             'dict_dir': opts.dict_dir,
             'optimize_level': opts.optimize_level,
+            'use_subset': opts.use_subset
         })
 
     # Create profile hooks
@@ -198,6 +201,11 @@ def main(argv):
     tf.logging.info("Save nce weights and biases ...")
     model.save_model_nce_params(classifier, opts.dict_dir)
     tf.logging.info("Save nce weights and biases OK")
+
+    if opts.use_subset:
+        tf.logging.info("Save subset dict and nce params ...")
+        model.filter_and_save_subset(opts.dict_dir)
+        tf.logging.info("Save subset dict and nce params OK")
 
     # evaluate model
     tf.logging.info("Beginning evaluate model ...")

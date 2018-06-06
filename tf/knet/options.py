@@ -48,6 +48,7 @@ class Options(object):
         self.optimize_level = 1
 
         self.receive_ws = 5
+        self.use_subset = False
 
     def __str__(self):
         return \
@@ -87,6 +88,7 @@ class Options(object):
         remove_model_dir = {} \n \
         optimize_level = {} \n \
         receive_ws = {} \n \
+        use_subset = {} \n \
         ".format(
                 self.train_data_path,
                 self.eval_data_path,
@@ -122,4 +124,5 @@ class Options(object):
                 self.root_ops_path,
                 self.remove_model_dir,
                 self.optimize_level,
-                self.receive_ws)
+                self.receive_ws,
+                self.use_subset)
