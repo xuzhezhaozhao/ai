@@ -46,7 +46,7 @@ profile_steps=100
 root_ops_path=lib/
 remove_model_dir=1
 
-optimize_level=2
+optimize_level=1
 
 receive_ws=100
 
