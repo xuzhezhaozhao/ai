@@ -32,6 +32,8 @@ optimize_level=2
 
 receive_ws=100
 
+use_subset=1
+
 python train.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
@@ -67,4 +69,5 @@ python train.py \
     --root_ops_path ${root_ops_path} \
     --remove_model_dir ${remove_model_dir} \
     --optimize_level ${optimize_level} \
-    --receive_ws ${receive_ws}
+    --receive_ws ${receive_ws} \
+    --use_subset ${use_subset}

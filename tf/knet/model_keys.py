@@ -9,6 +9,8 @@ NCE_BIASES_NAME = 'nce_biases'
 # filename must end with .npy
 SAVE_NCE_WEIGHTS_NAME = 'nce_weights.npy'
 SAVE_NCE_BIASES_NAME = 'nce_biases.npy'
+SAVE_NCE_WEIGHTS_SUBSET_NAME = 'nce_weights_subset.npy'
+SAVE_NCE_BIASES_SUBSET_NAME = 'nce_biases_subset.npy'
 
 NCE_PARAM_NAMES = [
     SAVE_NCE_WEIGHTS_NAME,
@@ -33,6 +35,7 @@ NUM_IN_DICT_COL = 'num_in_dict'
 DICT_META = 'dict_meta'
 DICT_WORDS = 'dict_words'
 SAVED_DICT_BIN = 'saved_dict.bin'
+DICT_WORDS_SUBSET = 'dict_words_subset'
 
 DICT_PARAM_NAMES = [
     DICT_META,
