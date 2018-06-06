@@ -11,32 +11,8 @@ import struct
 import tensorflow as tf
 import numpy as np
 
-import input_data
+import model_keys
 import custom_ops
-
-PADDING_ID = 0
-
-NCE_WEIGHTS_NAME = 'nce_weights'
-NCE_BIASES_NAME = 'nce_biases'
-
-# filename must end with .npy
-SAVE_NCE_WEIGHTS_NAME = 'nce_weights.npy'
-SAVE_NCE_BIASES_NAME = 'nce_biases.npy'
-
-NCE_PARAM_NAMES = [
-    SAVE_NCE_WEIGHTS_NAME,
-    SAVE_NCE_BIASES_NAME,
-]
-
-OPTIMIZE_LEVEL_ZERO = 0
-OPTIMIZE_LEVEL_SAVED_NCE_PARAMS = 1
-OPTIMIZE_LEVEL_OPENBLAS_TOP_K = 2
-
-ALL_OPTIMIZE_LEVELS = [
-    OPTIMIZE_LEVEL_ZERO,
-    OPTIMIZE_LEVEL_SAVED_NCE_PARAMS,
-    OPTIMIZE_LEVEL_OPENBLAS_TOP_K,
-]
 
 
 def knet_model(features, labels, mode, params):
@@ -50,7 +26,6 @@ def knet_model(features, labels, mode, params):
     recall_k = params['recall_k']
     dict_dir = params['dict_dir']
     optimize_level = params['optimize_level']
-    nce_params_dir = params['nce_params_dir']
 
     embeddings = get_embeddings(n_classes, embedding_dim)
     nce_weights, nce_biases = get_nce_weights_and_biases(n_classes,
@@ -61,7 +36,7 @@ def knet_model(features, labels, mode, params):
     nonzeros = tf.count_nonzero(input_layer, 1, keepdims=True)  # [batch, 1]
     nonzeros = tf.maximum(nonzeros, 1)  # avoid divide zero
     embeds = mask_padding_embedding_lookup(embeddings, embedding_dim,
-                                           input_layer, PADDING_ID)
+                                           input_layer, model_keys.PADDING_ID)
     embeds_sum = tf.reduce_sum(embeds, 1)
     embeds_mean = embeds_sum / tf.cast(nonzeros, tf.float32)
 
@@ -83,28 +58,28 @@ def knet_model(features, labels, mode, params):
     # Compute predictions.
     if mode == tf.estimator.ModeKeys.PREDICT:
         with tf.name_scope("PredictMode"):
-            if optimize_level == OPTIMIZE_LEVEL_SAVED_NCE_PARAMS:
+            if optimize_level == model_keys.OPTIMIZE_LEVEL_SAVED_NCE_PARAMS:
                 tf.logging.info("Use OPTIMIZE_LEVEL_SAVED_NCE_PARAMS")
                 scores, ids, _ = optimize_level_saved_nce_params(
-                    nce_params_dir, user_vector, recall_k)
-            elif optimize_level == OPTIMIZE_LEVEL_OPENBLAS_TOP_K:
+                    dict_dir, user_vector, recall_k)
+            elif optimize_level == model_keys.OPTIMIZE_LEVEL_OPENBLAS_TOP_K:
                 tf.logging.info("Use OPTIMIZE_LEVEL_OPENBLAS_TOP_K")
                 scores, ids = optimize_level_openblas_top_k(
-                    nce_params_dir, user_vector, recall_k)
+                    dict_dir, user_vector, recall_k)
 
         table = create_index_to_string_table(dict_dir)
         predictions = {
             'class_ids': ids,
             'scores': scores,
             'words': table.lookup(tf.cast(ids, tf.int64)),
-            'num_in_dict': features[input_data.NUM_IN_DICT_COL]
+            'num_in_dict': features[model_keys.NUM_IN_DICT_COL]
         }
         export_outputs = {
             'predicts': tf.estimator.export.PredictOutput(
                 outputs={
                     'scores': scores,
                     'words': table.lookup(tf.cast(ids, tf.int64)),
-                    'num_in_dict': features[input_data.NUM_IN_DICT_COL]
+                    'num_in_dict': features[model_keys.NUM_IN_DICT_COL]
                 }
             )
         }
@@ -116,11 +91,11 @@ def knet_model(features, labels, mode, params):
 
     if mode == tf.estimator.ModeKeys.EVAL:
         with tf.name_scope("EvalMode"):
-            if optimize_level != OPTIMIZE_LEVEL_ZERO:
+            if optimize_level != model_keys.OPTIMIZE_LEVEL_ZERO:
                 # Eval mode only surpport optimize_level_saved_nce_params
                 tf.logging.info("Use OPTIMIZE_LEVEL_SAVED_NCE_PARAMS to eval")
                 scores, ids, logits = optimize_level_saved_nce_params(
-                    nce_params_dir, user_vector, recall_k)
+                    dict_dir, user_vector, recall_k)
             else:
                 # No optimize
                 scores = train_scores
@@ -157,11 +132,11 @@ def get_nce_weights_and_biases(n_classes, embedding_dim):
     with tf.variable_scope("nce_layer", reuse=tf.AUTO_REUSE):
         # Construct the variables for the NCE loss
         nce_weights = tf.get_variable(
-            NCE_WEIGHTS_NAME,
+            model_keys.NCE_WEIGHTS_NAME,
             initializer=tf.truncated_normal(
                 [n_classes, embedding_dim],
                 stddev=1.0 / math.sqrt(embedding_dim)))
-        nce_biases = tf.get_variable(NCE_BIASES_NAME,
+        nce_biases = tf.get_variable(model_keys.NCE_BIASES_NAME,
                                      initializer=tf.zeros([n_classes]),
                                      trainable=False)
     return nce_weights, nce_biases
@@ -223,7 +198,7 @@ def add_metrics_summary(metrics):
 def create_index_to_string_table(dict_dir):
     """Create index to string[rowkey] table."""
 
-    dict_words_path = os.path.join(dict_dir, input_data.DICT_WORDS)
+    dict_words_path = os.path.join(dict_dir, model_keys.DICT_WORDS)
     words = [line.strip() for line in open(dict_words_path)
              if line.strip() != '']
     words.insert(0, '')
@@ -234,13 +209,13 @@ def create_index_to_string_table(dict_dir):
     return table
 
 
-def optimize_level_saved_nce_params(nce_params_dir, user_vector, recall_k):
+def optimize_level_saved_nce_params(dict_dir, user_vector, recall_k):
     """Optimize top-K with pre-saved nce weights and biases. Decrease
     delay from 200ms to 30ms per request.
     """
 
     (saved_nce_weights,
-     saved_nce_biases) = load_model_nce_params(nce_params_dir)
+     saved_nce_biases) = load_model_nce_params(dict_dir)
     transpose_saved_nce_weights = tf.convert_to_tensor(
         saved_nce_weights.transpose(), dtype=tf.float32,
         name='transpose_saved_nce_weights')
@@ -257,11 +232,11 @@ def optimize_level_saved_nce_params(nce_params_dir, user_vector, recall_k):
     return (scores, ids, logits)
 
 
-def optimize_level_openblas_top_k(nce_params_dir, user_vector, recall_k):
+def optimize_level_openblas_top_k(dict_dir, user_vector, recall_k):
     """Optimize using openblas to calculate top-K."""
 
     (saved_nce_weights,
-     saved_nce_biases) = load_model_nce_params(nce_params_dir)
+     saved_nce_biases) = load_model_nce_params(dict_dir)
     saved_nce_weights = tf.make_tensor_proto(saved_nce_weights)
     saved_nce_biases = tf.make_tensor_proto(saved_nce_biases)
 
@@ -275,28 +250,32 @@ def optimize_level_openblas_top_k(nce_params_dir, user_vector, recall_k):
 def get_model_nce_weights_and_biases(model):
     """Get nce weights and biases variables from estimator model"""
 
-    nce_weights = model.get_variable_value('nce_layer/' + NCE_WEIGHTS_NAME)
-    nce_biases = model.get_variable_value('nce_layer/' + NCE_BIASES_NAME)
+    nce_weights = model.get_variable_value(
+        'nce_layer/' + model_keys.NCE_WEIGHTS_NAME)
+    nce_biases = model.get_variable_value(
+        'nce_layer/' + model_keys.NCE_BIASES_NAME)
     return (nce_weights, nce_biases)
 
 
-def save_model_nce_params(model, nce_params_dir):
+def save_model_nce_params(model, dict_dir):
     """Save model nce weights and biases variables."""
 
     nce_weights, nce_biases = get_model_nce_weights_and_biases(model)
     tf.logging.info('save nce_weights = \n{}'.format(nce_weights))
     tf.logging.info('save nce_biases = \n{}'.format(nce_biases))
-    save_weights_path = os.path.join(nce_params_dir, SAVE_NCE_WEIGHTS_NAME)
-    save_biases_path = os.path.join(nce_params_dir, SAVE_NCE_BIASES_NAME)
+    save_weights_path = os.path.join(
+        dict_dir, model_keys.SAVE_NCE_WEIGHTS_NAME)
+    save_biases_path = os.path.join(dict_dir, model_keys.SAVE_NCE_BIASES_NAME)
     np.save(save_weights_path, nce_weights)
     np.save(save_biases_path, nce_biases)
 
 
-def load_model_nce_params(nce_params_dir):
+def load_model_nce_params(dict_dir):
     """Load pre-saved model nce weights and biases."""
 
-    save_weights_path = os.path.join(nce_params_dir, SAVE_NCE_WEIGHTS_NAME)
-    save_biases_path = os.path.join(nce_params_dir, SAVE_NCE_BIASES_NAME)
+    save_weights_path = os.path.join(
+        dict_dir, model_keys.SAVE_NCE_WEIGHTS_NAME)
+    save_biases_path = os.path.join(dict_dir, model_keys.SAVE_NCE_BIASES_NAME)
     nce_weights = np.load(save_weights_path)
     nce_biases = np.load(save_biases_path)
     tf.logging.info('load nce_weights = \n{}'.format(nce_weights))
