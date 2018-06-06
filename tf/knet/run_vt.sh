@@ -3,7 +3,7 @@
 MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
-find log/* -mtime +2 -exec rm -rf {} \;
+find log/* -mtime +60 -exec rm -rf {} \;
 ts=`date +%Y%m%d%H%M%S`
 
 vt_log=log/vt.log.${ts}
