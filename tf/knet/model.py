@@ -346,19 +346,3 @@ def filter_and_save_subset(dict_dir):
             subset_weights)
     np.save(os.path.join(dict_dir, model_keys.SAVE_NCE_BIASES_SUBSET_NAME),
             subset_biases)
-
-
-def load_model_nce_params_subset(dict_dir):
-    """Load pre-saved model nce weights and biases subset."""
-
-    subset_weights_path = os.path.join(
-        dict_dir, model_keys.SAVE_NCE_WEIGHTS_SUBSET_NAME)
-    subset_biases_path = os.path.join(dict_dir,
-                                      model_keys.SAVE_NCE_BIASES_SUBSET_NAME)
-    subset_nce_weights = np.load(subset_weights_path)
-    subset_nce_biases = np.load(subset_biases_path)
-    tf.logging.info(
-        'load subset nce_weights = \n{}'.format(subset_nce_weights))
-    tf.logging.info('load subset nce_biases = \n{}'.format(subset_nce_biases))
-
-    return (subset_nce_weights, subset_nce_biases)
