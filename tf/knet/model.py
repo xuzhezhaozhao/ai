@@ -18,11 +18,12 @@ import custom_ops
 def knet_model(features, labels, mode, params):
     """ build model graph """
 
+    feature_columns = params['feature_columns']
+    hidden_units = params['hidden_units']
     n_classes = params['n_classes']
     embedding_dim = params['embedding_dim']
     lr = params['learning_rate']
     num_sampled = params['num_sampled']
-    feature_columns = params['feature_columns']
     recall_k = params['recall_k']
     dict_dir = params['dict_dir']
     optimize_level = params['optimize_level']
@@ -41,7 +42,7 @@ def knet_model(features, labels, mode, params):
     embeds_mean = embeds_sum / tf.cast(nonzeros, tf.float32)
 
     hidden = embeds_mean
-    for units in params['hidden_units']:
+    for units in hidden_units:
         hidden = tf.layers.dense(hidden, units=units, activation=tf.nn.relu,
                                  name="fc_{}".format(units))
     user_vector = tf.layers.dense(hidden, embedding_dim, activation=None,

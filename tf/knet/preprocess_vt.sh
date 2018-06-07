@@ -27,7 +27,7 @@ min_count=100
 batch_size=1024
 num_sampled=10
 epoch=1
-hidden_units="256,128"
+hidden_units='256,128'
 prefetch_size=10000
 
 max_train_steps=-1
@@ -69,7 +69,7 @@ python train.py \
     --batch_size ${batch_size} \
     --num_sampled ${num_sampled} \
     --epoch ${epoch} \
-    --hidden_units ${hidden_units} \
+    --hidden_units "${hidden_units}" \
     --model_dir ${model_dir} \
     --export_model_dir ${export_model_dir} \
     --prefetch_size ${prefetch_size} \
