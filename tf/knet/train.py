@@ -131,6 +131,8 @@ def check_args(opts):
         raise ValueError(
             "ws[{}] should not be larger than receive_ws[{}]".format(
                 opts.ws, opts.receive_ws))
+    if len([u for u in opts.hidden_units if u <= 0]) > 0:
+        raise ValueError("hidden_units contain unit <= 0")
 
 
 def main(argv):
