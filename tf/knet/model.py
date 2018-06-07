@@ -29,8 +29,8 @@ def knet_model(features, labels, mode, params):
     use_subset = params['use_subset']
 
     embeddings = get_embeddings(n_classes, embedding_dim)
-    nce_weights, nce_biases = get_nce_weights_and_biases(n_classes,
-                                                         embedding_dim)
+    (nce_weights,
+     nce_biases) = get_nce_weights_and_biases(n_classes, embedding_dim)
 
     input_layer = tf.feature_column.input_layer(features, feature_columns)
     nonzeros = tf.count_nonzero(input_layer, 1, keepdims=True)  # [batch, 1]
