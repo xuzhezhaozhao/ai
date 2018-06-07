@@ -19,29 +19,35 @@ def feature_columns(opts):
     return my_feature_columns
 
 
+def pack_fasttext_params(opts):
+    params = dict()
+    params['train_data_path'] = opts.train_data_path
+    params['dict_dir'] = opts.dict_dir
+    params['dim'] = opts.dim
+    params['maxn'] = opts.maxn
+    params['minn'] = opts.minn
+    params['word_ngrams'] = opts.word_ngrams
+    params['bucket'] = opts.bucket
+    params['ws'] = opts.ws
+    params['min_count'] = opts.min_count
+    params['t'] = opts.t
+    params['verbose'] = opts.verbose
+    params['min_count_label'] = opts.min_count_label
+    params['label'] = opts.label
+
+    return params
+
+
 def init_dict(opts):
     if opts.use_saved_dict:
         return
 
-    dummy1, dummy2 = custom_ops.fasttext_example_generate(
-        train_data_path=opts.train_data_path,
-        input="",
-        use_saved_dict=False,
-        dict_dir=opts.dict_dir,
-        dim=opts.dim,
-        maxn=opts.maxn,
-        minn=opts.minn,
-        word_ngrams=opts.word_ngrams,
-        bucket=opts.bucket,
-        ws=opts.ws,
-        min_count=opts.min_count,
-        t=opts.t,
-        verbose=opts.verbose,
-        min_count_label=opts.min_count_label,
-        label=opts.label
-    )
+    params = pack_fasttext_params(opts)
+    params['input'] = ''
+    params['use_saved_dict'] = False
+    dummy = custom_ops.fasttext_example_generate(**params)
     with tf.Session() as sess:
-        sess.run(dummy1)
+        sess.run(dummy)
 
 
 def parse_dict_meta(opts):
@@ -63,23 +69,11 @@ def generate_example(line, opts):
         sess.run(it.initializer)
         sess.run(it.get_next())
     """
-    records, labels = custom_ops.fasttext_example_generate(
-        input=line,
-        train_data_path=opts.train_data_path,
-        use_saved_dict=True,
-        dict_dir=opts.dict_dir,
-        dim=opts.dim,
-        maxn=opts.maxn,
-        minn=opts.minn,
-        word_ngrams=opts.word_ngrams,
-        bucket=opts.bucket,
-        ws=opts.ws,
-        min_count=opts.min_count,
-        t=opts.t,
-        verbose=opts.verbose,
-        min_count_label=opts.min_count_label,
-        label=opts.label
-    )
+
+    params = pack_fasttext_params(opts)
+    params['input'] = line
+    params['use_saved_dict'] = True
+    records, labels = custom_ops.fasttext_example_generate(**params)
     dataset = tf.data.Dataset.from_tensor_slices(
         ({model_keys.RECORDS_COL: records}, labels))
     return dataset
