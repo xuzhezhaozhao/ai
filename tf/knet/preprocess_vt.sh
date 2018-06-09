@@ -51,6 +51,8 @@ receive_ws=100
 
 use_subset=1
 
+dropout=0.0
+
 python train.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
@@ -87,4 +89,5 @@ python train.py \
     --remove_model_dir ${remove_model_dir} \
     --optimize_level ${optimize_level} \
     --receive_ws ${receive_ws} \
-    --use_subset ${use_subset}
+    --use_subset ${use_subset} \
+    --dropout ${dropout}
