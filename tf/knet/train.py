@@ -56,6 +56,7 @@ parser.add_argument('--remove_model_dir', default=1, type=int, help='')
 parser.add_argument('--optimize_level', default=1, type=int, help='')
 parser.add_argument('--receive_ws', default=5, type=int, help='')
 parser.add_argument('--use_subset', default=0, type=int, help='')
+parser.add_argument('--drop_out', default=0.1, type=float, help='')
 
 opts = Options()
 
@@ -107,6 +108,7 @@ def parse_args(argv):
 
     opts.receive_ws = args.receive_ws
     opts.use_subset = bool(args.use_subset)
+    opts.drop_out = args.drop_out
 
     tf.logging.info(opts)
 
@@ -123,7 +125,7 @@ def delete_dir(filename):
                 "'{}' exists and not a directory.".format(filename))
 
 
-def check_args(opts):
+def validate_args(opts):
     if opts.optimize_level not in model_keys.ALL_OPTIMIZE_LEVELS:
         raise ValueError(
             "optimaize_level {} not surpported.".format(opts.optimize_level))
@@ -133,11 +135,13 @@ def check_args(opts):
                 opts.ws, opts.receive_ws))
     if len([u for u in opts.hidden_units if u <= 0]) > 0:
         raise ValueError("hidden_units contain unit <= 0")
+    if opts.drop_out < 0.0:
+        raise ValueError("drop_out should not less than 0")
 
 
 def main(argv):
     parse_args(argv)
-    check_args(opts)
+    validate_args(opts)
 
     if opts.remove_model_dir:
         delete_dir(opts.model_dir)
@@ -164,7 +168,7 @@ def main(argv):
         keep_checkpoint_every_n_hours=10000,
         log_step_count_steps=opts.log_step_count_steps)
     classifier = tf.estimator.Estimator(
-        model_fn=model.knet_model,
+        model_fn=model.knet_model_fn,
         config=config,
         params={
             'feature_columns': feature_columns,
@@ -176,7 +180,8 @@ def main(argv):
             'recall_k': opts.recall_k,
             'dict_dir': opts.dict_dir,
             'optimize_level': opts.optimize_level,
-            'use_subset': opts.use_subset
+            'use_subset': opts.use_subset,
+            'drop_out': opts.drop_out
         })
 
     # Create profile hooks
