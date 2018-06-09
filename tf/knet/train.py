@@ -56,7 +56,7 @@ parser.add_argument('--remove_model_dir', default=1, type=int, help='')
 parser.add_argument('--optimize_level', default=1, type=int, help='')
 parser.add_argument('--receive_ws', default=5, type=int, help='')
 parser.add_argument('--use_subset', default=0, type=int, help='')
-parser.add_argument('--drop_out', default=0.1, type=float, help='')
+parser.add_argument('--dropout', default=0.1, type=float, help='')
 
 opts = Options()
 
@@ -108,7 +108,7 @@ def parse_args(argv):
 
     opts.receive_ws = args.receive_ws
     opts.use_subset = bool(args.use_subset)
-    opts.drop_out = args.drop_out
+    opts.dropout = args.dropout
 
     tf.logging.info(opts)
 
@@ -135,8 +135,8 @@ def validate_args(opts):
                 opts.ws, opts.receive_ws))
     if len([u for u in opts.hidden_units if u <= 0]) > 0:
         raise ValueError("hidden_units contain unit <= 0")
-    if opts.drop_out < 0.0:
-        raise ValueError("drop_out should not less than 0")
+    if opts.dropout < 0.0:
+        raise ValueError("dropout should not less than 0")
 
 
 def main(argv):
@@ -181,7 +181,7 @@ def main(argv):
             'dict_dir': opts.dict_dir,
             'optimize_level': opts.optimize_level,
             'use_subset': opts.use_subset,
-            'drop_out': opts.drop_out
+            'dropout': opts.dropout
         })
 
     # Create profile hooks

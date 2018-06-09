@@ -49,7 +49,7 @@ class Options(object):
 
         self.receive_ws = 5
         self.use_subset = False
-        self.drop_out = 0.1
+        self.dropout = 0.1
 
     def __str__(self):
         return \
@@ -90,7 +90,7 @@ class Options(object):
         optimize_level = {} \n \
         receive_ws = {} \n \
         use_subset = {} \n \
-        drop_out = {} \n \
+        dropout = {} \n \
         ".format(
                 self.train_data_path,
                 self.eval_data_path,
@@ -128,4 +128,4 @@ class Options(object):
                 self.optimize_level,
                 self.receive_ws,
                 self.use_subset,
-                self.drop_out)
+                self.dropout)

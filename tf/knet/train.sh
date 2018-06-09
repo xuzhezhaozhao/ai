@@ -34,7 +34,7 @@ receive_ws=100
 
 use_subset=1
 
-drop_out=0.5
+dropout=0.5
 
 python train.py \
     --train_data_path ${train_data_path} \
@@ -73,4 +73,4 @@ python train.py \
     --optimize_level ${optimize_level} \
     --receive_ws ${receive_ws} \
     --use_subset ${use_subset} \
-    --drop_out ${drop_out}
+    --dropout ${dropout}
