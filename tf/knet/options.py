@@ -12,10 +12,6 @@ class Options(object):
         self.eval_data_path = ""
         self.lr = 0.05
         self.dim = 100
-        self.maxn = 0
-        self.minn = 0
-        self.word_ngrams = 1
-        self.bucket = 2000000
         self.ws = 5
         self.min_count = 5
         self.t = 0.0001
@@ -50,6 +46,7 @@ class Options(object):
         self.receive_ws = 5
         self.use_subset = False
         self.dropout = 0.1
+        self.ntargets = 1
 
     def __str__(self):
         return \
@@ -58,10 +55,6 @@ class Options(object):
         eval_data_path = {} \n \
         lr = {} \n \
         dim = {} \n \
-        maxn = {} \n \
-        minn = {} \n \
-        word_ngrams = {} \n \
-        bucket = {} \n \
         ws = {} \n \
         min_count = {} \n \
         t = {} \n \
@@ -91,15 +84,12 @@ class Options(object):
         receive_ws = {} \n \
         use_subset = {} \n \
         dropout = {} \n \
+        ntargets = {} \n \
         ".format(
                 self.train_data_path,
                 self.eval_data_path,
                 self.lr,
                 self.dim,
-                self.maxn,
-                self.minn,
-                self.word_ngrams,
-                self.bucket,
                 self.ws,
                 self.min_count,
                 self.t,
@@ -128,4 +118,5 @@ class Options(object):
                 self.optimize_level,
                 self.receive_ws,
                 self.use_subset,
-                self.dropout)
+                self.dropout,
+                self.ntargets)

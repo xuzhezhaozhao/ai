@@ -10,19 +10,20 @@ REGISTER_OP("FasttextExampleGenerate")
     .Attr("use_saved_dict: bool = true")
     .Attr("dict_dir: string")
     .Attr("train_data_path: string")
-    .Attr("dim: int = 100")
-    .Attr("maxn: int = 0")
-    .Attr("minn: int = 0")
     .Attr("word_ngrams: int = 1")
-    .Attr("bucket: int = 2000000")
     .Attr("ws: int = 5")
     .Attr("min_count: int = 1")
     .Attr("t: float = 1e-4")
     .Attr("verbose: int = 1")
-    .Attr("min_count_label: int = 1")
+    .Attr("min_count_label: int = 10")
     .Attr("label: string = '__label__'")
+    .Attr("ntargets: int = 1")
     .Doc(R"doc(
 Fasttext example generate operator.
+Args
+  input: A Tensor of string.
+  records: A Tensor of type int32 and shape [D, ws]
+  labels: A Tensor of type int64 and shape [D, ntargets]
 )doc");
 
 }  // namespace tensorflow

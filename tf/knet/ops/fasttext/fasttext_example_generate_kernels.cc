@@ -7,10 +7,10 @@
 #include "tensorflow/core/lib/random/philox_random.h"
 #include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow/core/lib/strings/str_util.h"
+#include "tensorflow/core/platform/default/integral_types.h"
 #include "tensorflow/core/platform/posix/posix_file_system.h"
 #include "tensorflow/core/platform/thread_annotations.h"
 #include "tensorflow/core/util/guarded_philox_random.h"
-#include "tensorflow/core/platform/default/integral_types.h"
 
 #include <time.h>
 
@@ -21,8 +21,8 @@
 #include <vector>
 
 #include "args.h"
-#include "dictionary.h"
 #include "defines.h"
+#include "dictionary.h"
 
 namespace tensorflow {
 
@@ -67,27 +67,35 @@ class FasttextExampleGenerateOp : public OpKernel {
     }
 
     const Tensor& input_tensor = ctx->input(0);
-    auto input = input_tensor.flat<std::string>();
+    auto flat_input = input_tensor.flat<std::string>();
 
     std::vector<int32_t> words;
     std::vector<std::vector<int>> insts;
-    for (int i = 0; i < input.size(); ++i) {
+    for (int i = 0; i < flat_input.size(); ++i) {
       words.clear();
-      std::stringstream ss(input(i));
+      std::stringstream ss(flat_input(i));
       int ntokens = dict_->getLine(ss, words, rng_);
-
       std::vector<int> bow;
       std::uniform_int_distribution<> uniform(1, args_->ws);
+      // genearte examples
       for (int w = 1; w < words.size(); w++) {
-        int32_t boundary = uniform(rng_);
+        // use words[w] as the first label
+        int32_t boundary = std::min(w, uniform(rng_));
         bow.clear();
         for (int c = -boundary; c < 0; c++) {
-          if (c != 0 && w + c >= 0) {
-            const std::vector<int>& ngrams = dict_->getSubwords(words[w + c]);
-            bow.insert(bow.end(), ngrams.cbegin(), ngrams.cend());
-          }
+          bow.push_back(words[w + c]);
         }
         bow.push_back(words[w]);  // add label
+
+        // TODO random select ntargets-1 labels
+        for (int i = 0; i < args_->ntargets - 1; ++i) {
+          int t = w + 1 + i;
+          if (t >= words.size()) {
+            t = w;
+          }
+          bow.push_back(words[t]);
+        }
+
         insts.push_back(bow);
       }
     }
@@ -102,25 +110,31 @@ class FasttextExampleGenerateOp : public OpKernel {
 
     TensorShape labels_shape;
     labels_shape.AddDim(insts.size());
-    labels_shape.AddDim(1);
+    labels_shape.AddDim(args_->ntargets);
     Tensor* labels_tensor = NULL;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(1, labels_shape, &labels_tensor));
 
-    auto records = records_tensor->flat<int32>();
-    auto labels = labels_tensor->flat<int64>();
-    int labels_index = 0, records_index = 0;
-    for (auto& inst : insts) {
-      OP_REQUIRES(ctx, inst.size() > 0,
-                  errors::InvalidArgument("inst size is 0"));
-
-      labels(labels_index++) = transform_id(inst.back());
-
-      for (int i = 0; i < inst.size() - 1; ++i) {
-        records(records_index++) = transform_id(inst[i]);
+    auto matrix_records = records_tensor->matrix<int32>();
+    auto matrix_labels = labels_tensor->matrix<int64>();
+    for (int inst_index = 0; inst_index < insts.size(); ++inst_index) {
+      auto& inst = insts[inst_index];
+      OP_REQUIRES(ctx, inst.size() >= args_->ntargets,
+                  errors::InvalidArgument(
+                      "inst size should larger or equal than ntargets"));
+      // fill labels
+      for (int t = 0; t < args_->ntargets; ++t) {
+        int index = inst.size() - args_->ntargets + t;
+        matrix_labels(inst_index, t) = transform_id(inst[index]);
       }
-      // padding
-      for (int i = inst.size() - 1; i < args_->ws; ++i) {
-        records(records_index++) = PADDING_INDEX;
+
+      // fill records
+      for (int i = 0; i < inst.size() - args_->ntargets; ++i) {
+        matrix_records(inst_index, i) = transform_id(inst[i]);
+      }
+
+      // padding records
+      for (int i = inst.size() - args_->ntargets; i < args_->ws; ++i) {
+        matrix_records(inst_index, i) = PADDING_INDEX;
       }
     }
   }
@@ -130,21 +144,6 @@ class FasttextExampleGenerateOp : public OpKernel {
     OP_REQUIRES_OK(ctx,
                    ctx->GetAttr("train_data_path", &args_->train_data_path));
     LOG(INFO) << "train_data_path: " << args_->train_data_path;
-
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("dim", &args_->dim));
-    LOG(INFO) << "dim: " << args_->dim;
-
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("maxn", &args_->maxn));
-    LOG(INFO) << "maxn: " << args_->maxn;
-
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("minn", &args_->minn));
-    LOG(INFO) << "minn: " << args_->minn;
-
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("word_ngrams", &args_->word_ngrams));
-    LOG(INFO) << "word_ngrams: " << args_->word_ngrams;
-
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("bucket", &args_->bucket));
-    LOG(INFO) << "bucket: " << args_->bucket;
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("ws", &args_->ws));
     LOG(INFO) << "ws: " << args_->ws;
@@ -170,12 +169,16 @@ class FasttextExampleGenerateOp : public OpKernel {
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("dict_dir", &args_->dict_dir));
     LOG(INFO) << "dict_dir: " << args_->dict_dir;
+
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("ntargets", &args_->ntargets));
+    LOG(INFO) << "ntargets: " << args_->ntargets;
   }
 
   void PreProcessTrainData(OpKernelConstruction* ctx) {
     LOG(INFO) << "Preprocess train data beginning ...";
     std::ifstream ifs(args_->train_data_path);
-    OP_REQUIRES(ctx, ifs.is_open(), errors::Unavailable(args_->train_data_path + " open failed."));
+    OP_REQUIRES(ctx, ifs.is_open(),
+                errors::Unavailable(args_->train_data_path + " open failed."));
     dict_->readFromFile(ifs);
     ifs.close();
     LOG(INFO) << "Preprocess train data done.";
@@ -202,7 +205,8 @@ class FasttextExampleGenerateOp : public OpKernel {
       // save dictionary
       LOG(INFO) << "Save dictionary to " << saved_dict << " ...";
       std::ofstream ofs(saved_dict);
-      OP_REQUIRES(ctx, ofs.is_open(), errors::Unavailable(saved_dict + " open failed"));
+      OP_REQUIRES(ctx, ofs.is_open(),
+                  errors::Unavailable(saved_dict + " open failed"));
       dict_->save(ofs);
       OP_REQUIRES(ctx, ofs.good(), errors::Unavailable("Write error"));
       ofs.close();
@@ -213,7 +217,8 @@ class FasttextExampleGenerateOp : public OpKernel {
       // save dict meta
       std::ofstream ofs(dict_meta);
       LOG(INFO) << "Write dict meta to " << dict_meta << " ...";
-      OP_REQUIRES(ctx, ofs.is_open(), errors::Unavailable(dict_meta + " open failed"));
+      OP_REQUIRES(ctx, ofs.is_open(),
+                  errors::Unavailable(dict_meta + " open failed"));
       int nwords = dict_->nwords();
       int nlabels = dict_->nlabels();
       auto to_write = std::string("nwords\t") + std::to_string(nwords) + "\n";
@@ -231,7 +236,8 @@ class FasttextExampleGenerateOp : public OpKernel {
       // save dict words
       std::ofstream ofs(dict_words);
       LOG(INFO) << "Write dict words to " << dict_words << " ...";
-      OP_REQUIRES(ctx, ofs.is_open(), errors::Unavailable(dict_words + " open failed"));
+      OP_REQUIRES(ctx, ofs.is_open(),
+                  errors::Unavailable(dict_words + " open failed"));
       for (const auto& entry : dict_->words()) {
         if (entry.type == ::fasttext::entry_type::word) {
           ofs.write(entry.word.data(), entry.word.size());
@@ -250,7 +256,8 @@ class FasttextExampleGenerateOp : public OpKernel {
     auto saved_dict = ::tensorflow::io::JoinPath(root_dir, SAVED_DICT);
     LOG(INFO) << "Load dictionary from " << saved_dict << " ...";
     std::ifstream ifs(saved_dict);
-    OP_REQUIRES(ctx, ifs.is_open(), errors::Unavailable(saved_dict + " open failed"));
+    OP_REQUIRES(ctx, ifs.is_open(),
+                errors::Unavailable(saved_dict + " open failed"));
     dict_->load(ifs);
     OP_REQUIRES(ctx, !ifs.fail(), errors::Unavailable("Read error!"));
     ifs.close();

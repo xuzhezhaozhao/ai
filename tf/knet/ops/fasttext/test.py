@@ -17,7 +17,8 @@ train_data_path = '../../../../data/train_data.in'
     train_data_path=train_data_path,
     input=test_line,
     use_saved_dict=False,
-    dict_dir="dict_dir"
+    dict_dir="dict_dir",
+    ntargets=2
 )
 sess.run(dummy1)
 
@@ -25,7 +26,8 @@ sess.run(dummy1)
     train_data_path=train_data_path,
     input=test_line,
     use_saved_dict=True,
-    dict_dir="dict_dir"
+    dict_dir="dict_dir",
+    ntargets=2
 )
 records = sess.run(records)
 labels = sess.run(labels)
