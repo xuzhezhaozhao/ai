@@ -5,14 +5,14 @@ set -e
 MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
-# fetch only video history
+# fetch video and article history
 
 parallel=47
 
 raw_data_dir=raw_data
 tmp_hdfs_dir=tmp_hdfs
 hadoop_bin=/usr/local/services/hadoop_client_2_2_0-1.0/tdwdfsclient/bin/hadoop
-hdfs_data_path=hdfs://ss-sng-dc-v2/stage/outface/SNG/g_sng_im_sng_imappdev_tribe/zhezhaoxu/preprocessed_data/hbcf
+hdfs_data_path=hdfs://ss-sng-dc-v2/stage/outface/SNG/g_sng_im_sng_imappdev_tribe/zhezhaoxu/preprocessed_data/hbcf2
 base_hdfs_data_path=`basename ${hdfs_data_path}`
 
 echo "check data timestamp .."
