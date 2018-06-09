@@ -15,7 +15,7 @@ import model_keys
 import custom_ops
 
 
-def knet_model(features, labels, mode, params):
+def knet_model_fn(features, labels, mode, params):
     """ build model graph """
 
     feature_columns = params['feature_columns']
@@ -28,6 +28,7 @@ def knet_model(features, labels, mode, params):
     dict_dir = params['dict_dir']
     optimize_level = params['optimize_level']
     use_subset = params['use_subset']
+    drop_out = params['drop_out']
 
     embeddings = get_embeddings(n_classes, embedding_dim)
     (nce_weights,
@@ -45,6 +46,10 @@ def knet_model(features, labels, mode, params):
     for units in hidden_units:
         hidden = tf.layers.dense(hidden, units=units, activation=tf.nn.relu,
                                  name="fc_{}".format(units))
+        if drop_out > 0:
+            training = (mode == tf.estimator.ModeKeys.TRAIN)
+            hidden = tf.layers.dropout(hidden, drop_out, training=training,
+                                       name="dropout_{}".format(units))
     user_vector = tf.layers.dense(hidden, embedding_dim, activation=None,
                                   name="user_vector")
 
