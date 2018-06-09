@@ -21,13 +21,13 @@ dict_dir=`pwd`/video_tab/dict_dir
 train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
 lr=0.25
-dim=100
+dim=128
 ws=50
-min_count=100
+min_count=50
 batch_size=256
 num_sampled=10
 epoch=1
-hidden_units='256,128'
+hidden_units=''
 prefetch_size=10000
 
 max_train_steps=-1
@@ -36,7 +36,7 @@ save_summary_steps=10000
 save_checkpoints_secs=1200
 log_step_count_steps=1000
 
-recall_k=300
+recall_k=400
 use_saved_dict=0
 
 use_profile_hook=0
@@ -52,7 +52,7 @@ receive_ws=100
 use_subset=1
 
 dropout=0.0
-ntargets=2
+ntargets=1
 
 python train.py \
     --train_data_path ${train_data_path} \
