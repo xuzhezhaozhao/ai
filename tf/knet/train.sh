@@ -35,16 +35,13 @@ receive_ws=100
 use_subset=1
 
 dropout=0.0
+ntargets=2
 
 python train.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
     --lr ${lr} \
     --dim ${dim} \
-    --maxn 0 \
-    --minn 0 \
-    --word_ngrams 1 \
-    --bucket 2000000 \
     --ws ${ws} \
     --min_count ${min_count} \
     --t 0.0001 \
@@ -73,4 +70,5 @@ python train.py \
     --optimize_level ${optimize_level} \
     --receive_ws ${receive_ws} \
     --use_subset ${use_subset} \
-    --dropout ${dropout}
+    --dropout ${dropout} \
+    --ntargets ${ntargets}

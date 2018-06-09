@@ -23,10 +23,6 @@ parser.add_argument('--train_data_path', default='', type=str, help='')
 parser.add_argument('--eval_data_path', default='', type=str, help='')
 parser.add_argument('--lr', default=0.25, type=float, help='learning rate')
 parser.add_argument('--dim', default=100, type=int, help='embedding dim')
-parser.add_argument('--maxn', default=0, type=int, help='')
-parser.add_argument('--minn', default=0, type=int, help='')
-parser.add_argument('--word_ngrams', default=1, type=int, help='')
-parser.add_argument('--bucket', default=2000000, type=int, help='')
 parser.add_argument('--ws', default=5, type=int, help='window size')
 parser.add_argument('--min_count', default=50, type=int, help='')
 parser.add_argument('--t', default=0.0001, type=float, help='')
@@ -57,6 +53,7 @@ parser.add_argument('--optimize_level', default=1, type=int, help='')
 parser.add_argument('--receive_ws', default=5, type=int, help='')
 parser.add_argument('--use_subset', default=0, type=int, help='')
 parser.add_argument('--dropout', default=0.1, type=float, help='')
+parser.add_argument('--ntargets', default=1, type=int, help='')
 
 opts = Options()
 
@@ -67,10 +64,6 @@ def parse_args(argv):
     opts.eval_data_path = args.eval_data_path
     opts.lr = args.lr
     opts.dim = args.dim
-    opts.maxn = args.maxn
-    opts.minn = args.minn
-    opts.word_ngrams = args.word_ngrams
-    opts.bucket = args.bucket
     opts.ws = args.ws
     opts.min_count = args.min_count
     opts.t = args.t
@@ -109,6 +102,7 @@ def parse_args(argv):
     opts.receive_ws = args.receive_ws
     opts.use_subset = bool(args.use_subset)
     opts.dropout = args.dropout
+    opts.ntargets = args.ntargets
 
     tf.logging.info(opts)
 
@@ -181,7 +175,8 @@ def main(argv):
             'dict_dir': opts.dict_dir,
             'optimize_level': opts.optimize_level,
             'use_subset': opts.use_subset,
-            'dropout': opts.dropout
+            'dropout': opts.dropout,
+            'ntargets': opts.ntargets
         })
 
     # Create profile hooks

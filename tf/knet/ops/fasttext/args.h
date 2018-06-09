@@ -30,11 +30,10 @@ namespace fasttext {
 
 struct Args {
     std::string train_data_path;
-    int dim = 100;
     int maxn = 0;
     int minn = 0;
     int word_ngrams = 1;
-    int bucket = 2000000;
+    int bucket = 20;
     int ws = 5;
     int min_count = 5;
     float t = 1e-4f;
@@ -44,6 +43,8 @@ struct Args {
 
     bool use_saved_dict = true;
     std::string dict_dir = "dict_dir";
+
+    int ntargets = 1;
 };
 
 }

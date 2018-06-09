@@ -23,17 +23,13 @@ def pack_fasttext_params(opts):
     params = dict()
     params['train_data_path'] = opts.train_data_path
     params['dict_dir'] = opts.dict_dir
-    params['dim'] = opts.dim
-    params['maxn'] = opts.maxn
-    params['minn'] = opts.minn
-    params['word_ngrams'] = opts.word_ngrams
-    params['bucket'] = opts.bucket
     params['ws'] = opts.ws
     params['min_count'] = opts.min_count
     params['t'] = opts.t
     params['verbose'] = opts.verbose
     params['min_count_label'] = opts.min_count_label
     params['label'] = opts.label
+    params['ntargets'] = opts.ntargets
 
     return params
 

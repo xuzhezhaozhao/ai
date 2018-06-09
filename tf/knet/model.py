@@ -29,6 +29,7 @@ def knet_model_fn(features, labels, mode, params):
     optimize_level = params['optimize_level']
     use_subset = params['use_subset']
     dropout = params['dropout']
+    ntargets = params['ntargets']
 
     embeddings = get_embeddings(n_classes, embedding_dim)
     (nce_weights,
@@ -91,7 +92,7 @@ def knet_model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(mode, predictions=predictions,
                                           export_outputs=export_outputs)
 
-    train_metrics = get_metrics(labels, train_ids, recall_k)
+    train_metrics = get_metrics(labels, train_ids, recall_k, ntargets)
     add_metrics_summary(train_metrics)
 
     if mode == tf.estimator.ModeKeys.EVAL:
@@ -106,7 +107,7 @@ def knet_model_fn(features, labels, mode, params):
                 scores = train_scores
                 ids = train_ids
 
-            eval_metrics = get_metrics(labels, ids, recall_k)
+            eval_metrics = get_metrics(labels, ids, recall_k, ntargets)
         return tf.estimator.EstimatorSpec(
             mode,
             loss=tf.constant(0),  # don't evaluate loss
@@ -118,6 +119,7 @@ def knet_model_fn(features, labels, mode, params):
                               inputs=user_vector,
                               num_sampled=num_sampled,
                               num_classes=n_classes,
+                              num_true=ntargets,
                               partition_strategy="div",
                               name="nce_loss")
     nce_loss = tf.reduce_mean(nce_loss, name="mean_nce_loss")
@@ -176,10 +178,10 @@ def mask_padding_embedding_lookup(embeddings, embedding_dim,
     return output
 
 
-def get_metrics(labels, ids, recall_k):
+def get_metrics(labels, ids, recall_k, ntargets):
     """Get metrics dict."""
 
-    predicted = ids[:, :1]
+    predicted = ids[:, :ntargets]
     accuracy = tf.metrics.accuracy(labels=labels, predictions=predicted)
     recall_at_top_k = tf.metrics.recall_at_top_k(
         labels=labels, predictions_idx=ids, k=recall_k)
@@ -284,7 +286,7 @@ def load_model_nce_params(dict_dir, use_subset):
     nce_weights_name = (model_keys.SAVE_NCE_WEIGHTS_SUBSET_NAME if use_subset
                         else model_keys.SAVE_NCE_WEIGHTS_NAME)
     nce_biases_name = (model_keys.SAVE_NCE_BIASES_SUBSET_NAME if use_subset
-                        else model_keys.SAVE_NCE_BIASES_NAME)
+                       else model_keys.SAVE_NCE_BIASES_NAME)
 
     save_weights_path = os.path.join(dict_dir, nce_weights_name)
     save_biases_path = os.path.join(dict_dir, nce_biases_name)
