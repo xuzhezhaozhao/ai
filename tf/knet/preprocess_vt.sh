@@ -52,7 +52,7 @@ receive_ws=100
 use_subset=1
 
 dropout=0.0
-ntargets=1
+ntargets=2
 
 python train.py \
     --train_data_path ${train_data_path} \
