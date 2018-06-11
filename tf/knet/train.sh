@@ -5,12 +5,12 @@ MODEL_DIR=`pwd`/model_dir
 EXPORT_MODEL_DIR=`pwd`/export_model_dir
 train_data_path=../../data/train_data.in
 eval_data_path=../../data/eval_data.in
-lr=1.0
+lr=1.25
 dim=100
-ws=20
-min_count=50
+ws=50
+min_count=10
 t=1.0
-batch_size=64
+batch_size=256
 num_sampled=10
 epoch=10
 hidden_units='512,256'
@@ -32,7 +32,7 @@ profile_steps=100
 root_ops_path=lib/
 remove_model_dir=1
 
-optimize_level=2
+optimize_level=1
 
 receive_ws=100
 
@@ -45,6 +45,7 @@ chief_lock=${MODEL_DIR}/chief.lock
 max_distribute_train_steps=-1
 
 train_nce_biases=0
+shuffle_batch=0
 
 python train.py \
     --train_data_path ${train_data_path} \
@@ -83,4 +84,5 @@ python train.py \
     --ntargets ${ntargets} \
     --chief_lock ${chief_lock} \
     --max_distribute_train_steps ${max_distribute_train_steps} \
-    --train_nce_biases ${train_nce_biases}
+    --train_nce_biases ${train_nce_biases} \
+    --shuffle_batch ${shuffle_batch}
