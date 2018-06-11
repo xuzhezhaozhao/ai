@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import os
 import tensorflow as tf
+import numpy as np
 
 import model_keys
 import custom_ops
@@ -95,6 +96,22 @@ def eval_input_fn(opts, skip_rows=0):
     ds = ds.prefetch(opts.prefetch_size)
     ds = ds.batch(batch_size)
     return ds
+
+
+def train_random_numpy_input_fn(opts):
+    """Generate dummy train examples for performence profile, see cpu usage."""
+
+    n = 1000000
+    examples = np.random.randint(1, 100, [n, opts.ws])
+    labels = np.random.randint(1, 100, [n, opts.ntargets])
+
+    return tf.estimator.inputs.numpy_input_fn(
+        x={model_keys.RECORDS_COL: examples},
+        y=labels,
+        batch_size=opts.batch_size,
+        num_epochs=opts.epoch,
+        shuffle=True
+    )
 
 
 def build_serving_input_fn(opts):
