@@ -24,6 +24,7 @@ lr=0.25
 dim=128
 ws=50
 min_count=50
+t=1.0
 batch_size=256
 num_sampled=10
 epoch=1
@@ -61,7 +62,7 @@ python train.py \
     --dim ${dim} \
     --ws ${ws} \
     --min_count ${min_count} \
-    --t 0.0001 \
+    --t ${t} \
     --verbose 2 \
     --min_count_label 50 \
     --label "__label__" \
