@@ -51,6 +51,7 @@ class Options(object):
         self.chief_lock = 'chief.lock'
         self.max_distribute_train_steps = None
         self.train_nce_biases = False
+        self.shuffle_batch = False
 
     def __str__(self):
         return \
@@ -92,6 +93,7 @@ class Options(object):
         chief_lock = {} \n \
         max_distribute_train_steps = {} \n \
         train_nce_biases = {} \n \
+        shuffle_batch = {} \n \
         ".format(
                 self.train_data_path,
                 self.eval_data_path,
@@ -129,4 +131,5 @@ class Options(object):
                 self.ntargets,
                 self.chief_lock,
                 self.max_distribute_train_steps,
-                self.train_nce_biases)
+                self.train_nce_biases,
+                self.shuffle_batch)

@@ -60,6 +60,7 @@ parser.add_argument('--chief_lock', default='chief.lock', type=str, help='')
 parser.add_argument(
     '--max_distribute_train_steps', default=None, type=int, help='')
 parser.add_argument('--train_nce_biases', default=0, type=int, help='')
+parser.add_argument('--shuffle_batch', default=0, type=int, help='')
 
 opts = Options()
 
@@ -117,6 +118,7 @@ def parse_args(argv):
         opts.max_distribute_train_steps = None
 
     opts.train_nce_biases = bool(args.train_nce_biases)
+    opts.shuffle_batch = bool(args.shuffle_batch)
 
     tf.logging.info(opts)
 
