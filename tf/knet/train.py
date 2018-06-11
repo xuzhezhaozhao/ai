@@ -250,7 +250,7 @@ def main(argv):
         input_fn=lambda: input_data.eval_input_fn(opts),
         hooks=hooks,
         start_delay_secs=10,
-        throttle_secs=10  # no evaluate during training
+        throttle_secs=7*24*3600  # no evaluate during training
     )
     tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
     tf.logging.info("Train and eval model done.")
