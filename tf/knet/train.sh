@@ -41,6 +41,9 @@ use_subset=1
 dropout=0.0
 ntargets=2
 
+chief_lock=${MODEL_DIR}/chief.lock
+max_distribute_train_steps=10000
+
 python train.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
@@ -75,4 +78,6 @@ python train.py \
     --receive_ws ${receive_ws} \
     --use_subset ${use_subset} \
     --dropout ${dropout} \
-    --ntargets ${ntargets}
+    --ntargets ${ntargets} \
+    --chief_lock ${chief_lock} \
+    --max_distribute_train_steps ${max_distribute_train_steps}

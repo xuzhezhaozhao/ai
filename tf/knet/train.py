@@ -8,7 +8,9 @@ from __future__ import print_function
 from options import Options
 
 import os
+import time
 import argparse
+import json
 import tensorflow as tf
 
 import model_keys
@@ -54,6 +56,10 @@ parser.add_argument('--receive_ws', default=5, type=int, help='')
 parser.add_argument('--use_subset', default=0, type=int, help='')
 parser.add_argument('--dropout', default=0.1, type=float, help='')
 parser.add_argument('--ntargets', default=1, type=int, help='')
+
+parser.add_argument('--chief_lock', default='chief.lock', type=str, help='')
+parser.add_argument(
+    '--max_distribute_train_steps', default=None, type=int, help='')
 
 opts = Options()
 
@@ -104,6 +110,12 @@ def parse_args(argv):
     opts.dropout = args.dropout
     opts.ntargets = args.ntargets
 
+    opts.chief_lock = args.chief_lock
+    opts.max_distribute_train_steps = args.max_distribute_train_steps
+    if (opts.max_distribute_train_steps is not None
+            and opts.max_distribute_train_steps < 0):
+        opts.max_distribute_train_steps = None
+
     tf.logging.info(opts)
 
 
@@ -133,16 +145,52 @@ def validate_args(opts):
         raise ValueError("dropout should not less than 0")
 
 
+def parse_tf_config():
+    """parse environment TF_CONFIG"""
+
+    try:
+        tf_config = os.environ.get('TF_CONFIG')
+        tf_config = json.loads(tf_config)
+    except Exception:
+        return None
+
+    return tf_config
+
+
 def main(argv):
     parse_args(argv)
     validate_args(opts)
 
-    if opts.remove_model_dir:
-        delete_dir(opts.model_dir)
-    else:
-        tf.logging.info("Don't remove model dir, maybe restore checkpoint ...")
+    tf_config = parse_tf_config()
+    task_type = model_keys.TaskType.CHIEF  # default mode
+    if tf_config is not None:
+        task_type = tf_config['task']['type']
 
-    input_data.init_dict(opts)
+    chief_lock_file = opts.chief_lock
+    if task_type == model_keys.TaskType.CHIEF:
+        """Init dict only in chief mode."""
+        if opts.remove_model_dir:
+            tf.logging.info("Remove model dir ...")
+            delete_dir(opts.model_dir)
+            tf.logging.info("Remove model dir OK")
+            os.makedirs(opts.model_dir)
+        else:
+            tf.logging.info("Don't remove model dir.")
+
+        tf.logging.info('Init dict ...')
+        input_data.init_dict(opts)
+        with open(chief_lock_file, 'w'):  # create file barrier
+            pass
+        tf.logging.info('Init dict OK')
+    else:
+        # init_dict barrier
+        while True:
+            if os.path.exists(chief_lock_file):
+                break
+            else:
+                tf.logging.info("Wait for {} ...".format(chief_lock_file))
+                time.sleep(5)
+
     dict_meta = input_data.parse_dict_meta(opts)
     feature_columns = input_data.feature_columns(opts)
 
@@ -189,48 +237,51 @@ def main(argv):
                                          show_memory=True)
     hooks = [meta_hook, profile_hook] if opts.use_profile_hook else None
 
-    # train model
-    tf.logging.info("Beginning train model ...")
-    classifier.train(input_fn=lambda: input_data.train_input_fn(opts),
-                     max_steps=opts.max_train_steps,
-                     hooks=hooks)
-    tf.logging.info("Train model OK")
+    # train and eval model
+    tf.logging.info("Beginning train_and_eval model ...")
+    train_spec = tf.estimator.TrainSpec(
+        input_fn=lambda: input_data.train_input_fn(opts),
+        max_steps=opts.max_distribute_train_steps,
+        hooks=hooks)
+    eval_spec = tf.estimator.EvalSpec(
+        input_fn=lambda: input_data.eval_input_fn(opts),
+        hooks=hooks,
+        start_delay_secs=10,
+        throttle_secs=10  # no evaluate during training
+    )
+    tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
+    tf.logging.info("Train and eval model done.")
 
-    # save nce params
-    if not os.path.exists(opts.dict_dir):
-        os.mkdir(opts.dict_dir)
+    if task_type == model_keys.TaskType.CHIEF:
+        # save nce params
+        if not os.path.exists(opts.dict_dir):
+            os.mkdir(opts.dict_dir)
 
-    tf.logging.info("Save nce weights and biases ...")
-    model.save_model_nce_params(classifier, opts.dict_dir)
-    tf.logging.info("Save nce weights and biases OK")
+        tf.logging.info("Save nce weights and biases ...")
+        model.save_model_nce_params(classifier, opts.dict_dir)
+        tf.logging.info("Save nce weights and biases OK")
 
-    if opts.use_subset:
-        tf.logging.info("Save subset dict and nce params ...")
-        model.filter_and_save_subset(opts.dict_dir)
-        tf.logging.info("Save subset dict and nce params OK")
+        if opts.use_subset:
+            tf.logging.info("Save subset dict and nce params ...")
+            model.filter_and_save_subset(opts.dict_dir)
+            tf.logging.info("Save subset dict and nce params OK")
 
-    # evaluate model
-    tf.logging.info("Beginning evaluate model ...")
-    classifier.evaluate(input_fn=lambda: input_data.eval_input_fn(opts),
-                        hooks=hooks)
-    tf.logging.info("Evaluate model OK")
+        # export model
+        tf.logging.info("Beginning export model ...")
+        assets_dict_dir = os.path.basename(opts.dict_dir)
+        dict_params = {}
+        for name in model_keys.DICT_PARAM_NAMES:
+            src = os.path.join(opts.dict_dir, name)
+            dest = os.path.join(assets_dict_dir, name)
+            dict_params[dest] = src
 
-    # export model
-    tf.logging.info("Beginning export model ...")
-    assets_dict_dir = os.path.basename(opts.dict_dir)
-    dict_params = {}
-    for name in model_keys.DICT_PARAM_NAMES:
-        src = os.path.join(opts.dict_dir, name)
-        dest = os.path.join(assets_dict_dir, name)
-        dict_params[dest] = src
+        assets_extra = dict_params
 
-    assets_extra = dict_params
-
-    classifier.export_savedmodel(
-        opts.export_model_dir,
-        serving_input_receiver_fn=input_data.build_serving_input_fn(opts),
-        assets_extra=assets_extra)
-    tf.logging.info("Export model OK")
+        classifier.export_savedmodel(
+            opts.export_model_dir,
+            serving_input_receiver_fn=input_data.build_serving_input_fn(opts),
+            assets_extra=assets_extra)
+        tf.logging.info("Export model OK")
 
 
 if __name__ == '__main__':

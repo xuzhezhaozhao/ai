@@ -48,6 +48,9 @@ class Options(object):
         self.dropout = 0.1
         self.ntargets = 1
 
+        self.chief_lock = 'chief.lock'
+        self.max_distribute_train_steps = None
+
     def __str__(self):
         return \
             "Option:\n \
@@ -85,6 +88,8 @@ class Options(object):
         use_subset = {} \n \
         dropout = {} \n \
         ntargets = {} \n \
+        chief_lock = {} \n \
+        max_distribute_train_steps = {} \n \
         ".format(
                 self.train_data_path,
                 self.eval_data_path,
@@ -119,4 +124,6 @@ class Options(object):
                 self.receive_ws,
                 self.use_subset,
                 self.dropout,
-                self.ntargets)
+                self.ntargets,
+                self.chief_lock,
+                self.max_distribute_train_steps)

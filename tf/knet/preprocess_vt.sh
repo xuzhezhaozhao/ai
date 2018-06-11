@@ -55,6 +55,8 @@ use_subset=1
 dropout=0.0
 ntargets=2
 
+chief_lock=${model_dir}/chief.lock
+
 python train.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
@@ -89,4 +91,5 @@ python train.py \
     --receive_ws ${receive_ws} \
     --use_subset ${use_subset} \
     --dropout ${dropout} \
-    --ntargets ${ntargets}
+    --ntargets ${ntargets} \
+    --chief_lock ${chief_lock}
