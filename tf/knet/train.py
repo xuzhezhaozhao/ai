@@ -278,14 +278,17 @@ def main(argv):
         hooks=hooks)
     eval_spec = tf.estimator.EvalSpec(
         input_fn=lambda: input_data.eval_input_fn(opts),
+        steps=100,
         hooks=hooks,
         start_delay_secs=10,
-        throttle_secs=7*24*3600  # no evaluate during training
+        throttle_secs=7*24*3600,  # TODO how to not evaluate during training, now will block evaluate
     )
     tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
     tf.logging.info("Train and eval model done.")
 
     if is_local_or_chief(task_type):
+        # TODO should sync with workers
+
         # save nce params
         if not os.path.exists(opts.dict_dir):
             os.mkdir(opts.dict_dir)

@@ -12,7 +12,7 @@ min_count=50
 t=1.0
 batch_size=64
 num_sampled=10
-epoch=5
+epoch=50
 hidden_units='256'
 prefetch_size=10000
 
