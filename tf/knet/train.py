@@ -159,18 +159,35 @@ def parse_tf_config():
     return tf_config
 
 
+def is_local_or_chief(task_type):
+    """Return True if task_type is 'local' or 'chief'."""
+
+    if (task_type == model_keys.TaskType.LOCAL
+            or task_type == model_keys.TaskType.CHIEF):
+        return True
+    return False
+
+
+def is_distributed(task_type):
+    """Return True if task_type is not 'local'."""
+
+    if task_type != model_keys.TaskType.LOCAL:
+        return True
+    return False
+
+
 def main(argv):
     parse_args(argv)
     validate_args(opts)
 
     tf_config = parse_tf_config()
-    task_type = model_keys.TaskType.CHIEF  # default mode
+    task_type = model_keys.TaskType.LOCAL  # default mode
     if tf_config is not None:
         task_type = tf_config['task']['type']
 
     chief_lock_file = opts.chief_lock
-    if task_type == model_keys.TaskType.CHIEF:
-        """Init dict only in chief mode."""
+    if is_local_or_chief(task_type):
+        """Init dict only in local or chief mode."""
         if opts.remove_model_dir:
             tf.logging.info("Remove model dir ...")
             delete_dir(opts.model_dir)
@@ -240,6 +257,19 @@ def main(argv):
                                          show_memory=True)
     hooks = [meta_hook, profile_hook] if opts.use_profile_hook else None
 
+    if is_distributed(task_type):
+        # feed splited train file for distributed mode
+        task_index = tf_config['task']['index']
+        assert task_index < 99, 'task_index >= 99'
+
+        if task_type == model_keys.TaskType.CHIEF:
+            opts.train_data_path += '.00'
+        elif task_type == model_keys.TaskType.WORKER:
+            suf = '.{:02d}'.format(task_index + 1)
+            opts.train_data_path += suf
+
+        tf.logging.info('train_data_path = {}'.format(opts.train_data_path))
+
     # train and eval model
     tf.logging.info("Beginning train_and_eval model ...")
     train_spec = tf.estimator.TrainSpec(
@@ -255,7 +285,7 @@ def main(argv):
     tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
     tf.logging.info("Train and eval model done.")
 
-    if task_type == model_keys.TaskType.CHIEF:
+    if is_local_or_chief(task_type):
         # save nce params
         if not os.path.exists(opts.dict_dir):
             os.mkdir(opts.dict_dir)
