@@ -56,10 +56,10 @@ parser.add_argument('--receive_ws', default=5, type=int, help='')
 parser.add_argument('--use_subset', default=0, type=int, help='')
 parser.add_argument('--dropout', default=0.1, type=float, help='')
 parser.add_argument('--ntargets', default=1, type=int, help='')
-
 parser.add_argument('--chief_lock', default='chief.lock', type=str, help='')
 parser.add_argument(
     '--max_distribute_train_steps', default=None, type=int, help='')
+parser.add_argument('--train_nce_biases', default=0, type=int, help='')
 
 opts = Options()
 
@@ -115,6 +115,8 @@ def parse_args(argv):
     if (opts.max_distribute_train_steps is not None
             and opts.max_distribute_train_steps < 0):
         opts.max_distribute_train_steps = None
+
+    opts.train_nce_biases = bool(args.train_nce_biases)
 
     tf.logging.info(opts)
 
@@ -224,7 +226,8 @@ def main(argv):
             'optimize_level': opts.optimize_level,
             'use_subset': opts.use_subset,
             'dropout': opts.dropout,
-            'ntargets': opts.ntargets
+            'ntargets': opts.ntargets,
+            'train_nce_biases': opts.train_nce_biases
         })
 
     # Create profile hooks

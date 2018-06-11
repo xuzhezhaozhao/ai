@@ -30,10 +30,12 @@ def knet_model_fn(features, labels, mode, params):
     use_subset = params['use_subset']
     dropout = params['dropout']
     ntargets = params['ntargets']
+    train_nce_biases = params['train_nce_biases']
 
     embeddings = get_embeddings(n_classes, embedding_dim)
     (nce_weights,
-     nce_biases) = get_nce_weights_and_biases(n_classes, embedding_dim)
+     nce_biases) = get_nce_weights_and_biases(
+         n_classes, embedding_dim, train_nce_biases)
 
     input_layer = tf.feature_column.input_layer(features, feature_columns)
     nonzeros = tf.count_nonzero(input_layer, 1, keepdims=True)  # [batch, 1]
@@ -133,7 +135,7 @@ def knet_model_fn(features, labels, mode, params):
     return tf.estimator.EstimatorSpec(mode, loss=nce_loss, train_op=train_op)
 
 
-def get_nce_weights_and_biases(n_classes, embedding_dim):
+def get_nce_weights_and_biases(n_classes, embedding_dim, train_nce_biases):
     """Get nce weights and biases variables."""
 
     with tf.variable_scope("nce_layer", reuse=tf.AUTO_REUSE):
@@ -144,7 +146,7 @@ def get_nce_weights_and_biases(n_classes, embedding_dim):
                 stddev=1.0 / math.sqrt(embedding_dim)))
         nce_biases = tf.get_variable(model_keys.NCE_BIASES_NAME,
                                      initializer=tf.zeros([n_classes]),
-                                     trainable=False)
+                                     trainable=train_nce_biases)
     return nce_weights, nce_biases
 
 

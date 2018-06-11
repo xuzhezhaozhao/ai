@@ -5,7 +5,7 @@ MODEL_DIR=`pwd`/model_dir
 EXPORT_MODEL_DIR=`pwd`/export_model_dir
 train_data_path=../../data/train_data.in
 eval_data_path=../../data/eval_data.in
-lr=0.25
+lr=1.0
 dim=100
 ws=20
 min_count=50
@@ -44,6 +44,8 @@ ntargets=2
 chief_lock=${MODEL_DIR}/chief.lock
 max_distribute_train_steps=10000
 
+train_nce_biases=0
+
 python train.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
@@ -80,4 +82,5 @@ python train.py \
     --dropout ${dropout} \
     --ntargets ${ntargets} \
     --chief_lock ${chief_lock} \
-    --max_distribute_train_steps ${max_distribute_train_steps}
+    --max_distribute_train_steps ${max_distribute_train_steps} \
+    --train_nce_biases ${train_nce_biases}
