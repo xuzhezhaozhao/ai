@@ -1,3 +1,6 @@
+
+echo 'TF_CONFIG = ' ${TF_CONFIG}
+
 MODEL_DIR=`pwd`/model_dir
 EXPORT_MODEL_DIR=`pwd`/export_model_dir
 train_data_path=../../data/train_data.in
