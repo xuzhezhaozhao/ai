@@ -66,7 +66,7 @@ train_lines=$((total_lines-eval_lines))
 echo "generate train_data ..."
 head ${raw_data_dir}/data.vt.in.shuf -n ${train_lines} > ${raw_data_dir}/train_data.vt.in
 
-num_workers=4
+num_workers=2
 split -a 2 -d -n l/${num_workers} ${raw_data_dir}/train_data.vt.in ${raw_data_dir}/train_data.vt.in.
 
 echo "generate eval_data ..."
