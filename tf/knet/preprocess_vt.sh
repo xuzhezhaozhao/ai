@@ -56,6 +56,9 @@ dropout=0.0
 ntargets=2
 
 chief_lock=${model_dir}/chief.lock
+max_distribute_train_steps=-1
+
+train_nce_biases=0
 
 python train.py \
     --train_data_path ${train_data_path} \
@@ -92,4 +95,6 @@ python train.py \
     --use_subset ${use_subset} \
     --dropout ${dropout} \
     --ntargets ${ntargets} \
-    --chief_lock ${chief_lock}
+    --chief_lock ${chief_lock} \
+    --max_distribute_train_steps ${max_distribute_train_steps} \
+    --train_nce_biases ${train_nce_biases}

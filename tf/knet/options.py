@@ -50,6 +50,7 @@ class Options(object):
 
         self.chief_lock = 'chief.lock'
         self.max_distribute_train_steps = None
+        self.train_nce_biases = False
 
     def __str__(self):
         return \
@@ -90,6 +91,7 @@ class Options(object):
         ntargets = {} \n \
         chief_lock = {} \n \
         max_distribute_train_steps = {} \n \
+        train_nce_biases = {} \n \
         ".format(
                 self.train_data_path,
                 self.eval_data_path,
@@ -126,4 +128,5 @@ class Options(object):
                 self.dropout,
                 self.ntargets,
                 self.chief_lock,
-                self.max_distribute_train_steps)
+                self.max_distribute_train_steps,
+                self.train_nce_biases)
