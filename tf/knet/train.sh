@@ -3,13 +3,13 @@ EXPORT_MODEL_DIR=`pwd`/export_model_dir
 train_data_path=../../data/train_data.in
 eval_data_path=../../data/eval_data.in
 lr=0.25
-dim=128
+dim=100
 ws=20
 min_count=50
 t=1.0
 batch_size=64
 num_sampled=10
-epoch=1
+epoch=10
 hidden_units='256'
 prefetch_size=10000
 
