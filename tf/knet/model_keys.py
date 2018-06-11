@@ -50,6 +50,7 @@ DICT_PARAM_NAMES = [
 class TaskType(object):
     """Distribute task type."""
 
+    LOCAL = 'local'  # non-distributed
     CHIEF = 'chief'
     WORKER = 'worker'
     PS = 'ps'
