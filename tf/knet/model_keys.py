@@ -45,3 +45,12 @@ DICT_PARAM_NAMES = [
     SAVED_DICT_BIN,
     DICT_WORDS_SUBSET,
 ]
+
+
+class TaskType(object):
+    """Distribute task type."""
+
+    CHIEF = 'chief'
+    WORKER = 'worker'
+    PS = 'ps'
+    EVALUATOR = 'evaluator'

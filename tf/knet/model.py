@@ -97,7 +97,8 @@ def knet_model_fn(features, labels, mode, params):
 
     if mode == tf.estimator.ModeKeys.EVAL:
         with tf.name_scope("EvalMode"):
-            if optimize_level != model_keys.OPTIMIZE_LEVEL_ZERO:
+            # TODO Don't optimize because of distribute model
+            if False:
                 # Eval mode only surpport optimize_level_saved_nce_params
                 tf.logging.info("Use OPTIMIZE_LEVEL_SAVED_NCE_PARAMS to eval")
                 scores, ids, logits = optimize_level_saved_nce_params(
