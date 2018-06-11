@@ -270,21 +270,35 @@ def main(argv):
 
         tf.logging.info('train_data_path = {}'.format(opts.train_data_path))
 
-    # train and eval model
-    tf.logging.info("Beginning train_and_eval model ...")
-    train_spec = tf.estimator.TrainSpec(
-        input_fn=lambda: input_data.train_input_fn(opts),
-        max_steps=opts.max_distribute_train_steps,
-        hooks=hooks)
-    eval_spec = tf.estimator.EvalSpec(
-        input_fn=lambda: input_data.eval_input_fn(opts),
-        steps=100,
-        hooks=hooks,
-        start_delay_secs=10,
-        throttle_secs=7*24*3600,  # TODO how to not evaluate during training, now will block evaluate
-    )
-    tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
-    tf.logging.info("Train and eval model done.")
+    if is_distributed(task_type):
+        # train and eval model
+        tf.logging.info("Beginning train_and_eval model ...")
+        train_spec = tf.estimator.TrainSpec(
+            input_fn=lambda: input_data.train_input_fn(opts),
+            max_steps=opts.max_distribute_train_steps,
+            hooks=hooks)
+        eval_spec = tf.estimator.EvalSpec(
+            input_fn=lambda: input_data.eval_input_fn(opts),
+            steps=100,
+            hooks=hooks,
+            start_delay_secs=10,
+            throttle_secs=7*24*3600,  # TODO how to not evaluate during training, now will block evaluate
+        )
+        tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
+        tf.logging.info("Train and eval model done.")
+    else:
+        # train model
+        tf.logging.info("Beginning train model ...")
+        classifier.train(input_fn=lambda: input_data.train_input_fn(opts),
+                         max_steps=opts.max_train_steps,
+                         hooks=hooks)
+        tf.logging.info("Train model OK")
+
+        # evaluate model
+        tf.logging.info("Beginning evaluate model ...")
+        classifier.evaluate(input_fn=lambda: input_data.eval_input_fn(opts),
+                            hooks=hooks)
+        tf.logging.info("Evaluate model OK")
 
     if is_local_or_chief(task_type):
         # TODO should sync with workers
