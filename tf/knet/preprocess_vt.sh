@@ -20,7 +20,7 @@ dict_dir=`pwd`/video_tab/dict_dir
 
 train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
-lr=0.25
+lr=1.25
 dim=128
 ws=50
 min_count=50
@@ -28,7 +28,7 @@ t=1.0
 batch_size=256
 num_sampled=10
 epoch=1
-hidden_units=''
+hidden_units='512,258'
 prefetch_size=10000
 
 max_train_steps=-1
@@ -53,7 +53,7 @@ receive_ws=100
 use_subset=1
 
 dropout=0.0
-ntargets=2
+ntargets=1
 
 chief_lock=${model_dir}/chief.lock
 max_distribute_train_steps=-1
