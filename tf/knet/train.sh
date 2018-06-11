@@ -12,8 +12,8 @@ min_count=50
 t=1.0
 batch_size=64
 num_sampled=10
-epoch=50
-hidden_units='256'
+epoch=10
+hidden_units='512,256'
 prefetch_size=10000
 
 max_train_steps=-1
@@ -39,7 +39,7 @@ receive_ws=100
 use_subset=1
 
 dropout=0.0
-ntargets=2
+ntargets=1
 
 chief_lock=${MODEL_DIR}/chief.lock
 max_distribute_train_steps=-1
