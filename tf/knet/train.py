@@ -361,7 +361,7 @@ def main(argv):
 
     if is_distributed():
         train_and_eval_in_distributed_mode()
-        # TODO export model
+        # TODO export model, need sync with workers
     else:
         train_and_eval_in_local_mode()
         export_model_in_local_mode()
