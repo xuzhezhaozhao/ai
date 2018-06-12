@@ -27,7 +27,7 @@ const std::string Dictionary::EOW = ">";
 
 Dictionary::Dictionary(std::shared_ptr<Args> args) : args_(args),
   word2int_(MAX_VOCAB_SIZE, -1), size_(0), nwords_(0), nlabels_(0),
-  ntokens_(0), pruneidx_size_(-1) {}
+  ntokens_(0), nvalidTokens_(0), pruneidx_size_(-1) {}
 
 int32_t Dictionary::find(const std::string& w) const {
   return find(w, hash(w));
@@ -66,6 +66,9 @@ int32_t Dictionary::nlabels() const {
 
 int64_t Dictionary::ntokens() const {
   return ntokens_;
+}
+int64_t Dictionary::nvalidTokens() const {
+  return nvalidTokens_;
 }
 
 const std::vector<int32_t>& Dictionary::getSubwords(int32_t i) const {
@@ -234,6 +237,7 @@ void Dictionary::readFromFile(std::istream& in) {
     }
   }
   threshold(args_->min_count, args_->min_count_label);
+  calcValidTokens();
   initTableDiscard();
   initNgrams();
   if (args_->verbose > 0) {
@@ -266,6 +270,13 @@ void Dictionary::threshold(int64_t t, int64_t tl) {
     word2int_[h] = size_++;
     if (it->type == entry_type::word) nwords_++;
     if (it->type == entry_type::label) nlabels_++;
+  }
+}
+
+void Dictionary::calcValidTokens() {
+  nvalidTokens_ = 0;
+  for (auto& e : words_) {
+    nvalidTokens_ += e.count;
   }
 }
 

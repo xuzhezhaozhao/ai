@@ -55,3 +55,10 @@ class TaskType(object):
     WORKER = 'worker'
     PS = 'ps'
     EVALUATOR = 'evaluator'
+
+
+class OptimizerType(object):
+    """Optimizer type."""
+
+    ADA = 'ada'
+    SGD = 'sgd'

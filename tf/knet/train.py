@@ -63,6 +63,7 @@ parser.add_argument('--train_nce_biases', default=0, type=int, help='')
 parser.add_argument('--shuffle_batch', default=0, type=int, help='')
 parser.add_argument('--predict_ws', default=5, type=int, help='')
 parser.add_argument('--sample_dropout', default=0.5, type=float, help='')
+parser.add_argument('--optimizer_type', default='ada', type=str, help='')
 
 opts = Options()
 
@@ -115,6 +116,7 @@ def parse_args(argv):
     opts.shuffle_batch = bool(args.shuffle_batch)
     opts.predict_ws = args.predict_ws
     opts.sample_dropout = args.sample_dropout
+    opts.optimizer_type = args.optimizer_type
 
 
 def delete_dir(filename):
@@ -213,7 +215,10 @@ def build_estimator():
             'use_subset': opts.use_subset,
             'dropout': opts.dropout,
             'ntargets': opts.ntargets,
-            'train_nce_biases': opts.train_nce_biases
+            'train_nce_biases': opts.train_nce_biases,
+            'ntokens': dict_meta["nvalidTokens"] * opts.epoch * opts.train_ws / 4 * (1 - opts.sample_dropout),
+            'batch_size': opts.batch_size,
+            'optimizer_type': opts.optimizer_type
         })
     return estimator
 
