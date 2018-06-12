@@ -29,7 +29,7 @@ namespace tensorflow {
 class FasttextExampleGenerateOp : public OpKernel {
  public:
   explicit FasttextExampleGenerateOp(OpKernelConstruction* ctx)
-      : OpKernel(ctx), global_lines_(0) {
+      : OpKernel(ctx), global_lines_(0), count_processed_tokens_(0) {
     LOG(INFO) << "Init FasttextExampleGenerateOp ...";
     args_ = std::make_shared<::fasttext::Args>();
     ParseArgs(ctx);
@@ -58,6 +58,9 @@ class FasttextExampleGenerateOp : public OpKernel {
       Tensor* labels_tensor = NULL;
       OP_REQUIRES_OK(ctx, ctx->allocate_output(1, shape, &labels_tensor));
 
+      Tensor* tokens_tensor = NULL;
+      OP_REQUIRES_OK(ctx, ctx->allocate_output(2, shape, &tokens_tensor));
+
       return;
     }
     ++global_lines_;
@@ -75,6 +78,8 @@ class FasttextExampleGenerateOp : public OpKernel {
       words.clear();
       std::stringstream ss(flat_input(i));
       int ntokens = dict_->getLine(ss, words, rng_);
+      count_processed_tokens_ += ntokens;
+
       std::vector<int> bow;
       std::uniform_int_distribution<> uniform(1, args_->ws);
       std::uniform_real_distribution<> dropout_uniform(0, 1);
@@ -118,6 +123,14 @@ class FasttextExampleGenerateOp : public OpKernel {
     labels_shape.AddDim(args_->ntargets);
     Tensor* labels_tensor = NULL;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(1, labels_shape, &labels_tensor));
+
+    // scalar
+    TensorShape tokens_shape;
+    tokens_shape.AddDim(1);
+    Tensor* tokens_tensor = NULL;
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(2, tokens_shape, &tokens_tensor));
+    tokens_tensor->scalar<int64>()() =
+        count_processed_tokens_.load(std::memory_order_relaxed);
 
     auto matrix_records = records_tensor->matrix<int32>();
     auto matrix_labels = labels_tensor->matrix<int64>();
@@ -240,7 +253,8 @@ class FasttextExampleGenerateOp : public OpKernel {
       to_write = std::string("ntokens\t" + std::to_string(ntokens) + "\n");
       ofs.write(to_write.data(), to_write.size());
 
-      to_write = std::string("nvalidTokens\t" + std::to_string(nvalidTokens) + "\n");
+      to_write =
+          std::string("nvalidTokens\t" + std::to_string(nvalidTokens) + "\n");
       ofs.write(to_write.data(), to_write.size());
 
       OP_REQUIRES(ctx, ofs.good(), errors::Unavailable("Write error!"));
@@ -284,7 +298,8 @@ class FasttextExampleGenerateOp : public OpKernel {
   std::shared_ptr<::fasttext::Dictionary> dict_;
 
   std::minstd_rand rng_;
-  std::atomic<long long> global_lines_;
+  std::atomic<int64> global_lines_;
+  std::atomic<int64> count_processed_tokens_;
 };
 REGISTER_KERNEL_BUILDER(Name("FasttextExampleGenerate").Device(DEVICE_CPU),
                         FasttextExampleGenerateOp);
