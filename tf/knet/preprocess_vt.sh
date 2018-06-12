@@ -10,14 +10,10 @@ export ANACONDA2_ROOT=/usr/local/services/kd_anaconda2-1.0/lib/anaconda2
 export PATH="${ANACONDA2_ROOT}/bin:$PATH"
 export PYTHONPATH="${ANACONDA2_ROOT}/lib/python2.7/site-packages:$PYTHONPATH"
 
-parallel=47
-
 raw_data_dir=raw_data
-
 model_dir=`pwd`/video_tab/model_dir
 export_model_dir=`pwd`/video_tab/export_model_dir
 dict_dir=`pwd`/video_tab/dict_dir
-
 train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
 lr=1.25
@@ -30,37 +26,25 @@ num_sampled=10
 epoch=1
 hidden_units='512,258'
 prefetch_size=10000
-
 max_train_steps=-1
-
 save_summary_steps=10000
 save_checkpoints_secs=1200
 log_step_count_steps=1000
-
-recall_k=400
+recall_k=350
 use_saved_dict=0
-
 use_profile_hook=0
 profile_steps=100
-
 root_ops_path=lib/
 remove_model_dir=1
-
 optimize_level=1
-
 receive_ws=100
-
 use_subset=1
-
 dropout=0.0
 ntargets=1
-
 chief_lock=${model_dir}/chief.lock
 max_distribute_train_steps=-1
-
 train_nce_biases=0
-shuffle_batch=0
-
+shuffle_batch=1
 predict_ws=50
 sample_dropout=0.5
 
