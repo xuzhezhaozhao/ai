@@ -126,11 +126,15 @@ class FasttextExampleGenerateOp : public OpKernel {
 
     // scalar
     TensorShape tokens_shape;
+    tokens_shape.AddDim(insts.size());
     tokens_shape.AddDim(1);
     Tensor* tokens_tensor = NULL;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(2, tokens_shape, &tokens_tensor));
-    tokens_tensor->scalar<int64>()() =
-        count_processed_tokens_.load(std::memory_order_relaxed);
+    int64 tokens = count_processed_tokens_.load(std::memory_order_relaxed);
+    auto flat_tokens = tokens_tensor->flat<int64>();
+    for (int i = 0; i < flat_tokens.size(); ++i) {
+      flat_tokens(i) = tokens;
+    }
 
     auto matrix_records = records_tensor->matrix<int32>();
     auto matrix_labels = labels_tensor->matrix<int64>();
