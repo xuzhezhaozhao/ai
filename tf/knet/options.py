@@ -8,6 +8,7 @@ from __future__ import print_function
 
 class Options(object):
     def __init__(self):
+        # cmd args
         self.train_data_path = ""
         self.eval_data_path = ""
         self.lr = 0.05
@@ -26,34 +27,34 @@ class Options(object):
         self.model_dir = 'model_dir'
         self.export_model_dir = 'export_model_dir'
         self.prefetch_size = 1000
-
         self.save_summary_steps = 100
         self.save_checkpoints_secs = 600
         self.keep_checkpoint_max = 3
         self.log_step_count_steps = 100
-
         self.recall_k = 10
         self.dict_dir = 'dict_dir'
         self.use_saved_dict = False
-
         self.use_profile_hook = False
         self.profile_steps = 100
-
         self.root_ops_path = ''
         self.remove_model_dir = 1
         self.optimize_level = 1
-
         self.receive_ws = 5
         self.use_subset = False
         self.dropout = 0.1
         self.ntargets = 1
-
         self.chief_lock = 'chief.lock'
         self.max_distribute_train_steps = None
         self.train_nce_biases = False
         self.shuffle_batch = False
-
         self.predict_ws = 5
+
+        # non-cmd args
+        self.estimator = None
+        self.hooks = None
+        self.tf_config = None
+        self.task_type = None
+        self.task_index = None
 
     def __str__(self):
         return \
@@ -97,6 +98,11 @@ class Options(object):
         train_nce_biases = {} \n \
         shuffle_batch = {} \n \
         predict_ws = {} \n \
+        estimator = {} \n \
+        hooks = {} \n \
+        tf_config = {} \n \
+        task_type = {} \n \
+        task_index = {} \n \
         ".format(
                 self.train_data_path,
                 self.eval_data_path,
@@ -136,4 +142,9 @@ class Options(object):
                 self.max_distribute_train_steps,
                 self.train_nce_biases,
                 self.shuffle_batch,
-                self.predict_ws)
+                self.predict_ws,
+                self.estimator,
+                self.hooks,
+                self.tf_config,
+                self.task_type,
+                self.task_index)
