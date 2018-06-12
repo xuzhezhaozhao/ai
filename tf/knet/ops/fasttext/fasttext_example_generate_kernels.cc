@@ -77,8 +77,13 @@ class FasttextExampleGenerateOp : public OpKernel {
       int ntokens = dict_->getLine(ss, words, rng_);
       std::vector<int> bow;
       std::uniform_int_distribution<> uniform(1, args_->ws);
+      std::uniform_real_distribution<> dropout_uniform(0, 1);
       // genearte examples
       for (int w = 1; w < words.size(); w++) {
+        if (dropout_uniform(rng_) < args_->sample_dropout) {
+          continue;
+        }
+
         // use words[w] as the first label
         int32_t boundary = std::min(w, uniform(rng_));
         bow.clear();
@@ -172,6 +177,9 @@ class FasttextExampleGenerateOp : public OpKernel {
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("ntargets", &args_->ntargets));
     LOG(INFO) << "ntargets: " << args_->ntargets;
+
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("sample_dropout", &args_->sample_dropout));
+    LOG(INFO) << "sample_dropout: " << args_->sample_dropout;
   }
 
   void PreProcessTrainData(OpKernelConstruction* ctx) {

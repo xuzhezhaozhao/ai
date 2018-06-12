@@ -48,6 +48,7 @@ class Options(object):
         self.train_nce_biases = False
         self.shuffle_batch = False
         self.predict_ws = 5
+        self.sample_dropout = 0.5
 
         # non-cmd args
         self.estimator = None
@@ -98,6 +99,8 @@ class Options(object):
         train_nce_biases = {} \n \
         shuffle_batch = {} \n \
         predict_ws = {} \n \
+        sample_dropout = {} \n \
+        \n \
         estimator = {} \n \
         hooks = {} \n \
         tf_config = {} \n \
@@ -143,6 +146,7 @@ class Options(object):
                 self.train_nce_biases,
                 self.shuffle_batch,
                 self.predict_ws,
+                self.sample_dropout,
                 self.estimator,
                 self.hooks,
                 self.tf_config,

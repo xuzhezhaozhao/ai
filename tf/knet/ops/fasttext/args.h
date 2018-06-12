@@ -45,6 +45,7 @@ struct Args {
     std::string dict_dir = "dict_dir";
 
     int ntargets = 1;
+    float sample_dropout = 0.5;
 };
 
 }

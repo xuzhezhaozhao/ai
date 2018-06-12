@@ -62,6 +62,7 @@ parser.add_argument(
 parser.add_argument('--train_nce_biases', default=0, type=int, help='')
 parser.add_argument('--shuffle_batch', default=0, type=int, help='')
 parser.add_argument('--predict_ws', default=5, type=int, help='')
+parser.add_argument('--sample_dropout', default=0.5, type=float, help='')
 
 opts = Options()
 
@@ -83,45 +84,37 @@ def parse_args(argv):
     opts.max_train_steps = args.max_train_steps
     if opts.max_train_steps is not None and opts.max_train_steps < 0:
         opts.max_train_steps = None
-
     opts.epoch = args.epoch
     opts.hidden_units = map(int, filter(lambda x: x != '',
                                         args.hidden_units.split(',')))
     opts.model_dir = args.model_dir
     opts.export_model_dir = args.export_model_dir
     opts.prefetch_size = args.prefetch_size
-
     opts.save_summary_steps = args.save_summary_steps
     opts.save_checkpoints_secs = args.save_checkpoints_secs
     opts.keep_checkpoint_max = args.keep_checkpoint_max
     opts.log_step_count_steps = args.log_step_count_steps
-
     opts.recall_k = args.recall_k
     opts.dict_dir = args.dict_dir
     opts.use_saved_dict = bool(args.use_saved_dict)
-
     opts.use_profile_hook = bool(args.use_profile_hook)
     opts.profile_steps = args.profile_steps
-
     opts.root_ops_path = args.root_ops_path
     opts.remove_model_dir = bool(args.remove_model_dir)
     opts.optimize_level = args.optimize_level
-
     opts.receive_ws = args.receive_ws
     opts.use_subset = bool(args.use_subset)
     opts.dropout = args.dropout
     opts.ntargets = args.ntargets
-
     opts.chief_lock = args.chief_lock
     opts.max_distribute_train_steps = args.max_distribute_train_steps
     if (opts.max_distribute_train_steps is not None
             and opts.max_distribute_train_steps < 0):
         opts.max_distribute_train_steps = None
-
     opts.train_nce_biases = bool(args.train_nce_biases)
     opts.shuffle_batch = bool(args.shuffle_batch)
-
     opts.predict_ws = args.predict_ws
+    opts.sample_dropout = args.sample_dropout
 
 
 def delete_dir(filename):
