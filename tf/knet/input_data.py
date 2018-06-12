@@ -14,17 +14,22 @@ import custom_ops
 
 
 def feature_columns(opts):
+    """Return a tuple of feature_columns. One for train, one for predict."""
+
     my_feature_columns = []
+    predict_feature_columns = []
     my_feature_columns.append(tf.feature_column.numeric_column(
-        key=model_keys.RECORDS_COL, shape=[opts.ws], dtype=tf.int32))
-    return my_feature_columns
+        key=model_keys.RECORDS_COL, shape=[opts.train_ws], dtype=tf.int32))
+    predict_feature_columns.append(tf.feature_column.numeric_column(
+        key=model_keys.RECORDS_COL, shape=[opts.predict_ws], dtype=tf.int32))
+    return my_feature_columns, predict_feature_columns
 
 
 def pack_fasttext_params(opts):
     params = dict()
     params['train_data_path'] = opts.train_data_path
     params['dict_dir'] = opts.dict_dir
-    params['ws'] = opts.ws
+    params['ws'] = opts.train_ws
     params['min_count'] = opts.min_count
     params['t'] = opts.t
     params['verbose'] = opts.verbose
@@ -104,7 +109,7 @@ def train_random_numpy_input_fn(opts):
     """Generate dummy train examples for performence profile, see cpu usage."""
 
     n = 1000000
-    examples = np.random.randint(1, 100, [n, opts.ws])
+    examples = np.random.randint(1, 100, [n, opts.train_ws])
     labels = np.random.randint(1, 100, [n, opts.ntargets])
 
     return tf.estimator.inputs.numpy_input_fn(
@@ -143,8 +148,7 @@ def build_serving_input_fn(opts):
         ids, num_in_dict = custom_ops.dict_lookup(
             input=features[model_keys.WORDS_COL],
             dict=tf.make_tensor_proto(words),
-            output_ws=opts.ws
-        )
+            output_ws=opts.predict_ws)
         features[model_keys.RECORDS_COL] = ids
         features[model_keys.NUM_IN_DICT_COL] = num_in_dict
 

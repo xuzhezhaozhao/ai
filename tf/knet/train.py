@@ -25,7 +25,7 @@ parser.add_argument('--train_data_path', default='', type=str, help='')
 parser.add_argument('--eval_data_path', default='', type=str, help='')
 parser.add_argument('--lr', default=0.25, type=float, help='learning rate')
 parser.add_argument('--dim', default=100, type=int, help='embedding dim')
-parser.add_argument('--ws', default=5, type=int, help='window size')
+parser.add_argument('--train_ws', default=5, type=int, help='window size')
 parser.add_argument('--min_count', default=50, type=int, help='')
 parser.add_argument('--t', default=0.0001, type=float, help='')
 parser.add_argument('--verbose', default=1, type=int, help='')
@@ -61,6 +61,7 @@ parser.add_argument(
     '--max_distribute_train_steps', default=None, type=int, help='')
 parser.add_argument('--train_nce_biases', default=0, type=int, help='')
 parser.add_argument('--shuffle_batch', default=0, type=int, help='')
+parser.add_argument('--predict_ws', default=5, type=int, help='')
 
 opts = Options()
 
@@ -71,7 +72,7 @@ def parse_args(argv):
     opts.eval_data_path = args.eval_data_path
     opts.lr = args.lr
     opts.dim = args.dim
-    opts.ws = args.ws
+    opts.train_ws = args.train_ws
     opts.min_count = args.min_count
     opts.t = args.t
     opts.verbose = args.verbose
@@ -120,6 +121,8 @@ def parse_args(argv):
     opts.train_nce_biases = bool(args.train_nce_biases)
     opts.shuffle_batch = bool(args.shuffle_batch)
 
+    opts.predict_ws = args.predict_ws
+
     tf.logging.info(opts)
 
 
@@ -139,10 +142,10 @@ def validate_args(opts):
     if opts.optimize_level not in model_keys.ALL_OPTIMIZE_LEVELS:
         raise ValueError(
             "optimaize_level {} not surpported.".format(opts.optimize_level))
-    if opts.ws > opts.receive_ws:
+    if opts.predict_ws > opts.receive_ws:
         raise ValueError(
-            "ws[{}] should not be larger than receive_ws[{}]".format(
-                opts.ws, opts.receive_ws))
+            "predict_ws[{}] should not be larger than receive_ws[{}]".format(
+                opts.predict_ws, opts.receive_ws))
     if len([u for u in opts.hidden_units if u <= 0]) > 0:
         raise ValueError("hidden_units contain unit <= 0")
     if opts.dropout < 0.0:
@@ -213,7 +216,7 @@ def main(argv):
                 time.sleep(5)
 
     dict_meta = input_data.parse_dict_meta(opts)
-    feature_columns = input_data.feature_columns(opts)
+    feature_columns, predict_feature_columns = input_data.feature_columns(opts)
 
     # session_config not used
     session_config = tf.ConfigProto(device_count={"CPU": 1},
@@ -235,6 +238,7 @@ def main(argv):
         config=config,
         params={
             'feature_columns': feature_columns,
+            'predict_feature_columns': predict_feature_columns,
             'hidden_units': opts.hidden_units,
             'n_classes': dict_meta["nwords"] + 1,
             'embedding_dim': opts.dim,

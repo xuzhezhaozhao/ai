@@ -12,7 +12,7 @@ class Options(object):
         self.eval_data_path = ""
         self.lr = 0.05
         self.dim = 100
-        self.ws = 5
+        self.train_ws = 5
         self.min_count = 5
         self.t = 0.0001
         self.verbose = 1
@@ -53,6 +53,8 @@ class Options(object):
         self.train_nce_biases = False
         self.shuffle_batch = False
 
+        self.predict_ws = 5
+
     def __str__(self):
         return \
             "Option:\n \
@@ -60,7 +62,7 @@ class Options(object):
         eval_data_path = {} \n \
         lr = {} \n \
         dim = {} \n \
-        ws = {} \n \
+        train_ws = {} \n \
         min_count = {} \n \
         t = {} \n \
         verbose = {} \n \
@@ -94,12 +96,13 @@ class Options(object):
         max_distribute_train_steps = {} \n \
         train_nce_biases = {} \n \
         shuffle_batch = {} \n \
+        predict_ws = {} \n \
         ".format(
                 self.train_data_path,
                 self.eval_data_path,
                 self.lr,
                 self.dim,
-                self.ws,
+                self.train_ws,
                 self.min_count,
                 self.t,
                 self.verbose,
@@ -132,4 +135,5 @@ class Options(object):
                 self.chief_lock,
                 self.max_distribute_train_steps,
                 self.train_nce_biases,
-                self.shuffle_batch)
+                self.shuffle_batch,
+                self.predict_ws)

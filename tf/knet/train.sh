@@ -7,12 +7,12 @@ train_data_path=../../data/train_data.in
 eval_data_path=../../data/eval_data.in
 lr=1.25
 dim=100
-ws=50
+train_ws=50
 min_count=10
 t=1.0
 batch_size=256
 num_sampled=10
-epoch=10
+epoch=5
 hidden_units='512,256'
 prefetch_size=10000
 
@@ -20,7 +20,7 @@ max_train_steps=-1
 
 save_summary_steps=100
 save_checkpoints_secs=600
-log_step_count_steps=1000
+log_step_count_steps=100
 
 recall_k=10
 dict_dir=`pwd`/dict_dir
@@ -47,12 +47,14 @@ max_distribute_train_steps=-1
 train_nce_biases=0
 shuffle_batch=0
 
+predict_ws=10
+
 python train.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
     --lr ${lr} \
     --dim ${dim} \
-    --ws ${ws} \
+    --train_ws ${train_ws} \
     --min_count ${min_count} \
     --t ${t} \
     --verbose 2 \
@@ -85,4 +87,5 @@ python train.py \
     --chief_lock ${chief_lock} \
     --max_distribute_train_steps ${max_distribute_train_steps} \
     --train_nce_biases ${train_nce_biases} \
-    --shuffle_batch ${shuffle_batch}
+    --shuffle_batch ${shuffle_batch} \
+    --predict_ws ${predict_ws}

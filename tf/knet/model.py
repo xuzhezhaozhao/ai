@@ -19,6 +19,7 @@ def knet_model_fn(features, labels, mode, params):
     """ build model graph """
 
     feature_columns = params['feature_columns']
+    predict_feature_columns = params['predict_feature_columns']
     hidden_units = params['hidden_units']
     n_classes = params['n_classes']
     embedding_dim = params['embedding_dim']
@@ -37,7 +38,12 @@ def knet_model_fn(features, labels, mode, params):
      nce_biases) = get_nce_weights_and_biases(
          n_classes, embedding_dim, train_nce_biases)
 
-    input_layer = tf.feature_column.input_layer(features, feature_columns)
+    if mode == tf.estimator.ModeKeys.PREDICT:
+        input_layer = tf.feature_column.input_layer(
+            features, predict_feature_columns)
+    else:
+        input_layer = tf.feature_column.input_layer(features, feature_columns)
+
     nonzeros = tf.count_nonzero(input_layer, 1, keepdims=True)  # [batch, 1]
     nonzeros = tf.maximum(nonzeros, 1)  # avoid divide zero
     embeds = mask_padding_embedding_lookup(embeddings, embedding_dim,

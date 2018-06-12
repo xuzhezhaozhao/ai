@@ -22,7 +22,7 @@ train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
 lr=1.25
 dim=128
-ws=50
+train_ws=20
 min_count=50
 t=1.0
 batch_size=256
@@ -61,12 +61,14 @@ max_distribute_train_steps=-1
 train_nce_biases=0
 shuffle_batch=0
 
+predict_ws=50
+
 python train.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
     --lr ${lr} \
     --dim ${dim} \
-    --ws ${ws} \
+    --train_ws ${train_ws} \
     --min_count ${min_count} \
     --t ${t} \
     --verbose 2 \
@@ -99,4 +101,5 @@ python train.py \
     --chief_lock ${chief_lock} \
     --max_distribute_train_steps ${max_distribute_train_steps} \
     --train_nce_biases ${train_nce_biases} \
-    --shuffle_batch ${shuffle_batch}
+    --shuffle_batch ${shuffle_batch} \
+    --predict_ws ${predict_ws}

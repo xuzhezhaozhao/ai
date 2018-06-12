@@ -36,9 +36,9 @@ class PredictionClient {
     auto feature = features->mutable_feature();
     ::tensorflow::Feature words;
     auto bytes_list = words.mutable_bytes_list();
-    const int ws = 100;
+    const int recieve_ws = 100;
 
-    for (int i = 0; i < ws; ++i) {
+    for (int i = 0; i < recieve_ws; ++i) {
       bytes_list->add_value("");
     }
     bytes_list->set_value(0, "6215a4e92df895aa");
