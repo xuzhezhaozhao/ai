@@ -32,6 +32,9 @@ def knet_model_fn(features, labels, mode, params):
     dropout = params['dropout']
     ntargets = params['ntargets']
     train_nce_biases = params['train_nce_biases']
+    ntokens = params['ntokens']
+    batch_size = params['batch_size']
+    optimizer_type = params['optimizer_type']
 
     embeddings = get_embeddings(n_classes, embedding_dim)
     (nce_weights,
@@ -46,6 +49,7 @@ def knet_model_fn(features, labels, mode, params):
 
     nonzeros = tf.count_nonzero(input_layer, 1, keepdims=True)  # [batch, 1]
     nonzeros = tf.maximum(nonzeros, 1)  # avoid divide zero
+    nonzeros_count = tf.reduce_sum(nonzeros) + ntargets * batch_size
     embeds = mask_padding_embedding_lookup(embeddings, embedding_dim,
                                            input_layer, model_keys.PADDING_ID)
     embeds_sum = tf.reduce_sum(embeds, 1)
@@ -135,7 +139,24 @@ def knet_model_fn(features, labels, mode, params):
 
     assert mode == tf.estimator.ModeKeys.TRAIN
 
-    optimizer = tf.train.AdagradOptimizer(learning_rate=lr)
+    if optimizer_type == model_keys.OptimizerType.ADA:
+        optimizer = tf.train.AdagradOptimizer(learning_rate=lr)
+    elif optimizer_type == model_keys.OptimizerType.SGD:
+        token_count = tf.get_variable(
+            'token_count', initializer=tf.cast(0, tf.int64),
+            trainable=False, dtype=tf.int64)
+        token_count = tf.assign_add(token_count, nonzeros_count)
+        tf.summary.scalar("token_count", token_count)
+
+        new_lr = lr * (1.0 - (tf.cast(token_count, tf.float32)
+                              / tf.cast(ntokens, tf.float32)))
+        new_lr = tf.maximum(new_lr, 1e-6)
+        tf.summary.scalar("lr", new_lr)
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate=new_lr)
+    else:
+        raise ValueError('OptimizerType "{}" not surpported.'
+                         .format(optimizer_type))
+
     train_op = optimizer.minimize(nce_loss,
                                   global_step=tf.train.get_global_step())
     return tf.estimator.EstimatorSpec(mode, loss=nce_loss, train_op=train_op)

@@ -47,6 +47,7 @@ train_nce_biases=0
 shuffle_batch=1
 predict_ws=50
 sample_dropout=0.5
+optimizer_type='ada'
 
 python train.py \
     --train_data_path ${train_data_path} \
@@ -88,4 +89,5 @@ python train.py \
     --train_nce_biases ${train_nce_biases} \
     --shuffle_batch ${shuffle_batch} \
     --predict_ws ${predict_ws} \
-    --sample_dropout ${sample_dropout}
+    --sample_dropout ${sample_dropout} \
+    --optimizer_type ${optimizer_type}

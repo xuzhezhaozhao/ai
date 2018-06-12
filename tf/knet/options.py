@@ -49,6 +49,7 @@ class Options(object):
         self.shuffle_batch = False
         self.predict_ws = 5
         self.sample_dropout = 0.5
+        self.optimizer_type = 'ada'
 
         # non-cmd args
         self.estimator = None
@@ -100,6 +101,7 @@ class Options(object):
         shuffle_batch = {} \n \
         predict_ws = {} \n \
         sample_dropout = {} \n \
+        optimizer_type = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -147,6 +149,7 @@ class Options(object):
                 self.shuffle_batch,
                 self.predict_ws,
                 self.sample_dropout,
+                self.optimizer_type,
                 self.estimator,
                 self.hooks,
                 self.tf_config,

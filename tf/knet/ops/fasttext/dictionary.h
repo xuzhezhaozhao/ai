@@ -55,6 +55,7 @@ class Dictionary {
   int32_t nwords_;
   int32_t nlabels_;
   int64_t ntokens_;
+  int64_t nvalidTokens_;
 
   int64_t pruneidx_size_;
   std::unordered_map<int32_t, int32_t> pruneidx_;
@@ -70,6 +71,7 @@ class Dictionary {
   int32_t nwords() const;
   int32_t nlabels() const;
   int64_t ntokens() const;
+  int64_t nvalidTokens() const;
   int32_t getId(const std::string&) const;
   int32_t getId(const std::string&, uint32_t h) const;
   entry_type getType(int32_t) const;
@@ -97,6 +99,7 @@ class Dictionary {
   int32_t getLine(std::istream&, std::vector<int32_t>&,
                   std::minstd_rand&) const;
   void threshold(int64_t, int64_t);
+  void calcValidTokens();
   void prune(std::vector<int32_t>&);
   bool isPruned() { return pruneidx_size_ >= 0; }
 

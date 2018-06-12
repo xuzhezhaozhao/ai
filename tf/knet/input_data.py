@@ -25,7 +25,7 @@ def feature_columns(opts):
     return my_feature_columns, predict_feature_columns
 
 
-def pack_fasttext_params(opts):
+def pack_fasttext_params(opts, is_eval):
     params = dict()
     params['train_data_path'] = opts.train_data_path
     params['dict_dir'] = opts.dict_dir
@@ -38,6 +38,10 @@ def pack_fasttext_params(opts):
     params['ntargets'] = opts.ntargets
     params['sample_dropout'] = opts.sample_dropout
 
+    if is_eval:
+        params['sample_dropout'] = 0
+        params['t'] = 1.0
+
     return params
 
 
@@ -45,7 +49,7 @@ def init_dict(opts):
     if opts.use_saved_dict:
         return
 
-    params = pack_fasttext_params(opts)
+    params = pack_fasttext_params(opts, False)
     params['input'] = ''
     params['use_saved_dict'] = False
     dummy = custom_ops.fasttext_example_generate(**params)
@@ -73,12 +77,9 @@ def generate_example(line, opts, is_eval):
         sess.run(it.get_next())
     """
 
-    params = pack_fasttext_params(opts)
+    params = pack_fasttext_params(opts, is_eval)
     params['input'] = line
     params['use_saved_dict'] = True
-
-    if is_eval:
-        params['sample_dropout'] = 0.0
 
     records, labels = custom_ops.fasttext_example_generate(**params)
     dataset = tf.data.Dataset.from_tensor_slices(

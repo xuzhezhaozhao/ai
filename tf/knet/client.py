@@ -49,7 +49,7 @@ def run():
         )
     ).SerializeToString()
 
-    examples = [example1]
+    examples = [example1, example2]
     request.inputs[input_name].CopyFrom(
         tf.contrib.util.make_tensor_proto(examples, dtype=tf.string))
 

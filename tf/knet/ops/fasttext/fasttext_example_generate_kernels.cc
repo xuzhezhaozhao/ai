@@ -229,10 +229,18 @@ class FasttextExampleGenerateOp : public OpKernel {
                   errors::Unavailable(dict_meta + " open failed"));
       int nwords = dict_->nwords();
       int nlabels = dict_->nlabels();
+      int ntokens = dict_->ntokens();
+      int nvalidTokens = dict_->nvalidTokens();
       auto to_write = std::string("nwords\t") + std::to_string(nwords) + "\n";
       ofs.write(to_write.data(), to_write.size());
 
       to_write = std::string("nlabels\t" + std::to_string(nlabels) + "\n");
+      ofs.write(to_write.data(), to_write.size());
+
+      to_write = std::string("ntokens\t" + std::to_string(ntokens) + "\n");
+      ofs.write(to_write.data(), to_write.size());
+
+      to_write = std::string("nvalidTokens\t" + std::to_string(nvalidTokens) + "\n");
       ofs.write(to_write.data(), to_write.size());
 
       OP_REQUIRES(ctx, ofs.good(), errors::Unavailable("Write error!"));
