@@ -60,7 +60,7 @@ echo "shuf ..."
 shuf ${raw_data_dir}/data.vt.in -o ${raw_data_dir}/data.vt.in.shuf
 
 total_lines=$(wc -l ${raw_data_dir}/data.vt.in.shuf | awk '{print $1}')
-eval_lines=100000
+eval_lines=20000
 train_lines=$((total_lines-eval_lines))
 
 echo "generate train_data ..."
