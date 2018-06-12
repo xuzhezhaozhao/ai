@@ -13,7 +13,7 @@ test_line = [
 sess = tf.Session()
 
 train_data_path = '../../../../data/train_data.in'
-(dummy1, dummy2) = fasttext_example_generate_ops.fasttext_example_generate(
+(dummy1, dummy2, dummy3) = fasttext_example_generate_ops.fasttext_example_generate(
     train_data_path=train_data_path,
     input=test_line,
     use_saved_dict=False,
@@ -22,13 +22,15 @@ train_data_path = '../../../../data/train_data.in'
 )
 sess.run(dummy1)
 
-(records, labels) = fasttext_example_generate_ops.fasttext_example_generate(
+(records_tensor, labels_tensor, tokens_tensor) = fasttext_example_generate_ops.fasttext_example_generate(
     train_data_path=train_data_path,
     input=test_line,
     use_saved_dict=True,
     dict_dir="dict_dir",
     ntargets=2
 )
-records = sess.run(records)
-labels = sess.run(labels)
-print("records = \n{}\nlabels = \n{}\n".format(records, labels))
+records, labels, tokens = sess.run([records_tensor, labels_tensor, tokens_tensor])
+print("records = \n{}\nlabels = \n{}\ntokens = \n{}".format(records, labels, tokens))
+
+tokens = sess.run(tokens_tensor)
+print("records = \n{}\nlabels = \n{}\ntokens = \n{}".format(records, labels, tokens))
