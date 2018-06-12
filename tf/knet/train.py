@@ -123,8 +123,6 @@ def parse_args(argv):
 
     opts.predict_ws = args.predict_ws
 
-    tf.logging.info(opts)
-
 
 def delete_dir(filename):
     tf.logging.info("To delete file '{}' ...".format(filename))
@@ -138,7 +136,7 @@ def delete_dir(filename):
                 "'{}' exists and not a directory.".format(filename))
 
 
-def validate_args(opts):
+def validate_opts():
     if opts.optimize_level not in model_keys.ALL_OPTIMIZE_LEVELS:
         raise ValueError(
             "optimaize_level {} not surpported.".format(opts.optimize_level))
@@ -153,15 +151,19 @@ def validate_args(opts):
 
 
 def parse_tf_config():
-    """parse environment TF_CONFIG"""
+    """Parse environment TF_CONFIG. config put in opts."""
 
     try:
         tf_config = os.environ.get('TF_CONFIG')
         tf_config = json.loads(tf_config)
     except Exception:
-        return None
+        tf_config = None
 
-    return tf_config
+    opts.tf_config = tf_config
+    opts.task_type = model_keys.TaskType.LOCAL  # default mode
+    if opts.tf_config is not None:
+        opts.task_type = opts.tf_config['task']['type']
+        opts.task_index = opts.tf_config['task']['index']
 
 
 def is_local_or_chief(task_type):
@@ -173,51 +175,19 @@ def is_local_or_chief(task_type):
     return False
 
 
-def is_distributed(task_type):
+def is_distributed():
     """Return True if task_type is not 'local'."""
 
-    if task_type != model_keys.TaskType.LOCAL:
+    if opts.task_type != model_keys.TaskType.LOCAL:
         return True
     return False
 
 
-def main(argv):
-    parse_args(argv)
-    validate_args(opts)
-
-    tf_config = parse_tf_config()
-    task_type = model_keys.TaskType.LOCAL  # default mode
-    if tf_config is not None:
-        task_type = tf_config['task']['type']
-
-    chief_lock_file = opts.chief_lock
-    if is_local_or_chief(task_type):
-        """Init dict only in local or chief mode."""
-        if opts.remove_model_dir:
-            tf.logging.info("Remove model dir ...")
-            delete_dir(opts.model_dir)
-            tf.logging.info("Remove model dir OK")
-            os.makedirs(opts.model_dir)
-        else:
-            tf.logging.info("Don't remove model dir.")
-
-        tf.logging.info('Init dict ...')
-        input_data.init_dict(opts)
-        with open(chief_lock_file, 'w'):  # create file barrier
-            pass
-        tf.logging.info('Init dict OK')
-    else:
-        # init_dict barrier
-        while True:
-            if os.path.exists(chief_lock_file):
-                break
-            else:
-                tf.logging.info("Wait for {} ...".format(chief_lock_file))
-                time.sleep(5)
+def build_estimator():
+    """Build estimator."""
 
     dict_meta = input_data.parse_dict_meta(opts)
     feature_columns, predict_feature_columns = input_data.feature_columns(opts)
-
     # session_config not used
     session_config = tf.ConfigProto(device_count={"CPU": 1},
                                     inter_op_parallelism_threads=1,
@@ -233,7 +203,7 @@ def main(argv):
         keep_checkpoint_max=opts.keep_checkpoint_max,
         keep_checkpoint_every_n_hours=10000,
         log_step_count_steps=opts.log_step_count_steps)
-    classifier = tf.estimator.Estimator(
+    estimator = tf.estimator.Estimator(
         model_fn=model.knet_model_fn,
         config=config,
         params={
@@ -252,7 +222,39 @@ def main(argv):
             'ntargets': opts.ntargets,
             'train_nce_biases': opts.train_nce_biases
         })
+    return estimator
 
+
+def init_dictionary():
+    """Init dict. In distribute mode, use file barrier."""
+
+    chief_lock_file = opts.chief_lock
+    if is_local_or_chief(opts.task_type):
+        """Init dict only in local or chief mode."""
+        if opts.remove_model_dir:
+            tf.logging.info("Remove model dir ...")
+            delete_dir(opts.model_dir)
+            tf.logging.info("Remove model dir OK")
+            os.makedirs(opts.model_dir)
+        else:
+            tf.logging.info("Don't remove model dir.")
+
+        tf.logging.info('Init dict ...')
+        input_data.init_dict(opts)
+        with open(chief_lock_file, 'w'):  # create file barrier
+            pass
+        tf.logging.info('Init dict OK')
+    else:
+        # Distributed mode, worker use file barrier to sync
+        while True:
+            if os.path.exists(chief_lock_file):
+                break
+            else:
+                tf.logging.info("Wait for {} ...".format(chief_lock_file))
+                time.sleep(5)
+
+
+def create_hooks():
     # Create profile hooks
     save_steps = opts.profile_steps
     meta_hook = hook.MetadataHook(save_steps=save_steps,
@@ -263,81 +265,106 @@ def main(argv):
                                          show_memory=True)
     hooks = [meta_hook, profile_hook] if opts.use_profile_hook else None
 
-    if is_distributed(task_type):
-        # feed splited train file for distributed mode
-        task_index = tf_config['task']['index']
-        assert task_index < 99, 'task_index >= 99'
+    return hooks
 
-        if task_type == model_keys.TaskType.CHIEF:
-            opts.train_data_path += '.00'
-        elif task_type == model_keys.TaskType.WORKER:
-            suf = '.{:02d}'.format(task_index + 1)
-            opts.train_data_path += suf
 
-        tf.logging.info('train_data_path = {}'.format(opts.train_data_path))
+def train_and_eval_in_distributed_mode():
+    """feed splited train file for distributed mode."""
+    assert opts.task_index < 99, 'task_index >= 99'
 
-    if is_distributed(task_type):
-        # train and eval model
-        tf.logging.info("Beginning train_and_eval model ...")
-        train_spec = tf.estimator.TrainSpec(
-            input_fn=lambda: input_data.train_input_fn(opts),
-            max_steps=opts.max_distribute_train_steps,
-            hooks=hooks)
-        eval_spec = tf.estimator.EvalSpec(
-            input_fn=lambda: input_data.eval_input_fn(opts),
-            steps=100,
-            hooks=hooks,
-            start_delay_secs=10,
-            throttle_secs=7*24*3600,  # TODO how to not evaluate during training, now will block evaluate
-        )
-        tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
-        tf.logging.info("Train and eval model done.")
-    else:
-        # train model
-        tf.logging.info("Beginning train model ...")
-        classifier.train(input_fn=lambda: input_data.train_input_fn(opts),
+    if opts.task_type == model_keys.TaskType.CHIEF:
+        opts.train_data_path += '.00'
+    elif opts.task_type == model_keys.TaskType.WORKER:
+        suf = '.{:02d}'.format(opts.task_index + 1)
+        opts.train_data_path += suf
+
+    tf.logging.info('train_data_path = {}'.format(opts.train_data_path))
+
+    # train and eval model
+    tf.logging.info("Beginning train_and_eval model ...")
+    train_spec = tf.estimator.TrainSpec(
+        input_fn=lambda: input_data.train_input_fn(opts),
+        max_steps=opts.max_distribute_train_steps,
+        hooks=opts.hooks)
+    eval_spec = tf.estimator.EvalSpec(
+        input_fn=lambda: input_data.eval_input_fn(opts),
+        steps=100,
+        hooks=opts.hooks,
+        start_delay_secs=10,
+        # TODO how to not evaluate during training, now will block evaluate
+        throttle_secs=7 * 24 * 3600,
+    )
+    tf.estimator.train_and_evaluate(opts.estimator, train_spec, eval_spec)
+    tf.logging.info("Train and eval model done.")
+
+
+def train_and_eval_in_local_mode():
+    """Train and eval model in lcoal mode."""
+
+    tf.logging.info("Beginning train model ...")
+    opts.estimator.train(input_fn=lambda: input_data.train_input_fn(opts),
                          max_steps=opts.max_train_steps,
-                         hooks=hooks)
-        tf.logging.info("Train model OK")
+                         hooks=opts.hooks)
+    tf.logging.info("Train model OK")
 
-        # evaluate model
-        tf.logging.info("Beginning evaluate model ...")
-        classifier.evaluate(input_fn=lambda: input_data.eval_input_fn(opts),
-                            hooks=hooks)
-        tf.logging.info("Evaluate model OK")
+    # evaluate model
+    tf.logging.info("Beginning evaluate model ...")
+    opts.estimator.evaluate(input_fn=lambda: input_data.eval_input_fn(opts),
+                            hooks=opts.hooks)
+    tf.logging.info("Evaluate model OK")
 
-    if is_local_or_chief(task_type):
-        # TODO should sync with workers
 
-        # save nce params
-        if not os.path.exists(opts.dict_dir):
-            os.mkdir(opts.dict_dir)
+def export_model_in_local_mode():
+    """Export model in local mode."""
 
-        tf.logging.info("Save nce weights and biases ...")
-        model.save_model_nce_params(classifier, opts.dict_dir)
-        tf.logging.info("Save nce weights and biases OK")
+    if not os.path.exists(opts.dict_dir):
+        os.mkdir(opts.dict_dir)
 
-        if opts.use_subset:
-            tf.logging.info("Save subset dict and nce params ...")
-            model.filter_and_save_subset(opts.dict_dir)
-            tf.logging.info("Save subset dict and nce params OK")
+    tf.logging.info("Save nce weights and biases ...")
+    model.save_model_nce_params(opts.estimator, opts.dict_dir)
+    tf.logging.info("Save nce weights and biases OK")
 
-        # export model
-        tf.logging.info("Beginning export model ...")
-        assets_dict_dir = os.path.basename(opts.dict_dir)
-        dict_params = {}
-        for name in model_keys.DICT_PARAM_NAMES:
-            src = os.path.join(opts.dict_dir, name)
-            dest = os.path.join(assets_dict_dir, name)
-            dict_params[dest] = src
+    if opts.use_subset:
+        tf.logging.info("Save subset dict and nce params ...")
+        model.filter_and_save_subset(opts.dict_dir)
+        tf.logging.info("Save subset dict and nce params OK")
 
-        assets_extra = dict_params
+    # export model
+    tf.logging.info("Beginning export model ...")
+    assets_dict_dir = os.path.basename(opts.dict_dir)
+    dict_params = {}
+    for name in model_keys.DICT_PARAM_NAMES:
+        src = os.path.join(opts.dict_dir, name)
+        dest = os.path.join(assets_dict_dir, name)
+        dict_params[dest] = src
 
-        classifier.export_savedmodel(
-            opts.export_model_dir,
-            serving_input_receiver_fn=input_data.build_serving_input_fn(opts),
-            assets_extra=assets_extra)
-        tf.logging.info("Export model OK")
+    assets_extra = dict_params
+
+    opts.estimator.export_savedmodel(
+        opts.export_model_dir,
+        serving_input_receiver_fn=input_data.build_serving_input_fn(opts),
+        assets_extra=assets_extra)
+    tf.logging.info("Export model OK")
+
+
+def main(argv):
+    parse_args(argv)
+    parse_tf_config()
+    validate_opts()
+
+    init_dictionary()
+
+    opts.estimator = build_estimator()
+    opts.hooks = create_hooks()
+
+    tf.logging.info(opts)
+
+    if is_distributed():
+        train_and_eval_in_distributed_mode()
+        # TODO export model
+    else:
+        train_and_eval_in_local_mode()
+        export_model_in_local_mode()
 
 
 if __name__ == '__main__':
