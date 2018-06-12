@@ -255,7 +255,8 @@ def init_dictionary():
 
 
 def create_hooks():
-    # Create profile hooks
+    """Create profile hooks."""
+
     save_steps = opts.profile_steps
     meta_hook = hook.MetadataHook(save_steps=save_steps,
                                   output_dir=opts.model_dir)
