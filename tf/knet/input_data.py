@@ -83,7 +83,8 @@ def generate_example(line, opts, is_eval):
 
     records, labels, tokens = custom_ops.fasttext_example_generate(**params)
     dataset = tf.data.Dataset.from_tensor_slices(
-        ({model_keys.RECORDS_COL: records}, labels))
+        ({model_keys.RECORDS_COL: records, model_keys.TOKENS_COL: tokens},
+         labels))
     return dataset
 
 
