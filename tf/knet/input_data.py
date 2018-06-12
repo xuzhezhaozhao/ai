@@ -36,6 +36,7 @@ def pack_fasttext_params(opts):
     params['min_count_label'] = opts.min_count_label
     params['label'] = opts.label
     params['ntargets'] = opts.ntargets
+    params['sample_dropout'] = opts.sample_dropout
 
     return params
 
@@ -64,7 +65,7 @@ def parse_dict_meta(opts):
     return dict_meta
 
 
-def generate_example(line, opts):
+def generate_example(line, opts, is_eval):
     """
     测试时需要使用 initializable iterator
         it = ds.make_initializable_iterator()
@@ -75,6 +76,10 @@ def generate_example(line, opts):
     params = pack_fasttext_params(opts)
     params['input'] = line
     params['use_saved_dict'] = True
+
+    if is_eval:
+        params['sample_dropout'] = 0.0
+
     records, labels = custom_ops.fasttext_example_generate(**params)
     dataset = tf.data.Dataset.from_tensor_slices(
         ({model_keys.RECORDS_COL: records}, labels))
@@ -86,7 +91,7 @@ def train_input_fn(opts, skip_rows=0):
     batch_size = opts.batch_size
 
     ds = tf.data.TextLineDataset(train_data_path).skip(skip_rows)
-    ds = ds.flat_map(lambda line: generate_example(line, opts))
+    ds = ds.flat_map(lambda line: generate_example(line, opts, False))
     ds = ds.prefetch(opts.prefetch_size)
     if opts.shuffle_batch:
         ds = ds.shuffle(buffer_size=opts.prefetch_size)
@@ -99,7 +104,7 @@ def eval_input_fn(opts, skip_rows=0):
     batch_size = opts.batch_size
 
     ds = tf.data.TextLineDataset(eval_data_path).skip(skip_rows)
-    ds = ds.flat_map(lambda line: generate_example(line, opts))
+    ds = ds.flat_map(lambda line: generate_example(line, opts, True))
     ds = ds.prefetch(opts.prefetch_size)
     ds = ds.batch(batch_size)
     return ds

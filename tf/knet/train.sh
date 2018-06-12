@@ -12,7 +12,7 @@ min_count=10
 t=1.0
 batch_size=64
 num_sampled=10
-epoch=5
+epoch=10
 hidden_units=''
 prefetch_size=10000
 
@@ -48,6 +48,7 @@ train_nce_biases=0
 shuffle_batch=0
 
 predict_ws=10
+sample_dropout=0.5
 
 python train.py \
     --train_data_path ${train_data_path} \
@@ -88,4 +89,5 @@ python train.py \
     --max_distribute_train_steps ${max_distribute_train_steps} \
     --train_nce_biases ${train_nce_biases} \
     --shuffle_batch ${shuffle_batch} \
-    --predict_ws ${predict_ws}
+    --predict_ws ${predict_ws} \
+    --sample_dropout ${sample_dropout}

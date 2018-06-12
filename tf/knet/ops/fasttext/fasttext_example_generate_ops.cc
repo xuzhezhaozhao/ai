@@ -18,6 +18,7 @@ REGISTER_OP("FasttextExampleGenerate")
     .Attr("min_count_label: int = 10")
     .Attr("label: string = '__label__'")
     .Attr("ntargets: int = 1")
+    .Attr("sample_dropout: float = 0.5")
     .Doc(R"doc(
 Fasttext example generate operator.
 Args
