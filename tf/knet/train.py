@@ -216,7 +216,7 @@ def build_estimator():
             'dropout': opts.dropout,
             'ntargets': opts.ntargets,
             'train_nce_biases': opts.train_nce_biases,
-            'ntokens': dict_meta["nvalidTokens"] * opts.epoch * opts.train_ws / 4 * (1 - opts.sample_dropout),
+            'ntokens': dict_meta["ntokens"] * opts.epoch,
             'batch_size': opts.batch_size,
             'optimizer_type': opts.optimizer_type
         })

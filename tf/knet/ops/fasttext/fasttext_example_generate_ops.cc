@@ -26,6 +26,8 @@ Args
   input: A Tensor of string.
   records: A Tensor of type int32 and shape [D, ws]
   labels: A Tensor of type int64 and shape [D, ntargets]
+  count_processed_tokens: A Tensor of type int64 and shape [D, 1], used for SGD
+  learning rate decay.
 )doc");
 
 }  // namespace tensorflow

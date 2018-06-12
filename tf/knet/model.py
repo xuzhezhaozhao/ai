@@ -142,13 +142,9 @@ def knet_model_fn(features, labels, mode, params):
     if optimizer_type == model_keys.OptimizerType.ADA:
         optimizer = tf.train.AdagradOptimizer(learning_rate=lr)
     elif optimizer_type == model_keys.OptimizerType.SGD:
-        token_count = tf.get_variable(
-            'token_count', initializer=tf.cast(0, tf.int64),
-            trainable=False, dtype=tf.int64)
-        token_count = tf.assign_add(token_count, nonzeros_count)
-        tf.summary.scalar("token_count", token_count)
-
-        new_lr = lr * (1.0 - (tf.cast(token_count, tf.float32)
+        processed_tokens = features[model_keys.TOKENS_COL][0][0]
+        tf.summary.scalar("processed_tokens", processed_tokens)
+        new_lr = lr * (1.0 - (tf.cast(processed_tokens, tf.float32)
                               / tf.cast(ntokens, tf.float32)))
         new_lr = tf.maximum(new_lr, 1e-6)
         tf.summary.scalar("lr", new_lr)
