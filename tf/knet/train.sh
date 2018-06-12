@@ -10,10 +10,10 @@ dim=100
 train_ws=50
 min_count=10
 t=1.0
-batch_size=256
+batch_size=64
 num_sampled=10
 epoch=5
-hidden_units='512,256'
+hidden_units=''
 prefetch_size=10000
 
 max_train_steps=-1
