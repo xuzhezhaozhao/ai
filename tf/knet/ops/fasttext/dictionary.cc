@@ -343,11 +343,11 @@ int32_t Dictionary::getLine(std::istream& in,
   reset(in);
   words.clear();
   while (readWord(in, token)) {
+    ntokens++;
     int32_t h = find(token);
     int32_t wid = word2int_[h];
     if (wid < 0) continue;
 
-    ntokens++;
     if (getType(wid) == entry_type::word && !discard(wid, uniform(rng))) {
       words.push_back(wid);
     }
@@ -368,11 +368,12 @@ int32_t Dictionary::getLine(std::istream& in,
   words.clear();
   labels.clear();
   while (readWord(in, token)) {
+    ntokens++;
+
     uint32_t h = hash(token);
     int32_t wid = getId(token, h);
     entry_type type = wid < 0 ? getType(token) : getType(wid);
 
-    ntokens++;
     if (type == entry_type::word) {
       addSubwords(words, token, wid);
       word_hashes.push_back(h);
