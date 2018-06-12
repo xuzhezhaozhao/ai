@@ -16,7 +16,7 @@ import custom_ops
 
 
 def knet_model_fn(features, labels, mode, params):
-    """ build model graph """
+    """Build model graph."""
 
     feature_columns = params['feature_columns']
     predict_feature_columns = params['predict_feature_columns']
