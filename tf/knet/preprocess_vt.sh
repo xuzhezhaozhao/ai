@@ -48,6 +48,7 @@ shuffle_batch=1
 predict_ws=50
 sample_dropout=0.0
 optimizer_type='sgd'
+num_in_graph_replication=1
 
 python train.py \
     --train_data_path ${train_data_path} \
@@ -90,4 +91,5 @@ python train.py \
     --shuffle_batch ${shuffle_batch} \
     --predict_ws ${predict_ws} \
     --sample_dropout ${sample_dropout} \
-    --optimizer_type ${optimizer_type}
+    --optimizer_type ${optimizer_type} \
+    --num_in_graph_replication ${num_in_graph_replication}

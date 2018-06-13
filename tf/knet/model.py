@@ -20,21 +20,24 @@ def knet_model_fn(features, labels, mode, params):
 
     feature_columns = params['feature_columns']
     predict_feature_columns = params['predict_feature_columns']
-    hidden_units = params['hidden_units']
     n_classes = params['n_classes']
-    embedding_dim = params['embedding_dim']
-    lr = params['learning_rate']
-    num_sampled = params['num_sampled']
-    recall_k = params['recall_k']
-    dict_dir = params['dict_dir']
-    optimize_level = params['optimize_level']
-    use_subset = params['use_subset']
-    dropout = params['dropout']
-    ntargets = params['ntargets']
-    train_nce_biases = params['train_nce_biases']
     ntokens = params['ntokens']
-    batch_size = params['batch_size']
-    optimizer_type = params['optimizer_type']
+    opts = params['opts']
+
+    embedding_dim = opts.dim
+    lr = opts.lr
+    hidden_units = opts.hidden_units
+    num_sampled = opts.num_sampled
+    recall_k = opts.recall_k
+    dict_dir = opts.dict_dir
+    optimize_level = opts.optimize_level
+    use_subset = opts.use_subset
+    dropout = opts.dropout
+    ntargets = opts.ntargets
+    train_nce_biases = opts.train_nce_biases
+    batch_size = opts.batch_size
+    optimizer_type = opts.optimizer_type
+    num_in_graph_replication = opts.num_in_graph_replication
 
     embeddings = get_embeddings(n_classes, embedding_dim)
     (nce_weights,
@@ -126,16 +129,19 @@ def knet_model_fn(features, labels, mode, params):
             loss=tf.constant(0),  # don't evaluate loss
             eval_metric_ops=eval_metrics)
 
-    nce_loss = tf.nn.nce_loss(weights=nce_weights,
-                              biases=nce_biases,
-                              labels=labels,
-                              inputs=user_vector,
-                              num_sampled=num_sampled,
-                              num_classes=n_classes,
-                              num_true=ntargets,
-                              partition_strategy="div",
-                              name="nce_loss")
-    nce_loss = tf.reduce_mean(nce_loss, name="mean_nce_loss")
+    replica_losses = create_losses_in_graph_replications(
+        num_in_graph_replication=num_in_graph_replication,
+        batch_size=batch_size,
+        weights=nce_weights,
+        biases=nce_biases,
+        labels=labels,
+        inputs=user_vector,
+        num_sampled=num_sampled,
+        num_classes=n_classes,
+        num_true=ntargets,
+        partition_strategy="div",
+        name="nce_loss")
+    loss = sum(replica_losses)
 
     assert mode == tf.estimator.ModeKeys.TRAIN
 
@@ -157,9 +163,12 @@ def knet_model_fn(features, labels, mode, params):
         raise ValueError('OptimizerType "{}" not surpported.'
                          .format(optimizer_type))
 
-    train_op = optimizer.minimize(nce_loss,
-                                  global_step=tf.train.get_global_step())
-    return tf.estimator.EstimatorSpec(mode, loss=nce_loss, train_op=train_op)
+    ops = []
+    for loss in replica_losses:
+        op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
+        ops.append(op)
+    train_op = tf.group(*ops)
+    return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
 
 def get_nce_weights_and_biases(n_classes, embedding_dim, train_nce_biases):
@@ -171,9 +180,9 @@ def get_nce_weights_and_biases(n_classes, embedding_dim, train_nce_biases):
             initializer=tf.truncated_normal(
                 [n_classes, embedding_dim],
                 stddev=1.0 / math.sqrt(embedding_dim)))
-        nce_biases = tf.get_variable(model_keys.NCE_BIASES_NAME,
-                                     initializer=tf.zeros([n_classes]),
-                                     trainable=train_nce_biases)
+        nce_biases = tf.get_variable(
+            model_keys.NCE_BIASES_NAME, initializer=tf.zeros([n_classes]),
+            trainable=train_nce_biases)
     return nce_weights, nce_biases
 
 
@@ -384,3 +393,26 @@ def filter_and_save_subset(dict_dir):
             subset_weights)
     np.save(os.path.join(dict_dir, model_keys.SAVE_NCE_BIASES_SUBSET_NAME),
             subset_biases)
+
+
+def create_losses_in_graph_replications(num_in_graph_replication, batch_size,
+                                          weights, biases, labels, inputs,
+                                          num_sampled, num_classes, num_true,
+                                          partition_strategy, name):
+    losses = []
+    for i in range(num_in_graph_replication):
+        repli_labels = labels[i * batch_size:(i + 1) * batch_size, :]
+        repli_inputs = inputs[i * batch_size:(i + 1) * batch_size, :]
+        nce_loss = tf.nn.nce_loss(weights=weights,
+                                  biases=biases,
+                                  labels=repli_labels,
+                                  inputs=repli_inputs,
+                                  num_sampled=num_sampled,
+                                  num_classes=num_classes,
+                                  num_true=num_true,
+                                  partition_strategy=partition_strategy,
+                                  name=name)
+        nce_loss = tf.reduce_mean(nce_loss, name="mean_nce_loss")
+        losses.append(nce_loss)
+
+    return losses

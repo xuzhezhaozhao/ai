@@ -90,7 +90,7 @@ def generate_example(line, opts, is_eval):
 
 def train_input_fn(opts, skip_rows=0):
     train_data_path = opts.train_data_path
-    batch_size = opts.batch_size
+    batch_size = opts.batch_size * opts.num_in_graph_replication
 
     ds = tf.data.TextLineDataset(train_data_path).skip(skip_rows)
     ds = ds.flat_map(lambda line: generate_example(line, opts, False))
