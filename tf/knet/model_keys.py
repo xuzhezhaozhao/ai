@@ -62,4 +62,6 @@ class OptimizerType(object):
     """Optimizer type."""
 
     ADA = 'ada'
+    ADADELTA = 'adadelta'
+    ADAM = 'adam'
     SGD = 'sgd'
