@@ -16,15 +16,15 @@ export_model_dir=`pwd`/video_tab/export_model_dir
 dict_dir=`pwd`/video_tab/dict_dir
 train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
-lr=1.25
-dim=128
+lr=0.5
+dim=100
 train_ws=20
 min_count=50
 t=1.0
 batch_size=256
 num_sampled=10
 epoch=1
-hidden_units='512,258'
+hidden_units=''
 prefetch_size=10000
 max_train_steps=-1
 save_summary_steps=10000
@@ -46,8 +46,8 @@ max_distribute_train_steps=-1
 train_nce_biases=0
 shuffle_batch=1
 predict_ws=50
-sample_dropout=0.5
-optimizer_type='ada'
+sample_dropout=0.0
+optimizer_type='sgd'
 
 python train.py \
     --train_data_path ${train_data_path} \

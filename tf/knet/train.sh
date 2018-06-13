@@ -5,14 +5,14 @@ MODEL_DIR=`pwd`/model_dir
 EXPORT_MODEL_DIR=`pwd`/export_model_dir
 train_data_path=../../data/train_data.in
 eval_data_path=../../data/eval_data.in
-lr=0.5
+lr=0.6
 dim=100
 train_ws=20
 min_count=30
 t=1.0
-batch_size=64
+batch_size=32
 num_sampled=10
-epoch=5
+epoch=10
 hidden_units=''
 prefetch_size=10000
 max_train_steps=-1
@@ -37,6 +37,10 @@ train_nce_biases=0
 shuffle_batch=0
 predict_ws=10
 sample_dropout=0.0
+
+# sgd, ada, adadelta, adam
+# sdg: lr 0.6
+# adam: lr 0.001
 optimizer_type='sgd'
 
 python train.py \

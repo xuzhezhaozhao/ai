@@ -141,6 +141,10 @@ def knet_model_fn(features, labels, mode, params):
 
     if optimizer_type == model_keys.OptimizerType.ADA:
         optimizer = tf.train.AdagradOptimizer(learning_rate=lr)
+    elif optimizer_type == model_keys.OptimizerType.ADADELTA:
+        optimizer = tf.train.AdadeltaOptimizer(learning_rate=lr)
+    elif optimizer_type == model_keys.OptimizerType.ADAM:
+        optimizer = tf.train.AdamOptimizer(learning_rate=lr)
     elif optimizer_type == model_keys.OptimizerType.SGD:
         processed_tokens = features[model_keys.TOKENS_COL][0][0]
         tf.summary.scalar("processed_tokens", processed_tokens)
