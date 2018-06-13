@@ -5,7 +5,7 @@ MODEL_DIR=`pwd`/model_dir
 EXPORT_MODEL_DIR=`pwd`/export_model_dir
 train_data_path=../../data/train_data.in
 eval_data_path=../../data/eval_data.in
-lr=0.6
+lr=0.5
 dim=100
 train_ws=20
 min_count=30
@@ -41,7 +41,9 @@ sample_dropout=0.0
 # sgd, ada, adadelta, adam
 # sdg: lr 0.6
 # adam: lr 0.001
-optimizer_type='sgd'
+optimizer_type='ada'
+
+num_in_graph_replication=2
 
 python train.py \
     --train_data_path ${train_data_path} \
@@ -84,4 +86,5 @@ python train.py \
     --shuffle_batch ${shuffle_batch} \
     --predict_ws ${predict_ws} \
     --sample_dropout ${sample_dropout} \
-    --optimizer_type ${optimizer_type}
+    --optimizer_type ${optimizer_type} \
+    --num_in_graph_replication ${num_in_graph_replication}

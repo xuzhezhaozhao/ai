@@ -64,6 +64,7 @@ parser.add_argument('--shuffle_batch', default=0, type=int, help='')
 parser.add_argument('--predict_ws', default=5, type=int, help='')
 parser.add_argument('--sample_dropout', default=0.5, type=float, help='')
 parser.add_argument('--optimizer_type', default='ada', type=str, help='')
+parser.add_argument('--num_in_graph_replication', default=1, type=int, help='')
 
 opts = Options()
 
@@ -117,6 +118,7 @@ def parse_args(argv):
     opts.predict_ws = args.predict_ws
     opts.sample_dropout = args.sample_dropout
     opts.optimizer_type = args.optimizer_type
+    opts.num_in_graph_replication = args.num_in_graph_replication
 
 
 def delete_dir(filename):
@@ -143,6 +145,8 @@ def validate_opts():
         raise ValueError("hidden_units contain unit <= 0")
     if opts.dropout < 0.0:
         raise ValueError("dropout should not less than 0")
+    if opts.num_in_graph_replication < 1:
+        raise ValueError("num_in_graph_replication should not less than 1")
 
 
 def parse_tf_config():
@@ -183,12 +187,12 @@ def build_estimator():
 
     dict_meta = input_data.parse_dict_meta(opts)
     feature_columns, predict_feature_columns = input_data.feature_columns(opts)
-    # session_config not used
+    """ session config
     session_config = tf.ConfigProto(device_count={"CPU": 1},
                                     inter_op_parallelism_threads=1,
                                     intra_op_parallelism_threads=1,
                                     log_device_placement=False)
-
+    """
     config = tf.estimator.RunConfig(
         model_dir=opts.model_dir,
         tf_random_seed=None,
@@ -204,21 +208,9 @@ def build_estimator():
         params={
             'feature_columns': feature_columns,
             'predict_feature_columns': predict_feature_columns,
-            'hidden_units': opts.hidden_units,
             'n_classes': dict_meta["nwords"] + 1,
-            'embedding_dim': opts.dim,
-            'learning_rate': opts.lr,
-            'num_sampled': opts.num_sampled,
-            'recall_k': opts.recall_k,
-            'dict_dir': opts.dict_dir,
-            'optimize_level': opts.optimize_level,
-            'use_subset': opts.use_subset,
-            'dropout': opts.dropout,
-            'ntargets': opts.ntargets,
-            'train_nce_biases': opts.train_nce_biases,
             'ntokens': dict_meta["ntokens"] * opts.epoch,
-            'batch_size': opts.batch_size,
-            'optimizer_type': opts.optimizer_type
+            'opts': opts
         })
     return estimator
 

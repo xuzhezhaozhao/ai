@@ -50,6 +50,7 @@ class Options(object):
         self.predict_ws = 5
         self.sample_dropout = 0.5
         self.optimizer_type = 'ada'
+        self.num_in_graph_replication = 1
 
         # non-cmd args
         self.estimator = None
@@ -102,6 +103,7 @@ class Options(object):
         predict_ws = {} \n \
         sample_dropout = {} \n \
         optimizer_type = {} \n \
+        num_in_graph_replication = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -150,6 +152,8 @@ class Options(object):
                 self.predict_ws,
                 self.sample_dropout,
                 self.optimizer_type,
+                self.num_in_graph_replication,
+                # non-cmd args
                 self.estimator,
                 self.hooks,
                 self.tf_config,
