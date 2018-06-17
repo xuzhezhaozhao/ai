@@ -16,7 +16,7 @@ export_model_dir=`pwd`/video_tab/export_model_dir
 dict_dir=`pwd`/video_tab/dict_dir
 train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
-lr=0.025
+lr=0.5
 dim=100
 train_ws=20
 min_count=50
@@ -47,7 +47,7 @@ train_nce_biases=0
 shuffle_batch=1
 predict_ws=50
 sample_dropout=0.0
-optimizer_type='sgd'
+optimizer_type='ada'
 num_in_graph_replication=1
 
 python train.py \
