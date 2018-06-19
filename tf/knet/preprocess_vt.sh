@@ -46,7 +46,7 @@ max_distribute_train_steps=-1
 train_nce_biases=0
 shuffle_batch=1
 predict_ws=50
-sample_dropout=0.0
+sample_dropout=0.5
 optimizer_type='ada'
 num_in_graph_replication=1
 
