@@ -52,20 +52,21 @@ def knet_model_fn(features, labels, mode, params):
 
     nonzeros = tf.count_nonzero(input_layer, 1, keepdims=True)  # [batch, 1]
     nonzeros = tf.maximum(nonzeros, 1)  # avoid divide zero
-    nonzeros_count = tf.reduce_sum(nonzeros) + ntargets * batch_size
     embeds = mask_padding_embedding_lookup(embeddings, embedding_dim,
                                            input_layer, model_keys.PADDING_ID)
     embeds_sum = tf.reduce_sum(embeds, 1)
     embeds_mean = embeds_sum / tf.cast(nonzeros, tf.float32)
 
     hidden = embeds_mean
-    for units in hidden_units:
-        hidden = tf.layers.dense(hidden, units=units, activation=tf.nn.relu,
-                                 name="fc_{}".format(units))
+    for index, units in enumerate(hidden_units):
+        hidden = tf.layers.dense(
+            hidden, units=units, activation=tf.nn.relu,
+            name="fc{}_{}".format(index, units), reuse=tf.AUTO_REUSE)
         if dropout > 0:
             training = (mode == tf.estimator.ModeKeys.TRAIN)
-            hidden = tf.layers.dropout(hidden, dropout, training=training,
-                                       name="dropout_{}".format(units))
+            hidden = tf.layers.dropout(
+                hidden, dropout, training=training,
+                name="dropout{}_{}".format(index, units))
     user_vector = tf.layers.dense(hidden, embedding_dim, activation=None,
                                   name="user_vector")
 
