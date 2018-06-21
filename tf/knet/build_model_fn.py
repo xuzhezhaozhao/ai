@@ -15,6 +15,9 @@ import model_keys
 import custom_ops
 
 
+_optimizer_id = 0
+
+
 def knet_model_fn(features, labels, mode, params):
     """Build model graph."""
 
@@ -68,7 +71,8 @@ def knet_model_fn(features, labels, mode, params):
                 hidden, dropout, training=training,
                 name="dropout{}_{}".format(index, units))
     user_vector = tf.layers.dense(hidden, embedding_dim, activation=None,
-                                  name="user_vector")
+                                  name="user_vector",
+                                  reuse=tf.AUTO_REUSE)
 
     # Compute logits(just for train Mode, for metric summary, no optimize).
     train_logits = tf.matmul(user_vector, nce_weights, transpose_b=True,
@@ -112,19 +116,7 @@ def knet_model_fn(features, labels, mode, params):
     add_metrics_summary(train_metrics)
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        with tf.name_scope("EvalMode"):
-            # TODO Don't optimize because of distribute model
-            if False:
-                # Eval mode only surpport optimize_level_saved_nce_params
-                tf.logging.info("Use OPTIMIZE_LEVEL_SAVED_NCE_PARAMS to eval")
-                scores, ids, logits = optimize_level_saved_nce_params(
-                    dict_dir, user_vector, recall_k, use_subset)
-            else:
-                # No optimize
-                scores = train_scores
-                ids = train_ids
-
-            eval_metrics = get_metrics(labels, ids, recall_k, ntargets)
+        eval_metrics = get_metrics(labels, train_ids, recall_k, ntargets)
         return tf.estimator.EstimatorSpec(
             mode,
             loss=tf.constant(0),  # don't evaluate loss
@@ -147,22 +139,29 @@ def knet_model_fn(features, labels, mode, params):
     assert mode == tf.estimator.ModeKeys.TRAIN
 
     if optimizer_type == model_keys.OptimizerType.ADA:
-        optimizer = tf.train.AdagradOptimizer(learning_rate=lr)
+        optimizer = tf.train.AdagradOptimizer(
+            learning_rate=lr, name='adagrad_{}'.format(_optimizer_id))
     elif optimizer_type == model_keys.OptimizerType.ADADELTA:
-        optimizer = tf.train.AdadeltaOptimizer(learning_rate=lr)
+        optimizer = tf.train.AdadeltaOptimizer(
+            learning_rate=lr, name='adadelta_{}'.format(_optimizer_id))
     elif optimizer_type == model_keys.OptimizerType.ADAM:
-        optimizer = tf.train.AdamOptimizer(learning_rate=lr)
+        optimizer = tf.train.AdamOptimizer(
+            learning_rate=lr, name='adam_{}'.format(_optimizer_id))
     elif optimizer_type == model_keys.OptimizerType.SGD:
         processed_tokens = features[model_keys.TOKENS_COL][0][0]
         tf.summary.scalar("processed_tokens", processed_tokens)
         new_lr = lr * (1.0 - (tf.cast(processed_tokens, tf.float32)
                               / tf.cast(ntokens, tf.float32)))
-        new_lr = tf.maximum(new_lr, 1e-6)
+        new_lr = tf.maximum(new_lr, 1e-5)
         tf.summary.scalar("lr", new_lr)
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate=new_lr)
+        optimizer = tf.train.GradientDescentOptimizer(
+            learning_rate=new_lr, name='sgd_{}'.format(_optimizer_id))
     else:
         raise ValueError('OptimizerType "{}" not surpported.'
                          .format(optimizer_type))
+
+    global _optimizer_id
+    _optimizer_id += 1
 
     ops = []
     for loss in replica_losses:
