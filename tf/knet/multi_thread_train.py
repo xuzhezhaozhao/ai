@@ -7,7 +7,6 @@ from __future__ import print_function
 
 
 import os
-import time
 import tensorflow as tf
 
 import build_model_fn
@@ -15,7 +14,7 @@ import model_keys
 import input_data
 import hook
 import args_parser
-from estimator.estimator import Estimator
+from estimator.estimator import MultiThreadEstimator
 
 opts = None
 
@@ -30,23 +29,6 @@ def delete_dir(filename):
         else:
             raise Exception(
                 "'{}' exists and not a directory.".format(filename))
-
-
-def is_local_or_chief(task_type):
-    """Return True if task_type is 'local' or 'chief'."""
-
-    if (task_type == model_keys.TaskType.LOCAL
-            or task_type == model_keys.TaskType.CHIEF):
-        return True
-    return False
-
-
-def is_distributed():
-    """Return True if task_type is not 'local'."""
-
-    if opts.task_type != model_keys.TaskType.LOCAL:
-        return True
-    return False
 
 
 def build_estimator():
@@ -69,7 +51,7 @@ def build_estimator():
         keep_checkpoint_max=opts.keep_checkpoint_max,
         keep_checkpoint_every_n_hours=10000,
         log_step_count_steps=opts.log_step_count_steps)
-    estimator = Estimator(
+    estimator = MultiThreadEstimator(
         model_fn=build_model_fn.knet_model_fn,
         config=config,
         params={
@@ -83,32 +65,17 @@ def build_estimator():
 
 
 def init_dictionary():
-    """Init dict. In distribute mode, use file barrier."""
-
-    chief_lock_file = opts.chief_lock
-    if is_local_or_chief(opts.task_type):
-        """Init dict only in local or chief mode."""
-        if opts.remove_model_dir:
-            tf.logging.info("Remove model dir ...")
-            delete_dir(opts.model_dir)
-            tf.logging.info("Remove model dir OK")
-            os.makedirs(opts.model_dir)
-        else:
-            tf.logging.info("Don't remove model dir.")
-
-        tf.logging.info('Init dict ...')
-        input_data.init_dict(opts)
-        with open(chief_lock_file, 'w'):  # create file barrier
-            pass
-        tf.logging.info('Init dict OK')
+    if opts.remove_model_dir:
+        tf.logging.info("Remove model dir ...")
+        delete_dir(opts.model_dir)
+        tf.logging.info("Remove model dir OK")
+        os.makedirs(opts.model_dir)
     else:
-        # Distributed mode, worker use file barrier to sync
-        while True:
-            if os.path.exists(chief_lock_file):
-                break
-            else:
-                tf.logging.info("Wait for {} ...".format(chief_lock_file))
-                time.sleep(5)
+        tf.logging.info("Don't remove model dir.")
+
+    tf.logging.info('Init dict ...')
+    input_data.init_dict(opts)
+    tf.logging.info('Init dict OK')
 
 
 def create_hooks():
@@ -126,40 +93,11 @@ def create_hooks():
     return hooks
 
 
-def train_and_eval_in_distributed_mode():
-    """feed splited train file for distributed mode."""
-    assert opts.task_index < 99, 'task_index >= 99'
-
-    if opts.task_type == model_keys.TaskType.CHIEF:
-        opts.train_data_path += '.00'
-    elif opts.task_type == model_keys.TaskType.WORKER:
-        suf = '.{:02d}'.format(opts.task_index + 1)
-        opts.train_data_path += suf
-
-    tf.logging.info('train_data_path = {}'.format(opts.train_data_path))
-
-    # train and eval model
-    tf.logging.info("Beginning train_and_eval model ...")
-    train_spec = tf.estimator.TrainSpec(
-        input_fn=lambda: input_data.train_input_fn(opts),
-        max_steps=opts.max_distribute_train_steps,
-        hooks=opts.hooks)
-    eval_spec = tf.estimator.EvalSpec(
-        input_fn=lambda: input_data.eval_input_fn(opts),
-        steps=100,
-        hooks=opts.hooks,
-        start_delay_secs=10,
-        # TODO how to not evaluate during training, now will block evaluate
-        throttle_secs=7 * 24 * 3600,
-    )
-    tf.estimator.train_and_evaluate(opts.estimator, train_spec, eval_spec)
-    tf.logging.info("Train and eval model done.")
-
-
 def train_and_eval_in_local_mode():
     """Train and eval model in lcoal mode."""
 
     tf.logging.info("Beginning train model ...")
+
     opts.estimator.train(input_fn=lambda: input_data.train_input_fn(opts),
                          max_steps=opts.max_train_steps,
                          hooks=opts.hooks)
@@ -217,12 +155,8 @@ def main(argv):
 
     tf.logging.info(opts)
 
-    if is_distributed():
-        train_and_eval_in_distributed_mode()
-        # TODO export model, need sync with workers
-    else:
-        train_and_eval_in_local_mode()
-        export_model_in_local_mode()
+    train_and_eval_in_local_mode()
+    export_model_in_local_mode()
 
 
 if __name__ == '__main__':

@@ -51,6 +51,7 @@ class Options(object):
         self.sample_dropout = 0.5
         self.optimizer_type = 'ada'
         self.num_in_graph_replication = 1
+        self.threads = 1
 
         # non-cmd args
         self.estimator = None
@@ -104,6 +105,7 @@ class Options(object):
         sample_dropout = {} \n \
         optimizer_type = {} \n \
         num_in_graph_replication = {} \n \
+        threads = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -153,6 +155,7 @@ class Options(object):
                 self.sample_dropout,
                 self.optimizer_type,
                 self.num_in_graph_replication,
+                self.threads,
                 # non-cmd args
                 self.estimator,
                 self.hooks,

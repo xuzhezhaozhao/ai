@@ -73,9 +73,11 @@ _VALID_MODEL_FN_ARGS = set(
     ['features', 'labels', 'mode', 'params', 'self', 'config'])
 
 
-@tf_export('estimator.Estimator')
-class Estimator(object):
-  """Estimator class to train and evaluate TensorFlow models.
+@tf_export('estimator.MultiThreadEstimator')
+class MultiThreadEstimator(object):
+  """Modified by zhezhaoxu.
+
+  Estimator class to train and evaluate TensorFlow models.
 
   The `Estimator` object wraps a model which is specified by a `model_fn`,
   which, given inputs and a number of other parameters, returns the ops
@@ -171,7 +173,7 @@ class Estimator(object):
     """
     logging.info("Use zhezhaoxu modified Estimator")
 
-    Estimator._assert_members_are_not_overridden(self)
+    MultiThreadEstimator._assert_members_are_not_overridden(self)
 
     if config is None:
       self._config = run_config.RunConfig()
@@ -220,7 +222,7 @@ class Estimator(object):
         self._config.device_fn or _get_replica_device_setter(self._config))
 
     if model_fn is None:
-      raise ValueError('model_fn must be provided to Estimator.')
+      raise ValueError('model_fn must be provided to MultiThreadEstimator.')
     _verify_model_fn_args(model_fn, params)
     self._model_fn = model_fn
     self._params = copy.deepcopy(params or {})
@@ -571,13 +573,13 @@ class Estimator(object):
         '_tf_api_names', '_validate_features_in_predict_input',
         '_call_model_fn', '_add_meta_graph_for_mode'
     ])
-    estimator_members = set([m for m in Estimator.__dict__.keys()
+    estimator_members = set([m for m in MultiThreadEstimator.__dict__.keys()
                              if not m.startswith('__')])
     subclass_members = set(self.__class__.__dict__.keys())
     common_members = estimator_members & subclass_members - allowed_overrides
     overridden_members = [
         m for m in common_members
-        if Estimator.__dict__[m] != self.__class__.__dict__[m]]
+        if MultiThreadEstimator.__dict__[m] != self.__class__.__dict__[m]]
     if overridden_members:
       raise ValueError(
           'Subclasses of Estimator cannot override members of Estimator. '
