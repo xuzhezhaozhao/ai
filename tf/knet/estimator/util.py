@@ -75,7 +75,7 @@ def get_timestamped_dir(dir_base):
                      '{} attempts.'.format(MAX_DIRECTORY_CREATION_ATTEMPTS))
 
 
-def parse_input_fn_result(result):
+def parse_input_fn_result(result, threads=1):
   """Gets features, labels, and hooks from the result of an Estimator input_fn.
 
   Args:
@@ -98,6 +98,7 @@ def parse_input_fn_result(result):
     ValueError: if the result is a list or tuple of length != 2.
   """
   input_hooks = []
+  results = []
   try:
     # We can't just check whether this is a tf.data.Dataset instance here,
     # as this is plausibly a PerDeviceDataset. Try treating as a dataset first.
@@ -107,14 +108,15 @@ def parse_input_fn_result(result):
     pass
   else:
     input_hooks.append(_DatasetInitializerHook(iterator))
-    result = iterator.get_next()
+    for i in range(threads):
+        results.append(iterator.get_next())
 
-  if isinstance(result, (list, tuple)):
-    if len(result) != 2:
+  if isinstance(results[0], (list, tuple)):
+    if len(results[0]) != 2:
       raise ValueError(
           'input_fn should return (features, labels) as a len 2 tuple.')
-    return result[0], result[1], input_hooks
-  return result, None, input_hooks
+    return results, True, input_hooks  # return list of (features, labels) tuple
+  return results, None, input_hooks  # return list of features
 
 
 class _DatasetInitializerHook(training.SessionRunHook):

@@ -12,7 +12,7 @@ min_count=30
 t=0.0001
 batch_size=64
 num_sampled=10
-epoch=50
+epoch=5
 hidden_units=''
 prefetch_size=10000
 max_train_steps=-1
@@ -44,6 +44,7 @@ sample_dropout=0.0
 optimizer_type='ada'
 
 num_in_graph_replication=1
+threads=1
 
 python multi_thread_train.py \
     --train_data_path ${train_data_path} \
@@ -87,4 +88,5 @@ python multi_thread_train.py \
     --predict_ws ${predict_ws} \
     --sample_dropout ${sample_dropout} \
     --optimizer_type ${optimizer_type} \
-    --num_in_graph_replication ${num_in_graph_replication}
+    --num_in_graph_replication ${num_in_graph_replication} \
+    --threads ${threads}
