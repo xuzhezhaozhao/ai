@@ -60,6 +60,7 @@ parser.add_argument('--predict_ws', default=5, type=int, help='')
 parser.add_argument('--sample_dropout', default=0.5, type=float, help='')
 parser.add_argument('--optimizer_type', default='ada', type=str, help='')
 parser.add_argument('--num_in_graph_replication', default=1, type=int, help='')
+parser.add_argument('--threads', default=1, type=int, help='')
 
 opts = Options()
 
@@ -114,6 +115,7 @@ def parse_args(argv):
     opts.sample_dropout = args.sample_dropout
     opts.optimizer_type = args.optimizer_type
     opts.num_in_graph_replication = args.num_in_graph_replication
+    opts.threads = args.threads
 
 
 def validate_opts():

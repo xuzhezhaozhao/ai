@@ -101,6 +101,25 @@ def train_input_fn(opts, skip_rows=0):
     return ds
 
 
+def multi_thread_train_input_fn(opts, skip_rows=0):
+    batch_size = opts.batch_size * opts.num_in_graph_replication
+    inputs = []
+
+    for i in range(opts.threads):
+        suf = '.{:02d}'.format(i)
+        train_data_path = opts.train_data_path + suf
+
+        ds = tf.data.TextLineDataset(train_data_path).skip(skip_rows)
+        ds = ds.flat_map(lambda line: generate_example(line, opts, False))
+        ds = ds.prefetch(opts.prefetch_size)
+        if opts.shuffle_batch:
+            ds = ds.shuffle(buffer_size=opts.prefetch_size)
+        ds = ds.batch(batch_size).repeat(opts.epoch)
+        inputs.append(ds)
+
+    return inputs
+
+
 def eval_input_fn(opts, skip_rows=0):
     eval_data_path = opts.eval_data_path
     batch_size = opts.batch_size
