@@ -21,6 +21,8 @@ _optimizer_id = 0
 def knet_model_fn(features, labels, mode, params):
     """Build model graph."""
 
+    global _optimizer_id
+
     feature_columns = params['feature_columns']
     predict_feature_columns = params['predict_feature_columns']
     n_classes = params['n_classes']
@@ -160,7 +162,6 @@ def knet_model_fn(features, labels, mode, params):
         raise ValueError('OptimizerType "{}" not surpported.'
                          .format(optimizer_type))
 
-    global _optimizer_id
     _optimizer_id += 1
 
     ops = []
