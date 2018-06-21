@@ -15,6 +15,7 @@ import input_data
 import hook
 import args_parser
 from estimator.estimator import MultiThreadEstimator
+from estimator.run_config import RunConfig
 
 opts = None
 
@@ -42,7 +43,7 @@ def build_estimator():
                                     intra_op_parallelism_threads=1,
                                     log_device_placement=False)
     """
-    config = tf.estimator.RunConfig(
+    config = RunConfig(
         model_dir=opts.model_dir,
         tf_random_seed=None,
         save_summary_steps=opts.save_summary_steps,
@@ -60,7 +61,8 @@ def build_estimator():
             'n_classes': dict_meta["nwords"] + 1,
             'ntokens': dict_meta["ntokens"] * opts.epoch,
             'opts': opts
-        })
+        },
+        threads=opts.threads)
     return estimator
 
 
