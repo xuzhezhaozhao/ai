@@ -33,11 +33,6 @@ from tensorflow.core.protobuf import config_pb2
 from tensorflow.core.protobuf import rewriter_config_pb2
 from tensorflow.python.client import session as tf_session
 from tensorflow.python.eager import context
-from tensorflow.python.estimator import model_fn as model_fn_lib
-from tensorflow.python.estimator import run_config
-from tensorflow.python.estimator import util as estimator_util
-from tensorflow.python.estimator.export import export as export_helpers
-from tensorflow.python.estimator.export import export_output
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import errors
 from tensorflow.python.framework import ops
@@ -68,6 +63,11 @@ from tensorflow.python.util import function_utils
 from tensorflow.python.util import nest
 from tensorflow.python.util.tf_export import tf_export
 
+import estimator.util as estimator_util
+import estimator.model_fn as model_fn_lib
+import estimator.run_config as run_config
+from estimator.export import export as export_helpers
+from estimator.export import export_output
 
 _VALID_MODEL_FN_ARGS = set(
     ['features', 'labels', 'mode', 'params', 'self', 'config'])
@@ -108,7 +108,7 @@ class MultiThreadEstimator(object):
   """
 
   def __init__(self, model_fn, model_dir=None, config=None, params=None,
-               warm_start_from=None):
+               warm_start_from=None, threads=1):
     """Constructs an `Estimator` instance.
 
     See @{$estimators} for more information. To warm-start an `Estimator`:
@@ -174,6 +174,8 @@ class MultiThreadEstimator(object):
     logging.info("Use zhezhaoxu modified Estimator")
 
     MultiThreadEstimator._assert_members_are_not_overridden(self)
+
+    self._threads = threads
 
     if config is None:
       self._config = run_config.RunConfig()
@@ -970,7 +972,8 @@ class MultiThreadEstimator(object):
   def _get_features_from_input_fn(self, input_fn, mode):
     """Extracts the `features` from return values of `input_fn`."""
     result = self._call_input_fn(input_fn, mode)
-    result, _, hooks = estimator_util.parse_input_fn_result(result)
+    results, _, hooks = estimator_util.parse_input_fn_result(result, threads=1)
+    result = results[0][0]
     self._validate_features_in_predict_input(result)
     return result, hooks
 
@@ -980,7 +983,7 @@ class MultiThreadEstimator(object):
                       'QueueRunner. That means predict yields forever. '
                       'This is probably a mistake.')
 
-  def _get_features_and_labels_from_input_fn(self, input_fn, mode):
+  def _get_features_and_labels_from_input_fn(self, input_fn, mode, threads=1):
     """Extracts the `features` and labels from return values of `input_fn`."""
     if self._distribution is not None and mode == model_fn_lib.ModeKeys.TRAIN:
       result = self._distribution.distribute_dataset(
@@ -988,7 +991,7 @@ class MultiThreadEstimator(object):
     else:
       result = self._call_input_fn(input_fn, mode)
 
-    return estimator_util.parse_input_fn_result(result)
+    return estimator_util.parse_input_fn_result(result, threads=threads)
 
   def _extract_batch_length(self, preds_evaluated):
     """Extracts batch length of predictions."""
@@ -1100,6 +1103,7 @@ class MultiThreadEstimator(object):
       if labels is not None:
         raise ValueError(
             'model_fn does not take labels, but input_fn returns labels.')
+
     if 'mode' in model_fn_args:
       kwargs['mode'] = mode
     if 'params' in model_fn_args:
@@ -1110,9 +1114,6 @@ class MultiThreadEstimator(object):
     logging.info('Calling model_fn.')
     model_fn_results = self._model_fn(features=features, **kwargs)
     logging.info('Done calling model_fn.')
-
-    if not isinstance(model_fn_results, model_fn_lib.EstimatorSpec):
-      raise ValueError('model_fn should return an EstimatorSpec.')
 
     return model_fn_results
 
@@ -1128,13 +1129,18 @@ class MultiThreadEstimator(object):
       random_seed.set_random_seed(self._config.tf_random_seed)
       global_step_tensor = self._create_and_assert_global_step(g)
       training_util._get_or_create_global_step_read()  # pylint: disable=protected-access
-      features, labels, input_hooks = (
+      results, _, input_hooks = (
           self._get_features_and_labels_from_input_fn(
-              input_fn, model_fn_lib.ModeKeys.TRAIN))
+              input_fn, model_fn_lib.ModeKeys.TRAIN, self._threads))
+
       worker_hooks.extend(input_hooks)
-      estimator_spec = self._call_model_fn(
-          features, labels, model_fn_lib.ModeKeys.TRAIN, self.config)
-      return self._train_with_estimator_spec(estimator_spec, worker_hooks,
+      estimator_specs = []
+      for item in results:
+          spec = self._call_model_fn(
+              item[0], item[1], model_fn_lib.ModeKeys.TRAIN, self.config)
+          estimator_specs.append(spec)
+
+      return self._train_with_estimator_specs(estimator_specs, worker_hooks,
                                              hooks, global_step_tensor,
                                              saving_listeners)
 
@@ -1256,8 +1262,8 @@ class MultiThreadEstimator(object):
                                                hooks, global_step_read_tensor,
                                                saving_listeners)
 
-  def _train_with_estimator_spec(self, estimator_spec, worker_hooks, hooks,
-                                 global_step_tensor, saving_listeners):
+  def _train_with_estimator_specs(self, estimator_specs, worker_hooks, hooks,
+                                  global_step_tensor, saving_listeners):
     """Train a model with the given Estimator Spec."""
     if self._warm_start_settings:
       logging.info('Warm-starting with WarmStartSettings: %s' %
@@ -1269,24 +1275,26 @@ class MultiThreadEstimator(object):
     # graph in TensorBoard.
     if not any([x.op.name == 'loss'
                 for x in ops.get_collection(ops.GraphKeys.SUMMARIES)]):
-      summary.scalar('loss', estimator_spec.loss)
-    ops.add_to_collection(ops.GraphKeys.LOSSES, estimator_spec.loss)
+      summary.scalar('loss', estimator_specs[0].loss)
+
+    ops.add_to_collection(ops.GraphKeys.LOSSES, estimator_specs[0].loss)
     worker_hooks.extend(hooks)
-    worker_hooks.append(
-        training.NanTensorHook(estimator_spec.loss)
-    )
+    for spec in estimator_specs:
+        worker_hooks.append(
+            training.NanTensorHook(spec.loss)
+        )
     if self._config.log_step_count_steps is not None:
       worker_hooks.append(
           training.LoggingTensorHook(
               {
-                  'loss': estimator_spec.loss,
+                  'loss': estimator_specs[0].loss,
                   'step': global_step_tensor
               },
               every_n_iter=self._config.log_step_count_steps)
       )
-    worker_hooks.extend(estimator_spec.training_hooks)
+    worker_hooks.extend(estimator_specs[0].training_hooks)
 
-    if not (estimator_spec.scaffold.saver or
+    if not (estimator_specs[0].scaffold.saver or
             ops.get_collection(ops.GraphKeys.SAVERS)):
       ops.add_to_collection(
           ops.GraphKeys.SAVERS,
@@ -1299,7 +1307,7 @@ class MultiThreadEstimator(object):
               save_relative_paths=True))
 
     chief_hooks = []
-    all_hooks = worker_hooks + list(estimator_spec.training_chief_hooks)
+    all_hooks = worker_hooks + list(estimator_specs[0].training_chief_hooks)
     saver_hooks = [
         h for h in all_hooks if isinstance(h, training.CheckpointSaverHook)]
     if (self._config.save_checkpoints_secs or
@@ -1310,7 +1318,7 @@ class MultiThreadEstimator(object):
                 self._model_dir,
                 save_secs=self._config.save_checkpoints_secs,
                 save_steps=self._config.save_checkpoints_steps,
-                scaffold=estimator_spec.scaffold)
+                scaffold=estimator_specs[0].scaffold)
         ]
         saver_hooks = [chief_hooks[0]]
     if saving_listeners:
@@ -1327,27 +1335,34 @@ class MultiThreadEstimator(object):
         master=self._config.master,
         is_chief=self._config.is_chief,
         checkpoint_dir=self._model_dir,
-        scaffold=estimator_spec.scaffold,
+        scaffold=estimator_specs[0].scaffold,
         hooks=worker_hooks,
         chief_only_hooks=(
-            tuple(chief_hooks) + tuple(estimator_spec.training_chief_hooks)),
+            tuple(chief_hooks) + tuple(estimator_specs[0].training_chief_hooks)),
         save_checkpoint_secs=0,  # Saving is handled by a hook.
         save_summaries_steps=self._config.save_summary_steps,
         config=self._session_config,
         log_step_count_steps=self._config.log_step_count_steps) as mon_sess:
-      loss = None
+      loss1 = None
+      train_ops = []
+      for item in estimator_specs:
+          train_ops.append(item.train_op)
+      train_ops.append(estimator_specs[0].loss)
       while not mon_sess.should_stop():
-        _, loss = mon_sess.run([estimator_spec.train_op, estimator_spec.loss])
-    return loss
+        result = mon_sess.run(train_ops)
+    return result[-1]
 
   def _evaluate_build_graph(self, input_fn, hooks=None, checkpoint_path=None):
     """Builds the graph and related hooks to run evaluation."""
     random_seed.set_random_seed(self._config.tf_random_seed)
     global_step_tensor = self._create_and_assert_global_step(
         ops.get_default_graph())
-    features, labels, input_hooks = (
+    results, _, input_hooks = (
         self._get_features_and_labels_from_input_fn(input_fn,
-                                                    model_fn_lib.ModeKeys.EVAL))
+                                                    model_fn_lib.ModeKeys.EVAL,
+                                                    threads=1))
+    features, labels = results[0]
+
     estimator_spec = self._call_model_fn(
         features, labels, model_fn_lib.ModeKeys.EVAL, self.config)
 
