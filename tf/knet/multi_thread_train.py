@@ -5,15 +5,17 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+
 import os
 import time
 import tensorflow as tf
 
+import build_model_fn
 import model_keys
-import model
 import input_data
 import hook
 import args_parser
+from estimator.estimator import Estimator
 
 opts = None
 
@@ -67,8 +69,8 @@ def build_estimator():
         keep_checkpoint_max=opts.keep_checkpoint_max,
         keep_checkpoint_every_n_hours=10000,
         log_step_count_steps=opts.log_step_count_steps)
-    estimator = tf.estimator.Estimator(
-        model_fn=model.knet_model_fn,
+    estimator = Estimator(
+        model_fn=build_model_fn.knet_model_fn,
         config=config,
         params={
             'feature_columns': feature_columns,
@@ -177,12 +179,12 @@ def export_model_in_local_mode():
         os.mkdir(opts.dict_dir)
 
     tf.logging.info("Save nce weights and biases ...")
-    model.save_model_nce_params(opts.estimator, opts.dict_dir)
+    build_model_fn.save_model_nce_params(opts.estimator, opts.dict_dir)
     tf.logging.info("Save nce weights and biases OK")
 
     if opts.use_subset:
         tf.logging.info("Save subset dict and nce params ...")
-        model.filter_and_save_subset(opts.dict_dir)
+        build_model_fn.filter_and_save_subset(opts.dict_dir)
         tf.logging.info("Save subset dict and nce params OK")
 
     # export model
