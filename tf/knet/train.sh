@@ -9,7 +9,7 @@ lr=0.5
 dim=100
 train_ws=20
 min_count=30
-t=1.0
+t=0.0001
 batch_size=64
 num_sampled=10
 epoch=5
@@ -29,12 +29,12 @@ remove_model_dir=1
 optimize_level=1
 receive_ws=100
 use_subset=1
-dropout=0.0
+dropout=0.5
 ntargets=1
 chief_lock=${MODEL_DIR}/chief.lock
 max_distribute_train_steps=-1
 train_nce_biases=0
-shuffle_batch=1
+shuffle_batch=0
 predict_ws=10
 sample_dropout=0.0
 
@@ -43,7 +43,7 @@ sample_dropout=0.0
 # adam: lr 0.001
 optimizer_type='ada'
 
-num_in_graph_replication=2
+num_in_graph_replication=1
 
 python train.py \
     --train_data_path ${train_data_path} \
