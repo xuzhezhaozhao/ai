@@ -7,60 +7,42 @@ from __future__ import print_function
 
 import tensorflow as tf
 import threading
-import time
 
 
-main_thread_scope = tf.VariableScope(tf.AUTO_REUSE, "main_thread_scope")
-
-v1 = None
-v2 = None
 sess = None
+c = None
 
 
-def get_constant(captured_scope):
-    with tf.variable_scope(captured_scope, reuse=tf.AUTO_REUSE):
-        with tf.variable_scope("constant", reuse=tf.AUTO_REUSE):
-            c = tf.get_variable("c1", initializer=tf.constant([1, 1, 1]))
+def get_constant():
+    with tf.variable_scope("constant", reuse=tf.AUTO_REUSE):
+        c = tf.get_variable("c1", initializer=tf.constant([1, 1, 1]))
     return c
 
 
-def thread_target_fn(id, captured_scope):
-    global v1, v2, sess
-    c = get_constant(captured_scope)
-    if id == 1:
-        sess.run(tf.global_variables_initializer())
-        v1 = c
-    elif id == 2:
-        v2 = c
-
-    print("thread {} init OK".format(id))
-    time.sleep(1.0)
-    print("thread {}, name = {}".format(id, c.name))
+def thread_target_fn(id):
+    global sess, c
 
     op = tf.assign_add(c, [id, id, id])
     op = sess.run(op)
-    c = sess.run(c)
 
     print("thread {}, op = {}".format(id, op))
-    print("thread {}, c = {}".format(id, c))
 
 
 def main(argv):
-    global v1, v2, sess
+    global sess, c
     sess = tf.Session()
+    c = get_constant()
+    sess.run(tf.global_variables_initializer())
+
     th1 = threading.Thread(target=thread_target_fn,
-                           args=(1, main_thread_scope))
-    th1.start()
-    th1.join()
-
+                           args=(1, ))
     th2 = threading.Thread(target=thread_target_fn,
-                           args=(2, main_thread_scope))
+                           args=(2, ))
+    th1.start()
     th2.start()
-    th2.join()
 
-    print(v1)
-    print(v1)
-    assert v1 == v2
+    th1.join()
+    th2.join()
 
 
 if __name__ == '__main__':
