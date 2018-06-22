@@ -10,9 +10,9 @@ dim=100
 train_ws=20
 min_count=30
 t=0.0001
-batch_size=16
+batch_size=64
 num_sampled=10
-epoch=10
+epoch=50
 hidden_units=''
 prefetch_size=10000
 max_train_steps=-1
@@ -44,7 +44,7 @@ sample_dropout=0.0
 optimizer_type='ada'
 
 num_in_graph_replication=1
-threads=1
+threads=2
 
 python multi_thread_train.py \
     --train_data_path ${train_data_path} \
