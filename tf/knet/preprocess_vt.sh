@@ -20,7 +20,7 @@ lr=0.5
 dim=100
 train_ws=20
 min_count=50
-t=0.001
+t=0.0001
 batch_size=256
 num_sampled=10
 epoch=1
@@ -49,7 +49,7 @@ predict_ws=50
 sample_dropout=0.5
 optimizer_type='ada'
 num_in_graph_replication=1
-threads=4
+threads=8
 
 python multi_thread_train.py \
     --train_data_path ${train_data_path} \
