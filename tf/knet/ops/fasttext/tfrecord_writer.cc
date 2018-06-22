@@ -11,6 +11,7 @@
 class WritableFile;
 
 int main(int argc, char *argv[]) {
+
   // Create Example
   ::tensorflow::Example example;
   auto features = example.mutable_features();
@@ -32,13 +33,11 @@ int main(int argc, char *argv[]) {
 
   ::tensorflow::Env* env = ::tensorflow::Env::Default();
   std::string fname = "example.tfrecord";
-  int buf_size = 2048;
 
   std::unique_ptr<::tensorflow::WritableFile> file;
   TF_CHECK_OK(env->NewWritableFile(fname, &file));
-  ::tensorflow::io::RecordWriterOptions options;
-  options.zlib_options.output_buffer_size = buf_size;
-  ::tensorflow::io::RecordWriter writer(file.get(), options);
+  ::tensorflow::io::RecordWriter writer(file.get());
+  TF_CHECK_OK(writer.WriteRecord(serialized));
   TF_CHECK_OK(writer.Flush());
 
   return 0;
