@@ -286,7 +286,7 @@ void Dictionary::initTableDiscard() {
     real f = real(words_[i].count) / real(ntokens_);
     pdiscard_[i] = std::sqrt(args_->t / f) + args_->t / f;
   }
-  for (size_t i = 0; i < std::min(20, size_); i++) {
+  for (size_t i = 0; i < std::min(200, size_); i++) {
     LOG(INFO) << "pdiscard " << i << " = " << pdiscard_[i];
   }
 }
