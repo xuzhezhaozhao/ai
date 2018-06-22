@@ -34,4 +34,4 @@ dict_dir
 nce_params_dir
 mnist_convnet_model
 *.tfrecord
-ops/fasttext/tfrecord_writer
+tf/knet/ops/fasttext/tfrecord_writer
