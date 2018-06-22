@@ -11,8 +11,18 @@
 class WritableFile;
 
 int main(int argc, char *argv[]) {
+  if (argc < 2) {
+    std::cout << "Usage: <tfrecord_file>" << std::endl;
+    exit(-1);
+  }
+  std::string fname = argv[1];
 
-  // Create Example
+  ::tensorflow::Env* env = ::tensorflow::Env::Default();
+  std::unique_ptr<::tensorflow::WritableFile> file;
+  TF_CHECK_OK(env->NewWritableFile(fname, &file));
+  ::tensorflow::io::RecordWriter writer(file.get());
+
+  // Create Example and write to tfrecord file
   ::tensorflow::Example example;
   auto features = example.mutable_features();
   auto feature = features->mutable_feature();
@@ -29,15 +39,9 @@ int main(int argc, char *argv[]) {
 
   std::string serialized;
   example.SerializeToString(&serialized);
-
-
-  ::tensorflow::Env* env = ::tensorflow::Env::Default();
-  std::string fname = "example.tfrecord";
-
-  std::unique_ptr<::tensorflow::WritableFile> file;
-  TF_CHECK_OK(env->NewWritableFile(fname, &file));
-  ::tensorflow::io::RecordWriter writer(file.get());
   TF_CHECK_OK(writer.WriteRecord(serialized));
+
+  // flush
   TF_CHECK_OK(writer.Flush());
 
   return 0;
