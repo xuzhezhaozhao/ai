@@ -39,8 +39,9 @@ def pack_fasttext_params(opts, is_eval):
     params['sample_dropout'] = opts.sample_dropout
 
     if is_eval:
-        params['sample_dropout'] = 0
         params['t'] = 1.0
+        params['ntargets'] = 1
+        params['sample_dropout'] = 0
 
     return params
 

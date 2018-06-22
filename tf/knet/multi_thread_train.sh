@@ -9,16 +9,16 @@ lr=0.5
 dim=100
 train_ws=20
 min_count=30
-t=0.0001
-batch_size=64
+t=0.01
+batch_size=32
 num_sampled=10
-epoch=50
+epoch=5
 hidden_units=''
 prefetch_size=10000
 max_train_steps=-1
 save_summary_steps=100
 save_checkpoints_secs=600
-log_step_count_steps=100
+log_step_count_steps=10000
 recall_k=10
 dict_dir=`pwd`/dict_dir
 use_saved_dict=0
@@ -44,7 +44,7 @@ sample_dropout=0.0
 optimizer_type='ada'
 
 num_in_graph_replication=1
-threads=2
+threads=4
 
 python multi_thread_train.py \
     --train_data_path ${train_data_path} \
