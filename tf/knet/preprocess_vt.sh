@@ -20,7 +20,7 @@ lr=0.5
 dim=100
 train_ws=20
 min_count=50
-t=0.0001
+t=0.001
 batch_size=256
 num_sampled=10
 epoch=1
@@ -29,7 +29,7 @@ prefetch_size=10000
 max_train_steps=-1
 save_summary_steps=1000000000
 save_checkpoints_secs=1800
-log_step_count_steps=10000
+log_step_count_steps=20000
 recall_k=350
 use_saved_dict=0
 use_profile_hook=0
@@ -49,8 +49,9 @@ predict_ws=50
 sample_dropout=0.5
 optimizer_type='ada'
 num_in_graph_replication=1
+threads=4
 
-python train.py \
+python multi_thread_train.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
     --lr ${lr} \
@@ -92,4 +93,5 @@ python train.py \
     --predict_ws ${predict_ws} \
     --sample_dropout ${sample_dropout} \
     --optimizer_type ${optimizer_type} \
-    --num_in_graph_replication ${num_in_graph_replication}
+    --num_in_graph_replication ${num_in_graph_replication} \
+    --threads ${threads}
