@@ -1,6 +1,11 @@
 #include <fstream>
 
 #include <gflags/gflags.h>
+#include <spawn.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <thread>
 
 #include "tensorflow/core/example/example.pb.h"
 #include "tensorflow/core/lib/io/record_writer.h"
@@ -12,9 +17,9 @@
 #include "tensorflow/core/platform/logging.h"
 
 #include "args.h"
+#include "common.h"
 #include "defines.h"
 #include "dictionary.h"
-#include "common.h"
 
 DEFINE_string(tfrecord_file, "", "");
 DEFINE_int32(ws, 5, "");
@@ -24,12 +29,40 @@ DEFINE_int32(ntargets, 1, "");
 DEFINE_double(sample_dropout, 0.5, "");
 DEFINE_string(train_data_path, "", "");
 DEFINE_string(dict_dir, "", "");
+DEFINE_int32(threads, 1, "");
+DEFINE_int32(is_delete, 0, "");
+
+std::atomic<int64_t> line_processed;
+std::atomic<int64_t> total;
 
 class WritableFile;
 
+static bool run_cmd(char *cmd) {
+  pid_t pid;
+  char sh[4] = "sh";
+  char arg[4] = "-c";
+  char *argv[] = {sh, arg, cmd, NULL};
+  LOG(ERROR) << "Run command: " << cmd;
+  int status = posix_spawn(&pid, "/bin/sh", NULL, NULL, argv, environ);
+  if (status == 0) {
+    LOG(ERROR) << "Child pid: " << pid;
+    if (waitpid(pid, &status, 0) != -1) {
+      LOG(ERROR) << "Child exited with status " << status;
+    } else {
+      LOG(ERROR) << "Child exited with status " << status
+                 << ", errmsg = " << strerror(errno);
+      return false;
+    }
+  } else {
+    LOG(ERROR) << "posix_spawn failed, errmsg = " << strerror(status);
+    return false;
+  }
+  return true;
+}
+
 void parse_and_save_dictionary(const std::string &train_data_path,
-                      const std::string &dict_dir,
-                      std::shared_ptr<::fasttext::Dictionary> dict) {
+                               const std::string &dict_dir,
+                               std::shared_ptr<::fasttext::Dictionary> dict) {
   LOG(INFO) << "Parse dictionary from " << train_data_path << " ...";
   PreProcessTrainData(train_data_path, dict);
   SaveDictionary(dict_dir, dict);
@@ -64,32 +97,18 @@ void fill_example(const std::vector<int> &inst,
   (*feature)["records"] = records;
 }
 
-int main(int argc, char *argv[]) {
-  google::ParseCommandLineFlags(&argc, &argv, true);
-
+void dump_tfrecord(const std::string &input_file,
+                   const std::string &tfrecord_file,
+                   std::shared_ptr<::fasttext::Args> args,
+                   std::shared_ptr<::fasttext::Dictionary> dict) {
   ::tensorflow::Env *env = ::tensorflow::Env::Default();
   std::unique_ptr<::tensorflow::WritableFile> file;
-  TF_CHECK_OK(env->NewWritableFile(FLAGS_tfrecord_file, &file));
+  TF_CHECK_OK(env->NewWritableFile(tfrecord_file, &file));
   ::tensorflow::io::RecordWriter writer(file.get());
 
-  std::shared_ptr<::fasttext::Args> args = std::make_shared<::fasttext::Args>();
-  args->ws = FLAGS_ws;
-  args->min_count = FLAGS_min_count;
-  args->t = FLAGS_t;
-  args->ntargets = FLAGS_ntargets;
-  args->sample_dropout = FLAGS_sample_dropout;
-  args->dict_dir = FLAGS_dict_dir;
-
-  std::shared_ptr<::fasttext::Dictionary> dict =
-      std::make_shared<::fasttext::Dictionary>(args);
-  parse_and_save_dictionary(FLAGS_train_data_path, args->dict_dir, dict);
-
-  int64_t line_processed = 0;
-  int64_t total = 0;
-
-  std::ifstream ifs(FLAGS_train_data_path);
+  std::ifstream ifs(input_file);
   if (!ifs.is_open()) {
-    LOG(FATAL) << "open " << FLAGS_train_data_path << " failed.";
+    LOG(FATAL) << "open " << input_file << " failed.";
   }
   std::string line;
   std::vector<int32_t> words;
@@ -142,11 +161,75 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  LOG(ERROR) << "dump " << total << " tfrecord examples.";
-
   // flush
   TF_CHECK_OK(writer.Flush());
   TF_CHECK_OK(writer.Close());
+}
+
+int main(int argc, char *argv[]) {
+  google::ParseCommandLineFlags(&argc, &argv, true);
+
+  line_processed.store(0);
+  total.store(0);
+
+  std::shared_ptr<::fasttext::Args> args = std::make_shared<::fasttext::Args>();
+  args->ws = FLAGS_ws;
+  args->min_count = FLAGS_min_count;
+  args->t = FLAGS_t;
+  args->ntargets = FLAGS_ntargets;
+  args->sample_dropout = FLAGS_sample_dropout;
+  args->dict_dir = FLAGS_dict_dir;
+
+  std::shared_ptr<::fasttext::Dictionary> dict =
+      std::make_shared<::fasttext::Dictionary>(args);
+  parse_and_save_dictionary(FLAGS_train_data_path, args->dict_dir, dict);
+
+  if (FLAGS_threads == 1) {
+    dump_tfrecord(FLAGS_train_data_path, FLAGS_tfrecord_file, args, dict);
+  } else {
+    const int kMaxCommandSize = 1024;
+    static char cmd[kMaxCommandSize];
+
+    std::string split_cmd =
+        "split -a 3 -d -n l/" + std::to_string(FLAGS_threads) + " " +
+        FLAGS_train_data_path + " " + FLAGS_train_data_path + ".";
+    memcpy(cmd, split_cmd.data(), split_cmd.size());
+    if (split_cmd.size() > kMaxCommandSize - 1) {
+      LOG(FATAL) << "cmd buffer not enough.";
+    }
+    if (!run_cmd(cmd)) {
+      LOG(FATAL) << "run split cmd failed.";
+    }
+
+    std::vector<std::thread> threads;
+    char suffix[4];
+    std::string todelete;
+    for (int i = 0; i < FLAGS_threads; ++i) {
+      snprintf(suffix, 4, "%03d", i);
+      auto input_file = FLAGS_train_data_path + "." + suffix;
+      auto tfrecord_file = FLAGS_tfrecord_file + "." + suffix;
+      todelete += input_file + " ";
+      threads.emplace_back(dump_tfrecord, input_file, tfrecord_file, args, dict);
+    }
+    for (int i = 0; i < FLAGS_threads; ++i) {
+      threads[i].join();
+    }
+    std::string rm_cmd = "rm -f " + todelete;
+    memcpy(cmd, rm_cmd.data(), rm_cmd.size());
+    if (FLAGS_is_delete) {
+      LOG(ERROR) << "Delete splited files ...";
+      if (!run_cmd(cmd)) {
+        LOG(ERROR) << "failed delete files.";
+      } else {
+        LOG(ERROR) << "Delete splited files OK";
+      }
+    } else {
+      LOG(ERROR) << "Don't delete splited files.";
+    }
+  }
+
+  LOG(ERROR) << "dump " << total << " tfrecord examples.";
+
 
   return 0;
 }
