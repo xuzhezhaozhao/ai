@@ -39,7 +39,7 @@ def parse_example(serialized):
             'words': tf.FixedLenFeature([receive_ws], tf.int64)
         }
     )
-    return example
+    return (example, example['words'])
 
 
 ds = tf.data.TFRecordDataset([tfrecord_file])

@@ -8,5 +8,6 @@ echo "compile tfrecord writer ..."
 
 g++ -std=c++11 \
     tfrecord_writer.cc \
+    dictionary.cc \
     -o tfrecord_writer \
-    ${TF_CFLAGS[@]} ${TF_LFLAGS[@]} -O2
+    ${TF_CFLAGS[@]} ${TF_LFLAGS[@]} -lgflags -O2
