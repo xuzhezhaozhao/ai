@@ -23,6 +23,7 @@
 #include "args.h"
 #include "defines.h"
 #include "dictionary.h"
+#include "common.h"
 
 namespace tensorflow {
 
@@ -38,8 +39,8 @@ class FasttextExampleGenerateOp : public OpKernel {
     dict_ = std::make_shared<::fasttext::Dictionary>(args_);
 
     if (!args_->use_saved_dict) {
-      PreProcessTrainData(ctx);
-      SaveDictionary(ctx);
+      PreProcessTrainData(args_->train_data_path, dict_);
+      SaveDictionary(args_->dict_dir, dict_);
     } else {
       LoadDictionary(ctx);
     }
@@ -199,90 +200,7 @@ class FasttextExampleGenerateOp : public OpKernel {
     LOG(INFO) << "sample_dropout: " << args_->sample_dropout;
   }
 
-  void PreProcessTrainData(OpKernelConstruction* ctx) {
-    LOG(INFO) << "Preprocess train data beginning ...";
-    std::ifstream ifs(args_->train_data_path);
-    OP_REQUIRES(ctx, ifs.is_open(),
-                errors::Unavailable(args_->train_data_path + " open failed."));
-    dict_->readFromFile(ifs);
-    ifs.close();
-    LOG(INFO) << "Preprocess train data done.";
-  }
-
   inline int transform_id(int id) { return id + 1; }
-
-  void SaveDictionary(OpKernelConstruction* ctx) {
-    auto root_dir = args_->dict_dir;
-
-    auto file_system = ::tensorflow::PosixFileSystem();
-    if (file_system.FileExists(root_dir) != Status::OK()) {
-      auto status = file_system.CreateDir(root_dir);
-      OP_REQUIRES(ctx, status == Status::OK(),
-                  errors::Unavailable("Create dir failed."));
-    }
-
-    LOG(INFO) << "SaveDictionary to " << root_dir << " ...";
-    auto saved_dict = ::tensorflow::io::JoinPath(root_dir, SAVED_DICT);
-    auto dict_meta = ::tensorflow::io::JoinPath(root_dir, DICT_META);
-    auto dict_words = ::tensorflow::io::JoinPath(root_dir, DICT_WORDS);
-
-    {
-      // save dictionary
-      LOG(INFO) << "Save dictionary to " << saved_dict << " ...";
-      std::ofstream ofs(saved_dict);
-      OP_REQUIRES(ctx, ofs.is_open(),
-                  errors::Unavailable(saved_dict + " open failed"));
-      dict_->save(ofs);
-      OP_REQUIRES(ctx, ofs.good(), errors::Unavailable("Write error"));
-      ofs.close();
-      LOG(INFO) << "Save dictionary OK";
-    }
-
-    {
-      // save dict meta
-      std::ofstream ofs(dict_meta);
-      LOG(INFO) << "Write dict meta to " << dict_meta << " ...";
-      OP_REQUIRES(ctx, ofs.is_open(),
-                  errors::Unavailable(dict_meta + " open failed"));
-      int nwords = dict_->nwords();
-      int nlabels = dict_->nlabels();
-      int ntokens = dict_->ntokens();
-      int nvalidTokens = dict_->nvalidTokens();
-      auto to_write = std::string("nwords\t") + std::to_string(nwords) + "\n";
-      ofs.write(to_write.data(), to_write.size());
-
-      to_write = std::string("nlabels\t" + std::to_string(nlabels) + "\n");
-      ofs.write(to_write.data(), to_write.size());
-
-      to_write = std::string("ntokens\t" + std::to_string(ntokens) + "\n");
-      ofs.write(to_write.data(), to_write.size());
-
-      to_write =
-          std::string("nvalidTokens\t" + std::to_string(nvalidTokens) + "\n");
-      ofs.write(to_write.data(), to_write.size());
-
-      OP_REQUIRES(ctx, ofs.good(), errors::Unavailable("Write error!"));
-      ofs.close();
-      LOG(INFO) << "Write dict meta OK";
-    }
-
-    {
-      // save dict words
-      std::ofstream ofs(dict_words);
-      LOG(INFO) << "Write dict words to " << dict_words << " ...";
-      OP_REQUIRES(ctx, ofs.is_open(),
-                  errors::Unavailable(dict_words + " open failed"));
-      for (const auto& entry : dict_->words()) {
-        if (entry.type == ::fasttext::entry_type::word) {
-          ofs.write(entry.word.data(), entry.word.size());
-          ofs.write("\n", 1);
-        }
-      }
-      OP_REQUIRES(ctx, ofs.good(), errors::Unavailable("Write error!"));
-      ofs.close();
-      LOG(INFO) << "Write dict words OK";
-    }
-  }
 
   void LoadDictionary(OpKernelConstruction* ctx) {
     // load dictionary
