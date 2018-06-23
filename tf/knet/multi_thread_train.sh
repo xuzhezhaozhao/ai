@@ -47,6 +47,7 @@ num_in_graph_replication=1
 threads=2
 tfrecord_file='example.tfrecord'
 train_data_format='tfrecord'  # 'tfrecord', 'fasttext'
+map_num_parallel_calls=2
 
 python multi_thread_train.py \
     --train_data_path ${train_data_path} \
@@ -93,4 +94,5 @@ python multi_thread_train.py \
     --num_in_graph_replication ${num_in_graph_replication} \
     --threads ${threads} \
     --tfrecord_file ${tfrecord_file} \
-    --train_data_format ${train_data_format}
+    --train_data_format ${train_data_format} \
+    --map_num_parallel_calls ${map_num_parallel_calls}

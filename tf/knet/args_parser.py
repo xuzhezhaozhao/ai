@@ -64,6 +64,7 @@ parser.add_argument('--threads', default=1, type=int, help='')
 parser.add_argument('--tfrecord_file', default='', type=str, help='')
 parser.add_argument(
     '--train_data_format', default='fasttext', type=str, help='')
+parser.add_argument('--map_num_parallel_calls', default=1, type=int, help='')
 
 opts = Options()
 
@@ -121,6 +122,7 @@ def parse_args(argv):
     opts.threads = args.threads
     opts.tfrecord_file = args.tfrecord_file
     opts.train_data_format = args.train_data_format
+    opts.map_num_parallel_calls = args.map_num_parallel_calls
 
 
 def validate_opts():
