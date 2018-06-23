@@ -14,6 +14,7 @@
 #include "args.h"
 #include "defines.h"
 #include "dictionary.h"
+#include "common.h"
 
 DEFINE_string(tfrecord_file, "", "");
 DEFINE_int32(ws, 5, "");
@@ -21,23 +22,17 @@ DEFINE_int32(min_count, 5, "");
 DEFINE_double(t, 0.0001, "");
 DEFINE_int32(ntargets, 1, "");
 DEFINE_double(sample_dropout, 0.5, "");
-DEFINE_string(saved_dict_file, "", "");
-DEFINE_string(input_file, "", "");
+DEFINE_string(train_data_path, "", "");
+DEFINE_string(dict_dir, "", "");
 
 class WritableFile;
 
-void load_dictionary(const std::string &saved_dict_file,
-                     std::shared_ptr<::fasttext::Dictionary> dict) {
-  LOG(INFO) << "Load dictionary from " << saved_dict_file << " ...";
-  std::ifstream ifs(saved_dict_file);
-  if (!ifs.is_open()) {
-    LOG(FATAL) << "Error: Open " << saved_dict_file << " failed." << std::endl;
-  }
-  dict->load(ifs);
-  if (ifs.fail()) {
-    LOG(FATAL) << "Error: Load dict failed." << std::endl;
-  }
-  ifs.close();
+void parse_and_save_dictionary(const std::string &train_data_path,
+                      const std::string &dict_dir,
+                      std::shared_ptr<::fasttext::Dictionary> dict) {
+  LOG(INFO) << "Parse dictionary from " << train_data_path << " ...";
+  PreProcessTrainData(train_data_path, dict);
+  SaveDictionary(dict_dir, dict);
   LOG(INFO) << "Load dictionary OK.";
 }
 
@@ -83,17 +78,18 @@ int main(int argc, char *argv[]) {
   args->t = FLAGS_t;
   args->ntargets = FLAGS_ntargets;
   args->sample_dropout = FLAGS_sample_dropout;
+  args->dict_dir = FLAGS_dict_dir;
 
   std::shared_ptr<::fasttext::Dictionary> dict =
       std::make_shared<::fasttext::Dictionary>(args);
-  load_dictionary(FLAGS_saved_dict_file, dict);
+  parse_and_save_dictionary(FLAGS_train_data_path, args->dict_dir, dict);
 
   int64_t line_processed = 0;
   int64_t total = 0;
 
-  std::ifstream ifs(FLAGS_input_file);
+  std::ifstream ifs(FLAGS_train_data_path);
   if (!ifs.is_open()) {
-    LOG(FATAL) << "open " << FLAGS_input_file << " failed.";
+    LOG(FATAL) << "open " << FLAGS_train_data_path << " failed.";
   }
   std::string line;
   std::vector<int32_t> words;
@@ -101,7 +97,7 @@ int main(int argc, char *argv[]) {
   std::minstd_rand rng(time(NULL));
   while (!ifs.eof()) {
     ++line_processed;
-    if (line_processed % 10000) {
+    if (line_processed % 200000 == 0) {
       LOG(INFO) << line_processed << " processed," << total << " examples.";
     }
 
@@ -145,6 +141,8 @@ int main(int argc, char *argv[]) {
       ++total;
     }
   }
+
+  LOG(ERROR) << "dump " << total << " tfrecord examples.";
 
   // flush
   TF_CHECK_OK(writer.Flush());
