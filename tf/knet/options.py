@@ -52,6 +52,8 @@ class Options(object):
         self.optimizer_type = 'ada'
         self.num_in_graph_replication = 1
         self.threads = 1
+        self.tfrecord_file = ''
+        self.train_data_format = 'fasttext'
 
         # non-cmd args
         self.estimator = None
@@ -106,6 +108,8 @@ class Options(object):
         optimizer_type = {} \n \
         num_in_graph_replication = {} \n \
         threads = {} \n \
+        tfrecord_file = {} \n \
+        train_data_format = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -156,6 +160,8 @@ class Options(object):
                 self.optimizer_type,
                 self.num_in_graph_replication,
                 self.threads,
+                self.tfrecord_file,
+                self.train_data_format,
                 # non-cmd args
                 self.estimator,
                 self.hooks,
