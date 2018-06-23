@@ -90,6 +90,16 @@ def generate_example(line, opts, is_eval):
 
 
 def train_input_fn(opts, skip_rows=0):
+    if opts.train_data_format == model_keys.TrainDataFormatType.fasttext:
+        return fasttext_train_input_fn(opts, skip_rows)
+    elif opts.train_data_format == model_keys.TrainDataFormatType.tfrecord:
+        return tfrecord_train_input_fn(opts)
+    else:
+        raise ValueError("Unsurpported train data format type '{}'".format(
+            opts.train_data_format))
+
+
+def fasttext_train_input_fn(opts, skip_rows=0):
     train_data_path = opts.train_data_path
     batch_size = opts.batch_size * opts.num_in_graph_replication
 
@@ -102,23 +112,27 @@ def train_input_fn(opts, skip_rows=0):
     return ds
 
 
-def multi_thread_train_input_fn(opts, skip_rows=0):
+def parse_example(serialized, opts):
+    example = tf.parse_single_example(
+        serialized,
+        features={
+            'records': tf.FixedLenFeature([opts.train_ws], tf.int64),
+            'label': tf.FixedLenFeature([opts.ntargets], tf.int64)
+        }
+    )
+    return (example, example['label'])
+
+
+def tfrecord_train_input_fn(opts):
     batch_size = opts.batch_size * opts.num_in_graph_replication
-    inputs = []
 
-    for i in range(opts.threads):
-        suf = '.{:02d}'.format(i)
-        train_data_path = opts.train_data_path + suf
-
-        ds = tf.data.TextLineDataset(train_data_path).skip(skip_rows)
-        ds = ds.flat_map(lambda line: generate_example(line, opts, False))
-        ds = ds.prefetch(opts.prefetch_size)
-        if opts.shuffle_batch:
-            ds = ds.shuffle(buffer_size=opts.prefetch_size)
-        ds = ds.batch(batch_size).repeat(opts.epoch)
-        inputs.append(ds)
-
-    return inputs
+    ds = tf.data.TFRecordDataset([opts.tfrecord_file])
+    ds = ds.map(lambda x: parse_example(x, opts))
+    ds = ds.prefetch(opts.prefetch_size)
+    if opts.shuffle_batch:
+        ds = ds.shuffle(buffer_size=opts.prefetch_size)
+    ds = ds.batch(batch_size).repeat(opts.epoch)
+    return ds
 
 
 def eval_input_fn(opts, skip_rows=0):

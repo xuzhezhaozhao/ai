@@ -65,3 +65,10 @@ class OptimizerType(object):
     ADADELTA = 'adadelta'
     ADAM = 'adam'
     SGD = 'sgd'
+
+
+class TrainDataFormatType(object):
+    """Train data format type."""
+
+    fasttext = 'fasttext'
+    tfrecord = 'tfrecord'

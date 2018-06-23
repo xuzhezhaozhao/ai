@@ -61,6 +61,9 @@ parser.add_argument('--sample_dropout', default=0.5, type=float, help='')
 parser.add_argument('--optimizer_type', default='ada', type=str, help='')
 parser.add_argument('--num_in_graph_replication', default=1, type=int, help='')
 parser.add_argument('--threads', default=1, type=int, help='')
+parser.add_argument('--tfrecord_file', default='', type=str, help='')
+parser.add_argument(
+    '--train_data_format', default='fasttext', type=str, help='')
 
 opts = Options()
 
@@ -116,6 +119,8 @@ def parse_args(argv):
     opts.optimizer_type = args.optimizer_type
     opts.num_in_graph_replication = args.num_in_graph_replication
     opts.threads = args.threads
+    opts.tfrecord_file = args.tfrecord_file
+    opts.train_data_format = args.train_data_format
 
 
 def validate_opts():
