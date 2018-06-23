@@ -54,6 +54,7 @@ class Options(object):
         self.threads = 1
         self.tfrecord_file = ''
         self.train_data_format = 'fasttext'
+        self.map_num_parallel_calls = 1
 
         # non-cmd args
         self.estimator = None
@@ -110,6 +111,7 @@ class Options(object):
         threads = {} \n \
         tfrecord_file = {} \n \
         train_data_format = {} \n \
+        map_num_parallel_calls = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -162,6 +164,7 @@ class Options(object):
                 self.threads,
                 self.tfrecord_file,
                 self.train_data_format,
+                self.map_num_parallel_calls,
                 # non-cmd args
                 self.estimator,
                 self.hooks,
