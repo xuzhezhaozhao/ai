@@ -49,12 +49,14 @@ predict_ws=50
 sample_dropout=0.5
 optimizer_type='ada'
 num_in_graph_replication=1
-threads=8
 tfrecord_file='example.tfrecord'
 train_data_format='tfrecord'  # 'tfrecord', 'fasttext'
-map_num_parallel_calls=2
+tfrecord_map_num_parallel_calls=2
 
-python multi_thread_train.py \
+train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
+num_train_op_parallel=8
+
+python train.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
     --lr ${lr} \
@@ -97,7 +99,8 @@ python multi_thread_train.py \
     --sample_dropout ${sample_dropout} \
     --optimizer_type ${optimizer_type} \
     --num_in_graph_replication ${num_in_graph_replication} \
-    --threads ${threads} \
     --tfrecord_file ${tfrecord_file} \
     --train_data_format ${train_data_format} \
-    --map_num_parallel_calls ${map_num_parallel_calls}
+    --tfrecord_map_num_parallel_calls ${tfrecord_map_num_parallel_calls} \
+    --train_parallel_mode ${train_parallel_mode} \
+    --num_train_op_parallel ${num_train_op_parallel}

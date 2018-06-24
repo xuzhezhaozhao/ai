@@ -127,7 +127,8 @@ def tfrecord_train_input_fn(opts):
     batch_size = opts.batch_size * opts.num_in_graph_replication
 
     ds = tf.data.TFRecordDataset([opts.tfrecord_file])
-    ds = ds.map(lambda x: parse_example(x, opts), opts.map_num_parallel_calls)
+    ds = ds.map(lambda x: parse_example(x, opts),
+                opts.tfrecord_map_num_parallel_calls)
     ds = ds.prefetch(opts.prefetch_size)
     if opts.shuffle_batch:
         ds = ds.shuffle(buffer_size=opts.prefetch_size)
