@@ -73,8 +73,8 @@ _VALID_MODEL_FN_ARGS = set(
     ['features', 'labels', 'mode', 'params', 'self', 'config'])
 
 
-@tf_export('estimator.MultiThreadEstimator')
-class MultiThreadEstimator(object):
+@tf_export('estimator.TrainOpParallelEstimator')
+class TrainOpParallelEstimator(object):
   """Modified by zhezhaoxu.
 
   Estimator class to train and evaluate TensorFlow models.
@@ -173,7 +173,7 @@ class MultiThreadEstimator(object):
     """
     logging.info("Use zhezhaoxu modified Estimator")
 
-    MultiThreadEstimator._assert_members_are_not_overridden(self)
+    TrainOpParallelEstimator._assert_members_are_not_overridden(self)
 
     self._num_train_op_parallel = num_train_op_parallel
 
@@ -224,7 +224,7 @@ class MultiThreadEstimator(object):
         self._config.device_fn or _get_replica_device_setter(self._config))
 
     if model_fn is None:
-      raise ValueError('model_fn must be provided to MultiThreadEstimator.')
+      raise ValueError('model_fn must be provided to TrainOpParallelEstimator.')
     _verify_model_fn_args(model_fn, params)
     self._model_fn = model_fn
     self._params = copy.deepcopy(params or {})
@@ -575,13 +575,13 @@ class MultiThreadEstimator(object):
         '_tf_api_names', '_validate_features_in_predict_input',
         '_call_model_fn', '_add_meta_graph_for_mode'
     ])
-    estimator_members = set([m for m in MultiThreadEstimator.__dict__.keys()
+    estimator_members = set([m for m in TrainOpParallelEstimator.__dict__.keys()
                              if not m.startswith('__')])
     subclass_members = set(self.__class__.__dict__.keys())
     common_members = estimator_members & subclass_members - allowed_overrides
     overridden_members = [
         m for m in common_members
-        if MultiThreadEstimator.__dict__[m] != self.__class__.__dict__[m]]
+        if TrainOpParallelEstimator.__dict__[m] != self.__class__.__dict__[m]]
     if overridden_members:
       raise ValueError(
           'Subclasses of Estimator cannot override members of Estimator. '
