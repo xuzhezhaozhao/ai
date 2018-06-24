@@ -59,6 +59,8 @@ dum_tfrecord_is_delete=1
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     echo 'dump tfrecord ...'
+    export LD_LIBRARY_PATH=./lib/:$LD_LIBRARY_PATH  # libtensorflow_framework.so
+
     ./utils/tfrecord_writer \
         --tfrecord_file ${tfrecord_file} \
         --ws ${train_ws} \
