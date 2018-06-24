@@ -53,7 +53,7 @@ class Options(object):
         self.num_in_graph_replication = 1
         self.tfrecord_file = ''
         self.train_data_format = 'fasttext'
-        self.map_num_parallel_calls = 1
+        self.tfrecord_map_num_parallel_calls = 1
         self.train_parallel_mode = 'default'
         self.num_train_op_parallel = 1
 
@@ -111,7 +111,7 @@ class Options(object):
         num_in_graph_replication = {} \n \
         tfrecord_file = {} \n \
         train_data_format = {} \n \
-        map_num_parallel_calls = {} \n \
+        tfrecord_map_num_parallel_calls = {} \n \
         train_parallel_mode = {} \n \
         num_train_op_parallel = {} \n \
         \n \
@@ -165,7 +165,7 @@ class Options(object):
                 self.num_in_graph_replication,
                 self.tfrecord_file,
                 self.train_data_format,
-                self.map_num_parallel_calls,
+                self.tfrecord_map_num_parallel_calls,
                 self.train_parallel_mode,
                 self.num_train_op_parallel,
                 # non-cmd args

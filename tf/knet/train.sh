@@ -46,7 +46,7 @@ optimizer_type='ada'
 num_in_graph_replication=1
 tfrecord_file='example.tfrecord'
 train_data_format='tfrecord'  # 'tfrecord', 'fasttext'
-map_num_parallel_calls=2
+tfrecord_map_num_parallel_calls=2
 
 train_parallel_mode='default' # 'default', 'train_op_parallel'
 num_train_op_parallel=1
@@ -96,6 +96,6 @@ python train.py \
     --num_in_graph_replication ${num_in_graph_replication} \
     --tfrecord_file ${tfrecord_file} \
     --train_data_format ${train_data_format} \
-    --map_num_parallel_calls ${map_num_parallel_calls} \
+    --tfrecord_map_num_parallel_calls ${tfrecord_map_num_parallel_calls} \
     --train_parallel_mode ${train_parallel_mode} \
-    --num_train_op_parallel ${num_train_op_paralle}
+    --num_train_op_parallel ${num_train_op_parallel}
