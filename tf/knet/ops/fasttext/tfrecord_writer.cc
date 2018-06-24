@@ -15,6 +15,7 @@
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/strings/strcat.h"
 #include "tensorflow/core/platform/logging.h"
+#include "tensorflow/core/platform/posix/posix_file_system.h"
 
 #include "args.h"
 #include "common.h"
@@ -31,6 +32,7 @@ DEFINE_string(train_data_path, "", "");
 DEFINE_string(dict_dir, "", "");
 DEFINE_int32(threads, 1, "");
 DEFINE_int32(is_delete, 0, "");
+DEFINE_int32(use_saved_dict, 0, "");
 
 std::atomic<int64_t> line_processed;
 std::atomic<int64_t> total;
@@ -67,6 +69,26 @@ void parse_and_save_dictionary(const std::string &train_data_path,
   PreProcessTrainData(train_data_path, dict);
   SaveDictionary(dict_dir, dict);
   LOG(INFO) << "Load dictionary OK.";
+}
+
+void load_dictionary(const std::string &dict_dir,
+                     std::shared_ptr<::fasttext::Dictionary> dict) {
+  // load dictionary
+  auto root_dir = dict_dir;
+  auto saved_dict = ::tensorflow::io::JoinPath(root_dir, SAVED_DICT);
+  LOG(INFO) << "Load dictionary from " << saved_dict << " ...";
+  std::ifstream ifs(saved_dict);
+  if (!ifs.is_open()) {
+    LOG(ERROR) << "Open saved_dict file '" << saved_dict << "' failed.";
+    exit(-1);
+  }
+  dict->load(ifs);
+  if (ifs.fail()) {
+    LOG(ERROR) << "Load dictionary failed.";
+    exit(-1);
+  }
+  ifs.close();
+  LOG(INFO) << "Load dictionary OK";
 }
 
 inline int transform_id(int id) { return id + 1; }
@@ -182,12 +204,16 @@ int main(int argc, char *argv[]) {
 
   std::shared_ptr<::fasttext::Dictionary> dict =
       std::make_shared<::fasttext::Dictionary>(args);
-  parse_and_save_dictionary(FLAGS_train_data_path, args->dict_dir, dict);
+  if (FLAGS_use_saved_dict) {
+    load_dictionary(args->dict_dir, dict);
+  } else {
+    parse_and_save_dictionary(FLAGS_train_data_path, args->dict_dir, dict);
+  }
 
   if (FLAGS_threads == 1) {
     dump_tfrecord(FLAGS_train_data_path, FLAGS_tfrecord_file, args, dict);
   } else {
-    const int kMaxCommandSize = 1024;
+    const int kMaxCommandSize = 8192;
     static char cmd[kMaxCommandSize];
 
     std::string split_cmd =
@@ -209,7 +235,8 @@ int main(int argc, char *argv[]) {
       auto input_file = FLAGS_train_data_path + "." + suffix;
       auto tfrecord_file = FLAGS_tfrecord_file + "." + suffix;
       todelete += input_file + " ";
-      threads.emplace_back(dump_tfrecord, input_file, tfrecord_file, args, dict);
+      threads.emplace_back(dump_tfrecord, input_file, tfrecord_file, args,
+                           dict);
     }
     for (int i = 0; i < FLAGS_threads; ++i) {
       threads[i].join();
@@ -229,7 +256,6 @@ int main(int argc, char *argv[]) {
   }
 
   LOG(ERROR) << "dump " << total << " tfrecord examples.";
-
 
   return 0;
 }

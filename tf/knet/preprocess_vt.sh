@@ -71,7 +71,8 @@ if [[ ${train_data_format} == 'tfrecord' ]]; then
         --train_data_path ${train_data_path} \
         --dict_dir ${dict_dir} \
         --threads ${num_tfrecord_file} \
-        --is_delete ${dum_tfrecord_is_delete}
+        --is_delete ${dum_tfrecord_is_delete} \
+        --use_saved_dict ${use_saved_dict}
     echo 'dump tfrecord OK'
 fi
 
