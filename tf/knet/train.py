@@ -10,11 +10,15 @@ import os
 import time
 import tensorflow as tf
 
+from estimator.estimator import MultiThreadEstimator as TrainOpParallelEstimator
+from estimator.run_config import RunConfig as TrainOpParallelRunConfig
+
 import build_model_fn
 import model_keys
 import input_data
 import hook
 import args_parser
+
 
 opts = None
 
@@ -59,25 +63,40 @@ def build_estimator():
                                     intra_op_parallelism_threads=1,
                                     log_device_placement=False)
     """
-    config = tf.estimator.RunConfig(
-        model_dir=opts.model_dir,
-        tf_random_seed=None,
-        save_summary_steps=opts.save_summary_steps,
-        save_checkpoints_secs=opts.save_checkpoints_secs,
-        session_config=None,
-        keep_checkpoint_max=opts.keep_checkpoint_max,
-        keep_checkpoint_every_n_hours=10000,
-        log_step_count_steps=opts.log_step_count_steps)
-    estimator = tf.estimator.Estimator(
-        model_fn=build_model_fn.knet_model_fn,
-        config=config,
-        params={
-            'feature_columns': feature_columns,
-            'predict_feature_columns': predict_feature_columns,
-            'n_classes': dict_meta["nwords"] + 1,
-            'ntokens': dict_meta["ntokens"] * opts.epoch,
-            'opts': opts
-        })
+    config_keys = {}
+    config_keys['model_dir'] = opts.model_dir
+    config_keys['tf_random_seed'] = None
+    config_keys['save_summary_steps'] = opts.save_summary_steps
+    config_keys['save_checkpoints_secs'] = opts.save_checkpoints_secs
+    config_keys['session_config'] = None
+    config_keys['keep_checkpoint_max'] = opts.keep_checkpoint_max
+    config_keys['keep_checkpoint_every_n_hours'] = 10000
+    config_keys['log_step_count_steps'] = opts.log_step_count_steps
+
+    estimator_keys = {}
+    estimator_keys['model_fn'] = build_model_fn.knet_model_fn
+    estimator_keys['params'] = {
+        'feature_columns': feature_columns,
+        'predict_feature_columns': predict_feature_columns,
+        'n_classes': dict_meta["nwords"] + 1,
+        'ntokens': dict_meta["ntokens"] * opts.epoch,
+        'opts': opts
+    }
+
+    train_parallel_mode = opts.train_parallel_mode
+    if train_parallel_mode == model_keys.TrainParallelMode.DEFAULT:
+        config = tf.estimator.RunConfig(**config_keys)
+        estimator_keys['config'] = config
+        estimator = tf.estimator.Estimator(**estimator_keys)
+    elif train_parallel_mode == model_keys.TrainParallelMode.TRAIN_OP_PARALLEL:
+        config = TrainOpParallelRunConfig(**config_keys)
+        estimator_keys['config'] = config
+        estimator_keys['num_train_op_parallel'] = opts.num_train_op_parallel
+        estimator = TrainOpParallelEstimator(**estimator_keys)
+    else:
+        raise ValueError("train_parallel_mode '{}' not surpported.".format(
+            train_parallel_mode))
+
     return estimator
 
 

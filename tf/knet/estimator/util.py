@@ -75,7 +75,7 @@ def get_timestamped_dir(dir_base):
                      '{} attempts.'.format(MAX_DIRECTORY_CREATION_ATTEMPTS))
 
 
-def parse_input_fn_result(result, threads=1):
+def parse_input_fn_result(result, num_train_op_parallel=1):
   """Gets features, labels, and hooks from the result of an Estimator input_fn.
 
   Args:
@@ -108,7 +108,7 @@ def parse_input_fn_result(result, threads=1):
     pass
   else:
     input_hooks.append(_DatasetInitializerHook(iterator))
-    for i in range(threads):
+    for i in range(num_train_op_parallel):
         results.append(iterator.get_next())
 
   if isinstance(results[0], (list, tuple)):

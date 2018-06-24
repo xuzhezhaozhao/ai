@@ -72,3 +72,10 @@ class TrainDataFormatType(object):
 
     fasttext = 'fasttext'
     tfrecord = 'tfrecord'
+
+
+class TrainParallelMode(object):
+    """Train parallen mode."""
+
+    DEFAULT = 'default'
+    TRAIN_OP_PARALLEL = 'train_op_parallel'
