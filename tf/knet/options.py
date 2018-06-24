@@ -52,6 +52,7 @@ class Options(object):
         self.optimizer_type = 'ada'
         self.num_in_graph_replication = 1
         self.tfrecord_file = ''
+        self.num_tfrecord_file = 1
         self.train_data_format = 'fasttext'
         self.tfrecord_map_num_parallel_calls = 1
         self.train_parallel_mode = 'default'
@@ -110,6 +111,7 @@ class Options(object):
         optimizer_type = {} \n \
         num_in_graph_replication = {} \n \
         tfrecord_file = {} \n \
+        num_tfrecord_file = {} \n \
         train_data_format = {} \n \
         tfrecord_map_num_parallel_calls = {} \n \
         train_parallel_mode = {} \n \
@@ -164,6 +166,7 @@ class Options(object):
                 self.optimizer_type,
                 self.num_in_graph_replication,
                 self.tfrecord_file,
+                self.num_tfrecord_file,
                 self.train_data_format,
                 self.tfrecord_map_num_parallel_calls,
                 self.train_parallel_mode,
