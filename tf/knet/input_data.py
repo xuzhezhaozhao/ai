@@ -126,7 +126,14 @@ def parse_example(serialized, opts):
 def tfrecord_train_input_fn(opts):
     batch_size = opts.batch_size * opts.num_in_graph_replication
 
-    ds = tf.data.TFRecordDataset([opts.tfrecord_file])
+    if opts.num_tfrecord_file > 1:
+        files = []
+        for seq in range(opts.num_tfrecord_file):
+            files.append(opts.tfrecord_file + '.' + '{:03d}'.format(seq))
+        ds = tf.data.TFRecordDataset(files)
+    else:
+        ds = tf.data.TFRecordDataset([opts.tfrecord_file])
+
     ds = ds.map(lambda x: parse_example(x, opts),
                 opts.tfrecord_map_num_parallel_calls)
     ds = ds.prefetch(opts.prefetch_size)

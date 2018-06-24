@@ -44,13 +44,33 @@ sample_dropout=0.0
 optimizer_type='ada'
 
 num_in_graph_replication=1
-tfrecord_file='example.tfrecord'
+tfrecord_file='../../data/train_data.tfrecord'
+num_tfrecord_file=2
 train_data_format='tfrecord'  # 'tfrecord', 'fasttext'
 tfrecord_map_num_parallel_calls=2
 
 train_parallel_mode='default' # 'default', 'train_op_parallel'
-#train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
+train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
 num_train_op_parallel=4
+
+dum_tfrecord_is_delete=1
+
+if [[ ${train_data_format} == 'tfrecord' ]]; then
+    echo 'dump tfrecord ...'
+    ./ops/fasttext/tfrecord_writer \
+        --tfrecord_file ${tfrecord_file} \
+        --ws ${train_ws} \
+        --min_count ${min_count} \
+        -t ${t} \
+        --ntargets ${ntargets} \
+        --sample_dropout ${sample_dropout} \
+        --train_data_path ${train_data_path} \
+        --dict_dir ${dict_dir} \
+        --threads ${num_tfrecord_file} \
+        --is_delete ${dum_tfrecord_is_delete}
+    echo 'dump tfrecord OK'
+fi
+
 
 python train.py \
     --train_data_path ${train_data_path} \
@@ -96,6 +116,7 @@ python train.py \
     --optimizer_type ${optimizer_type} \
     --num_in_graph_replication ${num_in_graph_replication} \
     --tfrecord_file ${tfrecord_file} \
+    --num_tfrecord_file ${num_tfrecord_file} \
     --train_data_format ${train_data_format} \
     --tfrecord_map_num_parallel_calls ${tfrecord_map_num_parallel_calls} \
     --train_parallel_mode ${train_parallel_mode} \

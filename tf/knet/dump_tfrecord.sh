@@ -3,7 +3,7 @@ cd ./ops/fasttext/
 bash ./compile_writer.sh
 cd -
 
-tfrecord_file='example.tfrecord'
+tfrecord_file='../../data/train_data.tfrecord'
 ws=20
 min_count=30
 t=0.01
