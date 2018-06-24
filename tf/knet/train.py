@@ -10,7 +10,7 @@ import os
 import time
 import tensorflow as tf
 
-from estimator.estimator import MultiThreadEstimator as TrainOpParallelEstimator
+from estimator.estimator import TrainOpParallelEstimator
 from estimator.run_config import RunConfig as TrainOpParallelRunConfig
 
 import build_model_fn
@@ -146,6 +146,7 @@ def create_hooks():
 
 def train_and_eval_in_distributed_mode():
     """feed splited train file for distributed mode."""
+
     assert opts.task_index < 99, 'task_index >= 99'
 
     if opts.task_type == model_keys.TaskType.CHIEF:

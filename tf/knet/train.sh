@@ -49,7 +49,8 @@ train_data_format='tfrecord'  # 'tfrecord', 'fasttext'
 tfrecord_map_num_parallel_calls=2
 
 train_parallel_mode='default' # 'default', 'train_op_parallel'
-num_train_op_parallel=1
+#train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
+num_train_op_parallel=4
 
 python train.py \
     --train_data_path ${train_data_path} \
