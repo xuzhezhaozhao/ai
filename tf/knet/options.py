@@ -51,10 +51,11 @@ class Options(object):
         self.sample_dropout = 0.5
         self.optimizer_type = 'ada'
         self.num_in_graph_replication = 1
-        self.threads = 1
         self.tfrecord_file = ''
         self.train_data_format = 'fasttext'
         self.map_num_parallel_calls = 1
+        self.train_parallel_mode = 'default'
+        self.num_train_op_parallel = 1
 
         # non-cmd args
         self.estimator = None
@@ -108,10 +109,11 @@ class Options(object):
         sample_dropout = {} \n \
         optimizer_type = {} \n \
         num_in_graph_replication = {} \n \
-        threads = {} \n \
         tfrecord_file = {} \n \
         train_data_format = {} \n \
         map_num_parallel_calls = {} \n \
+        train_parallel_mode = {} \n \
+        num_train_op_parallel = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -161,10 +163,11 @@ class Options(object):
                 self.sample_dropout,
                 self.optimizer_type,
                 self.num_in_graph_replication,
-                self.threads,
                 self.tfrecord_file,
                 self.train_data_format,
                 self.map_num_parallel_calls,
+                self.train_parallel_mode,
+                self.num_train_op_parallel,
                 # non-cmd args
                 self.estimator,
                 self.hooks,

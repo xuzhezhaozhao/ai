@@ -60,11 +60,13 @@ parser.add_argument('--predict_ws', default=5, type=int, help='')
 parser.add_argument('--sample_dropout', default=0.5, type=float, help='')
 parser.add_argument('--optimizer_type', default='ada', type=str, help='')
 parser.add_argument('--num_in_graph_replication', default=1, type=int, help='')
-parser.add_argument('--threads', default=1, type=int, help='')
 parser.add_argument('--tfrecord_file', default='', type=str, help='')
 parser.add_argument(
     '--train_data_format', default='fasttext', type=str, help='')
 parser.add_argument('--map_num_parallel_calls', default=1, type=int, help='')
+parser.add_argument(
+    '--train_parallel_mode', default='default', type=str, help='')
+parser.add_argument('--num_train_op_parallel', default=1, type=int, help='')
 
 opts = Options()
 
@@ -119,10 +121,11 @@ def parse_args(argv):
     opts.sample_dropout = args.sample_dropout
     opts.optimizer_type = args.optimizer_type
     opts.num_in_graph_replication = args.num_in_graph_replication
-    opts.threads = args.threads
     opts.tfrecord_file = args.tfrecord_file
     opts.train_data_format = args.train_data_format
     opts.map_num_parallel_calls = args.map_num_parallel_calls
+    opts.train_parallel_mode = args.train_parallel_mode
+    opts.num_train_op_parallel = args.num_train_op_parallel
 
 
 def validate_opts():

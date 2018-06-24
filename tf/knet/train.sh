@@ -18,7 +18,7 @@ prefetch_size=10000
 max_train_steps=-1
 save_summary_steps=100
 save_checkpoints_secs=600
-log_step_count_steps=10000
+log_step_count_steps=1000
 recall_k=10
 dict_dir=`pwd`/dict_dir
 use_saved_dict=0
@@ -47,6 +47,9 @@ num_in_graph_replication=1
 tfrecord_file='example.tfrecord'
 train_data_format='tfrecord'  # 'tfrecord', 'fasttext'
 map_num_parallel_calls=2
+
+train_parallel_mode='default' # 'default', 'train_op_parallel'
+num_train_op_parallel=1
 
 python train.py \
     --train_data_path ${train_data_path} \
@@ -93,4 +96,6 @@ python train.py \
     --num_in_graph_replication ${num_in_graph_replication} \
     --tfrecord_file ${tfrecord_file} \
     --train_data_format ${train_data_format} \
-    --map_num_parallel_calls ${map_num_parallel_calls}
+    --map_num_parallel_calls ${map_num_parallel_calls} \
+    --train_parallel_mode ${train_parallel_mode} \
+    --num_train_op_parallel ${num_train_op_paralle}

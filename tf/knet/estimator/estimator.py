@@ -108,7 +108,7 @@ class MultiThreadEstimator(object):
   """
 
   def __init__(self, model_fn, model_dir=None, config=None, params=None,
-               warm_start_from=None, threads=1):
+               warm_start_from=None, num_train_op_parallel=1):
     """Constructs an `Estimator` instance.
 
     See @{$estimators} for more information. To warm-start an `Estimator`:
@@ -175,7 +175,7 @@ class MultiThreadEstimator(object):
 
     MultiThreadEstimator._assert_members_are_not_overridden(self)
 
-    self._threads = threads
+    self._num_train_op_parallel = num_train_op_parallel
 
     if config is None:
       self._config = run_config.RunConfig()
@@ -972,7 +972,7 @@ class MultiThreadEstimator(object):
   def _get_features_from_input_fn(self, input_fn, mode):
     """Extracts the `features` from return values of `input_fn`."""
     result = self._call_input_fn(input_fn, mode)
-    results, _, hooks = estimator_util.parse_input_fn_result(result, threads=1)
+    results, _, hooks = estimator_util.parse_input_fn_result(result, num_train_op_parallel=1)
     result = results[0][0]
     self._validate_features_in_predict_input(result)
     return result, hooks
@@ -983,7 +983,7 @@ class MultiThreadEstimator(object):
                       'QueueRunner. That means predict yields forever. '
                       'This is probably a mistake.')
 
-  def _get_features_and_labels_from_input_fn(self, input_fn, mode, threads=1):
+  def _get_features_and_labels_from_input_fn(self, input_fn, mode, num_train_op_parallel=1):
     """Extracts the `features` and labels from return values of `input_fn`."""
     if self._distribution is not None and mode == model_fn_lib.ModeKeys.TRAIN:
       result = self._distribution.distribute_dataset(
@@ -991,7 +991,7 @@ class MultiThreadEstimator(object):
     else:
       result = self._call_input_fn(input_fn, mode)
 
-    return estimator_util.parse_input_fn_result(result, threads=threads)
+    return estimator_util.parse_input_fn_result(result, num_train_op_parallel=num_train_op_parallel)
 
   def _extract_batch_length(self, preds_evaluated):
     """Extracts batch length of predictions."""
@@ -1131,7 +1131,7 @@ class MultiThreadEstimator(object):
       training_util._get_or_create_global_step_read()  # pylint: disable=protected-access
       results, _, input_hooks = (
           self._get_features_and_labels_from_input_fn(
-              input_fn, model_fn_lib.ModeKeys.TRAIN, self._threads))
+              input_fn, model_fn_lib.ModeKeys.TRAIN, self._num_train_op_parallel))
 
       worker_hooks.extend(input_hooks)
       estimator_specs = []
@@ -1360,7 +1360,7 @@ class MultiThreadEstimator(object):
     results, _, input_hooks = (
         self._get_features_and_labels_from_input_fn(input_fn,
                                                     model_fn_lib.ModeKeys.EVAL,
-                                                    threads=1))
+                                                    num_train_op_parallel=1))
     features, labels = results[0]
 
     estimator_spec = self._call_model_fn(
