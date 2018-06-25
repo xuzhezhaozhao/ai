@@ -47,7 +47,8 @@ def knet_model_fn(features, labels, mode, params):
      nce_biases) = get_nce_weights_and_biases(
          n_classes, embedding_dim, train_nce_biases)
 
-    if mode == tf.estimator.ModeKeys.PREDICT:
+    if (mode == tf.estimator.ModeKeys.PREDICT
+            or mode == tf.estimator.ModeKeys.EVAL):
         input_layer = tf.feature_column.input_layer(
             features, predict_feature_columns)
     else:
@@ -387,7 +388,15 @@ def filter_and_save_subset(dict_dir):
 
 def create_loss(weights, biases, labels, inputs, num_sampled, num_classes,
                 num_true, partition_strategy):
-    loss = tf.nn.sampled_softmax_loss(
+    sampled_values = tf.nn.learned_unigram_candidate_sampler(
+        true_classes=labels,
+        num_true=num_true,
+        num_sampled=num_sampled,
+        unique=True,
+        range_max=num_classes,
+        seed=np.random.randint(1000000)
+    )
+    loss = tf.nn.nce_loss(
         weights=weights,
         biases=biases,
         labels=labels,
@@ -395,6 +404,7 @@ def create_loss(weights, biases, labels, inputs, num_sampled, num_classes,
         num_sampled=num_sampled,
         num_classes=num_classes,
         num_true=num_true,
+        sampled_values=sampled_values,
         partition_strategy=partition_strategy)
     loss = tf.reduce_mean(loss, name="mean_loss")
 

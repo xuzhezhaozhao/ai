@@ -12,13 +12,13 @@ EXPORT_MODEL_DIR=`pwd`/export_model_dir
 train_data_path=../../data/train_data.in
 eval_data_path=../../data/eval_data.in
 lr=0.5
-dim=256
+dim=128
 train_ws=20
 min_count=30
 t=0.01
 batch_size=32
 num_sampled=10
-epoch=5
+epoch=10
 hidden_units=''
 prefetch_size=10000
 max_train_steps=-1
@@ -40,8 +40,8 @@ ntargets=1
 chief_lock=${MODEL_DIR}/chief.lock
 max_distribute_train_steps=-1
 train_nce_biases=0
-shuffle_batch=0
-predict_ws=10
+shuffle_batch=1
+predict_ws=20
 sample_dropout=0.0
 
 # sgd, ada, adadelta, adam
@@ -55,7 +55,7 @@ train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 tfrecord_map_num_parallel_calls=2
 
 train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
-num_train_op_parallel=2
+num_train_op_parallel=3
 
 dum_tfrecord_is_delete=1
 
