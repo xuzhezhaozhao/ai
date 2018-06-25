@@ -42,6 +42,7 @@ def pack_fasttext_params(opts, is_eval):
         params['t'] = 1.0
         params['ntargets'] = 1
         params['sample_dropout'] = 0
+        params['ws'] = opts.predict_ws
 
     return params
 
