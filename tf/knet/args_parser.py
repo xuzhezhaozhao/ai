@@ -19,7 +19,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--train_data_path', default='', type=str, help='')
 parser.add_argument('--eval_data_path', default='', type=str, help='')
 parser.add_argument('--lr', default=0.25, type=float, help='learning rate')
-parser.add_argument('--dim', default=100, type=int, help='embedding dim')
+parser.add_argument(
+    '--embedding_dim', default=100, type=int, help='embedding embedding_dim')
 parser.add_argument('--train_ws', default=5, type=int, help='window size')
 parser.add_argument('--min_count', default=50, type=int, help='')
 parser.add_argument('--t', default=0.0001, type=float, help='')
@@ -77,7 +78,7 @@ def parse_args(argv):
     opts.train_data_path = args.train_data_path
     opts.eval_data_path = args.eval_data_path
     opts.lr = args.lr
-    opts.dim = args.dim
+    opts.embedding_dim = args.embedding_dim
     opts.train_ws = args.train_ws
     opts.min_count = args.min_count
     opts.t = args.t

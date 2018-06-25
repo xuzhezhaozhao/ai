@@ -12,7 +12,7 @@ class Options(object):
         self.train_data_path = ""
         self.eval_data_path = ""
         self.lr = 0.05
-        self.dim = 100
+        self.embedding_dim = 100
         self.train_ws = 5
         self.min_count = 5
         self.t = 0.0001
@@ -71,7 +71,7 @@ class Options(object):
         train_data_path = {} \n \
         eval_data_path = {} \n \
         lr = {} \n \
-        dim = {} \n \
+        embedding_dim = {} \n \
         train_ws = {} \n \
         min_count = {} \n \
         t = {} \n \
@@ -126,7 +126,7 @@ class Options(object):
                 self.train_data_path,
                 self.eval_data_path,
                 self.lr,
-                self.dim,
+                self.embedding_dim,
                 self.train_ws,
                 self.min_count,
                 self.t,
