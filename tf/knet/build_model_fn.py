@@ -21,26 +21,28 @@ _optimizer_id = 0
 def knet_model_fn(features, labels, mode, params):
     """Build model graph."""
 
-    (embeddings, nce_weights, nce_biases) = get_nce_variables(params)
+    with tf.name_scope("model_fn_{}".format(_optimizer_id)):
+        (embeddings, nce_weights, nce_biases) = get_nce_variables(params)
 
-    input_layer = create_input_layer(mode, features, params, embeddings)
-    user_vector = create_hidden_layer(mode, input_layer, params)
+        input_layer = create_input_layer(mode, features, params, embeddings)
+        user_vector = create_hidden_layer(mode, input_layer, params)
 
-    if mode == tf.estimator.ModeKeys.PREDICT:
-        return create_predict_estimator_spec(
-            mode, user_vector, features, params)
+        if mode == tf.estimator.ModeKeys.PREDICT:
+            return create_predict_estimator_spec(
+                mode, user_vector, features, params)
 
-    _, top_k_ids = compute_top_k(nce_weights, nce_biases, user_vector, params)
-    metrics = get_metrics(labels, top_k_ids, params)
-    add_metrics_summary(metrics)
+        _, top_k_ids = compute_top_k(
+            nce_weights, nce_biases, user_vector, params)
+        metrics = get_metrics(labels, top_k_ids, params)
+        add_metrics_summary(metrics)
 
-    if mode == tf.estimator.ModeKeys.EVAL:
-        return create_eval_estimator_spec(mode, metrics, params)
+        if mode == tf.estimator.ModeKeys.EVAL:
+            return create_eval_estimator_spec(mode, metrics, params)
 
-    if mode == tf.estimator.ModeKeys.TRAIN:
-        return create_train_estimator_spec(
-            mode, nce_weights, nce_biases,
-            features, labels, user_vector, params)
+        if mode == tf.estimator.ModeKeys.TRAIN:
+            return create_train_estimator_spec(
+                mode, nce_weights, nce_biases,
+                features, labels, user_vector, params)
 
     assert False  # Never reach here
 
