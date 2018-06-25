@@ -21,81 +21,31 @@ _optimizer_id = 0
 def knet_model_fn(features, labels, mode, params):
     """Build model graph."""
 
-    opts = params['opts']
-    recall_k = opts.recall_k
-    dict_dir = opts.dict_dir
-    optimize_level = opts.optimize_level
-    use_subset = opts.use_subset
-
-    (embeddings, nce_weights, nce_biases) = get_v(params)
+    (embeddings, nce_weights, nce_biases) = get_nce_variables(params)
 
     input_layer = create_input_layer(mode, features, params, embeddings)
     user_vector = create_hidden_layer(mode, input_layer, params)
 
-    # Compute logits(just for train Mode, for metric summary, no optimize).
-    train_logits = tf.matmul(user_vector, nce_weights, transpose_b=True,
-                             name="matmul_logits")
-    train_logits = tf.nn.bias_add(train_logits, nce_biases,
-                                  name="bias_add_logits")
-    train_scores, train_ids = tf.nn.top_k(train_logits, recall_k,
-                                          name="top_k_{}".format(recall_k))
-
     if mode == tf.estimator.ModeKeys.PREDICT:
-        with tf.name_scope("PredictMode"):
-            if optimize_level == model_keys.OPTIMIZE_LEVEL_SAVED_NCE_PARAMS:
-                tf.logging.info("Use OPTIMIZE_LEVEL_SAVED_NCE_PARAMS")
-                scores, ids, _ = optimize_level_saved_nce_params(
-                    dict_dir, user_vector, recall_k, use_subset)
-            elif optimize_level == model_keys.OPTIMIZE_LEVEL_OPENBLAS_TOP_K:
-                tf.logging.info("Use OPTIMIZE_LEVEL_OPENBLAS_TOP_K")
-                scores, ids = optimize_level_openblas_top_k(
-                    dict_dir, user_vector, recall_k, use_subset)
+        return create_predict_estimator_spec(
+            mode, user_vector, features, params)
 
-        table = create_index_to_string_table(dict_dir, use_subset)
-        predictions = {
-            'class_ids': ids,
-            'scores': scores,
-            'words': table.lookup(tf.cast(ids, tf.int64)),
-            'num_in_dict': features[model_keys.NUM_IN_DICT_COL]
-        }
-        export_outputs = {
-            'predicts': tf.estimator.export.PredictOutput(
-                outputs={
-                    'scores': scores,
-                    'words': table.lookup(tf.cast(ids, tf.int64)),
-                    'num_in_dict': features[model_keys.NUM_IN_DICT_COL]
-                }
-            )
-        }
-        return tf.estimator.EstimatorSpec(mode, predictions=predictions,
-                                          export_outputs=export_outputs)
-
-    train_metrics = get_metrics(labels, train_ids, params)
-    add_metrics_summary(train_metrics)
+    _, top_k_ids = compute_top_k(nce_weights, nce_biases, user_vector, params)
+    metrics = get_metrics(labels, top_k_ids, params)
+    add_metrics_summary(metrics)
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        eval_metrics = get_metrics(labels, train_ids, params)
-        return tf.estimator.EstimatorSpec(
-            mode,
-            loss=tf.constant(0),  # don't evaluate loss
-            eval_metric_ops=eval_metrics)
+        return create_eval_estimator_spec(mode, metrics, params)
 
-    loss = create_loss(
-        weights=nce_weights,
-        biases=nce_biases,
-        labels=labels,
-        inputs=user_vector,
-        partition_strategy="div",
-        params=params)
+    if mode == tf.estimator.ModeKeys.TRAIN:
+        return create_train_estimator_spec(
+            mode, nce_weights, nce_biases,
+            features, labels, user_vector, params)
 
-    assert mode == tf.estimator.ModeKeys.TRAIN
-
-    optimizer = create_optimizer(features, params)
-    train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
-    return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
+    assert False  # Never reach here
 
 
-def get_v(params):
+def get_nce_variables(params):
     """Get embeddings, nce_weights, nce_biases."""
 
     opts = params['opts']
@@ -389,7 +339,9 @@ def filter_and_save_subset(dict_dir):
             subset_biases)
 
 
-def create_loss(weights, biases, labels, inputs, partition_strategy, params):
+def create_loss(weights, biases, labels, inputs, params):
+    """Create nce loss."""
+
     num_classes = params['num_classes']
     opts = params['opts']
     num_sampled = opts.num_sampled
@@ -412,7 +364,7 @@ def create_loss(weights, biases, labels, inputs, partition_strategy, params):
         num_classes=num_classes,
         num_true=ntargets,
         sampled_values=sampled_values,
-        partition_strategy=partition_strategy)
+        partition_strategy="div")
     loss = tf.reduce_mean(loss, name="mean_loss")
 
     return loss
@@ -452,3 +404,74 @@ def create_optimizer(features, params):
     _optimizer_id += 1
 
     return optimizer
+
+
+def create_predict_estimator_spec(mode, user_vector, features, params):
+    """Create predict EstimatorSpec."""
+
+    opts = params['opts']
+
+    if (opts.optimize_level
+            == model_keys.OPTIMIZE_LEVEL_SAVED_NCE_PARAMS):
+        tf.logging.info("Use OPTIMIZE_LEVEL_SAVED_NCE_PARAMS")
+        scores, ids, _ = optimize_level_saved_nce_params(
+            opts.dict_dir, user_vector, opts.recall_k, opts.use_subset)
+    elif (opts.optimize_level
+          == model_keys.OPTIMIZE_LEVEL_OPENBLAS_TOP_K):
+        tf.logging.info("Use OPTIMIZE_LEVEL_OPENBLAS_TOP_K")
+        scores, ids = optimize_level_openblas_top_k(
+            opts.dict_dir, user_vector, opts.recall_k, opts.use_subset)
+    else:
+        raise ValueError(
+            "not surpported optimize_level '{}'".format(opts.optimize_level))
+
+    table = create_index_to_string_table(opts.dict_dir, opts.use_subset)
+    predictions = {
+        'class_ids': ids,
+        'scores': scores,
+        'words': table.lookup(tf.cast(ids, tf.int64)),
+        'num_in_dict': features[model_keys.NUM_IN_DICT_COL]
+    }
+    export_outputs = {
+        'predicts': tf.estimator.export.PredictOutput(
+            outputs={
+                'scores': scores,
+                'words': table.lookup(tf.cast(ids, tf.int64)),
+                'num_in_dict': features[model_keys.NUM_IN_DICT_COL]
+            }
+        )
+    }
+
+    return tf.estimator.EstimatorSpec(mode, predictions=predictions,
+                                      export_outputs=export_outputs)
+
+
+def create_eval_estimator_spec(mode, metrics, params):
+    """Create eval EstimatorSpec."""
+
+    return tf.estimator.EstimatorSpec(
+        mode,
+        loss=tf.constant(0),  # don't evaluate loss
+        eval_metric_ops=metrics)
+
+
+def create_train_estimator_spec(
+        mode, nce_weights, nce_biases, features, labels, user_vector, params):
+    """Create train EstimatorSpec."""
+
+    loss = create_loss(nce_weights, nce_biases, labels, user_vector, params)
+    optimizer = create_optimizer(features, params)
+    train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
+    return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
+
+
+def compute_top_k(nce_weights, nce_biases, user_vector, params):
+    """Compute top k."""
+
+    opts = params['opts']
+
+    logits = tf.nn.xw_plus_b(
+        user_vector, tf.transpose(nce_weights), nce_biases)
+    scores, ids = tf.nn.top_k(
+        logits, opts.recall_k, name="top_k_{}".format(opts.recall_k))
+    return scores, ids
