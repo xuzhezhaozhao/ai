@@ -40,9 +40,7 @@ def knet_model_fn(features, labels, mode, params):
     dropout = opts.dropout
     ntargets = opts.ntargets
     train_nce_biases = opts.train_nce_biases
-    batch_size = opts.batch_size
     optimizer_type = opts.optimizer_type
-    num_in_graph_replication = opts.num_in_graph_replication
 
     embeddings = get_embeddings(n_classes, embedding_dim)
     (nce_weights,
@@ -124,9 +122,7 @@ def knet_model_fn(features, labels, mode, params):
             loss=tf.constant(0),  # don't evaluate loss
             eval_metric_ops=eval_metrics)
 
-    replica_losses = create_losses_in_graph_replications(
-        num_in_graph_replication=num_in_graph_replication,
-        batch_size=batch_size,
+    loss = create_loss(
         weights=nce_weights,
         biases=nce_biases,
         labels=labels,
@@ -134,9 +130,7 @@ def knet_model_fn(features, labels, mode, params):
         num_sampled=num_sampled,
         num_classes=n_classes,
         num_true=ntargets,
-        partition_strategy="div",
-        name="nce_loss")
-    loss = sum(replica_losses)
+        partition_strategy="div")
 
     assert mode == tf.estimator.ModeKeys.TRAIN
 
@@ -161,14 +155,9 @@ def knet_model_fn(features, labels, mode, params):
     else:
         raise ValueError('OptimizerType "{}" not surpported.'
                          .format(optimizer_type))
-
     _optimizer_id += 1
 
-    ops = []
-    for loss in replica_losses:
-        op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
-        ops.append(op)
-    train_op = tf.group(*ops)
+    train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
     return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
 
@@ -396,24 +385,17 @@ def filter_and_save_subset(dict_dir):
             subset_biases)
 
 
-def create_losses_in_graph_replications(num_in_graph_replication, batch_size,
-                                          weights, biases, labels, inputs,
-                                          num_sampled, num_classes, num_true,
-                                          partition_strategy, name):
-    losses = []
-    for i in range(num_in_graph_replication):
-        repli_labels = labels[i * batch_size:(i + 1) * batch_size, :]
-        repli_inputs = inputs[i * batch_size:(i + 1) * batch_size, :]
-        nce_loss = tf.nn.nce_loss(weights=weights,
-                                  biases=biases,
-                                  labels=repli_labels,
-                                  inputs=repli_inputs,
-                                  num_sampled=num_sampled,
-                                  num_classes=num_classes,
-                                  num_true=num_true,
-                                  partition_strategy=partition_strategy,
-                                  name=name)
-        nce_loss = tf.reduce_mean(nce_loss, name="mean_nce_loss")
-        losses.append(nce_loss)
+def create_loss(weights, biases, labels, inputs, num_sampled, num_classes,
+                num_true, partition_strategy):
+    loss = tf.nn.sampled_softmax_loss(
+        weights=weights,
+        biases=biases,
+        labels=labels,
+        inputs=inputs,
+        num_sampled=num_sampled,
+        num_classes=num_classes,
+        num_true=num_true,
+        partition_strategy=partition_strategy)
+    loss = tf.reduce_mean(loss, name="mean_loss")
 
-    return losses
+    return loss
