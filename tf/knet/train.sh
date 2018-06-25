@@ -57,7 +57,7 @@ tfrecord_map_num_parallel_calls=2
 train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
 num_train_op_parallel=2
 
-dum_tfrecord_is_delete=1
+dump_tfrecord_is_delete=1
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     echo 'dump tfrecord ...'
@@ -73,7 +73,7 @@ if [[ ${train_data_format} == 'tfrecord' ]]; then
         --train_data_path ${train_data_path} \
         --dict_dir ${dict_dir} \
         --threads ${num_tfrecord_file} \
-        --is_delete ${dum_tfrecord_is_delete} \
+        --is_delete ${dump_tfrecord_is_delete} \
         --use_saved_dict ${use_saved_dict}
     echo 'dump tfrecord OK'
 fi
