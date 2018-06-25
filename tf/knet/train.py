@@ -78,7 +78,7 @@ def build_estimator():
     estimator_keys['params'] = {
         'feature_columns': feature_columns,
         'predict_feature_columns': predict_feature_columns,
-        'n_classes': dict_meta["nwords"] + 1,
+        'num_classes': dict_meta["nwords"] + 1,
         'ntokens': dict_meta["ntokens"] * opts.epoch,
         'opts': opts
     }

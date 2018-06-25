@@ -17,7 +17,7 @@ dict_dir=`pwd`/video_tab/dict_dir
 train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
 lr=0.5
-dim=128
+embedding_dim=128
 train_ws=20
 min_count=100
 t=0.0001
@@ -79,7 +79,7 @@ python train.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
     --lr ${lr} \
-    --dim ${dim} \
+    --embedding_dim ${embedding_dim} \
     --train_ws ${train_ws} \
     --min_count ${min_count} \
     --t ${t} \

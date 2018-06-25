@@ -12,14 +12,14 @@ EXPORT_MODEL_DIR=`pwd`/export_model_dir
 train_data_path=../../data/train_data.in
 eval_data_path=../../data/eval_data.in
 lr=0.5
-dim=128
+embedding_dim=128
 train_ws=20
 min_count=30
 t=0.01
 batch_size=32
 num_sampled=10
 epoch=10
-hidden_units=''
+hidden_units="${embedding_dim}"
 prefetch_size=10000
 max_train_steps=-1
 save_summary_steps=100
@@ -55,7 +55,7 @@ train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 tfrecord_map_num_parallel_calls=2
 
 train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
-num_train_op_parallel=3
+num_train_op_parallel=2
 
 dum_tfrecord_is_delete=1
 
@@ -83,7 +83,7 @@ python train.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
     --lr ${lr} \
-    --dim ${dim} \
+    --embedding_dim ${embedding_dim} \
     --train_ws ${train_ws} \
     --min_count ${min_count} \
     --t ${t} \

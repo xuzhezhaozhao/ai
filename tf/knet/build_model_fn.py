@@ -21,59 +21,16 @@ _optimizer_id = 0
 def knet_model_fn(features, labels, mode, params):
     """Build model graph."""
 
-    global _optimizer_id
-
-    feature_columns = params['feature_columns']
-    predict_feature_columns = params['predict_feature_columns']
-    n_classes = params['n_classes']
-    ntokens = params['ntokens']
     opts = params['opts']
-
-    embedding_dim = opts.dim
-    lr = opts.lr
-    hidden_units = opts.hidden_units
-    num_sampled = opts.num_sampled
     recall_k = opts.recall_k
     dict_dir = opts.dict_dir
     optimize_level = opts.optimize_level
     use_subset = opts.use_subset
-    dropout = opts.dropout
-    ntargets = opts.ntargets
-    train_nce_biases = opts.train_nce_biases
-    optimizer_type = opts.optimizer_type
 
-    embeddings = get_embeddings(n_classes, embedding_dim)
-    (nce_weights,
-     nce_biases) = get_nce_weights_and_biases(
-         n_classes, embedding_dim, train_nce_biases)
+    (embeddings, nce_weights, nce_biases) = get_v(params)
 
-    if (mode == tf.estimator.ModeKeys.PREDICT
-            or mode == tf.estimator.ModeKeys.EVAL):
-        input_layer = tf.feature_column.input_layer(
-            features, predict_feature_columns)
-    else:
-        input_layer = tf.feature_column.input_layer(features, feature_columns)
-
-    nonzeros = tf.count_nonzero(input_layer, 1, keepdims=True)  # [batch, 1]
-    nonzeros = tf.maximum(nonzeros, 1)  # avoid divide zero
-    embeds = mask_padding_embedding_lookup(embeddings, embedding_dim,
-                                           input_layer, model_keys.PADDING_ID)
-    embeds_sum = tf.reduce_sum(embeds, 1)
-    embeds_mean = embeds_sum / tf.cast(nonzeros, tf.float32)
-
-    hidden = embeds_mean
-    for index, units in enumerate(hidden_units):
-        hidden = tf.layers.dense(
-            hidden, units=units, activation=tf.nn.relu,
-            name="fc{}_{}".format(index, units), reuse=tf.AUTO_REUSE)
-        if dropout > 0:
-            training = (mode == tf.estimator.ModeKeys.TRAIN)
-            hidden = tf.layers.dropout(
-                hidden, dropout, training=training,
-                name="dropout{}_{}".format(index, units))
-    user_vector = tf.layers.dense(hidden, embedding_dim, activation=None,
-                                  name="user_vector",
-                                  reuse=tf.AUTO_REUSE)
+    input_layer = create_input_layer(mode, features, params, embeddings)
+    user_vector = create_hidden_layer(mode, input_layer, params)
 
     # Compute logits(just for train Mode, for metric summary, no optimize).
     train_logits = tf.matmul(user_vector, nce_weights, transpose_b=True,
@@ -113,11 +70,11 @@ def knet_model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(mode, predictions=predictions,
                                           export_outputs=export_outputs)
 
-    train_metrics = get_metrics(labels, train_ids, recall_k, ntargets)
+    train_metrics = get_metrics(labels, train_ids, params)
     add_metrics_summary(train_metrics)
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        eval_metrics = get_metrics(labels, train_ids, recall_k, ntargets)
+        eval_metrics = get_metrics(labels, train_ids, params)
         return tf.estimator.EstimatorSpec(
             mode,
             loss=tf.constant(0),  # don't evaluate loss
@@ -128,62 +85,53 @@ def knet_model_fn(features, labels, mode, params):
         biases=nce_biases,
         labels=labels,
         inputs=user_vector,
-        num_sampled=num_sampled,
-        num_classes=n_classes,
-        num_true=ntargets,
-        partition_strategy="div")
+        partition_strategy="div",
+        params=params)
 
     assert mode == tf.estimator.ModeKeys.TRAIN
 
-    if optimizer_type == model_keys.OptimizerType.ADA:
-        optimizer = tf.train.AdagradOptimizer(
-            learning_rate=lr, name='adagrad_{}'.format(_optimizer_id))
-    elif optimizer_type == model_keys.OptimizerType.ADADELTA:
-        optimizer = tf.train.AdadeltaOptimizer(
-            learning_rate=lr, name='adadelta_{}'.format(_optimizer_id))
-    elif optimizer_type == model_keys.OptimizerType.ADAM:
-        optimizer = tf.train.AdamOptimizer(
-            learning_rate=lr, name='adam_{}'.format(_optimizer_id))
-    elif optimizer_type == model_keys.OptimizerType.SGD:
-        processed_tokens = features[model_keys.TOKENS_COL][0][0]
-        tf.summary.scalar("processed_tokens", processed_tokens)
-        new_lr = lr * (1.0 - (tf.cast(processed_tokens, tf.float32)
-                              / tf.cast(ntokens, tf.float32)))
-        new_lr = tf.maximum(new_lr, 1e-5)
-        tf.summary.scalar("lr", new_lr)
-        optimizer = tf.train.GradientDescentOptimizer(
-            learning_rate=new_lr, name='sgd_{}'.format(_optimizer_id))
-    else:
-        raise ValueError('OptimizerType "{}" not surpported.'
-                         .format(optimizer_type))
-    _optimizer_id += 1
-
+    optimizer = create_optimizer(features, params)
     train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
     return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
 
-def get_nce_weights_and_biases(n_classes, embedding_dim, train_nce_biases):
+def get_v(params):
+    """Get embeddings, nce_weights, nce_biases."""
+
+    opts = params['opts']
+    num_classes = params['num_classes']
+    embedding_dim = opts.embedding_dim
+    train_nce_biases = opts.train_nce_biases
+
+    embeddings = get_embeddings(num_classes, embedding_dim)
+    (nce_weights,
+     nce_biases) = get_nce_weights_and_biases(
+         num_classes, embedding_dim, train_nce_biases)
+    return (embeddings, nce_weights, nce_biases)
+
+
+def get_nce_weights_and_biases(num_classes, embedding_dim, train_nce_biases):
     """Get nce weights and biases variables."""
 
     with tf.variable_scope("nce_layer", reuse=tf.AUTO_REUSE):
         nce_weights = tf.get_variable(
             model_keys.NCE_WEIGHTS_NAME,
             initializer=tf.truncated_normal(
-                [n_classes, embedding_dim],
+                [num_classes, embedding_dim],
                 stddev=1.0 / math.sqrt(embedding_dim)))
         nce_biases = tf.get_variable(
-            model_keys.NCE_BIASES_NAME, initializer=tf.zeros([n_classes]),
+            model_keys.NCE_BIASES_NAME, initializer=tf.zeros([num_classes]),
             trainable=train_nce_biases)
     return nce_weights, nce_biases
 
 
-def get_embeddings(n_classes, embedding_dim):
+def get_embeddings(num_classes, embedding_dim):
     """Get embeddings variables."""
 
     with tf.variable_scope("embeddings", reuse=tf.AUTO_REUSE):
         embeddings = tf.get_variable(
             "embeddings",
-            initializer=tf.random_uniform([n_classes, embedding_dim],
+            initializer=tf.random_uniform([num_classes, embedding_dim],
                                           -1.0, 1.0))
     return embeddings
 
@@ -208,8 +156,63 @@ def mask_padding_embedding_lookup(embeddings, embedding_dim,
     return output
 
 
-def get_metrics(labels, ids, recall_k, ntargets):
+def create_input_layer(mode, features, params, embeddings):
+    """Create input layer."""
+
+    feature_columns = params['feature_columns']
+    predict_feature_columns = params['predict_feature_columns']
+    embedding_dim = params['opts'].embedding_dim
+
+    if (mode == tf.estimator.ModeKeys.PREDICT
+            or mode == tf.estimator.ModeKeys.EVAL):
+        input_layer = tf.feature_column.input_layer(
+            features, predict_feature_columns)
+    else:
+        input_layer = tf.feature_column.input_layer(features, feature_columns)
+
+    nonzeros = tf.count_nonzero(input_layer, 1, keepdims=True)  # [batch, 1]
+    nonzeros = tf.maximum(nonzeros, 1)  # avoid divide zero
+    embeds = mask_padding_embedding_lookup(embeddings, embedding_dim,
+                                           input_layer, model_keys.PADDING_ID)
+    embeds_sum = tf.reduce_sum(embeds, 1)
+    embeds_mean = embeds_sum / tf.cast(nonzeros, tf.float32)
+
+    return embeds_mean
+
+
+def create_hidden_layer(mode, input_layer, params):
+    """Create DNN hidden layers."""
+
+    opts = params['opts']
+    hidden_units = opts.hidden_units
+    dropout = opts.dropout
+
+    hidden = input_layer
+    for index, units in enumerate(hidden_units):
+        is_last_layer = False
+        if index == len(hidden_units) - 1:
+            is_last_layer = True
+
+        activation = None if is_last_layer else tf.nn.relu
+        dropout = 0.0 if is_last_layer else dropout
+
+        hidden = tf.layers.dense(
+            hidden, units=units, activation=activation,
+            name="fc{}_{}".format(index, units), reuse=tf.AUTO_REUSE)
+        if dropout > 0.0:
+            training = (mode == tf.estimator.ModeKeys.TRAIN)
+            hidden = tf.layers.dropout(
+                hidden, dropout, training=training,
+                name="dropout{}_{}".format(index, units))
+    return hidden
+
+
+def get_metrics(labels, ids, params):
     """Get metrics dict."""
+
+    opts = params['opts']
+    ntargets = opts.ntargets
+    recall_k = opts.recall_k
 
     predicted = ids[:, :ntargets]
     accuracy = tf.metrics.accuracy(labels=labels, predictions=predicted)
@@ -386,11 +389,15 @@ def filter_and_save_subset(dict_dir):
             subset_biases)
 
 
-def create_loss(weights, biases, labels, inputs, num_sampled, num_classes,
-                num_true, partition_strategy):
+def create_loss(weights, biases, labels, inputs, partition_strategy, params):
+    num_classes = params['num_classes']
+    opts = params['opts']
+    num_sampled = opts.num_sampled
+    ntargets = opts.ntargets
+
     sampled_values = tf.nn.learned_unigram_candidate_sampler(
         true_classes=labels,
-        num_true=num_true,
+        num_true=ntargets,
         num_sampled=num_sampled,
         unique=True,
         range_max=num_classes,
@@ -403,9 +410,45 @@ def create_loss(weights, biases, labels, inputs, num_sampled, num_classes,
         inputs=inputs,
         num_sampled=num_sampled,
         num_classes=num_classes,
-        num_true=num_true,
+        num_true=ntargets,
         sampled_values=sampled_values,
         partition_strategy=partition_strategy)
     loss = tf.reduce_mean(loss, name="mean_loss")
 
     return loss
+
+
+def create_optimizer(features, params):
+    """Create optimizer."""
+
+    global _optimizer_id
+
+    opts = params['opts']
+    ntokens = params['ntokens']
+    lr = opts.lr
+    optimizer_type = opts.optimizer_type
+
+    if optimizer_type == model_keys.OptimizerType.ADA:
+        optimizer = tf.train.AdagradOptimizer(
+            learning_rate=lr, name='adagrad_{}'.format(_optimizer_id))
+    elif optimizer_type == model_keys.OptimizerType.ADADELTA:
+        optimizer = tf.train.AdadeltaOptimizer(
+            learning_rate=lr, name='adadelta_{}'.format(_optimizer_id))
+    elif optimizer_type == model_keys.OptimizerType.ADAM:
+        optimizer = tf.train.AdamOptimizer(
+            learning_rate=lr, name='adam_{}'.format(_optimizer_id))
+    elif optimizer_type == model_keys.OptimizerType.SGD:
+        processed_tokens = features[model_keys.TOKENS_COL][0][0]
+        tf.summary.scalar("processed_tokens", processed_tokens)
+        new_lr = lr * (1.0 - (tf.cast(processed_tokens, tf.float32)
+                              / tf.cast(ntokens, tf.float32)))
+        new_lr = tf.maximum(new_lr, 1e-5)
+        tf.summary.scalar("lr", new_lr)
+        optimizer = tf.train.GradientDescentOptimizer(
+            learning_rate=new_lr, name='sgd_{}'.format(_optimizer_id))
+    else:
+        raise ValueError('OptimizerType "{}" not surpported.'
+                         .format(optimizer_type))
+    _optimizer_id += 1
+
+    return optimizer
