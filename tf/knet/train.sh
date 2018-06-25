@@ -12,7 +12,7 @@ EXPORT_MODEL_DIR=`pwd`/export_model_dir
 train_data_path=../../data/train_data.in
 eval_data_path=../../data/eval_data.in
 lr=0.5
-dim=100
+dim=256
 train_ws=20
 min_count=30
 t=0.01
@@ -49,15 +49,13 @@ sample_dropout=0.0
 # adam: lr 0.001
 optimizer_type='ada'
 
-num_in_graph_replication=1
 tfrecord_file='../../data/train_data.tfrecord'
 num_tfrecord_file=2
-train_data_format='tfrecord'  # 'tfrecord', 'fasttext'
+train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 tfrecord_map_num_parallel_calls=2
 
-train_parallel_mode='default' # 'default', 'train_op_parallel'
 train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
-num_train_op_parallel=4
+num_train_op_parallel=2
 
 dum_tfrecord_is_delete=1
 
@@ -123,7 +121,6 @@ python train.py \
     --predict_ws ${predict_ws} \
     --sample_dropout ${sample_dropout} \
     --optimizer_type ${optimizer_type} \
-    --num_in_graph_replication ${num_in_graph_replication} \
     --tfrecord_file ${tfrecord_file} \
     --num_tfrecord_file ${num_tfrecord_file} \
     --train_data_format ${train_data_format} \

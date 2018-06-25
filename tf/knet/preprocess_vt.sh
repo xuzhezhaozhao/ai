@@ -48,7 +48,6 @@ shuffle_batch=0
 predict_ws=50
 sample_dropout=0.5
 optimizer_type='ada'
-num_in_graph_replication=1
 tfrecord_file=${raw_data_dir}/train_data.vt.tfrecord
 num_tfrecord_file=42
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
@@ -118,7 +117,6 @@ python train.py \
     --predict_ws ${predict_ws} \
     --sample_dropout ${sample_dropout} \
     --optimizer_type ${optimizer_type} \
-    --num_in_graph_replication ${num_in_graph_replication} \
     --tfrecord_file ${tfrecord_file} \
     --num_tfrecord_file ${num_tfrecord_file} \
     --train_data_format ${train_data_format} \

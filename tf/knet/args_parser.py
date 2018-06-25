@@ -59,7 +59,6 @@ parser.add_argument('--shuffle_batch', default=0, type=int, help='')
 parser.add_argument('--predict_ws', default=5, type=int, help='')
 parser.add_argument('--sample_dropout', default=0.5, type=float, help='')
 parser.add_argument('--optimizer_type', default='ada', type=str, help='')
-parser.add_argument('--num_in_graph_replication', default=1, type=int, help='')
 parser.add_argument('--tfrecord_file', default='', type=str, help='')
 parser.add_argument('--num_tfrecord_file', default=1, type=int, help='')
 parser.add_argument(
@@ -122,7 +121,6 @@ def parse_args(argv):
     opts.predict_ws = args.predict_ws
     opts.sample_dropout = args.sample_dropout
     opts.optimizer_type = args.optimizer_type
-    opts.num_in_graph_replication = args.num_in_graph_replication
     opts.tfrecord_file = args.tfrecord_file
     opts.num_tfrecord_file = args.num_tfrecord_file
     opts.train_data_format = args.train_data_format
@@ -143,8 +141,6 @@ def validate_opts():
         raise ValueError("hidden_units contain unit <= 0")
     if opts.dropout < 0.0:
         raise ValueError("dropout should not less than 0")
-    if opts.num_in_graph_replication < 1:
-        raise ValueError("num_in_graph_replication should not less than 1")
 
 
 def parse_tf_config():
