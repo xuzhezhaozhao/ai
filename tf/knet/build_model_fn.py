@@ -69,7 +69,7 @@ def get_nce_variables(params):
 def get_nce_weights_and_biases(num_classes, embedding_dim, train_nce_biases):
     """Get nce weights and biases variables."""
 
-    with tf.variable_scope("nce_layer", reuse=tf.AUTO_REUSE):
+    with tf.variable_scope("nce_layer_variables", reuse=tf.AUTO_REUSE):
         nce_weights = tf.get_variable(
             model_keys.NCE_WEIGHTS_NAME,
             initializer=tf.truncated_normal(
@@ -84,11 +84,10 @@ def get_nce_weights_and_biases(num_classes, embedding_dim, train_nce_biases):
 def get_embeddings(num_classes, embedding_dim):
     """Get embeddings variables."""
 
-    with tf.variable_scope("embeddings", reuse=tf.AUTO_REUSE):
+    with tf.variable_scope("embeddings_variable", reuse=tf.AUTO_REUSE):
         embeddings = tf.get_variable(
-            "embeddings",
-            initializer=tf.random_uniform([num_classes, embedding_dim],
-                                          -1.0, 1.0))
+            "embeddings", initializer=tf.random_uniform(
+                [num_classes, embedding_dim], -1.0, 1.0))
     return embeddings
 
 
@@ -250,9 +249,9 @@ def get_model_nce_weights_and_biases(model):
     """Get nce weights and biases variables from estimator model"""
 
     nce_weights = model.get_variable_value(
-        'nce_layer/' + model_keys.NCE_WEIGHTS_NAME)
+        'nce_layer_variables/' + model_keys.NCE_WEIGHTS_NAME)
     nce_biases = model.get_variable_value(
-        'nce_layer/' + model_keys.NCE_BIASES_NAME)
+        'nce_layer_variables/' + model_keys.NCE_BIASES_NAME)
     return (nce_weights, nce_biases)
 
 
