@@ -16,9 +16,9 @@ embedding_dim=100
 train_ws=20
 min_count=30
 t=0.01
-batch_size=32
-num_sampled=10
-epoch=10
+batch_size=64
+num_sampled=200
+epoch=5
 hidden_units=""
 prefetch_size=10000
 max_train_steps=-1
@@ -35,7 +35,7 @@ remove_model_dir=1
 optimize_level=1
 receive_ws=100
 use_subset=1
-dropout=0.5
+dropout=0.0
 ntargets=1
 chief_lock=${MODEL_DIR}/chief.lock
 max_distribute_train_steps=-1
@@ -55,7 +55,7 @@ train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 tfrecord_map_num_parallel_calls=2
 
 train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
-num_train_op_parallel=2
+num_train_op_parallel=4
 
 dump_tfrecord_is_delete=1
 
