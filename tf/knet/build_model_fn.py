@@ -15,13 +15,17 @@ import model_keys
 import custom_ops
 
 
-_optimizer_id = 0
+_call_model_fn_times = 0
 
 
 def knet_model_fn(features, labels, mode, params):
     """Build model graph."""
 
-    with tf.name_scope("model_fn_{}".format(_optimizer_id)):
+    global _call_model_fn_times
+    _call_model_fn_times += 1
+
+    with tf.name_scope("model_fn_{}".format(_call_model_fn_times)):
+
         (embeddings, nce_weights, nce_biases) = get_nce_variables(params)
 
         input_layer = create_input_layer(mode, features, params, embeddings)
@@ -375,8 +379,6 @@ def create_loss(weights, biases, labels, inputs, params):
 def create_optimizer(features, params):
     """Create optimizer."""
 
-    global _optimizer_id
-
     opts = params['opts']
     ntokens = params['ntokens']
     lr = opts.lr
@@ -384,13 +386,13 @@ def create_optimizer(features, params):
 
     if optimizer_type == model_keys.OptimizerType.ADA:
         optimizer = tf.train.AdagradOptimizer(
-            learning_rate=lr, name='adagrad_{}'.format(_optimizer_id))
+            learning_rate=lr, name='adagrad_{}'.format(_call_model_fn_times))
     elif optimizer_type == model_keys.OptimizerType.ADADELTA:
         optimizer = tf.train.AdadeltaOptimizer(
-            learning_rate=lr, name='adadelta_{}'.format(_optimizer_id))
+            learning_rate=lr, name='adadelta_{}'.format(_call_model_fn_times))
     elif optimizer_type == model_keys.OptimizerType.ADAM:
         optimizer = tf.train.AdamOptimizer(
-            learning_rate=lr, name='adam_{}'.format(_optimizer_id))
+            learning_rate=lr, name='adam_{}'.format(_call_model_fn_times))
     elif optimizer_type == model_keys.OptimizerType.SGD:
         processed_tokens = features[model_keys.TOKENS_COL][0][0]
         tf.summary.scalar("processed_tokens", processed_tokens)
@@ -399,11 +401,10 @@ def create_optimizer(features, params):
         new_lr = tf.maximum(new_lr, 1e-5)
         tf.summary.scalar("lr", new_lr)
         optimizer = tf.train.GradientDescentOptimizer(
-            learning_rate=new_lr, name='sgd_{}'.format(_optimizer_id))
+            learning_rate=new_lr, name='sgd_{}'.format(_call_model_fn_times))
     else:
         raise ValueError('OptimizerType "{}" not surpported.'
                          .format(optimizer_type))
-    _optimizer_id += 1
 
     return optimizer
 
