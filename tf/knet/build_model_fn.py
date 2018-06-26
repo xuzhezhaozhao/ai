@@ -463,7 +463,10 @@ def create_train_estimator_spec(
 
     loss = create_loss(nce_weights, nce_biases, labels, user_vector, params)
     optimizer = create_optimizer(features, params)
-    train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
+    train_op = optimizer.minimize(
+        loss=loss,
+        global_step=tf.train.get_global_step(),
+        gate_gradients=tf.train.Optimizer.GATE_OP)
     return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
 
