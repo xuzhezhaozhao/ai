@@ -35,9 +35,9 @@ def knet_model_fn(features, labels, mode, params):
             return create_predict_estimator_spec(
                 mode, user_vector, features, params)
 
-        _, top_k_ids = compute_top_k(
+        logits, _, top_k_ids = compute_top_k(
             nce_weights, nce_biases, user_vector, params)
-        metrics = get_metrics(labels, top_k_ids, params)
+        metrics = get_metrics(labels, logits, top_k_ids, params)
         add_metrics_summary(metrics)
 
         if mode == tf.estimator.ModeKeys.EVAL:
@@ -162,7 +162,7 @@ def create_hidden_layer(mode, input_layer, params):
     return hidden
 
 
-def get_metrics(labels, ids, params):
+def get_metrics(labels, logits, ids, params):
     """Get metrics dict."""
 
     opts = params['opts']
@@ -175,9 +175,14 @@ def get_metrics(labels, ids, params):
         labels=labels, predictions_idx=ids, k=recall_k)
     precision_at_top_k = tf.metrics.precision_at_top_k(
         labels=labels, predictions_idx=ids, k=recall_k)
+    average_precision_at_k = tf.metrics.average_precision_at_k(
+        labels=labels, predictions=logits, k=recall_k)
+
     metrics = {'accuracy': accuracy,
                'recall_at_top_{}'.format(recall_k): recall_at_top_k,
-               'precision_at_top_{}'.format(recall_k): precision_at_top_k}
+               'precision_at_top_{}'.format(recall_k): precision_at_top_k,
+               'average_precision_at_{}'
+               .format(recall_k): average_precision_at_k}
     return metrics
 
 
@@ -479,4 +484,4 @@ def compute_top_k(nce_weights, nce_biases, user_vector, params):
         user_vector, tf.transpose(nce_weights), nce_biases)
     scores, ids = tf.nn.top_k(
         logits, opts.recall_k, name="top_k_{}".format(opts.recall_k))
-    return scores, ids
+    return logits, scores, ids
