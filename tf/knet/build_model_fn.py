@@ -275,8 +275,8 @@ def save_model_nce_params(model, dict_dir):
     """Save model nce weights and biases variables."""
 
     nce_weights, nce_biases = get_model_nce_weights_and_biases(model)
-    tf.logging.info('save nce_weights = \n{}'.format(nce_weights))
-    tf.logging.info('save nce_biases = \n{}'.format(nce_biases))
+    # tf.logging.info('save nce_weights = \n{}'.format(nce_weights))
+    # tf.logging.info('save nce_biases = \n{}'.format(nce_biases))
     save_weights_path = os.path.join(
         dict_dir, model_keys.SAVE_NCE_WEIGHTS_NAME)
     save_biases_path = os.path.join(dict_dir, model_keys.SAVE_NCE_BIASES_NAME)
@@ -296,8 +296,8 @@ def load_model_nce_params(dict_dir, use_subset):
     save_biases_path = os.path.join(dict_dir, nce_biases_name)
     nce_weights = np.load(save_weights_path)
     nce_biases = np.load(save_biases_path)
-    tf.logging.info('load nce_weights = \n{}'.format(nce_weights))
-    tf.logging.info('load nce_biases = \n{}'.format(nce_biases))
+    # tf.logging.info('load nce_weights = \n{}'.format(nce_weights))
+    # tf.logging.info('load nce_biases = \n{}'.format(nce_biases))
 
     return (nce_weights, nce_biases)
 
