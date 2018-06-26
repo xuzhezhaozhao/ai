@@ -114,9 +114,12 @@ def mask_padding_embedding_lookup(embeddings, embedding_dim,
 def create_input_layer(mode, features, params, embeddings):
     """Create input layer."""
 
+    opts = params['opts']
     feature_columns = params['feature_columns']
     predict_feature_columns = params['predict_feature_columns']
-    embedding_dim = params['opts'].embedding_dim
+    embedding_dim = opts.embedding_dim
+    use_batch_normalization = opts.use_batch_normalization
+    training = (mode == tf.estimator.ModeKeys.TRAIN)
 
     if (mode == tf.estimator.ModeKeys.PREDICT
             or mode == tf.estimator.ModeKeys.EVAL):
@@ -132,6 +135,9 @@ def create_input_layer(mode, features, params, embeddings):
     embeds_sum = tf.reduce_sum(embeds, 1)
     embeds_mean = embeds_sum / tf.cast(nonzeros, tf.float32)
 
+    if use_batch_normalization:
+        embeds_mean = batch_normalization(embeds_mean, training, "bn_input")
+
     return embeds_mean
 
 
@@ -141,6 +147,8 @@ def create_hidden_layer(mode, input_layer, params):
     opts = params['opts']
     hidden_units = opts.hidden_units
     dropout = opts.dropout
+    use_batch_normalization = opts.use_batch_normalization
+    training = (mode == tf.estimator.ModeKeys.TRAIN)
 
     hidden = input_layer
     for index, units in enumerate(hidden_units):
@@ -154,8 +162,11 @@ def create_hidden_layer(mode, input_layer, params):
         hidden = tf.layers.dense(
             hidden, units=units, activation=activation,
             name="fc{}_{}".format(index, units), reuse=tf.AUTO_REUSE)
+        if use_batch_normalization:
+            hidden = batch_normalization(
+                hidden, training, "bn{}_{}".format(index, units))
+
         if dropout > 0.0:
-            training = (mode == tf.estimator.ModeKeys.TRAIN)
             hidden = tf.layers.dropout(
                 hidden, dropout, training=training,
                 name="dropout{}_{}".format(index, units))
@@ -468,10 +479,13 @@ def create_train_estimator_spec(
 
     loss = create_loss(nce_weights, nce_biases, labels, user_vector, params)
     optimizer = create_optimizer(features, params)
-    train_op = optimizer.minimize(
-        loss=loss,
-        global_step=tf.train.get_global_step(),
-        gate_gradients=tf.train.Optimizer.GATE_OP)
+
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
+    with tf.control_dependencies(update_ops):
+        train_op = optimizer.minimize(
+            loss=loss,
+            global_step=tf.train.get_global_step(),
+            gate_gradients=tf.train.Optimizer.GATE_OP)
     return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
 
@@ -485,3 +499,13 @@ def compute_top_k(nce_weights, nce_biases, user_vector, params):
     scores, ids = tf.nn.top_k(
         logits, opts.recall_k, name="top_k_{}".format(opts.recall_k))
     return logits, scores, ids
+
+
+def batch_normalization(input, training, name):
+    """batch normalization layer."""
+
+    bn = tf.layers.batch_normalization(
+        input, axis=1, training=training,
+        scale=False, trainable=True,
+        name=name, reuse=tf.AUTO_REUSE)
+    return bn

@@ -57,6 +57,7 @@ class Options(object):
         self.tfrecord_map_num_parallel_calls = 1
         self.train_parallel_mode = 'default'
         self.num_train_op_parallel = 1
+        self.use_batch_normalization = 0
 
         # non-cmd args
         self.estimator = None
@@ -116,6 +117,7 @@ class Options(object):
         tfrecord_map_num_parallel_calls = {} \n \
         train_parallel_mode = {} \n \
         num_train_op_parallel = {} \n \
+        use_batch_normalization = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -171,6 +173,7 @@ class Options(object):
                 self.tfrecord_map_num_parallel_calls,
                 self.train_parallel_mode,
                 self.num_train_op_parallel,
+                self.use_batch_normalization,
                 # non-cmd args
                 self.estimator,
                 self.hooks,

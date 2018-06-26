@@ -69,6 +69,7 @@ parser.add_argument(
 parser.add_argument(
     '--train_parallel_mode', default='default', type=str, help='')
 parser.add_argument('--num_train_op_parallel', default=1, type=int, help='')
+parser.add_argument('--use_batch_normalization', default=0, type=int, help='')
 
 opts = Options()
 
@@ -128,6 +129,7 @@ def parse_args(argv):
     opts.tfrecord_map_num_parallel_calls = args.tfrecord_map_num_parallel_calls
     opts.train_parallel_mode = args.train_parallel_mode
     opts.num_train_op_parallel = args.num_train_op_parallel
+    opts.use_batch_normalization = bool(args.use_batch_normalization)
 
 
 def validate_opts():
