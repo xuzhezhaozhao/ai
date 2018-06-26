@@ -11,11 +11,11 @@ MODEL_DIR=`pwd`/model_dir
 EXPORT_MODEL_DIR=`pwd`/export_model_dir
 train_data_path=../../data/train_data.in
 eval_data_path=../../data/eval_data.in
-lr=0.5
-embedding_dim=100
+lr=0.025
+embedding_dim=256
 train_ws=20
 min_count=30
-t=0.01
+t=0.025
 batch_size=64
 num_sampled=200
 epoch=5
@@ -50,7 +50,7 @@ train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 tfrecord_map_num_parallel_calls=2
 train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
 num_train_op_parallel=4
-use_batch_normalization=0
+use_batch_normalization=1
 
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
