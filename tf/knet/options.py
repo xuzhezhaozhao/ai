@@ -5,6 +5,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import model_keys
+
 
 class Options(object):
     def __init__(self):
@@ -50,7 +52,6 @@ class Options(object):
         self.predict_ws = 5
         self.sample_dropout = 0.5
         self.optimizer_type = 'ada'
-        self.num_in_graph_replication = 1
         self.tfrecord_file = ''
         self.num_tfrecord_file = 1
         self.train_data_format = 'fasttext'
@@ -63,7 +64,7 @@ class Options(object):
         self.estimator = None
         self.hooks = None
         self.tf_config = None
-        self.task_type = None
+        self.task_type = model_keys.TaskType.LOCAL
         self.task_index = None
 
     def __str__(self):
@@ -110,7 +111,6 @@ class Options(object):
         predict_ws = {} \n \
         sample_dropout = {} \n \
         optimizer_type = {} \n \
-        num_in_graph_replication = {} \n \
         tfrecord_file = {} \n \
         num_tfrecord_file = {} \n \
         train_data_format = {} \n \
@@ -166,7 +166,6 @@ class Options(object):
                 self.predict_ws,
                 self.sample_dropout,
                 self.optimizer_type,
-                self.num_in_graph_replication,
                 self.tfrecord_file,
                 self.num_tfrecord_file,
                 self.train_data_format,

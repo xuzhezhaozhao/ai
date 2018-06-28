@@ -17,10 +17,6 @@ import build_model_fn
 import model_keys
 import input_data
 import hook
-import args_parser
-
-
-opts = None
 
 
 def delete_dir(filename):
@@ -44,7 +40,7 @@ def is_local_or_chief(task_type):
     return False
 
 
-def is_distributed():
+def is_distributed(opts):
     """Return True if task_type is not 'local'."""
 
     if opts.task_type != model_keys.TaskType.LOCAL:
@@ -52,7 +48,7 @@ def is_distributed():
     return False
 
 
-def build_estimator():
+def build_estimator(opts):
     """Build estimator."""
 
     dict_meta = input_data.parse_dict_meta(opts)
@@ -100,7 +96,7 @@ def build_estimator():
     return estimator
 
 
-def init_dictionary():
+def init_dictionary(opts):
     """Init dict. In distribute mode, use file barrier."""
 
     chief_lock_file = opts.chief_lock
@@ -129,7 +125,7 @@ def init_dictionary():
                 time.sleep(5)
 
 
-def create_hooks():
+def create_hooks(opts):
     """Create profile hooks."""
 
     save_steps = opts.profile_steps
@@ -144,7 +140,7 @@ def create_hooks():
     return hooks
 
 
-def train_and_eval_in_distributed_mode():
+def train_and_eval_in_distributed_mode(opts):
     """feed splited train file for distributed mode."""
 
     assert opts.task_index < 99, 'task_index >= 99'
@@ -175,7 +171,7 @@ def train_and_eval_in_distributed_mode():
     tf.logging.info("Train and eval model done.")
 
 
-def train_and_eval_in_local_mode():
+def train_and_eval_in_local_mode(opts):
     """Train and eval model in lcoal mode."""
 
     tf.logging.info("Beginning train model ...")
@@ -186,12 +182,15 @@ def train_and_eval_in_local_mode():
 
     # evaluate model
     tf.logging.info("Beginning evaluate model ...")
-    opts.estimator.evaluate(input_fn=lambda: input_data.eval_input_fn(opts),
-                            hooks=opts.hooks)
+    result = opts.estimator.evaluate(
+        input_fn=lambda: input_data.eval_input_fn(opts),
+        hooks=opts.hooks)
+    tf.logging.info(result)
     tf.logging.info("Evaluate model OK")
+    return result
 
 
-def export_model_in_local_mode():
+def export_model_in_local_mode(opts):
     """Export model in local mode."""
 
     if not os.path.exists(opts.dict_dir):
@@ -224,26 +223,21 @@ def export_model_in_local_mode():
     tf.logging.info("Export model OK")
 
 
-def main(argv):
-    global opts
+def train(opts, export=True):
+    """Train model."""
 
-    opts = args_parser.parse(argv)
+    init_dictionary(opts)
 
-    init_dictionary()
-
-    opts.estimator = build_estimator()
-    opts.hooks = create_hooks()
+    opts.estimator = build_estimator(opts)
+    opts.hooks = create_hooks(opts)
 
     tf.logging.info(opts)
 
-    if is_distributed():
-        train_and_eval_in_distributed_mode()
+    if is_distributed(opts):
+        train_and_eval_in_distributed_mode(opts)
         # TODO export model, need sync with workers
     else:
-        train_and_eval_in_local_mode()
-        export_model_in_local_mode()
-
-
-if __name__ == '__main__':
-    tf.logging.set_verbosity(tf.logging.INFO)
-    tf.app.run(main)
+        result = train_and_eval_in_local_mode(opts)
+        if export:
+            export_model_in_local_mode(opts)
+        return result
