@@ -35,4 +35,7 @@ nce_params_dir
 mnist_convnet_model
 *.tfrecord
 *.tfrecord.*
+*.tar.gz
+*.bz2
+*.tgz
 tf/knet/ops/fasttext/tfrecord_writer
