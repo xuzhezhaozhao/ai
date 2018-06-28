@@ -102,7 +102,7 @@ def train_input_fn(opts, skip_rows=0):
 
 def fasttext_train_input_fn(opts, skip_rows=0):
     train_data_path = opts.train_data_path
-    batch_size = opts.batch_size * opts.num_in_graph_replication
+    batch_size = opts.batch_size
 
     ds = tf.data.TextLineDataset(train_data_path).skip(skip_rows)
     ds = ds.flat_map(lambda line: generate_example(line, opts, False))
@@ -125,7 +125,7 @@ def parse_example(serialized, opts):
 
 
 def tfrecord_train_input_fn(opts):
-    batch_size = opts.batch_size * opts.num_in_graph_replication
+    batch_size = opts.batch_size
 
     if opts.num_tfrecord_file > 1:
         files = []
