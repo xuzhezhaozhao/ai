@@ -112,7 +112,7 @@ def eval_config(id, config, f):
     opts.use_subset = True
     opts.dropout = 0.0
     opts.ntargets = 1
-    opts.chief_lock = 'chief.lock'
+    opts.chief_lock = 'model_dir/chief.lock'
     opts.max_distribute_train_steps = -1
     opts.train_nce_biases = get_train_nce_biases(config)
     opts.shuffle_batch = get_shuffle_batch(config)
