@@ -15,11 +15,12 @@ import model_keys
 
 _id = 0
 
-params_lr = [x * 0.005 for x in range(1, 100)]
+# params_lr = [x * 0.005 for x in range(1, 100)]
+params_lr = [0.001, 0.005, 0.025, 0.125, 0.75, 1.5]
 params_embedding_dim = [128, 256]
 params_train_ws = [10, 20, 50]
-params_batch_size = [16, 32, 64, 128]
-params_num_sampled = [10, 50, 100, 200]
+params_batch_size = [32, 64, 128]
+params_num_sampled = [10, 100]
 params_hidden_units = [[], [-1], [256, -1], [512, 256, -1]]
 params_shuffle_batch = [0, 1]
 params_optimizer_type = ['ada', 'sgd']
@@ -91,7 +92,7 @@ def eval_config(id, config, f):
     opts.batch_size = get_batch_size(config)
     opts.num_sampled = get_num_sampled(config)
     opts.max_train_steps = None
-    opts.epoch = 5
+    opts.epoch = 2
     opts.hidden_units = get_hidden_units(config)
     opts.model_dir = 'model_dir'
     opts.export_model_dir = 'export_model_dir'
@@ -130,8 +131,12 @@ def eval_config(id, config, f):
     opts.tf_config = None
     opts.task_type = model_keys.TaskType.LOCAL  # default mode
 
+    result = {}
     start = int(time.time())
-    result = train.train(opts, export=False)
+    try:
+        result = train.train(opts, export=False)
+    except Exception:
+        pass
     end = int(time.time())
     elapsed = end - start
     f.write(str(opts.lr))
@@ -153,15 +158,15 @@ def eval_config(id, config, f):
     f.write(str(opts.use_batch_normalization))
     f.write('\t')
 
-    f.write(str(result['loss']))
+    f.write(str(result.get('loss', -1)))
     f.write('\t')
-    f.write(str(result['precision_at_top_10']))
+    f.write(str(result.get('precision_at_top_10', -1)))
     f.write('\t')
-    f.write(str(result['recall_at_top_10']))
+    f.write(str(result.get('recall_at_top_10', -1)))
     f.write('\t')
-    f.write(str(result['average_precision_at_10']))
+    f.write(str(result.get('average_precision_at_10', -1)))
     f.write('\t')
-    f.write(str(result['accuracy']))
+    f.write(str(result.get('accuracy', -1)))
     f.write('\t')
     f.write(str(elapsed))
     f.write('\n')
@@ -185,7 +190,7 @@ def main():
     tf.logging.set_verbosity(tf.logging.INFO)
 
     config = []
-    with open('result.log', 'w') as f:
+    with open('grid_search.log', 'w') as f:
         f.write("lr\tembedding_dim\ttrain_ws\tbatch_size\tnum_sampled\t"
                 "hidden_units\tshuffle_batch\toptimizer_type\t"
                 "use_batch_normalization\tloss\tprecision_at_top_10\t"
