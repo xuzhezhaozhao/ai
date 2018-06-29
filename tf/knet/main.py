@@ -13,7 +13,7 @@ import train
 
 def main(argv):
     opts = args_parser.parse(argv)
-    train(opts, export=True)
+    train.train(opts, export=True)
 
 
 if __name__ == '__main__':
