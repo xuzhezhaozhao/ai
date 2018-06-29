@@ -75,7 +75,7 @@ if [[ ${train_data_format} == 'tfrecord' ]]; then
     echo 'dump tfrecord OK'
 fi
 
-python train.py \
+python main.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
     --lr ${lr} \
