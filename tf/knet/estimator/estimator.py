@@ -1332,25 +1332,27 @@ class TrainOpParallelEstimator(object):
         # up the first one to add listener.
         saver_hooks[0]._listeners.extend(saving_listeners)  # pylint: disable=protected-access
     with training.MonitoredTrainingSession(
-        master=self._config.master,
-        is_chief=self._config.is_chief,
-        checkpoint_dir=self._model_dir,
-        scaffold=estimator_specs[0].scaffold,
-        hooks=worker_hooks,
-        chief_only_hooks=(
-            tuple(chief_hooks) + tuple(estimator_specs[0].training_chief_hooks)),
-        save_checkpoint_secs=0,  # Saving is handled by a hook.
-        save_summaries_steps=self._config.save_summary_steps,
-        config=self._session_config,
-        log_step_count_steps=self._config.log_step_count_steps) as mon_sess:
-      loss1 = None
+      master=self._config.master,
+      is_chief=self._config.is_chief,
+      checkpoint_dir=self._model_dir,
+      scaffold=estimator_specs[0].scaffold,
+      hooks=worker_hooks,
+      chief_only_hooks=(
+          tuple(chief_hooks) + tuple(estimator_specs[0].training_chief_hooks)),
+      save_checkpoint_secs=0,  # Saving is handled by a hook.
+      save_summaries_steps=self._config.save_summary_steps,
+      config=self._session_config,
+      log_step_count_steps=self._config.log_step_count_steps) as mon_sess:
       train_ops = []
       for item in estimator_specs:
-          train_ops.append(item.train_op)
-      train_ops.append(estimator_specs[0].loss)
+        train_ops.append(item.train_op)
+      for item in estimator_specs:
+        train_ops.append(item.loss)
       while not mon_sess.should_stop():
         result = mon_sess.run(train_ops)
-    return result[-1]
+
+    loss = sum(result[len(estimator_specs):], 0.0) / len(estimator_specs)
+    return loss
 
   def _evaluate_build_graph(self, input_fn, hooks=None, checkpoint_path=None):
     """Builds the graph and related hooks to run evaluation."""
