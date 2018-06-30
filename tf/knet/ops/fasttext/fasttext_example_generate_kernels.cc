@@ -82,7 +82,7 @@ class FasttextExampleGenerateOp : public OpKernel {
       count_processed_tokens_ += ntokens;
 
       std::vector<int> bow;
-      std::uniform_int_distribution<> uniform(1, args_->ws);
+      std::uniform_int_distribution<> uniform(args_->lower_ws, args_->ws);
       std::uniform_real_distribution<> dropout_uniform(0, 1);
       // genearte examples
       for (int w = 1; w < words.size(); w++) {
@@ -170,6 +170,9 @@ class FasttextExampleGenerateOp : public OpKernel {
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("ws", &args_->ws));
     LOG(INFO) << "ws: " << args_->ws;
+
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("lower_ws", &args_->lower_ws));
+    LOG(INFO) << "lower_ws: " << args_->lower_ws;
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("min_count", &args_->min_count));
     LOG(INFO) << "min_count: " << args_->min_count;

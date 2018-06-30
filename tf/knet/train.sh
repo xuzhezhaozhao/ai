@@ -11,9 +11,10 @@ MODEL_DIR=`pwd`/model_dir
 EXPORT_MODEL_DIR=`pwd`/export_model_dir
 train_data_path=../../data/train_data.in
 eval_data_path=../../data/eval_data.in
-lr=0.05
+lr=0.5
 embedding_dim=128
 train_ws=20
+train_lower_ws=1
 min_count=30
 t=0.025
 batch_size=64
@@ -43,7 +44,7 @@ train_nce_biases=1
 shuffle_batch=1
 predict_ws=20
 sample_dropout=0.0
-optimizer_type='ada'  # 'ada', 'sgd', 'adadelta', 'adam'
+optimizer_type='sgd'  # 'ada', 'sgd', 'adadelta', 'adam'
 tfrecord_file='../../data/train_data.tfrecord'
 num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
@@ -51,6 +52,11 @@ tfrecord_map_num_parallel_calls=2
 train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
 num_train_op_parallel=4
 use_batch_normalization=1
+sgd_lr_decay_type='fasttext_decay'  # 'exponential_decay', 'fasttext_decay'
+sgd_lr_decay_steps=100
+sgd_lr_decay_rate=0.95
+use_clip_gradients=1
+clip_norm=5.0
 
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
@@ -61,6 +67,7 @@ if [[ ${train_data_format} == 'tfrecord' ]]; then
     ./ops/fasttext/tfrecord_writer \
         --tfrecord_file ${tfrecord_file} \
         --ws ${train_ws} \
+        --lower_ws ${train_lower_ws} \
         --min_count ${min_count} \
         -t ${t} \
         --ntargets ${ntargets} \
@@ -80,6 +87,7 @@ python main.py \
     --lr ${lr} \
     --embedding_dim ${embedding_dim} \
     --train_ws ${train_ws} \
+    --train_lower_ws ${train_lower_ws} \
     --min_count ${min_count} \
     --t ${t} \
     --verbose 2 \
@@ -122,4 +130,9 @@ python main.py \
     --tfrecord_map_num_parallel_calls ${tfrecord_map_num_parallel_calls} \
     --train_parallel_mode ${train_parallel_mode} \
     --num_train_op_parallel ${num_train_op_parallel} \
-    --use_batch_normalization ${use_batch_normalization}
+    --use_batch_normalization ${use_batch_normalization} \
+    --sgd_lr_decay_type ${sgd_lr_decay_type} \
+    --sgd_lr_decay_steps ${sgd_lr_decay_steps} \
+    --sgd_lr_decay_rate ${sgd_lr_decay_rate} \
+    --use_clip_gradients ${use_clip_gradients} \
+    --clip_norm ${clip_norm}

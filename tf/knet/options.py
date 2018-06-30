@@ -16,6 +16,7 @@ class Options(object):
         self.lr = 0.05
         self.embedding_dim = 100
         self.train_ws = 5
+        self.train_lower_ws = 1
         self.min_count = 5
         self.t = 0.0001
         self.verbose = 1
@@ -59,6 +60,11 @@ class Options(object):
         self.train_parallel_mode = 'default'
         self.num_train_op_parallel = 1
         self.use_batch_normalization = 0
+        self.sgd_lr_decay_type = 'exponential_decay'
+        self.sgd_lr_decay_steps = 100
+        self.sgd_lr_decay_rate = 0.99
+        self.use_clip_gradients = 0
+        self.clip_norm = 5.0
 
         # non-cmd args
         self.estimator = None
@@ -75,6 +81,7 @@ class Options(object):
         lr = {} \n \
         embedding_dim = {} \n \
         train_ws = {} \n \
+        train_lower_ws = {} \n \
         min_count = {} \n \
         t = {} \n \
         verbose = {} \n \
@@ -118,6 +125,11 @@ class Options(object):
         train_parallel_mode = {} \n \
         num_train_op_parallel = {} \n \
         use_batch_normalization = {} \n \
+        sgd_lr_decay_type = {} \n \
+        sgd_lr_decay_steps = {} \n \
+        sgd_lr_decay_rate = {} \n \
+        use_clip_gradients = {} \n \
+        clip_norm = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -130,6 +142,7 @@ class Options(object):
                 self.lr,
                 self.embedding_dim,
                 self.train_ws,
+                self.train_lower_ws,
                 self.min_count,
                 self.t,
                 self.verbose,
@@ -173,6 +186,11 @@ class Options(object):
                 self.train_parallel_mode,
                 self.num_train_op_parallel,
                 self.use_batch_normalization,
+                self.sgd_lr_decay_type,
+                self.sgd_lr_decay_steps,
+                self.sgd_lr_decay_rate,
+                self.use_clip_gradients,
+                self.clip_norm,
                 # non-cmd args
                 self.estimator,
                 self.hooks,

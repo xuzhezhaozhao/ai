@@ -24,6 +24,7 @@
 
 DEFINE_string(tfrecord_file, "", "");
 DEFINE_int32(ws, 5, "");
+DEFINE_int32(lower_ws, 1, "");
 DEFINE_int32(min_count, 5, "");
 DEFINE_double(t, 0.0001, "");
 DEFINE_int32(ntargets, 1, "");
@@ -149,7 +150,7 @@ void dump_tfrecord(const std::string &input_file,
     words.clear();
     std::stringstream ss(line);
     int ntokens = dict->getLine(ss, words, rng);
-    std::uniform_int_distribution<> uniform(1, args->ws);
+    std::uniform_int_distribution<> uniform(args->lower_ws, args->ws);
     std::uniform_real_distribution<> dropout_uniform(0, 1);
 
     // genearte examples
@@ -196,6 +197,7 @@ int main(int argc, char *argv[]) {
 
   std::shared_ptr<::fasttext::Args> args = std::make_shared<::fasttext::Args>();
   args->ws = FLAGS_ws;
+  args->lower_ws = FLAGS_lower_ws;
   args->min_count = FLAGS_min_count;
   args->t = FLAGS_t;
   args->ntargets = FLAGS_ntargets;
