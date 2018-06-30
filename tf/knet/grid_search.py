@@ -16,14 +16,15 @@ import model_keys
 _id = 0
 
 # params_lr = [x * 0.005 for x in range(1, 100)]
-params_lr = [0.001, 0.005, 0.025, 0.125, 0.75, 1.5]
+# params_lr = [0.001, 0.005, 0.025, 0.125, 0.75, 1.5]
+params_lr = [1.5]
 params_embedding_dim = [128, 256]
 params_train_ws = [10, 20, 50]
 params_batch_size = [32, 64, 128]
 params_num_sampled = [10, 100]
-params_hidden_units = [[], [-1], [256, -1], [512, 256, -1]]
+params_hidden_units = [[256, -1], [512, 256, -1]]
 params_shuffle_batch = [0, 1]
-params_optimizer_type = ['ada', 'sgd']
+params_optimizer_type = ['sgd']
 params_use_batch_normalization = [0, 1]
 params_train_nce_biases = [0, 1]
 
@@ -157,6 +158,8 @@ def eval_config(id, config, f):
     f.write('\t')
     f.write(str(opts.use_batch_normalization))
     f.write('\t')
+    f.write(str(opts.train_nce_biases))
+    f.write('\t')
 
     f.write(str(result.get('loss', -1)))
     f.write('\t')
@@ -193,7 +196,8 @@ def main():
     with open('grid_search.log', 'w') as f:
         f.write("lr\tembedding_dim\ttrain_ws\tbatch_size\tnum_sampled\t"
                 "hidden_units\tshuffle_batch\toptimizer_type\t"
-                "use_batch_normalization\tloss\tprecision_at_top_10\t"
+                "use_batch_normalization\ttrain_nce_biases\t"
+                "loss\tprecision_at_top_10\t"
                 "recall_at_top_10\taverage_precision_at_top_10\t"
                 "accuracy\ttime\n")
         traverse_config(all_params, config, f)
