@@ -478,8 +478,8 @@ def create_predict_estimator_spec(mode, user_vector, features, params):
 def create_eval_estimator_spec(mode, metrics, logits, labels, params):
     """Create eval EstimatorSpec."""
 
-    loss = tf.nn.sigmoid_cross_entropy_with_logits(
-        labels=tf.one_hot(labels, params['num_classes']),
+    loss = tf.losses.sparse_softmax_cross_entropy(
+        labels=tf.reshape(labels, [-1]),
         logits=logits)
 
     return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
