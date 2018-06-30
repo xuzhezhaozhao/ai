@@ -16,24 +16,24 @@ export_model_dir=`pwd`/video_tab/export_model_dir
 dict_dir=`pwd`/video_tab/dict_dir
 train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
-lr=0.5
+lr=0.025
 embedding_dim=128
 train_ws=20
 min_count=100
 t=0.0001
 batch_size=128
-num_sampled=200
+num_sampled=10
 epoch=1
 hidden_units=""
 prefetch_size=100000
 max_train_steps=-1
-save_summary_steps=1000000000
+save_summary_steps=100000000
 save_checkpoints_secs=1800
 log_step_count_steps=20000
 recall_k=350
 use_saved_dict=0
 use_profile_hook=0
-profile_steps=100
+profile_steps=100000
 root_ops_path=lib/
 remove_model_dir=1
 optimize_level=1
@@ -54,9 +54,10 @@ train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 tfrecord_map_num_parallel_calls=2
 train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
 num_train_op_parallel=8
-dump_tfrecord_is_delete=1
+use_batch_normalization=1
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
+    dump_tfrecord_is_delete=1
     echo 'dump tfrecord ...'
     export LD_LIBRARY_PATH=./lib/:$LD_LIBRARY_PATH  # libtensorflow_framework.so
 
@@ -122,4 +123,5 @@ python main.py \
     --train_data_format ${train_data_format} \
     --tfrecord_map_num_parallel_calls ${tfrecord_map_num_parallel_calls} \
     --train_parallel_mode ${train_parallel_mode} \
-    --num_train_op_parallel ${num_train_op_parallel}
+    --num_train_op_parallel ${num_train_op_parallel} \
+    --use_batch_normalization ${use_batch_normalization}
