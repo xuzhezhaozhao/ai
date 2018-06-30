@@ -79,3 +79,10 @@ class TrainParallelMode(object):
 
     DEFAULT = 'default'
     TRAIN_OP_PARALLEL = 'train_op_parallel'
+
+
+class SGDLrDecayType(object):
+    """SGD learning rate decay type."""
+
+    EXPONENTIAL_DECAY = 'exponential_decay'
+    FASTTEXT_DECAY = 'fasttext_decay'

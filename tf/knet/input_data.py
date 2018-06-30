@@ -30,6 +30,7 @@ def pack_fasttext_params(opts, is_eval):
     params['train_data_path'] = opts.train_data_path
     params['dict_dir'] = opts.dict_dir
     params['ws'] = opts.train_ws
+    params['lower_ws'] = opts.train_lower_ws
     params['min_count'] = opts.min_count
     params['t'] = opts.t
     params['verbose'] = opts.verbose

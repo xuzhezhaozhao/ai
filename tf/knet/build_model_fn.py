@@ -369,7 +369,6 @@ def create_loss(weights, biases, labels, inputs, params):
     ntargets = opts.ntargets
 
     sampled_values = tf.nn.learned_unigram_candidate_sampler(
-    # sampled_values = tf.nn.uniform_candidate_sampler(
         true_classes=labels,
         num_true=ntargets,
         num_sampled=num_sampled,
@@ -410,11 +409,21 @@ def create_optimizer(features, params):
         optimizer = tf.train.AdamOptimizer(
             learning_rate=lr, name='adam_{}'.format(_call_model_fn_times))
     elif optimizer_type == model_keys.OptimizerType.SGD:
-        processed_tokens = features[model_keys.TOKENS_COL][0][0]
-        tf.summary.scalar("processed_tokens", processed_tokens)
-        new_lr = lr * (1.0 - (tf.cast(processed_tokens, tf.float32)
-                              / tf.cast(ntokens, tf.float32)))
-        new_lr = tf.maximum(new_lr, 1e-5)
+        if opts.sgd_lr_decay_type == model_keys.SGDLrDecayType.FASTTEXT_DECAY:
+            processed_tokens = features[model_keys.TOKENS_COL][0][0]
+            tf.summary.scalar("processed_tokens", processed_tokens)
+            new_lr = lr * (1.0 - (tf.cast(processed_tokens, tf.float32)
+                                  / tf.cast(ntokens, tf.float32)))
+            new_lr = tf.maximum(new_lr, 1e-5)
+        elif (opts.sgd_lr_decay_type
+              == model_keys.SGDLrDecayType.EXPONENTIAL_DECAY):
+            new_lr = tf.train.exponential_decay(
+                lr, tf.train.get_global_step(),
+                decay_steps=opts.sgd_lr_decay_steps,
+                decay_rate=opts.sgd_lr_decay_rate)
+        else:
+            raise ValueError("Unsurpported sgd lr decay type '{}'"
+                             .format(opts.sgd_lr_decay_type))
         tf.summary.scalar("lr", new_lr)
         optimizer = tf.train.GradientDescentOptimizer(
             learning_rate=new_lr, name='sgd_{}'.format(_call_model_fn_times))
@@ -478,15 +487,25 @@ def create_train_estimator_spec(
         mode, nce_weights, nce_biases, features, labels, user_vector, params):
     """Create train EstimatorSpec."""
 
+    opts = params['opts']
+
     loss = create_loss(nce_weights, nce_biases, labels, user_vector, params)
     optimizer = create_optimizer(features, params)
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
     with tf.control_dependencies(update_ops):
-        train_op = optimizer.minimize(
-            loss=loss,
-            global_step=tf.train.get_global_step(),
-            gate_gradients=tf.train.Optimizer.GATE_OP)
+        if opts.use_clip_gradients:
+            gradients, variables = zip(*optimizer.compute_gradients(
+                loss, gate_gradients=tf.train.Optimizer.GATE_OP))
+            gradients, _ = tf.clip_by_global_norm(gradients, opts.clip_norm)
+            train_op = optimizer.apply_gradients(
+                zip(gradients, variables),
+                global_step=tf.train.get_global_step())
+        else:
+            train_op = optimizer.minimize(
+                loss=loss,
+                global_step=tf.train.get_global_step(),
+                gate_gradients=tf.train.Optimizer.GATE_OP)
     return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
 

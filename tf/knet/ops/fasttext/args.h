@@ -35,6 +35,7 @@ struct Args {
     int word_ngrams = 1;
     int bucket = 20;
     int ws = 5;
+    int lower_ws = 1;
     int min_count = 5;
     float t = 1e-4f;
     int verbose = 1;

@@ -13,7 +13,8 @@ import model_keys
 import argparse
 
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = '0'
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = '1'
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_data_path', default='', type=str, help='')
@@ -22,6 +23,8 @@ parser.add_argument('--lr', default=0.25, type=float, help='learning rate')
 parser.add_argument(
     '--embedding_dim', default=100, type=int, help='embedding embedding_dim')
 parser.add_argument('--train_ws', default=5, type=int, help='window size')
+parser.add_argument(
+    '--train_lower_ws', default=1, type=int, help='lower window size')
 parser.add_argument('--min_count', default=50, type=int, help='')
 parser.add_argument('--t', default=0.0001, type=float, help='')
 parser.add_argument('--verbose', default=1, type=int, help='')
@@ -70,6 +73,12 @@ parser.add_argument(
     '--train_parallel_mode', default='default', type=str, help='')
 parser.add_argument('--num_train_op_parallel', default=1, type=int, help='')
 parser.add_argument('--use_batch_normalization', default=0, type=int, help='')
+parser.add_argument(
+    '--sgd_lr_decay_type', default='exponential_decay', type=str, help='')
+parser.add_argument('--sgd_lr_decay_steps', default=100, type=int, help='')
+parser.add_argument('--sgd_lr_decay_rate', default=0.99, type=float, help='')
+parser.add_argument('--use_clip_gradients', default=0, type=int, help='')
+parser.add_argument('--clip_norm', default=5.0, type=float, help='')
 
 opts = Options()
 
@@ -81,6 +90,7 @@ def parse_args(argv):
     opts.lr = args.lr
     opts.embedding_dim = args.embedding_dim
     opts.train_ws = args.train_ws
+    opts.train_lower_ws = args.train_lower_ws
     opts.min_count = args.min_count
     opts.t = args.t
     opts.verbose = args.verbose
@@ -130,6 +140,11 @@ def parse_args(argv):
     opts.train_parallel_mode = args.train_parallel_mode
     opts.num_train_op_parallel = args.num_train_op_parallel
     opts.use_batch_normalization = bool(args.use_batch_normalization)
+    opts.sgd_lr_decay_type = args.sgd_lr_decay_type
+    opts.sgd_lr_decay_steps = args.sgd_lr_decay_steps
+    opts.sgd_lr_decay_rate = args.sgd_lr_decay_rate
+    opts.use_clip_gradients = bool(args.use_clip_gradients)
+    opts.clip_norm = args.clip_norm
 
 
 def validate_opts():
