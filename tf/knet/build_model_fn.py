@@ -41,7 +41,8 @@ def knet_model_fn(features, labels, mode, params):
         add_metrics_summary(metrics)
 
         if mode == tf.estimator.ModeKeys.EVAL:
-            return create_eval_estimator_spec(mode, metrics, params)
+            return create_eval_estimator_spec(
+                mode, metrics, logits, labels, params)
 
         if mode == tf.estimator.ModeKeys.TRAIN:
             return create_train_estimator_spec(
@@ -474,13 +475,14 @@ def create_predict_estimator_spec(mode, user_vector, features, params):
                                       export_outputs=export_outputs)
 
 
-def create_eval_estimator_spec(mode, metrics, params):
+def create_eval_estimator_spec(mode, metrics, logits, labels, params):
     """Create eval EstimatorSpec."""
 
-    return tf.estimator.EstimatorSpec(
-        mode,
-        loss=tf.constant(0),  # don't evaluate loss
-        eval_metric_ops=metrics)
+    loss = tf.nn.sigmoid_cross_entropy_with_logits(
+        labels=tf.one_hot(labels, params['num_classes']),
+        logits=logits)
+
+    return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
 
 
 def create_train_estimator_spec(
