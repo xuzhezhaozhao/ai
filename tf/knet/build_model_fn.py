@@ -368,8 +368,8 @@ def create_loss(weights, biases, labels, inputs, params):
     num_sampled = opts.num_sampled
     ntargets = opts.ntargets
 
-    # sampled_values = tf.nn.learned_unigram_candidate_sampler(
-    sampled_values = tf.nn.uniform_candidate_sampler(
+    sampled_values = tf.nn.learned_unigram_candidate_sampler(
+    # sampled_values = tf.nn.uniform_candidate_sampler(
         true_classes=labels,
         num_true=ntargets,
         num_sampled=num_sampled,
