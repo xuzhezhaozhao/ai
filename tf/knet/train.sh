@@ -19,7 +19,7 @@ if [ $# != 0 ] ; then
 else
     train_data_path=../../data/train_data.in
     eval_data_path=../../data/eval_data.in
-    epoch=5
+    epoch=1
     recall_k=10
     min_count=30
 fi
@@ -62,7 +62,7 @@ tfrecord_map_num_parallel_calls=2
 train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
 num_train_op_parallel=4
 use_batch_normalization=1
-sgd_lr_decay_type='fasttext_decay'  # 'exponential_decay', 'fasttext_decay'
+sgd_lr_decay_type='fasttext_decay'  # 'exponential_decay', 'fasttext_decay', 'none'
 sgd_lr_decay_steps=100
 sgd_lr_decay_rate=0.95
 use_clip_gradients=1

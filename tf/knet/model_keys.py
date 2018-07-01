@@ -84,5 +84,6 @@ class TrainParallelMode(object):
 class SGDLrDecayType(object):
     """SGD learning rate decay type."""
 
+    NONE = 'none'
     EXPONENTIAL_DECAY = 'exponential_decay'
     FASTTEXT_DECAY = 'fasttext_decay'
