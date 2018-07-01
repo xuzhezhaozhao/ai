@@ -396,7 +396,6 @@ def create_optimizer(features, params):
     """Create optimizer."""
 
     opts = params['opts']
-    total_tokens = params['total_tokens']
     lr = opts.lr
     optimizer_type = opts.optimizer_type
 
@@ -411,14 +410,7 @@ def create_optimizer(features, params):
             learning_rate=lr, name='adam_{}'.format(_call_model_fn_times))
     elif optimizer_type == model_keys.OptimizerType.SGD:
         if opts.sgd_lr_decay_type == model_keys.SGDLrDecayType.FASTTEXT_DECAY:
-            processed_tokens = get_processed_tokens()
-            current_tokens = tf.reduce_sum(features[model_keys.TOKENS_COL])
-            processed_tokens = tf.assign_add(processed_tokens, current_tokens)
-
-            tf.summary.scalar("processed_tokens", processed_tokens)
-            new_lr = lr * (1.0 - (tf.cast(processed_tokens, tf.float32)
-                                  / tf.cast(total_tokens, tf.float32)))
-            new_lr = tf.maximum(new_lr, 1e-8)
+            new_lr = sgd_lr_fasttext_decay(features, params)
         elif (opts.sgd_lr_decay_type
               == model_keys.SGDLrDecayType.EXPONENTIAL_DECAY):
             new_lr = tf.train.exponential_decay(
@@ -543,3 +535,20 @@ def get_processed_tokens():
         processed_tokens = tf.get_variable(
             "processed_tokens", initializer=tf.constant(0.0, dtype=tf.float32))
     return processed_tokens
+
+
+def sgd_lr_fasttext_decay(features, params):
+    """sgd lr fasttext decay."""
+
+    lr = params['opts'].lr
+    total_tokens = params['total_tokens']
+
+    processed_tokens = get_processed_tokens()
+    current_tokens = tf.reduce_sum(features[model_keys.TOKENS_COL])
+    processed_tokens = tf.assign_add(processed_tokens, current_tokens)
+
+    tf.summary.scalar("processed_tokens", processed_tokens)
+    new_lr = lr * (1.0 - (tf.cast(processed_tokens, tf.float32)
+                          / tf.cast(total_tokens, tf.float32)))
+    new_lr = tf.maximum(new_lr, 1e-8)
+    return new_lr
