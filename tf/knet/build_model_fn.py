@@ -396,7 +396,7 @@ def create_optimizer(features, params):
     """Create optimizer."""
 
     opts = params['opts']
-    ntokens = params['ntokens']
+    total_tokens = params['total_tokens']
     lr = opts.lr
     optimizer_type = opts.optimizer_type
 
@@ -411,10 +411,13 @@ def create_optimizer(features, params):
             learning_rate=lr, name='adam_{}'.format(_call_model_fn_times))
     elif optimizer_type == model_keys.OptimizerType.SGD:
         if opts.sgd_lr_decay_type == model_keys.SGDLrDecayType.FASTTEXT_DECAY:
-            processed_tokens = features[model_keys.TOKENS_COL][0][0]
+            processed_tokens = get_processed_tokens()
+            current_tokens = tf.reduce_sum(features[model_keys.TOKENS_COL])
+            processed_tokens = tf.assign_add(processed_tokens, current_tokens)
+
             tf.summary.scalar("processed_tokens", processed_tokens)
             new_lr = lr * (1.0 - (tf.cast(processed_tokens, tf.float32)
-                                  / tf.cast(ntokens, tf.float32)))
+                                  / tf.cast(total_tokens, tf.float32)))
             new_lr = tf.maximum(new_lr, 1e-8)
         elif (opts.sgd_lr_decay_type
               == model_keys.SGDLrDecayType.EXPONENTIAL_DECAY):
@@ -531,3 +534,12 @@ def batch_normalization(input, training, name):
         scale=False, trainable=True,
         name=name, reuse=tf.AUTO_REUSE)
     return bn
+
+
+def get_processed_tokens():
+    """Processed tokens count."""
+
+    with tf.variable_scope("processed_tokens", reuse=tf.AUTO_REUSE):
+        processed_tokens = tf.get_variable(
+            "processed_tokens", initializer=tf.constant(0.0, dtype=tf.float32))
+    return processed_tokens

@@ -30,7 +30,7 @@ namespace tensorflow {
 class FasttextExampleGenerateOp : public OpKernel {
  public:
   explicit FasttextExampleGenerateOp(OpKernelConstruction* ctx)
-      : OpKernel(ctx), global_lines_(0), count_processed_tokens_(0) {
+      : OpKernel(ctx), global_lines_(0) {
     LOG(INFO) << "Init FasttextExampleGenerateOp ...";
     args_ = std::make_shared<::fasttext::Args>();
     ParseArgs(ctx);
@@ -75,11 +75,11 @@ class FasttextExampleGenerateOp : public OpKernel {
 
     std::vector<int32_t> words;
     std::vector<std::vector<int>> insts;
+    int ntokens = 0;
     for (int i = 0; i < flat_input.size(); ++i) {
       words.clear();
       std::stringstream ss(flat_input(i));
-      int ntokens = dict_->getLine(ss, words, rng_);
-      count_processed_tokens_ += ntokens;
+      ntokens += dict_->getLine(ss, words, rng_);
 
       std::vector<int> bow;
       std::uniform_int_distribution<> uniform(args_->lower_ws, args_->ws);
@@ -131,10 +131,9 @@ class FasttextExampleGenerateOp : public OpKernel {
     tokens_shape.AddDim(1);
     Tensor* tokens_tensor = NULL;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(2, tokens_shape, &tokens_tensor));
-    int64 tokens = count_processed_tokens_.load(std::memory_order_relaxed);
-    auto flat_tokens = tokens_tensor->flat<int64>();
+    auto flat_tokens = tokens_tensor->flat<float>();
     for (int i = 0; i < flat_tokens.size(); ++i) {
-      flat_tokens(i) = tokens;
+      flat_tokens(i) = static_cast<float>(ntokens) / insts.size();
     }
 
     auto matrix_records = records_tensor->matrix<int32>();
@@ -224,7 +223,6 @@ class FasttextExampleGenerateOp : public OpKernel {
 
   std::minstd_rand rng_;
   std::atomic<int64> global_lines_;
-  std::atomic<int64> count_processed_tokens_;
 };
 REGISTER_KERNEL_BUILDER(Name("FasttextExampleGenerate").Device(DEVICE_CPU),
                         FasttextExampleGenerateOp);

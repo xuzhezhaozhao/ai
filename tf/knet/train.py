@@ -75,7 +75,7 @@ def build_estimator(opts):
         'feature_columns': feature_columns,
         'predict_feature_columns': predict_feature_columns,
         'num_classes': dict_meta["nwords"] + 1,
-        'ntokens': dict_meta["ntokens"] * opts.epoch,
+        'total_tokens': dict_meta["ntokens"] * opts.epoch,
         'opts': opts
     }
 
@@ -185,7 +185,6 @@ def train_and_eval_in_local_mode(opts):
     result = opts.estimator.evaluate(
         input_fn=lambda: input_data.eval_input_fn(opts),
         hooks=opts.hooks)
-    tf.logging.info(result)
     tf.logging.info("Evaluate model OK")
     return result
 

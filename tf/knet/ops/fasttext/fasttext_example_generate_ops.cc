@@ -6,7 +6,7 @@ REGISTER_OP("FasttextExampleGenerate")
     .Input("input: string")
     .Output("records: int32")
     .Output("labels: int64")
-    .Output("count_processed_tokens: int64")
+    .Output("ntokens: float32")
     .SetIsStateful()
     .Attr("use_saved_dict: bool = true")
     .Attr("dict_dir: string")
@@ -27,7 +27,7 @@ Args
   input: A Tensor of string.
   records: A Tensor of type int32 and shape [D, ws]
   labels: A Tensor of type int64 and shape [D, ntargets]
-  count_processed_tokens: A Tensor of type int64 and shape [D, 1], used for SGD
+  ntokens: A Tensor of type float32 and shape [D, 1], used for SGD
   learning rate decay.
 )doc");
 

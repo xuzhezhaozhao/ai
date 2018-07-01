@@ -84,10 +84,10 @@ def generate_example(line, opts, is_eval):
     params['input'] = line
     params['use_saved_dict'] = True
 
-    records, labels, tokens = custom_ops.fasttext_example_generate(**params)
+    records, labels, ntokens = custom_ops.fasttext_example_generate(**params)
     dataset = tf.data.Dataset.from_tensor_slices(
-        ({model_keys.RECORDS_COL: records, model_keys.TOKENS_COL: tokens},
-         labels))
+        ({model_keys.RECORDS_COL: records,
+          model_keys.TOKENS_COL: ntokens}, labels))
     return dataset
 
 
