@@ -415,7 +415,7 @@ def create_optimizer(features, params):
             tf.summary.scalar("processed_tokens", processed_tokens)
             new_lr = lr * (1.0 - (tf.cast(processed_tokens, tf.float32)
                                   / tf.cast(ntokens, tf.float32)))
-            new_lr = tf.maximum(new_lr, 1e-5)
+            new_lr = tf.maximum(new_lr, 1e-8)
         elif (opts.sgd_lr_decay_type
               == model_keys.SGDLrDecayType.EXPONENTIAL_DECAY):
             new_lr = tf.train.exponential_decay(

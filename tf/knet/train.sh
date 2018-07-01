@@ -19,7 +19,7 @@ if [ $# != 0 ] ; then
 else
     train_data_path=../../data/train_data.in
     eval_data_path=../../data/eval_data.in
-    epoch=5
+    epoch=1
     recall_k=10
     min_count=30
 fi
@@ -32,7 +32,7 @@ t=0.025
 batch_size=64
 num_sampled=10
 hidden_units=""
-prefetch_size=100000
+prefetch_size=10000
 max_train_steps=-1
 save_summary_steps=100
 save_checkpoints_secs=600
