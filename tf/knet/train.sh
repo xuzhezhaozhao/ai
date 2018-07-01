@@ -25,7 +25,7 @@ else
 fi
 
 lr=0.5
-embedding_dim=256
+embedding_dim=128
 train_ws=20
 train_lower_ws=1
 t=0.025
