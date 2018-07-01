@@ -417,6 +417,8 @@ def create_optimizer(features, params):
                 lr, tf.train.get_global_step(),
                 decay_steps=opts.sgd_lr_decay_steps,
                 decay_rate=opts.sgd_lr_decay_rate)
+        elif opts.sgd_lr_decay_type == model_keys.SGDLrDecayType.NONE:
+            new_lr = lr
         else:
             raise ValueError("Unsurpported sgd lr decay type '{}'"
                              .format(opts.sgd_lr_decay_type))
