@@ -19,7 +19,7 @@ if [ $# != 0 ] ; then
 else
     train_data_path=../../data/train_data.in
     eval_data_path=../../data/eval_data.in
-    epoch=1
+    epoch=5
     recall_k=10
     min_count=30
 fi
