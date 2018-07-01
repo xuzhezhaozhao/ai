@@ -17,13 +17,13 @@ dict_dir=`pwd`/video_tab/dict_dir
 train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
 
-lr=0.5
+lr=0.001
 embedding_dim=128
 train_ws=20
 train_lower_ws=1
 min_count=100
 t=0.0001
-batch_size=128
+batch_size=256
 num_sampled=10
 epoch=1
 hidden_units=""
