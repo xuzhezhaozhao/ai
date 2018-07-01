@@ -13,7 +13,7 @@ import model_keys
 import argparse
 
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = '1'
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = '0'
 
 
 parser = argparse.ArgumentParser()
