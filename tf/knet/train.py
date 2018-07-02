@@ -10,9 +10,6 @@ import os
 import time
 import tensorflow as tf
 
-from estimator.estimator import TrainOpParallelEstimator
-from estimator.run_config import RunConfig as TrainOpParallelRunConfig
-
 import build_model_fn
 import model_keys
 import input_data
@@ -85,6 +82,9 @@ def build_estimator(opts):
         estimator_keys['config'] = config
         estimator = tf.estimator.Estimator(**estimator_keys)
     elif train_parallel_mode == model_keys.TrainParallelMode.TRAIN_OP_PARALLEL:
+        from estimator.estimator import TrainOpParallelEstimator
+        from estimator.run_config import RunConfig as TrainOpParallelRunConfig
+
         config = TrainOpParallelRunConfig(**config_keys)
         estimator_keys['config'] = config
         estimator_keys['num_train_op_parallel'] = opts.num_train_op_parallel
