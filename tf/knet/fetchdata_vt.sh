@@ -15,6 +15,7 @@ hadoop_bin=/usr/local/services/hadoop_client_2_2_0-1.0/tdwdfsclient/bin/hadoop
 hdfs_data_path=hdfs://ss-sng-dc-v2/stage/outface/SNG/g_sng_im_sng_imappdev_tribe/zhezhaoxu/preprocessed_data/hbcf
 base_hdfs_data_path=`basename ${hdfs_data_path}`
 
+echo "begin fetch video watch data ..."
 echo "check data timestamp .."
 array_check=($hdfs_file_path)
 today_timestamp=$(date -d "$(date +"%Y-%m-%d %H:%M")" +%s)
@@ -71,3 +72,5 @@ num_workers=2
 
 echo "generate eval_data ..."
 tail ${raw_data_dir}/data.vt.in.shuf -n ${eval_lines} > ${raw_data_dir}/eval_data.vt.in
+
+echo "fetch video watch data done."
