@@ -7,6 +7,7 @@ from __future__ import print_function
 
 
 import os
+import shutil
 import time
 import tensorflow as tf
 
@@ -14,18 +15,6 @@ import build_model_fn
 import model_keys
 import input_data
 import hook
-
-
-def delete_dir(filename):
-    tf.logging.info("To delete file '{}' ...".format(filename))
-    if tf.gfile.Exists(filename):
-        if tf.gfile.IsDirectory(filename):
-            tf.logging.info("delete dir '{}' ...".format(filename))
-            tf.gfile.DeleteRecursively(filename)
-            tf.logging.info("delete dir '{}' OK".format(filename))
-        else:
-            raise Exception(
-                "'{}' exists and not a directory.".format(filename))
 
 
 def is_local_or_chief(task_type):
@@ -104,7 +93,7 @@ def init_dictionary(opts):
         """Init dict only in local or chief mode."""
         if opts.remove_model_dir:
             tf.logging.info("Remove model dir ...")
-            delete_dir(opts.model_dir)
+            shutil.rmtree(opts.model_dir)
             tf.logging.info("Remove model dir OK")
             os.makedirs(opts.model_dir)
         else:
