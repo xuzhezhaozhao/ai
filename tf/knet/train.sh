@@ -19,7 +19,7 @@ if [ $# != 0 ] ; then
 else
     train_data_path=../../data/train_data.in
     eval_data_path=../../data/eval_data.in
-    epoch=1
+    epoch=5
     recall_k=10
     min_count=30
 fi
@@ -66,7 +66,7 @@ sgd_lr_decay_type='fasttext_decay'  # 'exponential_decay', 'fasttext_decay', 'no
 sgd_lr_decay_steps=100
 sgd_lr_decay_rate=0.95
 use_clip_gradients=1
-clip_norm=5.0
+clip_norm=1000.0
 
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then

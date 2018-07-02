@@ -86,9 +86,10 @@ def get_embeddings(num_classes, embedding_dim):
     """Get embeddings variables."""
 
     with tf.variable_scope("embeddings_variable", reuse=tf.AUTO_REUSE):
+        init_width = 0.5 / embedding_dim
         embeddings = tf.get_variable(
             "embeddings", initializer=tf.random_uniform(
-                [num_classes, embedding_dim], -1.0, 1.0))
+                [num_classes, embedding_dim], -init_width, init_width))
     return embeddings
 
 
@@ -276,8 +277,8 @@ def save_model_nce_params(model, dict_dir):
     """Save model nce weights and biases variables."""
 
     nce_weights, nce_biases = get_model_nce_weights_and_biases(model)
-    # tf.logging.info('save nce_weights = \n{}'.format(nce_weights))
-    # tf.logging.info('save nce_biases = \n{}'.format(nce_biases))
+    tf.logging.info('save nce_weights = \n{}'.format(nce_weights))
+    tf.logging.info('save nce_biases = \n{}'.format(nce_biases))
     save_weights_path = os.path.join(
         dict_dir, model_keys.SAVE_NCE_WEIGHTS_NAME)
     save_biases_path = os.path.join(dict_dir, model_keys.SAVE_NCE_BIASES_NAME)
