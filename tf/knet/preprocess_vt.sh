@@ -17,8 +17,8 @@ dict_dir=`pwd`/video_tab/dict_dir
 train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
 
-lr=0.001
-embedding_dim=128
+lr=0.5
+embedding_dim=256
 train_ws=20
 train_lower_ws=1
 min_count=100
@@ -49,7 +49,7 @@ train_nce_biases=0
 shuffle_batch=1
 predict_ws=50
 sample_dropout=0.0
-optimizer_type='sgd'
+optimizer_type='ada'
 tfrecord_file=${raw_data_dir}/train_data.vt.tfrecord
 num_tfrecord_file=42
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
@@ -61,7 +61,7 @@ sgd_lr_decay_type='fasttext_decay'  # 'exponential_decay', 'fasttext_decay'
 sgd_lr_decay_steps=100
 sgd_lr_decay_rate=0.99
 use_clip_gradients=1
-clip_norm=5.0
+clip_norm=500.0
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
