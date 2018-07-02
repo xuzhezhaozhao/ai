@@ -405,7 +405,10 @@ def create_optimizer(features, params):
             learning_rate=lr, name='adagrad_{}'.format(_call_model_fn_times))
     elif optimizer_type == model_keys.OptimizerType.ADADELTA:
         optimizer = tf.train.AdadeltaOptimizer(
-            learning_rate=lr, name='adadelta_{}'.format(_call_model_fn_times))
+            learning_rate=lr,
+            rho=0.95,
+            epsilon=0.00001,
+            name='adadelta_{}'.format(_call_model_fn_times))
     elif optimizer_type == model_keys.OptimizerType.ADAM:
         optimizer = tf.train.AdamOptimizer(
             learning_rate=lr, name='adam_{}'.format(_call_model_fn_times))
@@ -426,6 +429,13 @@ def create_optimizer(features, params):
         tf.summary.scalar("lr", new_lr)
         optimizer = tf.train.GradientDescentOptimizer(
             learning_rate=new_lr, name='sgd_{}'.format(_call_model_fn_times))
+    elif optimizer_type == model_keys.OptimizerType.RMSPROP:
+        optimizer = tf.train.RMSPropOptimizer(
+            learning_rate=lr,
+            decay=0.95,
+            momentum=0.001,
+            epsilon=1e-10,
+            name='rmsprop_{}'.format(_call_model_fn_times))
     else:
         raise ValueError('OptimizerType "{}" not surpported.'
                          .format(optimizer_type))
@@ -549,7 +559,6 @@ def sgd_lr_fasttext_decay(features, params):
     processed_tokens = get_processed_tokens()
     current_tokens = tf.reduce_sum(features[model_keys.TOKENS_COL])
     processed_tokens = tf.assign_add(processed_tokens, current_tokens)
-
     tf.summary.scalar("processed_tokens", processed_tokens)
     new_lr = lr * (1.0 - (tf.cast(processed_tokens, tf.float32)
                           / tf.cast(total_tokens, tf.float32)))

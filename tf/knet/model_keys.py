@@ -65,6 +65,7 @@ class OptimizerType(object):
     ADADELTA = 'adadelta'
     ADAM = 'adam'
     SGD = 'sgd'
+    RMSPROP = 'rmsprop'
 
 
 class TrainDataFormatType(object):
