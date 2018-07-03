@@ -18,12 +18,12 @@ train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
 
 lr=0.5
-embedding_dim=256
+embedding_dim=128
 train_ws=20
 train_lower_ws=1
 min_count=100
 t=0.0001
-batch_size=256
+batch_size=128
 num_sampled=10
 epoch=1
 hidden_units=""
@@ -56,11 +56,11 @@ train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 tfrecord_map_num_parallel_calls=2
 train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
 num_train_op_parallel=8
-use_batch_normalization=1
+use_batch_normalization=0
 sgd_lr_decay_type='fasttext_decay'  # 'exponential_decay', 'fasttext_decay'
 sgd_lr_decay_steps=100
 sgd_lr_decay_rate=0.99
-use_clip_gradients=1
+use_clip_gradients=0
 clip_norm=500.0
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
