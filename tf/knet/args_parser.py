@@ -182,6 +182,9 @@ def validate_opts():
         raise ValueError("hidden_units contain unit <= 0")
     if opts.dropout < 0.0:
         raise ValueError("dropout should not less than 0")
+    if opts.normalize_nce_weights and opts.train_nce_biases:
+        raise ValueError(
+            "option normalize_nce_weights and train_nce_biases conflicts.")
 
 
 def parse_tf_config():

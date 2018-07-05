@@ -5,12 +5,14 @@ PADDING_ID = 0
 
 NCE_WEIGHTS_NAME = 'nce_weights'
 NCE_BIASES_NAME = 'nce_biases'
+EMBEDDINGS_NAME = 'embeddings'
 
 # filename must end with .npy
 SAVE_NCE_WEIGHTS_NAME = 'nce_weights.npy'
 SAVE_NCE_BIASES_NAME = 'nce_biases.npy'
 SAVE_NCE_WEIGHTS_SUBSET_NAME = 'nce_weights_subset.npy'
 SAVE_NCE_BIASES_SUBSET_NAME = 'nce_biases_subset.npy'
+SAVE_EMBEDDINGS_NAME = 'embeddings.npy'
 
 NCE_PARAM_NAMES = [
     SAVE_NCE_WEIGHTS_NAME,

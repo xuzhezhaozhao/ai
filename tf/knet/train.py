@@ -171,7 +171,8 @@ def train_and_eval_in_local_mode(opts):
     tf.logging.info("Train model OK")
 
     tf.logging.info("Save nce weights and biases ...")
-    build_model_fn.save_model_nce_params(opts.estimator, opts.dict_dir)
+    build_model_fn.save_model_nce_params(opts.estimator, opts)
+    build_model_fn.save_model_embeddings(opts.estimator, opts)
     tf.logging.info("Save nce weights and biases OK")
 
     # evaluate model

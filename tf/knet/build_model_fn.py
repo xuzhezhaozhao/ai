@@ -12,6 +12,7 @@ import numpy as np
 
 import model_keys
 import custom_ops
+import utils
 
 
 _call_model_fn_times = 0
@@ -23,9 +24,15 @@ def knet_model_fn(features, labels, mode, params):
     global _call_model_fn_times
     _call_model_fn_times += 1
 
+    opts = params['opts']
+
     with tf.name_scope("model_fn_{}".format(_call_model_fn_times)):
 
         (embeddings, nce_weights, nce_biases) = get_nce_variables(params)
+
+        if mode != tf.estimator.ModeKeys.TRAIN:
+            embeddings = load_model_embeddings(opts.dict_dir)
+            embeddings = tf.convert_to_tensor(embeddings, dtype=tf.float32)
 
         input_layer = create_input_layer(mode, features, params, embeddings)
         user_vector = create_hidden_layer(mode, input_layer, params)
@@ -41,7 +48,7 @@ def knet_model_fn(features, labels, mode, params):
 
         if mode == tf.estimator.ModeKeys.EVAL:
             return create_eval_estimator_spec(
-                mode, metrics, logits, labels, params)
+                mode, labels, user_vector, params)
 
         if mode == tf.estimator.ModeKeys.TRAIN:
             return create_train_estimator_spec(
@@ -125,17 +132,22 @@ def create_input_layer(mode, features, params, embeddings):
     use_batch_normalization = opts.use_batch_normalization
     training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-    if (mode == tf.estimator.ModeKeys.PREDICT
-            or mode == tf.estimator.ModeKeys.EVAL):
+    if training:
+        input_layer = tf.feature_column.input_layer(features, feature_columns)
+    else:
         input_layer = tf.feature_column.input_layer(
             features, predict_feature_columns)
-    else:
-        input_layer = tf.feature_column.input_layer(features, feature_columns)
 
     nonzeros = tf.count_nonzero(input_layer, 1, keepdims=True)  # [batch, 1]
     nonzeros = tf.maximum(nonzeros, 1)  # avoid divide zero
-    embeds = mask_padding_embedding_lookup(embeddings, embedding_dim,
-                                           input_layer, model_keys.PADDING_ID)
+
+    if not training and opts.normalize_embeddings:
+        embeds = tf.nn.embedding_lookup(
+            embeddings, tf.cast(input_layer, tf.int32))
+    else:
+        embeds = mask_padding_embedding_lookup(
+            embeddings, embedding_dim, input_layer, model_keys.PADDING_ID)
+
     embeds_sum = tf.reduce_sum(embeds, 1)
     embeds_mean = embeds_sum / tf.cast(nonzeros, tf.float32)
 
@@ -275,10 +287,24 @@ def get_model_nce_weights_and_biases(model):
     return (nce_weights, nce_biases)
 
 
-def save_model_nce_params(model, dict_dir):
+def get_model_embeddings(model):
+    """Get embeddings variables from estimator model"""
+
+    embeddings = model.get_variable_value(
+        'embeddings_variable/' + model_keys.EMBEDDINGS_NAME)
+    return embeddings
+
+
+def save_model_nce_params(model, opts):
     """Save model nce weights and biases variables."""
 
+    dict_dir = opts.dict_dir
     nce_weights, nce_biases = get_model_nce_weights_and_biases(model)
+
+    if opts.normalize_nce_weights:
+        tf.logging.info("Normalize nce weihts.")
+        nce_weights = utils.normalize_matrix(nce_weights)
+
     tf.logging.info('save nce_weights = \n{}'.format(nce_weights))
     tf.logging.info('save nce_biases = \n{}'.format(nce_biases))
     save_weights_path = os.path.join(
@@ -286,6 +312,21 @@ def save_model_nce_params(model, dict_dir):
     save_biases_path = os.path.join(dict_dir, model_keys.SAVE_NCE_BIASES_NAME)
     np.save(save_weights_path, nce_weights)
     np.save(save_biases_path, nce_biases)
+
+
+def save_model_embeddings(model, opts):
+    """Save model embeddings."""
+
+    dict_dir = opts.dict_dir
+    embeddings = get_model_embeddings(model)
+    if opts.normalize_embeddings:
+        tf.logging.info("Normalize embeddings.")
+        embeddings = utils.normalize_matrix(embeddings)
+    embeddings[model_keys.PADDING_ID] = 0.0
+    tf.logging.info('save embeddings = \n{}'.format(embeddings))
+    save_embeddings_path = os.path.join(
+        dict_dir, model_keys.SAVE_EMBEDDINGS_NAME)
+    np.save(save_embeddings_path, embeddings)
 
 
 def load_model_nce_params(dict_dir, use_subset):
@@ -300,10 +341,18 @@ def load_model_nce_params(dict_dir, use_subset):
     save_biases_path = os.path.join(dict_dir, nce_biases_name)
     nce_weights = np.load(save_weights_path)
     nce_biases = np.load(save_biases_path)
-    # tf.logging.info('load nce_weights = \n{}'.format(nce_weights))
-    # tf.logging.info('load nce_biases = \n{}'.format(nce_biases))
 
     return (nce_weights, nce_biases)
+
+
+def load_model_embeddings(dict_dir):
+    """Load model embeddings."""
+
+    embeddings_name = model_keys.SAVE_EMBEDDINGS_NAME
+    save_embeddings_path = os.path.join(dict_dir, embeddings_name)
+    embeddings = np.load(save_embeddings_path)
+
+    return embeddings
 
 
 def save_numpy_float_array(array, filename):
@@ -430,12 +479,16 @@ def create_predict_estimator_spec(mode, user_vector, features, params):
                                       export_outputs=export_outputs)
 
 
-def create_eval_estimator_spec(mode, metrics, logits, labels, params):
+def create_eval_estimator_spec(mode, labels, user_vector, params):
     """Create eval EstimatorSpec."""
 
+    opts = params['opts']
+    _, top_k_ids, logits = optimize_level_saved_nce_params(
+        opts.dict_dir, user_vector, opts.recall_k, False)
     loss = tf.losses.sparse_softmax_cross_entropy(
         labels=tf.reshape(labels, [-1]),
         logits=logits)
+    metrics = get_metrics(labels, logits, top_k_ids, params)
 
     return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
 
