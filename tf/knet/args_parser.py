@@ -79,6 +79,17 @@ parser.add_argument('--sgd_lr_decay_steps', default=100, type=int, help='')
 parser.add_argument('--sgd_lr_decay_rate', default=0.99, type=float, help='')
 parser.add_argument('--use_clip_gradients', default=0, type=int, help='')
 parser.add_argument('--clip_norm', default=5.0, type=float, help='')
+parser.add_argument('--filter_with_rowkey_info', default=0, type=int, help='')
+parser.add_argument(
+    '--filter_with_rowkey_info_exposure_thr', default=0, type=int, help='')
+parser.add_argument(
+    '--filter_with_rowkey_info_play', default=0, type=int, help='')
+parser.add_argument(
+    '--filter_with_rowkey_info_e_play', default=0, type=int, help='')
+parser.add_argument(
+    '--filter_with_rowkey_info_e_play_ratio_thr',
+    default=0.0, type=float, help='')
+parser.add_argument('--rowkey_info_file', default='', type=str, help='')
 
 opts = Options()
 
@@ -145,6 +156,14 @@ def parse_args(argv):
     opts.sgd_lr_decay_rate = args.sgd_lr_decay_rate
     opts.use_clip_gradients = bool(args.use_clip_gradients)
     opts.clip_norm = args.clip_norm
+    opts.filter_with_rowkey_info = bool(args.filter_with_rowkey_info)
+    opts.filter_with_rowkey_info_exposure_thr = \
+        args.filter_with_rowkey_info_exposure_thr
+    opts.filter_with_rowkey_info_play = args.filter_with_rowkey_info_play
+    opts.filter_with_rowkey_info_e_play = args.filter_with_rowkey_info_e_play
+    opts.filter_with_rowkey_info_e_play_ratio_thr = \
+        args.filter_with_rowkey_info_e_play_ratio_thr
+    opts.rowkey_info_file = args.rowkey_info_file
 
 
 def validate_opts():

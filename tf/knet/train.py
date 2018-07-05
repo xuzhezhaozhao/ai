@@ -15,6 +15,7 @@ import build_model_fn
 import model_keys
 import input_data
 import hook
+import filter_dict
 
 
 def is_local_or_chief(task_type):
@@ -190,7 +191,7 @@ def export_model_in_local_mode(opts):
 
     if opts.use_subset:
         tf.logging.info("Save subset dict and nce params ...")
-        build_model_fn.filter_and_save_subset(opts.dict_dir)
+        filter_dict.filter_and_save_subset(opts)
         tf.logging.info("Save subset dict and nce params OK")
 
     # export model

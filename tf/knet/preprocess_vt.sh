@@ -62,6 +62,11 @@ sgd_lr_decay_steps=100
 sgd_lr_decay_rate=0.99
 use_clip_gradients=0
 clip_norm=500.0
+filter_with_rowkey_info=1
+filter_with_rowkey_info_exposure_thr=10000
+filter_with_rowkey_info_click=100
+filter_with_rowkey_info_e_click=100
+rowkey_info_file=""
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
@@ -138,4 +143,9 @@ python main.py \
     --sgd_lr_decay_steps ${sgd_lr_decay_steps} \
     --sgd_lr_decay_rate ${sgd_lr_decay_rate} \
     --use_clip_gradients ${use_clip_gradients} \
-    --clip_norm ${clip_norm}
+    --clip_norm ${clip_norm} \
+    --filter_with_rowkey_info ${filter_with_rowkey_info} \
+    --filter_with_rowkey_info_exposure_thr ${filter_with_rowkey_info_exposure_thr} \
+    --filter_with_rowkey_info_click ${filter_with_rowkey_info_click} \
+    --filter_with_rowkey_info_e_click ${filter_with_rowkey_info_e_click} \
+    --rowkey_info_file "${rowkey_info_file}"

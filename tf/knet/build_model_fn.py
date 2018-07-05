@@ -5,7 +5,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import math
 import os
 import struct
 import tensorflow as tf
@@ -319,52 +318,6 @@ def save_numpy_float_array(array, filename):
             f.write(struct.pack('<f', v))
 
 
-def is_in_subset(word):
-    """Check wheather rowkey is video, yes return True, or False."""
-
-    if len(word) > 5:
-        if word[-2] == 'a' or word[-2] == 'b':
-            return True
-    return False
-
-
-def filter_and_save_subset(dict_dir):
-    save_weights_path = os.path.join(
-        dict_dir, model_keys.SAVE_NCE_WEIGHTS_NAME)
-    save_biases_path = os.path.join(dict_dir, model_keys.SAVE_NCE_BIASES_NAME)
-    nce_weights = np.load(save_weights_path)
-    nce_biases = np.load(save_biases_path)
-    dict_words_path = os.path.join(dict_dir, model_keys.DICT_WORDS)
-    words = [line.strip() for line in open(dict_words_path)
-             if line.strip() != '']
-
-    subset_words = [w for w in words if is_in_subset(w)]
-    num_in_subset = len(subset_words)
-    dim = nce_weights.shape[-1]
-
-    subset_weights = np.zeros([num_in_subset, dim], dtype=np.float32)
-    subset_biases = np.zeros([num_in_subset], dtype=np.float32)
-    tf.logging.info("subset length = {}".format(num_in_subset))
-
-    subset_index = 0
-    for index, word in enumerate(words):
-        if is_in_subset(word):
-            # index plus one because of padding
-            subset_weights[subset_index] = nce_weights[index + 1]
-            subset_biases[subset_index] = nce_biases[index + 1]
-            subset_index += 1
-
-    to_save_subset_words = reduce(lambda w1, w2: w1 + '\n' + w2, subset_words)
-
-    with open(os.path.join(dict_dir, model_keys.DICT_WORDS_SUBSET), 'w') as f:
-        f.write(to_save_subset_words)
-
-    np.save(os.path.join(dict_dir, model_keys.SAVE_NCE_WEIGHTS_SUBSET_NAME),
-            subset_weights)
-    np.save(os.path.join(dict_dir, model_keys.SAVE_NCE_BIASES_SUBSET_NAME),
-            subset_biases)
-
-
 def create_loss(weights, biases, labels, inputs, params):
     """Create nce loss."""
 
@@ -373,14 +326,6 @@ def create_loss(weights, biases, labels, inputs, params):
     num_sampled = opts.num_sampled
     ntargets = opts.ntargets
 
-    sampled_values = tf.nn.learned_unigram_candidate_sampler(
-        true_classes=labels,
-        num_true=ntargets,
-        num_sampled=num_sampled,
-        unique=True,
-        range_max=num_classes,
-        seed=np.random.randint(1000000)
-    )
     loss = tf.nn.nce_loss(
         weights=weights,
         biases=biases,
@@ -389,7 +334,6 @@ def create_loss(weights, biases, labels, inputs, params):
         num_sampled=num_sampled,
         num_classes=num_classes,
         num_true=ntargets,
-        sampled_values=sampled_values,
         partition_strategy="div")
     loss = tf.reduce_mean(loss, name="mean_loss")
 

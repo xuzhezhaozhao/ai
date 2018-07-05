@@ -65,6 +65,12 @@ class Options(object):
         self.sgd_lr_decay_rate = 0.99
         self.use_clip_gradients = 0
         self.clip_norm = 5.0
+        self.filter_with_rowkey_info = False
+        self.filter_with_rowkey_info_exposure_thr = 0
+        self.filter_with_rowkey_info_play = 0
+        self.filter_with_rowkey_info_e_play = 0
+        self.filter_with_rowkey_info_e_play_ratio_thr = 0.0
+        self.rowkey_info_file = ''
 
         # non-cmd args
         self.estimator = None
@@ -130,6 +136,11 @@ class Options(object):
         sgd_lr_decay_rate = {} \n \
         use_clip_gradients = {} \n \
         clip_norm = {} \n \
+        filter_with_rowkey_info = {} \n \
+        filter_with_rowkey_info_exposure_thr = {} \n \
+        filter_with_rowkey_info_play = {} \n \
+        filter_with_rowkey_info_e_play_ratio_thr = {} \n \
+        rowkey_info_file = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -191,6 +202,11 @@ class Options(object):
                 self.sgd_lr_decay_rate,
                 self.use_clip_gradients,
                 self.clip_norm,
+                self.filter_with_rowkey_info,
+                self.filter_with_rowkey_info_exposure_thr,
+                self.filter_with_rowkey_info_play,
+                self.filter_with_rowkey_info_e_play_ratio_thr,
+                self.rowkey_info_file,
                 # non-cmd args
                 self.estimator,
                 self.hooks,
