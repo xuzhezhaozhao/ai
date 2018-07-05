@@ -3,6 +3,7 @@
 
 import json
 import collections
+import tensorflow as tf
 
 
 RowkeyInfo = collections.namedtuple(
@@ -15,8 +16,12 @@ def parse_rowkey_info(rowkey_info_file):
     Return: Python dict, rowkey => RowkeyInfo
     """
 
+    tf.logging.info("parse rowkey info ...")
+
     D = dict()
     for lineindex, line in enumerate(open(rowkey_info_file)):
+        if lineindex % 100000 == 0:
+            tf.logging.info("parse {}w lines ...".format(lineindex / 10000))
         line = line.strip()
         try:
             root = json.loads(line)
@@ -38,5 +43,7 @@ def parse_rowkey_info(rowkey_info_file):
         except Exception as e:
             print("catch exception in line {}, exception: {}, line = {}"
                   .format(lineindex, e, line))
+
+    tf.logging.info("parse rowkey info done, size = {}.".format(len(D)))
 
     return D
