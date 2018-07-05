@@ -30,7 +30,7 @@ def knet_model_fn(features, labels, mode, params):
 
         (embeddings, nce_weights, nce_biases) = get_nce_variables(params)
 
-        if mode != tf.estimator.ModeKeys.TRAIN:
+        if mode != tf.estimator.ModeKeys.TRAIN and opts.normalize_embeddings:
             embeddings = load_model_embeddings(opts.dict_dir)
             embeddings = tf.convert_to_tensor(embeddings, dtype=tf.float32)
 
