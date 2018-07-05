@@ -94,7 +94,7 @@ def init_dictionary(opts):
         """Init dict only in local or chief mode."""
         if opts.remove_model_dir:
             tf.logging.info("Remove model dir ...")
-            shutil.rmtree(opts.model_dir)
+            shutil.rmtree(opts.model_dir, ignore_errors=True)
             tf.logging.info("Remove model dir OK")
             os.makedirs(opts.model_dir)
         else:
