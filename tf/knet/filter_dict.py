@@ -12,6 +12,9 @@ import numpy as np
 import model_keys
 
 
+D = None  # rowkey_info dict
+
+
 def filter_and_save_subset(opts):
     dict_dir = opts.dict_dir
     save_weights_path = os.path.join(
@@ -72,7 +75,10 @@ def filter_video_rowkey(rowkey):
 def filter_with_rowkey_info(rowkey, opts):
     import parse_rowkey_info
 
-    D = parse_rowkey_info.parse_rowkey_info(opts.rowkey_info_file)
+    global D
+
+    if D is None:
+        D = parse_rowkey_info.parse_rowkey_info(opts.rowkey_info_file)
     tf.logging.info('rowkey info size = {}'.format(len(D)))
 
     if rowkey not in D:
