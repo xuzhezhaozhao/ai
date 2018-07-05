@@ -73,8 +73,8 @@ filter_with_rowkey_info_play=100
 filter_with_rowkey_info_e_play=100
 filter_with_rowkey_info_e_play_ratio_thr=0.3
 rowkey_info_file=""
-normalize_nce_weights=1
-normalize_embeddings=0
+normalize_nce_weights=0
+normalize_embeddings=1
 
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
