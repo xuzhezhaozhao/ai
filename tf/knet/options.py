@@ -71,6 +71,8 @@ class Options(object):
         self.filter_with_rowkey_info_e_play = 0
         self.filter_with_rowkey_info_e_play_ratio_thr = 0.0
         self.rowkey_info_file = ''
+        self.normalize_nce_weights = False
+        self.normalize_embeddings = False
 
         # non-cmd args
         self.estimator = None
@@ -141,6 +143,8 @@ class Options(object):
         filter_with_rowkey_info_play = {} \n \
         filter_with_rowkey_info_e_play_ratio_thr = {} \n \
         rowkey_info_file = {} \n \
+        normalize_nce_weights = {} \n \
+        normalize_embeddings = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -207,6 +211,8 @@ class Options(object):
                 self.filter_with_rowkey_info_play,
                 self.filter_with_rowkey_info_e_play_ratio_thr,
                 self.rowkey_info_file,
+                self.normalize_nce_weights,
+                self.normalize_embeddings,
                 # non-cmd args
                 self.estimator,
                 self.hooks,

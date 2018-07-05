@@ -90,6 +90,8 @@ parser.add_argument(
     '--filter_with_rowkey_info_e_play_ratio_thr',
     default=0.0, type=float, help='')
 parser.add_argument('--rowkey_info_file', default='', type=str, help='')
+parser.add_argument('--normalize_nce_weights', default=0, type=int, help='')
+parser.add_argument('--normalize_embeddings', default=0, type=int, help='')
 
 opts = Options()
 
@@ -164,6 +166,8 @@ def parse_args(argv):
     opts.filter_with_rowkey_info_e_play_ratio_thr = \
         args.filter_with_rowkey_info_e_play_ratio_thr
     opts.rowkey_info_file = args.rowkey_info_file
+    opts.normalize_nce_weights = bool(args.normalize_nce_weights)
+    opts.normalize_embeddings = bool(args.normalize_embeddings)
 
 
 def validate_opts():
