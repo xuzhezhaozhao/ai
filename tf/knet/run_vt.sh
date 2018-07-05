@@ -15,5 +15,6 @@ vt_log=log/vt.log.${ts}
 ( \
 ./fetchdata_vt_all.sh \
 && ./fetchdata_user_features.sh \
+&& ./fetchdata_rowkey_info.sh \
 && ./preprocess_vt.sh \
 ) > ${vt_log} 2>&1
