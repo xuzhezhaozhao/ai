@@ -64,9 +64,10 @@ use_clip_gradients=0
 clip_norm=500.0
 filter_with_rowkey_info=1
 filter_with_rowkey_info_exposure_thr=10000
-filter_with_rowkey_info_click=100
-filter_with_rowkey_info_e_click=100
-rowkey_info_file=""
+filter_with_rowkey_info_play=4000
+filter_with_rowkey_info_e_play=2000
+filter_with_rowkey_info_e_play_ratio_thr=0.3
+rowkey_info_file=${raw_data_dir}/rowkey_info.json
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
@@ -146,6 +147,7 @@ python main.py \
     --clip_norm ${clip_norm} \
     --filter_with_rowkey_info ${filter_with_rowkey_info} \
     --filter_with_rowkey_info_exposure_thr ${filter_with_rowkey_info_exposure_thr} \
-    --filter_with_rowkey_info_click ${filter_with_rowkey_info_click} \
-    --filter_with_rowkey_info_e_click ${filter_with_rowkey_info_e_click} \
+    --filter_with_rowkey_info_play ${filter_with_rowkey_info_play} \
+    --filter_with_rowkey_info_e_play ${filter_with_rowkey_info_e_play} \
+    --filter_with_rowkey_info_e_play_ratio_thr ${filter_with_rowkey_info_e_play_ratio_thr} \
     --rowkey_info_file "${rowkey_info_file}"
