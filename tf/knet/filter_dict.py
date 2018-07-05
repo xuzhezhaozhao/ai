@@ -79,7 +79,6 @@ def filter_with_rowkey_info(rowkey, opts):
 
     if D is None:
         D = parse_rowkey_info.parse_rowkey_info(opts.rowkey_info_file)
-    tf.logging.info('rowkey info size = {}'.format(len(D)))
 
     if rowkey not in D:
         return False
