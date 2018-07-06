@@ -70,7 +70,8 @@ filter_with_rowkey_info_e_play_ratio_thr=0.3
 rowkey_info_file=${raw_data_dir}/rowkey_info.json
 normalize_nce_weights=0
 normalize_embeddings=0
-use_custom_nce_loss=0
+use_custom_nce_loss=1
+negative_sampler_type='fixed'  # fixed(better), log_uniform
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
@@ -156,4 +157,5 @@ python main.py \
     --rowkey_info_file "${rowkey_info_file}" \
     --normalize_nce_weights ${normalize_nce_weights} \
     --normalize_embeddings ${normalize_embeddings} \
-    --use_custom_nce_loss ${use_custom_nce_loss}
+    --use_custom_nce_loss ${use_custom_nce_loss} \
+    --negative_sampler_type ${negative_sampler_type}
