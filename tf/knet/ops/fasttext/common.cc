@@ -41,6 +41,8 @@ void SaveDictionary(const std::string& dict_dir,
   auto saved_dict = ::tensorflow::io::JoinPath(root_dir, SAVED_DICT);
   auto dict_meta = ::tensorflow::io::JoinPath(root_dir, DICT_META);
   auto dict_words = ::tensorflow::io::JoinPath(root_dir, DICT_WORDS);
+  auto dict_word_counts =
+      ::tensorflow::io::JoinPath(root_dir, DICT_WORD_COUNTS);
 
   {
     // save dictionary
@@ -95,7 +97,7 @@ void SaveDictionary(const std::string& dict_dir,
     std::ofstream ofs(dict_words);
     LOG(INFO) << "Write dict words to " << dict_words << " ...";
     if (!ofs.is_open()) {
-      LOG(FATAL) << "Open " << dict_meta << " failed.";
+      LOG(FATAL) << "Open " << dict_words << " failed.";
     }
     for (const auto& entry : dict->words()) {
       if (entry.type == ::fasttext::entry_type::word) {
@@ -105,6 +107,26 @@ void SaveDictionary(const std::string& dict_dir,
     }
     if (!ofs.good()) {
       LOG(FATAL) << "write file " << dict_words << " failed.";
+    }
+    ofs.close();
+    LOG(INFO) << "Write dict words OK";
+  }
+  {
+    // save dict word counts
+    std::ofstream ofs(dict_word_counts);
+    LOG(INFO) << "Write dict word counts to " << dict_word_counts << " ...";
+    if (!ofs.is_open()) {
+      LOG(FATAL) << "Open " << dict_word_counts << " failed.";
+    }
+    for (const auto& entry : dict->words()) {
+      if (entry.type == ::fasttext::entry_type::word) {
+        auto s = std::to_string(entry.count);
+        ofs.write(s.data(), s.size());
+        ofs.write("\n", 1);
+      }
+    }
+    if (!ofs.good()) {
+      LOG(FATAL) << "write file " << dict_word_counts << " failed.";
     }
     ofs.close();
     LOG(INFO) << "Write dict words OK";

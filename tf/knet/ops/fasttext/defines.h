@@ -5,5 +5,6 @@
 #define SAVED_DICT "saved_dict.bin"
 #define DICT_META "dict_meta"
 #define DICT_WORDS "dict_words"
+#define DICT_WORD_COUNTS "dict_word_counts"
 
 #endif

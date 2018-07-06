@@ -39,6 +39,7 @@ TOKENS_COL = 'tokens'
 
 DICT_META = 'dict_meta'
 DICT_WORDS = 'dict_words'
+DICT_WORD_COUNTS = 'dict_word_counts'
 SAVED_DICT_BIN = 'saved_dict.bin'
 DICT_WORDS_SUBSET = 'dict_words_subset'
 
