@@ -73,6 +73,7 @@ class Options(object):
         self.rowkey_info_file = ''
         self.normalize_nce_weights = False
         self.normalize_embeddings = False
+        self.use_custom_nce_loss = False
 
         # non-cmd args
         self.estimator = None
@@ -145,6 +146,7 @@ class Options(object):
         rowkey_info_file = {} \n \
         normalize_nce_weights = {} \n \
         normalize_embeddings = {} \n \
+        use_custom_nce_loss = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -213,6 +215,7 @@ class Options(object):
                 self.rowkey_info_file,
                 self.normalize_nce_weights,
                 self.normalize_embeddings,
+                self.use_custom_nce_loss,
                 # non-cmd args
                 self.estimator,
                 self.hooks,
