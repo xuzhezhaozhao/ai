@@ -93,6 +93,8 @@ parser.add_argument('--rowkey_info_file', default='', type=str, help='')
 parser.add_argument('--normalize_nce_weights', default=0, type=int, help='')
 parser.add_argument('--normalize_embeddings', default=0, type=int, help='')
 parser.add_argument('--use_custom_nce_loss', default=0, type=int, help='')
+parser.add_argument(
+    '--negative_sampler_type', default='fixed', type=str, help='')
 
 opts = Options()
 
@@ -170,6 +172,7 @@ def parse_args(argv):
     opts.normalize_nce_weights = bool(args.normalize_nce_weights)
     opts.normalize_embeddings = bool(args.normalize_embeddings)
     opts.use_custom_nce_loss = bool(args.use_custom_nce_loss)
+    opts.negative_sampler_type = args.negative_sampler_type
 
 
 def validate_opts():

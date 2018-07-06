@@ -91,3 +91,10 @@ class SGDLrDecayType(object):
     NONE = 'none'
     EXPONENTIAL_DECAY = 'exponential_decay'
     FASTTEXT_DECAY = 'fasttext_decay'
+
+
+class NegativeSamplerType(object):
+    """Negative sampler type."""
+
+    FIXED = 'fixed'
+    LOG_UNIFORM = 'log_uniform'

@@ -370,42 +370,29 @@ def save_numpy_float_array(array, filename):
 def create_loss(weights, biases, labels, inputs, params):
     """Create nce loss."""
 
-    num_classes = params['num_classes']
     opts = params['opts']
-    num_sampled = opts.num_sampled
-    ntargets = opts.ntargets
+
+    # Negative sampling.
+    sampled_values = get_negative_samples(labels, params)
 
     if opts.use_custom_nce_loss:
         tf.logging.info("Use custom nce loss.")
-        return custom_nce_loss(weights, biases, labels, inputs, params)
-
-    loss = tf.nn.nce_loss(
-        weights=weights,
-        biases=biases,
-        labels=labels,
-        inputs=inputs,
-        num_sampled=num_sampled,
-        num_classes=num_classes,
-        num_true=ntargets,
-        partition_strategy="div")
-    loss = tf.reduce_mean(loss, name="mean_loss")
-
-    return loss
+        return custom_nce_loss(weights, biases, labels, inputs,
+                               sampled_values, params)
+    else:
+        tf.logging.info("Use default nce loss.")
+        return default_nce_loss(weights, biases, labels, inputs,
+                                sampled_values, params)
 
 
-def custom_nce_loss(weights, biases, labels, inputs, params):
+def custom_nce_loss(weights, biases, labels, inputs, sampled_values, params):
     """Optimized custom nce loss implemented.
     ref: https://github.com/tensorflow/models/blob/master/tutorials/embedding/word2vec.py
     """
 
     opts = params['opts']
-    num_classes = params['num_classes']
-    sampled_ids, _, _ = tf.nn.log_uniform_candidate_sampler(
-        true_classes=labels,
-        num_true=opts.ntargets,
-        num_sampled=opts.num_sampled,
-        unique=True,
-        range_max=num_classes)
+
+    sampled_ids = sampled_values[0]
 
     # Weights for labels: [batch_size, emb_dim]
     true_w = tf.nn.embedding_lookup(weights, tf.reshape(labels, [-1]))
@@ -439,6 +426,28 @@ def custom_nce_loss(weights, biases, labels, inputs, params):
     nce_loss_tensor = (tf.reduce_sum(true_xent) +
                        tf.reduce_sum(sampled_xent)) / opts.batch_size
     return nce_loss_tensor
+
+
+def default_nce_loss(weights, biases, labels, inputs, sampled_values, params):
+    """Default nce loss."""
+
+    num_classes = params['num_classes']
+    opts = params['opts']
+    num_sampled = opts.num_sampled
+    ntargets = opts.ntargets
+
+    loss = tf.nn.nce_loss(
+        weights=weights,
+        biases=biases,
+        labels=labels,
+        inputs=inputs,
+        num_sampled=num_sampled,
+        num_classes=num_classes,
+        num_true=ntargets,
+        sampled_values=sampled_values,
+        partition_strategy="div")
+    loss = tf.reduce_mean(loss, name="mean_loss")
+    return loss
 
 
 def create_optimizer(features, params):
@@ -616,3 +625,55 @@ def sgd_lr_fasttext_decay(features, params):
                           / tf.cast(total_tokens, tf.float32)))
     new_lr = tf.maximum(new_lr, 1e-8)
     return new_lr
+
+
+def get_fixed_unigram_negative_samples(labels, params):
+    """Get fixed_unigram_candidate_sampler."""
+
+    num_classes = params['num_classes']
+    opts = params['opts']
+
+    dict_word_counts_path = os.path.join(
+        opts.dict_dir, model_keys.DICT_WORD_COUNTS)
+    vocab_counts = [int(word.strip()) for word in open(dict_word_counts_path)]
+    vocab_counts.insert(0, vocab_counts[0])  # for padding
+    sampled_values = (tf.nn.fixed_unigram_candidate_sampler(
+        true_classes=labels,
+        num_true=opts.ntargets,
+        num_sampled=opts.num_sampled,
+        unique=True,
+        range_max=num_classes,
+        distortion=0.75,
+        unigrams=vocab_counts))
+    return sampled_values
+
+
+def get_log_uniform_negative_samples(labels, params):
+    """Get log_uniform_candidate_sampler."""
+
+    num_classes = params['num_classes']
+    opts = params['opts']
+    sampled_values = (tf.nn.log_uniform_candidate_sampler(
+        true_classes=labels,
+        num_true=opts.ntargets,
+        num_sampled=opts.num_sampled,
+        unique=True,
+        range_max=num_classes))
+    return sampled_values
+
+
+def get_negative_samples(labels, params):
+    """Get negative samples."""
+
+    opts = params['opts']
+
+    if opts.negative_sampler_type == model_keys.NegativeSamplerType.FIXED:
+        tf.logging.info("Use fixed_unigram_candidate_sampler.")
+        sampled_values = get_fixed_unigram_negative_samples(labels, params)
+    elif (opts.negative_sampler_type
+          == model_keys.NegativeSamplerType.LOG_UNIFORM):
+        tf.logging.info("Use log_uniform_candidate_sampler.")
+        sampled_values = get_log_uniform_negative_samples(labels, params)
+    else:
+        raise ValueError("Unsurpported negative sampler type.")
+    return sampled_values

@@ -74,6 +74,7 @@ class Options(object):
         self.normalize_nce_weights = False
         self.normalize_embeddings = False
         self.use_custom_nce_loss = False
+        self.negative_sampler_type = 'fixed'
 
         # non-cmd args
         self.estimator = None
@@ -147,6 +148,7 @@ class Options(object):
         normalize_nce_weights = {} \n \
         normalize_embeddings = {} \n \
         use_custom_nce_loss = {} \n \
+        negative_sampler_type = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -216,6 +218,7 @@ class Options(object):
                 self.normalize_nce_weights,
                 self.normalize_embeddings,
                 self.use_custom_nce_loss,
+                self.negative_sampler_type,
                 # non-cmd args
                 self.estimator,
                 self.hooks,
