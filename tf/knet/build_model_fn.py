@@ -387,7 +387,7 @@ def create_loss(weights, biases, labels, inputs, params):
 
 def custom_nce_loss(weights, biases, labels, inputs, sampled_values, params):
     """Optimized custom nce loss implemented.
-    ref: https://github.com/tensorflow/models/blob/master/tutorials/embedding/word2vec.py
+    ref: tensorflow/models/tutorials/embedding/word2vec.py (github)
     """
 
     opts = params['opts']
@@ -644,6 +644,7 @@ def get_fixed_unigram_negative_samples(labels, params):
         unique=True,
         range_max=num_classes,
         distortion=0.75,
+        num_reserved_ids=1,  # for padding id 0
         unigrams=vocab_counts))
     return sampled_values
 
