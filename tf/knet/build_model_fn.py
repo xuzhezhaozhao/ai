@@ -636,7 +636,7 @@ def get_fixed_unigram_negative_samples(labels, params):
     dict_word_counts_path = os.path.join(
         opts.dict_dir, model_keys.DICT_WORD_COUNTS)
     vocab_counts = [int(word.strip()) for word in open(dict_word_counts_path)]
-    vocab_counts.insert(0, vocab_counts[0])  # for padding
+    vocab_counts.insert(0, vocab_counts[0])  # for padding id
     sampled_values = (tf.nn.fixed_unigram_candidate_sampler(
         true_classes=labels,
         num_true=opts.ntargets,
@@ -644,7 +644,7 @@ def get_fixed_unigram_negative_samples(labels, params):
         unique=True,
         range_max=num_classes,
         distortion=0.75,
-        num_reserved_ids=1,  # for padding id 0
+        # num_reserved_ids=1,  # don't use it seems better?
         unigrams=vocab_counts))
     return sampled_values
 
