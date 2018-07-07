@@ -98,3 +98,11 @@ class NegativeSamplerType(object):
 
     FIXED = 'fixed'
     LOG_UNIFORM = 'log_uniform'
+
+
+class NceLossType(object):
+    """Nce loss type."""
+
+    DEFAULT = 'default'
+    WORD2VEC = 'word2vec'
+    FASTTEXT = 'fasttext'

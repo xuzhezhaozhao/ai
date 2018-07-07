@@ -59,7 +59,7 @@ tfrecord_file='../../data/train_data.tfrecord'
 num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 tfrecord_map_num_parallel_calls=2
-train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
+train_parallel_mode='default' # 'default', 'train_op_parallel'
 num_train_op_parallel=4
 use_batch_normalization=1
 sgd_lr_decay_type='fasttext_decay'  # 'exponential_decay', 'fasttext_decay', 'none'
@@ -75,7 +75,7 @@ filter_with_rowkey_info_e_play_ratio_thr=0.3
 rowkey_info_file=""
 normalize_nce_weights=0
 normalize_embeddings=0
-use_custom_nce_loss=1
+nce_loss_type='fasttext'
 negative_sampler_type='fixed'  # fixed(better), log_uniform
 
 
@@ -164,5 +164,5 @@ python main.py \
     --rowkey_info_file "${rowkey_info_file}" \
     --normalize_nce_weights ${normalize_nce_weights} \
     --normalize_embeddings ${normalize_embeddings} \
-    --use_custom_nce_loss ${use_custom_nce_loss} \
+    --nce_loss_type ${nce_loss_type} \
     --negative_sampler_type ${negative_sampler_type}

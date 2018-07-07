@@ -374,19 +374,22 @@ def create_loss(weights, biases, labels, inputs, params):
 
     # Negative sampling.
     sampled_values = get_negative_samples(labels, params)
-
-    if opts.use_custom_nce_loss:
-        tf.logging.info("Use custom nce loss.")
-        # return custom_nce_loss(weights, biases, labels, inputs,
-                               # sampled_values, params)
-        return optimized_nce_loss(weights, biases, labels, inputs, params)
-    else:
+    if opts.nce_loss_type == model_keys.NceLossType.DEFAULT:
         tf.logging.info("Use default nce loss.")
         return default_nce_loss(weights, biases, labels, inputs,
                                 sampled_values, params)
+    elif opts.nce_loss_type == model_keys.NceLossType.WORD2VEC:
+        tf.logging.info("Use word2vec nce loss.")
+        return word2vec_nce_loss(weights, biases, labels, inputs,
+                                 sampled_values, params)
+    elif opts.nce_loss_type == model_keys.NceLossType.FASTTEXT:
+        tf.logging.info("Use fasttext nce loss.")
+        return fasttext_nce_loss(weights, biases, labels, inputs, params)
+    else:
+        raise ValueError("Unsurpported nce loss type.")
 
 
-def custom_nce_loss(weights, biases, labels, inputs, sampled_values, params):
+def word2vec_nce_loss(weights, biases, labels, inputs, sampled_values, params):
     """Optimized custom nce loss implemented.
     ref: tensorflow/models/tutorials/embedding/word2vec.py (github)
     """
@@ -429,7 +432,8 @@ def custom_nce_loss(weights, biases, labels, inputs, sampled_values, params):
     return nce_loss_tensor
 
 
-def optimized_nce_loss(weights, biases, labels, inputs, params):
+def fasttext_nce_loss(weights, biases, labels, inputs, params):
+    """Fasttext nce loss. [batch, num_sampled] sampled ids."""
 
     num_classes = params['num_classes']
     opts = params['opts']
@@ -456,7 +460,6 @@ def optimized_nce_loss(weights, biases, labels, inputs, params):
 
     # Weights for sampled ids: [batch, num_sampled, emb_dim]
     sampled_w = tf.nn.embedding_lookup(weights, sampled_ids)
-    print(sampled_w)
     # Biases for sampled ids: [batch, num_sampled, 1]
     sampled_b = tf.nn.embedding_lookup(biases, sampled_ids)
 
@@ -464,9 +467,8 @@ def optimized_nce_loss(weights, biases, labels, inputs, params):
     true_logits = tf.reduce_sum(tf.multiply(inputs, true_w), 1) + true_b
 
     # Sampled logits: [batch_size, num_sampled]
-    sampled_b_vec = tf.reshape(sampled_b, [opts.batch_size, opts.num_sampled])
-    broadcast_inputs = tf.reshape(inputs,
-                                  [opts.batch_size, 1, opts.embedding_dim])
+    sampled_b_vec = tf.reshape(sampled_b, [-1, opts.num_sampled])
+    broadcast_inputs = tf.reshape(inputs, [-1, 1, opts.embedding_dim])
     sampled_logits = tf.multiply(broadcast_inputs, sampled_w)
     sampled_logits = tf.reduce_sum(sampled_logits, -1) + sampled_b_vec
 
