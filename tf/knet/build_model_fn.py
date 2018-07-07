@@ -446,7 +446,8 @@ def default_nce_loss(weights, biases, labels, inputs, sampled_values, params):
         num_true=ntargets,
         sampled_values=sampled_values,
         partition_strategy="div")
-    loss = tf.reduce_mean(loss, name="mean_loss")
+    loss = tf.reduce_sum(loss, name="mean_loss")
+    loss = loss / opts.batch_size
     return loss
 
 
