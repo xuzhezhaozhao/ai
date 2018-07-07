@@ -96,7 +96,7 @@ class FasttextNegativeSamplerOp : public OpKernel {
     OP_REQUIRES(ctx, TensorShapeUtils::IsVector(unigrams_shape),
                 errors::InvalidArgument("unigrams expects a Vector."));
     OP_REQUIRES(
-        ctx, flat_unigrams.size() == range_max_,
+        ctx, flat_unigrams.size() + num_reserved_ids_ == range_max_,
         errors::InvalidArgument("unigrams and range_max size not matched."));
 
     float z = 0.0;

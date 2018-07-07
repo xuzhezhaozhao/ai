@@ -377,8 +377,9 @@ def create_loss(weights, biases, labels, inputs, params):
 
     if opts.use_custom_nce_loss:
         tf.logging.info("Use custom nce loss.")
-        return custom_nce_loss(weights, biases, labels, inputs,
-                               sampled_values, params)
+        # return custom_nce_loss(weights, biases, labels, inputs,
+                               # sampled_values, params)
+        return optimized_nce_loss(weights, biases, labels, inputs, params)
     else:
         tf.logging.info("Use default nce loss.")
         return default_nce_loss(weights, biases, labels, inputs,
@@ -414,6 +415,60 @@ def custom_nce_loss(weights, biases, labels, inputs, sampled_values, params):
     sampled_logits = tf.matmul(inputs,
                                sampled_w,
                                transpose_b=True) + sampled_b_vec
+
+    # cross-entropy(logits, labels)
+    true_xent = tf.nn.sigmoid_cross_entropy_with_logits(
+        labels=tf.ones_like(true_logits), logits=true_logits)
+    sampled_xent = tf.nn.sigmoid_cross_entropy_with_logits(
+        labels=tf.zeros_like(sampled_logits), logits=sampled_logits)
+
+    # NCE-loss is the sum of the true and noise (sampled words)
+    # contributions, averaged over the batch.
+    nce_loss_tensor = (tf.reduce_sum(true_xent) +
+                       tf.reduce_sum(sampled_xent)) / opts.batch_size
+    return nce_loss_tensor
+
+
+def optimized_nce_loss(weights, biases, labels, inputs, params):
+
+    num_classes = params['num_classes']
+    opts = params['opts']
+
+    dict_word_counts_path = os.path.join(
+        opts.dict_dir, model_keys.DICT_WORD_COUNTS)
+    unigrams = [int(word.strip()) for word in open(dict_word_counts_path)]
+    unigrams = tf.make_tensor_proto(unigrams, dtype=tf.int64)
+
+    # [batch, num_sampled]
+    sampled_ids = custom_ops.fasttext_negative_sampler(
+        true_classes=labels,
+        num_true=opts.ntargets,
+        num_sampled=opts.num_sampled,
+        unique=True,
+        range_max=num_classes,
+        num_reserved_ids=1,
+        unigrams=unigrams)
+
+    # Weights for labels: [batch_size, emb_dim]
+    true_w = tf.nn.embedding_lookup(weights, tf.reshape(labels, [-1]))
+    # Biases for labels: [batch_size, emb_dim]
+    true_b = tf.nn.embedding_lookup(biases, tf.reshape(labels, [-1]))
+
+    # Weights for sampled ids: [batch, num_sampled, emb_dim]
+    sampled_w = tf.nn.embedding_lookup(weights, sampled_ids)
+    print(sampled_w)
+    # Biases for sampled ids: [batch, num_sampled, 1]
+    sampled_b = tf.nn.embedding_lookup(biases, sampled_ids)
+
+    # True logits: [batch_size, 1]
+    true_logits = tf.reduce_sum(tf.multiply(inputs, true_w), 1) + true_b
+
+    # Sampled logits: [batch_size, num_sampled]
+    sampled_b_vec = tf.reshape(sampled_b, [opts.batch_size, opts.num_sampled])
+    broadcast_inputs = tf.reshape(inputs,
+                                  [opts.batch_size, 1, opts.embedding_dim])
+    sampled_logits = tf.multiply(broadcast_inputs, sampled_w)
+    sampled_logits = tf.reduce_sum(sampled_logits, -1) + sampled_b_vec
 
     # cross-entropy(logits, labels)
     true_xent = tf.nn.sigmoid_cross_entropy_with_logits(
