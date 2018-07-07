@@ -30,7 +30,7 @@ train_ws=20
 train_lower_ws=1
 t=0.025
 batch_size=64
-num_sampled=10
+num_sampled=5
 hidden_units=""
 prefetch_size=10000
 max_train_steps=-1
@@ -75,7 +75,7 @@ filter_with_rowkey_info_e_play_ratio_thr=0.3
 rowkey_info_file=""
 normalize_nce_weights=0
 normalize_embeddings=0
-nce_loss_type='fasttext'
+nce_loss_type='fasttext'  # 'word2vec', 'fasttext', 'default'
 negative_sampler_type='fixed'  # fixed(better), log_uniform
 
 
