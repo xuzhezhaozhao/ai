@@ -202,12 +202,15 @@ def get_metrics(labels, logits, ids, params):
         labels=labels, predictions_idx=ids, k=recall_k)
     precision_at_top_k = tf.metrics.precision_at_top_k(
         labels=labels, predictions_idx=ids, k=recall_k)
+    precision_at_top_k2 = tf.metrics.precision_at_top_k(
+        labels=labels, predictions_idx=ids, k=recall_k/2)
     average_precision_at_k = tf.metrics.average_precision_at_k(
         labels=labels, predictions=logits, k=recall_k)
 
     metrics = {'accuracy': accuracy,
                'recall_at_top_{}'.format(recall_k): recall_at_top_k,
                'precision_at_top_{}'.format(recall_k): precision_at_top_k,
+               'precision_at_top_{}'.format(recall_k/2): precision_at_top_k2,
                'average_precision_at_{}'
                .format(recall_k): average_precision_at_k}
     return metrics
