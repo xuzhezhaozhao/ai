@@ -195,22 +195,27 @@ def get_metrics(labels, logits, ids, params):
     opts = params['opts']
     ntargets = opts.ntargets
     recall_k = opts.recall_k
+    recall_k2 = recall_k//2
+    recall_k4 = recall_k//4
 
     predicted = ids[:, :ntargets]
     accuracy = tf.metrics.accuracy(labels=labels, predictions=predicted)
     recall_at_top_k = tf.metrics.recall_at_top_k(
         labels=labels, predictions_idx=ids, k=recall_k)
+    recall_at_top_k2 = tf.metrics.recall_at_top_k(
+        labels=labels, predictions_idx=ids[:, :recall_k2], k=recall_k2)
+    recall_at_top_k4 = tf.metrics.recall_at_top_k(
+        labels=labels, predictions_idx=ids[:, :recall_k4], k=recall_k4)
     precision_at_top_k = tf.metrics.precision_at_top_k(
         labels=labels, predictions_idx=ids, k=recall_k)
-    precision_at_top_k2 = tf.metrics.precision_at_top_k(
-        labels=labels, predictions_idx=ids, k=recall_k/2)
     average_precision_at_k = tf.metrics.average_precision_at_k(
         labels=labels, predictions=logits, k=recall_k)
 
     metrics = {'accuracy': accuracy,
                'recall_at_top_{}'.format(recall_k): recall_at_top_k,
+               'recall_at_top_{}'.format(recall_k2): recall_at_top_k2,
+               'recall_at_top_{}'.format(recall_k4): recall_at_top_k4,
                'precision_at_top_{}'.format(recall_k): precision_at_top_k,
-               'precision_at_top_{}'.format(recall_k/2): precision_at_top_k2,
                'average_precision_at_{}'
                .format(recall_k): average_precision_at_k}
     return metrics
