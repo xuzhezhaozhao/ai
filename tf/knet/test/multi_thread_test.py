@@ -15,7 +15,7 @@ c = None
 
 def get_constant():
     with tf.variable_scope("constant", reuse=tf.AUTO_REUSE):
-        c = tf.get_variable("c1", initializer=tf.constant([1, 1, 1]))
+        c = tf.get_variable("c1", initializer=tf.constant([0, 0, 0]))
     return c
 
 
