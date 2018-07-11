@@ -23,9 +23,9 @@ class FasttextNegativeSamplerOp : public OpKernel {
         num_reserved_ids_(0),
         seed_(0),
         unique_(true),
-        rng_(seed_),
         negpos_(0) {
     LOG(ERROR) << "Init FasttextNegativeSamplerOp ...";
+    negatives_.clear();
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("num_true", &num_true_));
     LOG(ERROR) << "num_true = " << num_true_;
@@ -130,7 +130,7 @@ class FasttextNegativeSamplerOp : public OpKernel {
   int64 num_sampled_;
   int64 range_max_;
   int64 num_reserved_ids_;
-  int64 seed_ = 0;
+  int64 seed_;
   bool unique_;
 
   std::vector<int> negatives_;

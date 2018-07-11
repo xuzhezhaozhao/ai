@@ -69,6 +69,9 @@ from tensorflow.python.estimator.export import export as export_helpers
 from tensorflow.python.estimator.export import export_output
 from tensorflow.python.estimator import run_config
 
+import threading
+import Queue
+
 
 _VALID_MODEL_FN_ARGS = set(
     ['features', 'labels', 'mode', 'params', 'self', 'config'])
@@ -1342,8 +1345,6 @@ class Estimator(object):
         log_step_count_steps=self._config.log_step_count_steps) as mon_sess:
 
       loss = 0.0
-      import threading
-      import Queue
       workers = []
       queue = Queue.Queue()
       mon_sess.run_step_fn(step_fn)  # run once to avoid run op constructor repeatedly
@@ -1358,9 +1359,9 @@ class Estimator(object):
         worker.join()
 
     while not queue.empty():
-        single_loss = queue.get()
-        logging.info("single thread loss: {}".format(single_loss))
-        loss += single_loss
+      single_loss = queue.get()
+      logging.info("single thread loss: {}".format(single_loss))
+      loss += single_loss
 
     loss /= self._num_thread
     logging.info("Last loss: {}".format(loss))
