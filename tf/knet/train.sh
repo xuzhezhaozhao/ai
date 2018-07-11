@@ -59,8 +59,8 @@ tfrecord_file='../../data/train_data.tfrecord'
 num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 tfrecord_map_num_parallel_calls=2
-train_parallel_mode='default' # 'default', 'train_op_parallel'
-num_train_op_parallel=4
+train_parallel_mode='multi_thread' # 'default', 'train_op_parallel', 'multi_thread'
+num_parallel=4
 use_batch_normalization=1
 sgd_lr_decay_type='fasttext_decay'  # 'exponential_decay', 'fasttext_decay', 'none'
 sgd_lr_decay_steps=100
@@ -149,7 +149,7 @@ python main.py \
     --train_data_format ${train_data_format} \
     --tfrecord_map_num_parallel_calls ${tfrecord_map_num_parallel_calls} \
     --train_parallel_mode ${train_parallel_mode} \
-    --num_train_op_parallel ${num_train_op_parallel} \
+    --num_parallel ${num_parallel} \
     --use_batch_normalization ${use_batch_normalization} \
     --sgd_lr_decay_type ${sgd_lr_decay_type} \
     --sgd_lr_decay_steps ${sgd_lr_decay_steps} \

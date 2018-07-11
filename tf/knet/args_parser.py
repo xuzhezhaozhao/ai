@@ -71,7 +71,7 @@ parser.add_argument(
     '--tfrecord_map_num_parallel_calls', default=1, type=int, help='')
 parser.add_argument(
     '--train_parallel_mode', default='default', type=str, help='')
-parser.add_argument('--num_train_op_parallel', default=1, type=int, help='')
+parser.add_argument('--num_parallel', default=1, type=int, help='')
 parser.add_argument('--use_batch_normalization', default=0, type=int, help='')
 parser.add_argument(
     '--sgd_lr_decay_type', default='exponential_decay', type=str, help='')
@@ -156,7 +156,7 @@ def parse_args(argv):
     opts.train_data_format = args.train_data_format
     opts.tfrecord_map_num_parallel_calls = args.tfrecord_map_num_parallel_calls
     opts.train_parallel_mode = args.train_parallel_mode
-    opts.num_train_op_parallel = args.num_train_op_parallel
+    opts.num_parallel = args.num_parallel
     opts.use_batch_normalization = bool(args.use_batch_normalization)
     opts.sgd_lr_decay_type = args.sgd_lr_decay_type
     opts.sgd_lr_decay_steps = args.sgd_lr_decay_steps

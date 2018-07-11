@@ -83,6 +83,7 @@ class TrainParallelMode(object):
 
     DEFAULT = 'default'
     TRAIN_OP_PARALLEL = 'train_op_parallel'
+    MULTI_THREAD = 'multi_thread'
 
 
 class SGDLrDecayType(object):

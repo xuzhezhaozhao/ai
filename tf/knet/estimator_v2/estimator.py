@@ -33,11 +33,6 @@ from tensorflow.core.protobuf import config_pb2
 from tensorflow.core.protobuf import rewriter_config_pb2
 from tensorflow.python.client import session as tf_session
 from tensorflow.python.eager import context
-from tensorflow.python.estimator import model_fn as model_fn_lib
-from tensorflow.python.estimator import run_config
-from tensorflow.python.estimator import util as estimator_util
-from tensorflow.python.estimator.export import export as export_helpers
-from tensorflow.python.estimator.export import export_output
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import errors
 from tensorflow.python.framework import ops
@@ -67,6 +62,12 @@ from tensorflow.python.util import compat_internal
 from tensorflow.python.util import function_utils
 from tensorflow.python.util import nest
 from tensorflow.python.util.tf_export import tf_export
+
+from tensorflow.python.estimator import model_fn as model_fn_lib
+from tensorflow.python.estimator import util as estimator_util
+from tensorflow.python.estimator.export import export as export_helpers
+from tensorflow.python.estimator.export import export_output
+from tensorflow.python.estimator import run_config
 
 
 _VALID_MODEL_FN_ARGS = set(
@@ -106,7 +107,7 @@ class Estimator(object):
   """
 
   def __init__(self, model_fn, model_dir=None, config=None, params=None,
-               warm_start_from=None):
+               warm_start_from=None, num_thread=1):
     """Constructs an `Estimator` instance.
 
     See @{$estimators} for more information. To warm-start an `Estimator`:
@@ -170,6 +171,8 @@ class Estimator(object):
         a member of `Estimator`.
     """
     Estimator._assert_members_are_not_overridden(self)
+
+    self._num_thread = num_thread
 
     if config is None:
       self._config = run_config.RunConfig()
@@ -1319,6 +1322,12 @@ class Estimator(object):
         # It is expected to have one CheckpointSaverHook. If multiple, we pick
         # up the first one to add listener.
         saver_hooks[0]._listeners.extend(saving_listeners)  # pylint: disable=protected-access
+
+    def step_fn(step_context):
+      _, loss = step_context.session.run([estimator_spec.train_op,
+                                          estimator_spec.loss])
+      return loss
+
     with training.MonitoredTrainingSession(
         master=self._config.master,
         is_chief=self._config.is_chief,
@@ -1331,9 +1340,20 @@ class Estimator(object):
         save_summaries_steps=self._config.save_summary_steps,
         config=self._session_config,
         log_step_count_steps=self._config.log_step_count_steps) as mon_sess:
-      loss = None
-      while not mon_sess.should_stop():
-        _, loss = mon_sess.run([estimator_spec.train_op, estimator_spec.loss])
+
+      loss = 0.0
+      import threading
+      workers = []
+      for tid in range(self._num_thread):
+        logging.info("Start thread {} ...".format(tid))
+        worker = threading.Thread(target=_thread_train_body,
+                                  args=(mon_sess, step_fn))
+        worker.start()
+        workers.append(worker)
+
+      for worker in workers:
+        worker.join()
+
     return loss
 
   def _evaluate_build_graph(self, input_fn, hooks=None, checkpoint_path=None):
@@ -1834,3 +1854,8 @@ def _get_default_warm_start_settings(warm_start_from):
   else:
     raise ValueError('warm_start_from must be a string or a WarmStartSettings, '
                      'instead got {}'.format(type(warm_start_from)))
+
+def _thread_train_body(mon_sess, step_fn):
+  while not mon_sess.should_stop():
+    loss = mon_sess.run_step_fn(step_fn)
+  return loss
