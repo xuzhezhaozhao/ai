@@ -459,7 +459,8 @@ def fasttext_nce_loss(weights, biases, labels, inputs, params):
         unique=True,
         range_max=num_classes,
         num_reserved_ids=1,
-        unigrams=unigrams)
+        unigrams=unigrams,
+        seed=_call_model_fn_times)
 
     # Weights for labels: [batch_size, emb_dim]
     true_w = tf.nn.embedding_lookup(weights, tf.reshape(labels, [-1]))

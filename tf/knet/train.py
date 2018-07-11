@@ -73,9 +73,7 @@ def build_estimator(opts):
         estimator = tf.estimator.Estimator(**estimator_keys)
     elif train_parallel_mode == model_keys.TrainParallelMode.TRAIN_OP_PARALLEL:
         from estimator.estimator import TrainOpParallelEstimator
-        from estimator.run_config import RunConfig as TrainOpParallelRunConfig
-
-        config = TrainOpParallelRunConfig(**config_keys)
+        config = tf.estimator.RunConfig(**config_keys)
         estimator_keys['config'] = config
         estimator_keys['num_train_op_parallel'] = opts.num_parallel
         estimator = TrainOpParallelEstimator(**estimator_keys)

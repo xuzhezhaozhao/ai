@@ -62,12 +62,12 @@ from tensorflow.python.util import compat_internal
 from tensorflow.python.util import function_utils
 from tensorflow.python.util import nest
 from tensorflow.python.util.tf_export import tf_export
+from tensorflow.python.estimator import model_fn as model_fn_lib
+from tensorflow.python.estimator.export import export as export_helpers
+from tensorflow.python.estimator.export import export_output
+from tensorflow.python.estimator import run_config
 
 import estimator.util as estimator_util
-import estimator.model_fn as model_fn_lib
-import estimator.run_config as run_config
-from estimator.export import export as export_helpers
-from estimator.export import export_output
 
 _VALID_MODEL_FN_ARGS = set(
     ['features', 'labels', 'mode', 'params', 'self', 'config'])
