@@ -124,6 +124,8 @@ def parse_args(argv):
     opts.export_model_dir = args.export_model_dir
     opts.prefetch_size = args.prefetch_size
     opts.save_summary_steps = args.save_summary_steps
+    if opts.save_summary_steps < 0:
+        opts.save_summary_steps = None
     opts.save_checkpoints_secs = args.save_checkpoints_secs
     opts.keep_checkpoint_max = args.keep_checkpoint_max
     opts.log_step_count_steps = args.log_step_count_steps
