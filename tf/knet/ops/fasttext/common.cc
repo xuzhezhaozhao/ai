@@ -129,6 +129,6 @@ void SaveDictionary(const std::string& dict_dir,
       LOG(FATAL) << "write file " << dict_word_counts << " failed.";
     }
     ofs.close();
-    LOG(INFO) << "Write dict words OK";
+    LOG(INFO) << "Write dict word counts OK";
   }
 }
