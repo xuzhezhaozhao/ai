@@ -2,6 +2,7 @@
 # -*- coding=utf8 -*-
 
 import tensorflow as tf
+import threading
 
 
 fasttext_negative_sampler_ops = tf.load_op_library(
@@ -20,5 +21,18 @@ sampled_ids = fasttext_negative_sampler_ops.fasttext_negative_sampler(
     range_max=10,
     unigrams=unigrams)
 
-sampled_ids = sess.run(sampled_ids)
-print(sampled_ids)
+
+def thread_body(sess, op):
+    print(sess.run(op))
+
+
+print(sess.run(sampled_ids))
+
+workers = []
+for _ in xrange(4):
+    worker = threading.Thread(target=thread_body, args=(sess, sampled_ids))
+    worker.start()
+    workers.append(worker)
+
+for worker in workers:
+    worker.join()
