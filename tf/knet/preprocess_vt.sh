@@ -54,7 +54,8 @@ tfrecord_file=${raw_data_dir}/train_data.vt.tfrecord
 num_tfrecord_file=42
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 tfrecord_map_num_parallel_calls=2
-train_parallel_mode='train_op_parallel' # 'default', 'train_op_parallel'
+# 'default', 'train_op_parallel', 'multi_thread'
+train_parallel_mode='train_op_parallel'
 num_parallel=8
 use_batch_normalization=0
 sgd_lr_decay_type='fasttext_decay'  # 'exponential_decay', 'fasttext_decay'
