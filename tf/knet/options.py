@@ -58,7 +58,7 @@ class Options(object):
         self.train_data_format = 'fasttext'
         self.tfrecord_map_num_parallel_calls = 1
         self.train_parallel_mode = 'default'
-        self.num_train_op_parallel = 1
+        self.num_parallel = 1
         self.use_batch_normalization = 0
         self.sgd_lr_decay_type = 'exponential_decay'
         self.sgd_lr_decay_steps = 100
@@ -133,7 +133,7 @@ class Options(object):
         train_data_format = {} \n \
         tfrecord_map_num_parallel_calls = {} \n \
         train_parallel_mode = {} \n \
-        num_train_op_parallel = {} \n \
+        num_parallel = {} \n \
         use_batch_normalization = {} \n \
         sgd_lr_decay_type = {} \n \
         sgd_lr_decay_steps = {} \n \
@@ -203,7 +203,7 @@ class Options(object):
                 self.train_data_format,
                 self.tfrecord_map_num_parallel_calls,
                 self.train_parallel_mode,
-                self.num_train_op_parallel,
+                self.num_parallel,
                 self.use_batch_normalization,
                 self.sgd_lr_decay_type,
                 self.sgd_lr_decay_steps,
