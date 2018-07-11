@@ -42,6 +42,9 @@ int32_t Dictionary::find(const std::string& w, uint32_t h) const {
 }
 
 void Dictionary::add(const std::string& w) {
+  if (w == EOS) {
+    return;
+  }
   int32_t h = find(w);
   ntokens_++;
   if (word2int_[h] == -1) {
