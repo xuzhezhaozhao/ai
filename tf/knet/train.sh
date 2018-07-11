@@ -32,7 +32,7 @@ t=0.025
 batch_size=64
 num_sampled=10
 hidden_units=""
-prefetch_size=10000
+prefetch_size=1000
 max_train_steps=-1
 save_summary_steps=100
 save_checkpoints_secs=600
@@ -58,7 +58,7 @@ optimizer_type='sgd'  # 'ada', 'sgd', 'adadelta', 'adam', 'rmsprop'
 tfrecord_file='../../data/train_data.tfrecord'
 num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
-tfrecord_map_num_parallel_calls=2
+map_num_parallel_calls=1
 # 'default', 'train_op_parallel', 'multi_thread'
 train_parallel_mode='multi_thread'
 num_parallel=4
@@ -148,7 +148,7 @@ python main.py \
     --tfrecord_file ${tfrecord_file} \
     --num_tfrecord_file ${num_tfrecord_file} \
     --train_data_format ${train_data_format} \
-    --tfrecord_map_num_parallel_calls ${tfrecord_map_num_parallel_calls} \
+    --map_num_parallel_calls ${map_num_parallel_calls} \
     --train_parallel_mode ${train_parallel_mode} \
     --num_parallel ${num_parallel} \
     --use_batch_normalization ${use_batch_normalization} \

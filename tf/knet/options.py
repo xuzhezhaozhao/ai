@@ -56,7 +56,7 @@ class Options(object):
         self.tfrecord_file = ''
         self.num_tfrecord_file = 1
         self.train_data_format = 'fasttext'
-        self.tfrecord_map_num_parallel_calls = 1
+        self.map_num_parallel_calls = 1
         self.train_parallel_mode = 'default'
         self.num_parallel = 1
         self.use_batch_normalization = 0
@@ -131,7 +131,7 @@ class Options(object):
         tfrecord_file = {} \n \
         num_tfrecord_file = {} \n \
         train_data_format = {} \n \
-        tfrecord_map_num_parallel_calls = {} \n \
+        map_num_parallel_calls = {} \n \
         train_parallel_mode = {} \n \
         num_parallel = {} \n \
         use_batch_normalization = {} \n \
@@ -201,7 +201,7 @@ class Options(object):
                 self.tfrecord_file,
                 self.num_tfrecord_file,
                 self.train_data_format,
-                self.tfrecord_map_num_parallel_calls,
+                self.map_num_parallel_calls,
                 self.train_parallel_mode,
                 self.num_parallel,
                 self.use_batch_normalization,

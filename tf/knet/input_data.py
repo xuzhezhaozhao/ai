@@ -72,7 +72,7 @@ def parse_dict_meta(opts):
     return dict_meta
 
 
-def generate_example(line, opts, is_eval):
+def map_generate_example(line, opts, is_eval):
     """
     测试时需要使用 initializable iterator
         it = ds.make_initializable_iterator()
@@ -85,6 +85,10 @@ def generate_example(line, opts, is_eval):
     params['use_saved_dict'] = True
 
     records, labels, ntokens = custom_ops.fasttext_example_generate(**params)
+    return (records, labels, ntokens)
+
+
+def flat_map_example(records, labels, ntokens):
     dataset = tf.data.Dataset.from_tensor_slices(
         ({model_keys.RECORDS_COL: records,
           model_keys.TOKENS_COL: ntokens}, labels))
@@ -106,8 +110,11 @@ def fasttext_train_input_fn(opts, skip_rows=0):
     batch_size = opts.batch_size
 
     ds = tf.data.TextLineDataset(train_data_path).skip(skip_rows)
-    ds = ds.flat_map(lambda line: generate_example(line, opts, False))
-    ds = ds.prefetch(opts.prefetch_size)
+    # ref: https://stackoverflow.com/questions/47411383/parallel-threads-with-tensorflow-dataset-api-and-flat-map/47414078
+    ds = ds.map(lambda line: map_generate_example(line, opts, False),
+                num_parallel_calls=opts.map_num_parallel_calls)
+    ds = ds.prefetch(opts.prefetch_size).flat_map(flat_map_example)
+
     if opts.shuffle_batch:
         ds = ds.shuffle(buffer_size=opts.prefetch_size)
     ds = ds.batch(batch_size).repeat(opts.epoch)
@@ -137,7 +144,7 @@ def tfrecord_train_input_fn(opts):
         ds = tf.data.TFRecordDataset([opts.tfrecord_file])
 
     ds = ds.map(lambda x: parse_example(x, opts),
-                opts.tfrecord_map_num_parallel_calls)
+                num_parallel_calls=opts.map_num_parallel_calls)
     ds = ds.prefetch(opts.prefetch_size)
     if opts.shuffle_batch:
         ds = ds.shuffle(buffer_size=opts.prefetch_size)
@@ -150,7 +157,9 @@ def eval_input_fn(opts, skip_rows=0):
     batch_size = opts.batch_size
 
     ds = tf.data.TextLineDataset(eval_data_path).skip(skip_rows)
-    ds = ds.flat_map(lambda line: generate_example(line, opts, True))
+    ds = ds.map(lambda line: map_generate_example(line, opts, True),
+                num_parallel_calls=opts.map_num_parallel_calls)
+    ds = ds.prefetch(opts.prefetch_size).flat_map(flat_map_example)
     ds = ds.prefetch(opts.prefetch_size)
     ds = ds.batch(batch_size)
     return ds

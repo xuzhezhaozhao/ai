@@ -53,7 +53,7 @@ optimizer_type='ada'
 tfrecord_file=${raw_data_dir}/train_data.vt.tfrecord
 num_tfrecord_file=42
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
-tfrecord_map_num_parallel_calls=2
+map_num_parallel_calls=2
 # 'default', 'train_op_parallel', 'multi_thread'
 train_parallel_mode='multi_thread'
 num_parallel=16
@@ -141,7 +141,7 @@ python main.py \
     --tfrecord_file ${tfrecord_file} \
     --num_tfrecord_file ${num_tfrecord_file} \
     --train_data_format ${train_data_format} \
-    --tfrecord_map_num_parallel_calls ${tfrecord_map_num_parallel_calls} \
+    --map_num_parallel_calls ${map_num_parallel_calls} \
     --train_parallel_mode ${train_parallel_mode} \
     --num_parallel ${num_parallel} \
     --use_batch_normalization ${use_batch_normalization} \

@@ -68,7 +68,7 @@ parser.add_argument('--num_tfrecord_file', default=1, type=int, help='')
 parser.add_argument(
     '--train_data_format', default='fasttext', type=str, help='')
 parser.add_argument(
-    '--tfrecord_map_num_parallel_calls', default=1, type=int, help='')
+    '--map_num_parallel_calls', default=1, type=int, help='')
 parser.add_argument(
     '--train_parallel_mode', default='default', type=str, help='')
 parser.add_argument('--num_parallel', default=1, type=int, help='')
@@ -154,7 +154,7 @@ def parse_args(argv):
     opts.tfrecord_file = args.tfrecord_file
     opts.num_tfrecord_file = args.num_tfrecord_file
     opts.train_data_format = args.train_data_format
-    opts.tfrecord_map_num_parallel_calls = args.tfrecord_map_num_parallel_calls
+    opts.map_num_parallel_calls = args.map_num_parallel_calls
     opts.train_parallel_mode = args.train_parallel_mode
     opts.num_parallel = args.num_parallel
     opts.use_batch_normalization = bool(args.use_batch_normalization)
