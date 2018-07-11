@@ -1343,18 +1343,28 @@ class Estimator(object):
 
       loss = 0.0
       import threading
+      import Queue
       workers = []
+      queue = Queue.Queue()
       for tid in range(self._num_thread):
         logging.info("Start thread {} ...".format(tid))
         worker = threading.Thread(target=_thread_train_body,
-                                  args=(tid, mon_sess, step_fn))
+                                  args=(tid, mon_sess, step_fn, queue))
         worker.start()
         workers.append(worker)
 
       for worker in workers:
         worker.join()
 
+    while not queue.empty():
+        single_loss = queue.get()
+        logging.info("single thread loss: {}".format(single_loss))
+        loss += single_loss
+
+    loss /= self._num_thread
+    logging.info("Last loss: {}".format(loss))
     return loss
+
 
   def _evaluate_build_graph(self, input_fn, hooks=None, checkpoint_path=None):
     """Builds the graph and related hooks to run evaluation."""
@@ -1856,7 +1866,7 @@ def _get_default_warm_start_settings(warm_start_from):
                      'instead got {}'.format(type(warm_start_from)))
 
 
-def _thread_train_body(tid, mon_sess, step_fn):
+def _thread_train_body(tid, mon_sess, step_fn, queue):
   last_loss = 0.0
   while True:
     try:
@@ -1865,4 +1875,5 @@ def _thread_train_body(tid, mon_sess, step_fn):
     except errors.OutOfRangeError:
       logging.info("_thread_train_body catch 'OutOfRangeError'.")
       break
+  queue.put(last_loss)
   return last_loss
