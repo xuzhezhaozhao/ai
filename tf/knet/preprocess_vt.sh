@@ -56,7 +56,7 @@ train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 tfrecord_map_num_parallel_calls=2
 # 'default', 'train_op_parallel', 'multi_thread'
 train_parallel_mode='multi_thread'
-num_parallel=12
+num_parallel=16
 use_batch_normalization=0
 sgd_lr_decay_type='fasttext_decay'  # 'exponential_decay', 'fasttext_decay'
 sgd_lr_decay_steps=100
