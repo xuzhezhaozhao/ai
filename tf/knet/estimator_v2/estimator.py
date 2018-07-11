@@ -1347,7 +1347,7 @@ class Estimator(object):
       for tid in range(self._num_thread):
         logging.info("Start thread {} ...".format(tid))
         worker = threading.Thread(target=_thread_train_body,
-                                  args=(mon_sess, step_fn))
+                                  args=(tid, mon_sess, step_fn))
         worker.start()
         workers.append(worker)
 
@@ -1855,7 +1855,14 @@ def _get_default_warm_start_settings(warm_start_from):
     raise ValueError('warm_start_from must be a string or a WarmStartSettings, '
                      'instead got {}'.format(type(warm_start_from)))
 
-def _thread_train_body(mon_sess, step_fn):
-  while not mon_sess.should_stop():
-    loss = mon_sess.run_step_fn(step_fn)
-  return loss
+
+def _thread_train_body(tid, mon_sess, step_fn):
+  last_loss = 0.0
+  while True:
+    try:
+      loss = mon_sess.run_step_fn(step_fn)
+      last_loss = loss
+    except errors.OutOfRangeError:
+      logging.info("_thread_train_body catch 'OutOfRangeError'.")
+      break
+  return last_loss
