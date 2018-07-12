@@ -381,13 +381,14 @@ def create_loss(weights, biases, labels, inputs, params):
     opts = params['opts']
 
     # Negative sampling.
-    sampled_values = get_negative_samples(labels, params)
     if opts.nce_loss_type == model_keys.NceLossType.DEFAULT:
         tf.logging.info("Use default nce loss.")
+        sampled_values = get_negative_samples(labels, params)
         return default_nce_loss(weights, biases, labels, inputs,
                                 sampled_values, params)
     elif opts.nce_loss_type == model_keys.NceLossType.WORD2VEC:
         tf.logging.info("Use word2vec nce loss.")
+        sampled_values = get_negative_samples(labels, params)
         return word2vec_nce_loss(weights, biases, labels, inputs,
                                  sampled_values, params)
     elif opts.nce_loss_type == model_keys.NceLossType.FASTTEXT:
