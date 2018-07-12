@@ -33,6 +33,7 @@ batch_size=64
 num_sampled=10
 hidden_units=""
 prefetch_size=1000
+shuffle_size=1000
 max_train_steps=-1
 save_summary_steps=100
 save_checkpoints_secs=600
@@ -121,6 +122,7 @@ python main.py \
     --model_dir ${MODEL_DIR} \
     --export_model_dir ${EXPORT_MODEL_DIR} \
     --prefetch_size ${prefetch_size} \
+    --shuffle_size ${shuffle_size} \
     --max_train_steps ${max_train_steps} \
     --save_summary_steps ${save_summary_steps} \
     --save_checkpoints_secs ${save_checkpoints_secs} \

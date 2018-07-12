@@ -116,7 +116,7 @@ def fasttext_train_input_fn(opts, skip_rows=0):
     ds = ds.prefetch(opts.prefetch_size).flat_map(flat_map_example)
 
     if opts.shuffle_batch:
-        ds = ds.shuffle(buffer_size=opts.prefetch_size)
+        ds = ds.shuffle(buffer_size=opts.shuffle_size)
     ds = ds.batch(batch_size).repeat(opts.epoch)
     return ds
 
@@ -147,7 +147,7 @@ def tfrecord_train_input_fn(opts):
                 num_parallel_calls=opts.map_num_parallel_calls)
     ds = ds.prefetch(opts.prefetch_size)
     if opts.shuffle_batch:
-        ds = ds.shuffle(buffer_size=opts.prefetch_size)
+        ds = ds.shuffle(buffer_size=opts.shuffle_size)
     ds = ds.batch(batch_size).repeat(opts.epoch)
     return ds
 
@@ -160,7 +160,6 @@ def eval_input_fn(opts, skip_rows=0):
     ds = ds.map(lambda line: map_generate_example(line, opts, True),
                 num_parallel_calls=opts.map_num_parallel_calls)
     ds = ds.prefetch(opts.prefetch_size).flat_map(flat_map_example)
-    ds = ds.prefetch(opts.prefetch_size)
     ds = ds.batch(batch_size)
     return ds
 

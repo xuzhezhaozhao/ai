@@ -39,6 +39,7 @@ parser.add_argument('--model_dir', default="model_dir", type=str, help='')
 parser.add_argument('--export_model_dir', default="export_model_dir",
                     type=str, help='')
 parser.add_argument('--prefetch_size', default=10000, type=int, help='')
+parser.add_argument('--shuffle_size', default=10000, type=int, help='')
 parser.add_argument('--save_summary_steps', default=100, type=int, help='')
 parser.add_argument('--save_checkpoints_secs', default=600, type=int, help='')
 parser.add_argument('--keep_checkpoint_max', default=3, type=int, help='')
@@ -123,6 +124,7 @@ def parse_args(argv):
     opts.model_dir = args.model_dir
     opts.export_model_dir = args.export_model_dir
     opts.prefetch_size = args.prefetch_size
+    opts.shuffle_size = args.shuffle_size
     opts.save_summary_steps = args.save_summary_steps
     if opts.save_summary_steps < 0:
         opts.save_summary_steps = None

@@ -30,6 +30,7 @@ class Options(object):
         self.model_dir = 'model_dir'
         self.export_model_dir = 'export_model_dir'
         self.prefetch_size = 1000
+        self.shuffle_size = 1000
         self.save_summary_steps = 100
         self.save_checkpoints_secs = 600
         self.keep_checkpoint_max = 3
@@ -105,6 +106,7 @@ class Options(object):
         model_dir = {} \n \
         export_model_dir = {} \n \
         prefetch_size = {} \n \
+        shuffle_size = {} \n \
         save_summary_steps = {} \n \
         save_checkpoints_secs = {} \n \
         keep_checkpoint_max = {} \n \
@@ -175,6 +177,7 @@ class Options(object):
                 self.model_dir,
                 self.export_model_dir,
                 self.prefetch_size,
+                self.shuffle_size,
                 self.save_summary_steps,
                 self.save_checkpoints_secs,
                 self.keep_checkpoint_max,
