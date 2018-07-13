@@ -635,7 +635,7 @@ def create_train_estimator_spec(
     with tf.control_dependencies(update_ops):
         if opts.use_clip_gradients:
             gradients, variables = zip(*optimizer.compute_gradients(
-                loss, gate_gradients=tf.train.Optimizer.GATE_OP))
+                loss, gate_gradients=tf.train.Optimizer.GATE_GRAPH))
             gradients, _ = tf.clip_by_global_norm(gradients, opts.clip_norm)
             train_op = optimizer.apply_gradients(
                 zip(gradients, variables),
