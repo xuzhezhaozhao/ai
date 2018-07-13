@@ -1347,7 +1347,9 @@ class Estimator(object):
       loss = 0.0
       workers = []
       queue = Queue.Queue()
-      mon_sess.run_step_fn(step_fn)  # run once to avoid run op constructor repeatedly
+      # run once to avoid run op constructor repeatedly
+      # Do not do that get better result, magic
+      # mon_sess.run_step_fn(step_fn)
       for tid in range(self._num_thread):
         logging.info("Start thread {} ...".format(tid))
         worker = threading.Thread(target=_thread_train_body,
