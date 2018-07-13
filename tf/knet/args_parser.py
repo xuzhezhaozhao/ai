@@ -96,6 +96,9 @@ parser.add_argument('--normalize_embeddings', default=0, type=int, help='')
 parser.add_argument('--nce_loss_type', default='default', type=str, help='')
 parser.add_argument(
     '--negative_sampler_type', default='fixed', type=str, help='')
+parser.add_argument('--sgd_lr_decay_end_learning_rate',
+                    default=0.0001, type=float, help='')
+parser.add_argument('--sgd_lr_decay_power', default=1.0, type=float, help='')
 
 opts = Options()
 
@@ -177,6 +180,8 @@ def parse_args(argv):
     opts.normalize_embeddings = bool(args.normalize_embeddings)
     opts.nce_loss_type = args.nce_loss_type
     opts.negative_sampler_type = args.negative_sampler_type
+    opts.sgd_lr_decay_end_learning_rate = args.sgd_lr_decay_end_learning_rate
+    opts.sgd_lr_decay_power = args.sgd_lr_decay_power
 
 
 def validate_opts():

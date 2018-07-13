@@ -74,6 +74,8 @@ normalize_nce_weights=0
 normalize_embeddings=0
 nce_loss_type='fasttext'  # 'word2vec', 'fasttext', 'default'
 negative_sampler_type='fixed'  # fixed(better), log_uniform
+sgd_lr_decay_end_learning_rate=0.00001
+sgd_lr_decay_power=1.0
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
@@ -161,4 +163,6 @@ python main.py \
     --normalize_nce_weights ${normalize_nce_weights} \
     --normalize_embeddings ${normalize_embeddings} \
     --nce_loss_type ${nce_loss_type} \
-    --negative_sampler_type ${negative_sampler_type}
+    --negative_sampler_type ${negative_sampler_type} \
+    --sgd_lr_decay_end_learning_rate ${sgd_lr_decay_end_learning_rate} \
+    --sgd_lr_decay_power ${sgd_lr_decay_power}

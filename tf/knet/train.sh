@@ -24,7 +24,7 @@ else
     min_count=30
 fi
 
-lr=0.5
+lr=0.025
 embedding_dim=128
 train_ws=20
 train_lower_ws=1
@@ -55,7 +55,7 @@ train_nce_biases=0
 shuffle_batch=1
 predict_ws=20
 sample_dropout=0.0
-optimizer_type='ada'  # 'ada', 'sgd', 'adadelta', 'adam', 'rmsprop'
+optimizer_type='sgd'  # 'ada', 'sgd', 'adadelta', 'adam', 'rmsprop'
 tfrecord_file='../../data/train_data.tfrecord'
 num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
@@ -63,11 +63,12 @@ map_num_parallel_calls=1
 # 'default', 'train_op_parallel', 'multi_thread'
 train_parallel_mode='multi_thread'
 num_parallel=4
-use_batch_normalization=0
-sgd_lr_decay_type='fasttext_decay'  # 'exponential_decay', 'fasttext_decay', 'none'
-sgd_lr_decay_steps=100
+use_batch_normalization=1
+# 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'
+sgd_lr_decay_type='polynomial_decay'
+sgd_lr_decay_steps=1
 sgd_lr_decay_rate=0.95
-use_clip_gradients=0
+use_clip_gradients=1
 clip_norm=1000.0
 filter_with_rowkey_info=0
 filter_with_rowkey_info_exposure_thr=10000
@@ -79,6 +80,8 @@ normalize_nce_weights=0
 normalize_embeddings=0
 nce_loss_type='fasttext'  # 'word2vec', 'fasttext', 'default'
 negative_sampler_type='fixed'  # fixed(better), log_uniform
+sgd_lr_decay_end_learning_rate=0.0001
+sgd_lr_decay_power=1.0
 
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
@@ -168,4 +171,6 @@ python main.py \
     --normalize_nce_weights ${normalize_nce_weights} \
     --normalize_embeddings ${normalize_embeddings} \
     --nce_loss_type ${nce_loss_type} \
-    --negative_sampler_type ${negative_sampler_type}
+    --negative_sampler_type ${negative_sampler_type} \
+    --sgd_lr_decay_end_learning_rate ${sgd_lr_decay_end_learning_rate} \
+    --sgd_lr_decay_power ${sgd_lr_decay_power}

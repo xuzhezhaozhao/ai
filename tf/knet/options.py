@@ -76,6 +76,8 @@ class Options(object):
         self.normalize_embeddings = False
         self.nce_loss_type = 'default'
         self.negative_sampler_type = 'fixed'
+        self.sgd_lr_decay_end_learning_rate = 0.0001
+        self.sgd_lr_decay_power = 1.0
 
         # non-cmd args
         self.estimator = None
@@ -151,6 +153,8 @@ class Options(object):
         normalize_embeddings = {} \n \
         nce_loss_type = {} \n \
         negative_sampler_type = {} \n \
+        sgd_lr_decay_end_learning_rate = {} \n \
+        sgd_lr_decay_power = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -222,6 +226,8 @@ class Options(object):
                 self.normalize_embeddings,
                 self.nce_loss_type,
                 self.negative_sampler_type,
+                self.sgd_lr_decay_end_learning_rate,
+                self.sgd_lr_decay_power,
                 # non-cmd args
                 self.estimator,
                 self.hooks,

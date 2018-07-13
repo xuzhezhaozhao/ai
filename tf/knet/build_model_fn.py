@@ -548,6 +548,14 @@ def create_optimizer(features, params):
                 decay_rate=opts.sgd_lr_decay_rate)
         elif opts.sgd_lr_decay_type == model_keys.SGDLrDecayType.NONE:
             new_lr = lr
+        elif (opts.sgd_lr_decay_type
+              == model_keys.SGDLrDecayType.POLYNOMIAL_DECAY):
+            new_lr = tf.train.polynomial_decay(
+                lr, tf.train.get_global_step(),
+                decay_steps=opts.sgd_lr_decay_steps,
+                end_learning_rate=opts.sgd_lr_decay_end_learning_rate,
+                power=opts.sgd_lr_decay_power,
+                cycle=False)
         else:
             raise ValueError("Unsurpported sgd lr decay type '{}'"
                              .format(opts.sgd_lr_decay_type))

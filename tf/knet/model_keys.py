@@ -92,6 +92,7 @@ class SGDLrDecayType(object):
     NONE = 'none'
     EXPONENTIAL_DECAY = 'exponential_decay'
     FASTTEXT_DECAY = 'fasttext_decay'
+    POLYNOMIAL_DECAY = 'polynomial_decay'
 
 
 class NegativeSamplerType(object):
