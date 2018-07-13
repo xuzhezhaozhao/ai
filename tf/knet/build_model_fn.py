@@ -539,18 +539,18 @@ def create_optimizer(features, params):
             learning_rate=lr, name='adam_{}'.format(_call_model_fn_times))
     elif optimizer_type == model_keys.OptimizerType.SGD:
         if opts.sgd_lr_decay_type == model_keys.SGDLrDecayType.FASTTEXT_DECAY:
-            new_lr = sgd_lr_fasttext_decay(features, params)
+            sgd_lr = sgd_lr_fasttext_decay(features, params)
         elif (opts.sgd_lr_decay_type
               == model_keys.SGDLrDecayType.EXPONENTIAL_DECAY):
-            new_lr = tf.train.exponential_decay(
+            sgd_lr = tf.train.exponential_decay(
                 lr, tf.train.get_global_step(),
                 decay_steps=opts.sgd_lr_decay_steps,
                 decay_rate=opts.sgd_lr_decay_rate)
         elif opts.sgd_lr_decay_type == model_keys.SGDLrDecayType.NONE:
-            new_lr = lr
+            sgd_lr = lr
         elif (opts.sgd_lr_decay_type
               == model_keys.SGDLrDecayType.POLYNOMIAL_DECAY):
-            new_lr = tf.train.polynomial_decay(
+            sgd_lr = tf.train.polynomial_decay(
                 lr, tf.train.get_global_step(),
                 decay_steps=opts.sgd_lr_decay_steps,
                 end_learning_rate=opts.sgd_lr_decay_end_learning_rate,
@@ -559,9 +559,9 @@ def create_optimizer(features, params):
         else:
             raise ValueError("Unsurpported sgd lr decay type '{}'"
                              .format(opts.sgd_lr_decay_type))
-        tf.summary.scalar("lr", new_lr)
         optimizer = tf.train.GradientDescentOptimizer(
-            learning_rate=new_lr, name='sgd_{}'.format(_call_model_fn_times))
+            learning_rate=sgd_lr, name='sgd_{}'.format(_call_model_fn_times))
+        tf.summary.scalar("sgd_lr", sgd_lr)
     elif optimizer_type == model_keys.OptimizerType.RMSPROP:
         optimizer = tf.train.RMSPropOptimizer(
             learning_rate=lr,

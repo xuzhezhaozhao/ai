@@ -59,9 +59,12 @@ map_num_parallel_calls=2
 train_parallel_mode='multi_thread'
 num_parallel=16
 use_batch_normalization=0
-sgd_lr_decay_type='fasttext_decay'  # 'exponential_decay', 'fasttext_decay'
+# 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'
+sgd_lr_decay_type='fasttext_decay'
 sgd_lr_decay_steps=100
 sgd_lr_decay_rate=0.99
+sgd_lr_decay_end_learning_rate=0.0001
+sgd_lr_decay_power=1.0
 use_clip_gradients=0
 clip_norm=500.0
 filter_with_rowkey_info=0
@@ -74,8 +77,6 @@ normalize_nce_weights=0
 normalize_embeddings=0
 nce_loss_type='fasttext'  # 'word2vec', 'fasttext', 'default'
 negative_sampler_type='fixed'  # fixed(better), log_uniform
-sgd_lr_decay_end_learning_rate=0.00001
-sgd_lr_decay_power=1.0
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
