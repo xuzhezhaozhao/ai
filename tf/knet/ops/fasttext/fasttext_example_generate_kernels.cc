@@ -21,9 +21,9 @@
 #include <vector>
 
 #include "args.h"
+#include "common.h"
 #include "defines.h"
 #include "dictionary.h"
-#include "common.h"
 
 namespace tensorflow {
 
@@ -89,13 +89,16 @@ class FasttextExampleGenerateOp : public OpKernel {
     for (int i = 0; i < flat_input.size(); ++i) {
       words.clear();
       std::stringstream ss(flat_input(i));
-
       std::string label;
-      ntokens += dict_->getLine(ss, words, label, rng_);
+      if (args_->use_user_features) {
+        ntokens += dict_->getLine(ss, words, label, rng_);
+      } else {
+        ntokens += dict_->getLine(ss, words, rng_);
+      }
 
       auto age = DEFAULT_AGE;
       auto gender = DEFAULT_GENDER;
-      if (label != "") {
+      if (args_->use_user_features && label != "") {
         uint32_t uin = std::stoll(label);
         auto it = user_features_.find(uin);
         if (it != user_features_.end()) {
@@ -131,8 +134,10 @@ class FasttextExampleGenerateOp : public OpKernel {
         }
 
         insts.push_back(bow);
-        ages.push_back(age);
-        genders.push_back(gender);
+        if (args_->use_user_features) {
+          ages.push_back(age);
+          genders.push_back(gender);
+        }
       }
     }
 
@@ -183,24 +188,32 @@ class FasttextExampleGenerateOp : public OpKernel {
       flat_ntokens(i) = static_cast<float>(ntokens) / insts.size();
     }
 
-    TensorShape age_shape;
-    age_shape.AddDim(insts.size());
-    age_shape.AddDim(1);
-    Tensor* age_tensor = NULL;
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(3, age_shape, &age_tensor));
-    auto flat_age = age_tensor->flat<float>();
-    for (int i = 0; i < ages.size(); ++i) {
-      flat_age(i) = ages[i];
-    }
-
-    TensorShape gender_shape;
-    gender_shape.AddDim(insts.size());
-    gender_shape.AddDim(1);
-    Tensor* gender_tensor = NULL;
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(4, gender_shape, &gender_tensor));
-    auto flat_gender = gender_tensor->flat<int64>();
-    for (int i = 0; i < genders.size(); ++i) {
-      flat_gender(i) = genders[i];
+    if (args_->use_user_features) {
+      TensorShape age_shape;
+      age_shape.AddDim(insts.size());
+      age_shape.AddDim(1);
+      Tensor* age_tensor = NULL;
+      OP_REQUIRES_OK(ctx, ctx->allocate_output(3, age_shape, &age_tensor));
+      auto flat_age = age_tensor->flat<float>();
+      for (int i = 0; i < ages.size(); ++i) {
+        flat_age(i) = ages[i];
+      }
+      TensorShape gender_shape;
+      gender_shape.AddDim(insts.size());
+      gender_shape.AddDim(1);
+      Tensor* gender_tensor = NULL;
+      OP_REQUIRES_OK(ctx,
+                     ctx->allocate_output(4, gender_shape, &gender_tensor));
+      auto flat_gender = gender_tensor->flat<int64>();
+      for (int i = 0; i < genders.size(); ++i) {
+        flat_gender(i) = genders[i];
+      }
+    } else {
+      TensorShape shape;
+      Tensor* age_tensor = NULL;
+      Tensor* gender_tensor = NULL;
+      OP_REQUIRES_OK(ctx, ctx->allocate_output(3, shape, &age_tensor));
+      OP_REQUIRES_OK(ctx, ctx->allocate_output(4, shape, &gender_tensor));
     }
   }
 
@@ -269,7 +282,6 @@ class FasttextExampleGenerateOp : public OpKernel {
     LOG(INFO) << "Load dictionary OK";
   }
 
-
   void LoadUserFeatures(OpKernelConstruction* ctx) {
     LOG(ERROR) << "Load user features from '" << args_->user_features_file
                << "' ...";
@@ -323,7 +335,6 @@ class FasttextExampleGenerateOp : public OpKernel {
     short gender;
   };
 
-
   std::shared_ptr<::fasttext::Args> args_;
   std::shared_ptr<::fasttext::Dictionary> dict_;
 
@@ -333,7 +344,6 @@ class FasttextExampleGenerateOp : public OpKernel {
   std::unordered_map<uint32_t, UserFeatures> user_features_;
   const float DEFAULT_AGE = 0.0;
   const int64 DEFAULT_GENDER = 0;
-
 };
 REGISTER_KERNEL_BUILDER(Name("FasttextExampleGenerate").Device(DEVICE_CPU),
                         FasttextExampleGenerateOp);
