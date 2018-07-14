@@ -36,6 +36,8 @@ RECORDS_COL = 'records'
 WORDS_COL = 'words'
 NUM_IN_DICT_COL = 'num_in_dict'
 TOKENS_COL = 'tokens'
+AGE_COL = 'age'
+GENDER_COL = 'gender'
 
 DICT_META = 'dict_meta'
 DICT_WORDS = 'dict_words'

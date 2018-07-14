@@ -361,6 +361,34 @@ int32_t Dictionary::getLine(std::istream& in,
 
 int32_t Dictionary::getLine(std::istream& in,
                             std::vector<int32_t>& words,
+                            std::string& label,
+                            std::minstd_rand& rng) const {
+  std::uniform_real_distribution<> uniform(0, 1);
+  std::string token;
+  int32_t ntokens = 0;
+
+  reset(in);
+  words.clear();
+  while (readWord(in, token)) {
+    ntokens++;
+    if (getType(token) == entry_type::label) {
+      label = token.substr(args_->label.size());
+    }
+
+    int32_t h = find(token);
+    int32_t wid = word2int_[h];
+    if (wid < 0) continue;
+
+    if (getType(wid) == entry_type::word && !discard(wid, uniform(rng))) {
+      words.push_back(wid);
+    }
+    if (ntokens > MAX_LINE_SIZE || token == EOS) break;
+  }
+  return ntokens;
+}
+
+int32_t Dictionary::getLine(std::istream& in,
+                            std::vector<int32_t>& words,
                             std::vector<int32_t>& labels,
                             std::minstd_rand& rng) const {
   std::vector<int32_t> word_hashes;

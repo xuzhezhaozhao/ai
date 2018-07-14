@@ -47,6 +47,9 @@ struct Args {
 
     int ntargets = 1;
     float sample_dropout = 0.5;
+
+    bool use_user_features = false;
+    std::string user_features_file = "";
 };
 
 }

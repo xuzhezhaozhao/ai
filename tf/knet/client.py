@@ -18,6 +18,14 @@ def _bytes_feature(value):
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=value))
 
 
+def _int64_feature(value):
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
+
+
+def _float_feature(value):
+    return tf.train.Feature(float_list=tf.train.FloatList(value=value))
+
+
 def run():
     channel = grpc.insecure_channel('localhost:9000')
     stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
@@ -35,21 +43,13 @@ def run():
         features=tf.train.Features(
             feature={
                 'words': _bytes_feature(x),
+                'age': _float_feature([1.0]),
+                'gender': _int64_feature([1]),
             }
         )
     ).SerializeToString()
 
-    x = ['' for i in range(receive_ws)]
-    x[0] = '5955a4f20fd540aa'
-    example2 = tf.train.Example(
-        features=tf.train.Features(
-            feature={
-                'words': _bytes_feature(x),
-            }
-        )
-    ).SerializeToString()
-
-    examples = [example1, example2]
+    examples = [example1]
     request.inputs[input_name].CopyFrom(
         tf.contrib.util.make_tensor_proto(examples, dtype=tf.string))
 

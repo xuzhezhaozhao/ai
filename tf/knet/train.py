@@ -39,7 +39,9 @@ def build_estimator(opts):
     """Build estimator."""
 
     dict_meta = input_data.parse_dict_meta(opts)
-    feature_columns, predict_feature_columns = input_data.feature_columns(opts)
+    (records_column, predict_records_column,
+     user_features_columns,
+     user_features_dim) = input_data.feature_columns(opts)
     """ session config
     session_config = tf.ConfigProto(device_count={"CPU": 1},
                                     inter_op_parallelism_threads=1,
@@ -59,8 +61,10 @@ def build_estimator(opts):
     estimator_keys = {}
     estimator_keys['model_fn'] = build_model_fn.knet_model_fn
     estimator_keys['params'] = {
-        'feature_columns': feature_columns,
-        'predict_feature_columns': predict_feature_columns,
+        'records_column': records_column,
+        'predict_records_column': predict_records_column,
+        'user_features_columns': user_features_columns,
+        'user_features_dim': user_features_dim,
         'num_classes': dict_meta["nwords"] + 1,
         'total_tokens': dict_meta["ntokens"] * opts.epoch,
         'opts': opts

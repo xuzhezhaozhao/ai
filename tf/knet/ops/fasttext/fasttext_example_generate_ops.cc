@@ -7,6 +7,8 @@ REGISTER_OP("FasttextExampleGenerate")
     .Output("records: int32")
     .Output("labels: int64")
     .Output("ntokens: float32")
+    .Output("age: float32")
+    .Output("gender: int64")
     .SetIsStateful()
     .Attr("use_saved_dict: bool = true")
     .Attr("dict_dir: string")
@@ -21,6 +23,8 @@ REGISTER_OP("FasttextExampleGenerate")
     .Attr("label: string = '__label__'")
     .Attr("ntargets: int = 1")
     .Attr("sample_dropout: float = 0.5")
+    .Attr("use_user_features: bool = false")
+    .Attr("user_features_file: string = ''")
     .Doc(R"doc(
 Fasttext example generate operator.
 Args

@@ -28,7 +28,8 @@ def knet_model_fn(features, labels, mode, params):
 
     with tf.name_scope("model_fn_{}".format(_call_model_fn_times)):
 
-        (embeddings, nce_weights, nce_biases) = get_nce_variables(params)
+        embeddings = get_embeddings(params)
+        nce_weights, nce_biases = get_nce_weights_and_biases(params)
 
         if mode != tf.estimator.ModeKeys.TRAIN and opts.normalize_embeddings:
             embeddings = load_model_embeddings(opts.dict_dir)
@@ -58,41 +59,12 @@ def knet_model_fn(features, labels, mode, params):
     assert False  # Never reach here
 
 
-def get_nce_variables(params):
-    """Get embeddings, nce_weights, nce_biases."""
+def get_embeddings(params):
+    """Get embeddings variables."""
 
     opts = params['opts']
     num_classes = params['num_classes']
     embedding_dim = opts.embedding_dim
-    train_nce_biases = opts.train_nce_biases
-
-    embeddings = get_embeddings(num_classes, embedding_dim)
-    (nce_weights,
-     nce_biases) = get_nce_weights_and_biases(
-         num_classes, embedding_dim, train_nce_biases)
-    return (embeddings, nce_weights, nce_biases)
-
-
-def get_nce_weights_and_biases(num_classes, embedding_dim, train_nce_biases):
-    """Get nce weights and biases variables."""
-
-    with tf.variable_scope("nce_layer_variables", reuse=tf.AUTO_REUSE):
-        # nce_weights = tf.get_variable(
-            # model_keys.NCE_WEIGHTS_NAME,
-            # initializer=tf.truncated_normal(
-                # [num_classes, embedding_dim],
-                # stddev=1.0 / math.sqrt(embedding_dim)))
-        nce_weights = tf.get_variable(
-            model_keys.NCE_WEIGHTS_NAME,
-            initializer=tf.zeros([num_classes, embedding_dim]))
-        nce_biases = tf.get_variable(
-            model_keys.NCE_BIASES_NAME, initializer=tf.zeros([num_classes]),
-            trainable=train_nce_biases)
-    return nce_weights, nce_biases
-
-
-def get_embeddings(num_classes, embedding_dim):
-    """Get embeddings variables."""
 
     with tf.variable_scope("embeddings_variable", reuse=tf.AUTO_REUSE):
         init_width = 1.0 / embedding_dim
@@ -100,6 +72,32 @@ def get_embeddings(num_classes, embedding_dim):
             "embeddings", initializer=tf.random_uniform(
                 [num_classes, embedding_dim], -init_width, init_width))
     return embeddings
+
+
+def get_nce_weights_and_biases(params):
+    """Get nce weights and biases variables."""
+
+    opts = params['opts']
+    num_classes = params['num_classes']
+    user_features_dim = params['user_features_dim']
+
+    if len(opts.hidden_units) == 0:
+        nce_dim = opts.embedding_dim
+        if opts.use_user_features:
+            nce_dim += user_features_dim
+    else:
+        nce_dim = opts.hidden_units[-1]
+
+    tf.logging.info("nce_dim = {}".format(nce_dim))
+
+    with tf.variable_scope("nce_layer_variables", reuse=tf.AUTO_REUSE):
+        nce_weights = tf.get_variable(
+            model_keys.NCE_WEIGHTS_NAME,
+            initializer=tf.zeros([num_classes, opts.embedding_dim]))
+        nce_biases = tf.get_variable(
+            model_keys.NCE_BIASES_NAME, initializer=tf.zeros([num_classes]),
+            trainable=opts.train_nce_biases)
+    return nce_weights, nce_biases
 
 
 def mask_padding_embedding_lookup(embeddings, embedding_dim,
@@ -126,35 +124,47 @@ def create_input_layer(mode, features, params, embeddings):
     """Create input layer."""
 
     opts = params['opts']
-    feature_columns = params['feature_columns']
-    predict_feature_columns = params['predict_feature_columns']
     embedding_dim = opts.embedding_dim
     use_batch_normalization = opts.use_batch_normalization
     training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-    if training:
-        input_layer = tf.feature_column.input_layer(features, feature_columns)
-    else:
-        input_layer = tf.feature_column.input_layer(
-            features, predict_feature_columns)
+    with tf.name_scope("input_layer"):
+        if training:
+            records_column = params['records_column']
+        else:
+            records_column = params['predict_records_column']
 
-    nonzeros = tf.count_nonzero(input_layer, 1, keepdims=True)  # [batch, 1]
-    nonzeros = tf.maximum(nonzeros, 1)  # avoid divide zero
+        records_column = tf.feature_column.input_layer(
+            features, records_column)
 
-    if not training and opts.normalize_embeddings:
-        embeds = tf.nn.embedding_lookup(
-            embeddings, tf.cast(input_layer, tf.int32))
-    else:
-        embeds = mask_padding_embedding_lookup(
-            embeddings, embedding_dim, input_layer, model_keys.PADDING_ID)
+        # [batch, 1]
+        nonzeros = tf.count_nonzero(records_column, 1, keepdims=True)
+        nonzeros = tf.maximum(nonzeros, 1)  # avoid divide zero
 
-    embeds_sum = tf.reduce_sum(embeds, 1)
-    embeds_mean = embeds_sum / tf.cast(nonzeros, tf.float32)
+        if not training and opts.normalize_embeddings:
+            embeds = tf.nn.embedding_lookup(
+                embeddings, tf.cast(records_column, tf.int32))
+        else:
+            embeds = mask_padding_embedding_lookup(
+                embeddings, embedding_dim, records_column,
+                model_keys.PADDING_ID)
 
-    if use_batch_normalization:
-        embeds_mean = batch_normalization(embeds_mean, training, "bn_input")
+        embeds_sum = tf.reduce_sum(embeds, 1)
+        embeds_mean = embeds_sum / tf.cast(nonzeros, tf.float32)
 
-    return embeds_mean
+        if use_batch_normalization:
+            embeds_mean = batch_normalization(
+                embeds_mean, training, "bn_input")
+
+        if opts.use_user_features:
+            user_features = tf.feature_column.input_layer(
+                features, params['user_features_columns'])
+            concat_features = [embeds_mean, user_features]
+            input_layer = tf.concat(concat_features, axis=1)
+        else:
+            input_layer = embeds_mean
+
+    return input_layer
 
 
 def create_hidden_layer(mode, input_layer, params):
@@ -166,26 +176,27 @@ def create_hidden_layer(mode, input_layer, params):
     use_batch_normalization = opts.use_batch_normalization
     training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-    hidden = input_layer
-    for index, units in enumerate(hidden_units):
-        is_last_layer = False
-        if index == len(hidden_units) - 1:
-            is_last_layer = True
+    with tf.name_scope('hidden_layers'):
+        hidden = input_layer
+        for index, units in enumerate(hidden_units):
+            is_last_layer = False
+            if index == len(hidden_units) - 1:
+                is_last_layer = True
 
-        activation = None if is_last_layer else tf.nn.relu
-        dropout = 0.0 if is_last_layer else dropout
+            activation = None if is_last_layer else tf.nn.relu
+            dropout = 0.0 if is_last_layer else dropout
 
-        hidden = tf.layers.dense(
-            hidden, units=units, activation=activation,
-            name="fc{}_{}".format(index, units), reuse=tf.AUTO_REUSE)
-        if use_batch_normalization:
-            hidden = batch_normalization(
-                hidden, training, "bn{}_{}".format(index, units))
+            hidden = tf.layers.dense(
+                hidden, units=units, activation=activation,
+                name="fc{}_{}".format(index, units), reuse=tf.AUTO_REUSE)
+            if use_batch_normalization:
+                hidden = batch_normalization(
+                    hidden, training, "bn{}_{}".format(index, units))
 
-        if dropout > 0.0:
-            hidden = tf.layers.dropout(
-                hidden, dropout, training=training,
-                name="dropout{}_{}".format(index, units))
+            if dropout > 0.0:
+                hidden = tf.layers.dropout(
+                    hidden, dropout, training=training,
+                    name="dropout{}_{}".format(index, units))
     return hidden
 
 
@@ -198,26 +209,27 @@ def get_metrics(labels, logits, ids, params):
     recall_k2 = recall_k//2
     recall_k4 = recall_k//4
 
-    predicted = ids[:, :ntargets]
-    accuracy = tf.metrics.accuracy(labels=labels, predictions=predicted)
-    recall_at_top_k = tf.metrics.recall_at_top_k(
-        labels=labels, predictions_idx=ids, k=recall_k)
-    recall_at_top_k2 = tf.metrics.recall_at_top_k(
-        labels=labels, predictions_idx=ids[:, :recall_k2], k=recall_k2)
-    recall_at_top_k4 = tf.metrics.recall_at_top_k(
-        labels=labels, predictions_idx=ids[:, :recall_k4], k=recall_k4)
-    precision_at_top_k = tf.metrics.precision_at_top_k(
-        labels=labels, predictions_idx=ids, k=recall_k)
-    average_precision_at_k = tf.metrics.average_precision_at_k(
-        labels=labels, predictions=logits, k=recall_k)
+    with tf.name_scope('eval_metrics'):
+        predicted = ids[:, :ntargets]
+        accuracy = tf.metrics.accuracy(labels=labels, predictions=predicted)
+        recall_at_top_k = tf.metrics.recall_at_top_k(
+            labels=labels, predictions_idx=ids, k=recall_k)
+        recall_at_top_k2 = tf.metrics.recall_at_top_k(
+            labels=labels, predictions_idx=ids[:, :recall_k2], k=recall_k2)
+        recall_at_top_k4 = tf.metrics.recall_at_top_k(
+            labels=labels, predictions_idx=ids[:, :recall_k4], k=recall_k4)
+        precision_at_top_k = tf.metrics.precision_at_top_k(
+            labels=labels, predictions_idx=ids, k=recall_k)
+        average_precision_at_k = tf.metrics.average_precision_at_k(
+            labels=labels, predictions=logits, k=recall_k)
 
-    metrics = {'accuracy': accuracy,
-               'recall_at_top_{}'.format(recall_k): recall_at_top_k,
-               'recall_at_top_{}'.format(recall_k2): recall_at_top_k2,
-               'recall_at_top_{}'.format(recall_k4): recall_at_top_k4,
-               'precision_at_top_{}'.format(recall_k): precision_at_top_k,
-               'average_precision_at_{}'
-               .format(recall_k): average_precision_at_k}
+        metrics = {'accuracy': accuracy,
+                   'recall_at_top_{}'.format(recall_k): recall_at_top_k,
+                   'recall_at_top_{}'.format(recall_k2): recall_at_top_k2,
+                   'recall_at_top_{}'.format(recall_k4): recall_at_top_k4,
+                   'precision_at_top_{}'.format(recall_k): precision_at_top_k,
+                   'average_precision_at_{}'
+                   .format(recall_k): average_precision_at_k}
     return metrics
 
 
@@ -380,22 +392,23 @@ def create_loss(weights, biases, labels, inputs, params):
 
     opts = params['opts']
 
-    # Negative sampling.
-    if opts.nce_loss_type == model_keys.NceLossType.DEFAULT:
-        tf.logging.info("Use default nce loss.")
-        sampled_values = get_negative_samples(labels, params)
-        return default_nce_loss(weights, biases, labels, inputs,
-                                sampled_values, params)
-    elif opts.nce_loss_type == model_keys.NceLossType.WORD2VEC:
-        tf.logging.info("Use word2vec nce loss.")
-        sampled_values = get_negative_samples(labels, params)
-        return word2vec_nce_loss(weights, biases, labels, inputs,
-                                 sampled_values, params)
-    elif opts.nce_loss_type == model_keys.NceLossType.FASTTEXT:
-        tf.logging.info("Use fasttext nce loss.")
-        return fasttext_nce_loss(weights, biases, labels, inputs, params)
-    else:
-        raise ValueError("Unsurpported nce loss type.")
+    with tf.name_scope('loss_layer'):
+        # Negative sampling.
+        if opts.nce_loss_type == model_keys.NceLossType.DEFAULT:
+            tf.logging.info("Use default nce loss.")
+            sampled_values = get_negative_samples(labels, params)
+            return default_nce_loss(weights, biases, labels, inputs,
+                                    sampled_values, params)
+        elif opts.nce_loss_type == model_keys.NceLossType.WORD2VEC:
+            tf.logging.info("Use word2vec nce loss.")
+            sampled_values = get_negative_samples(labels, params)
+            return word2vec_nce_loss(weights, biases, labels, inputs,
+                                     sampled_values, params)
+        elif opts.nce_loss_type == model_keys.NceLossType.FASTTEXT:
+            tf.logging.info("Use fasttext nce loss.")
+            return fasttext_nce_loss(weights, biases, labels, inputs, params)
+        else:
+            raise ValueError("Unsurpported nce loss type.")
 
 
 def word2vec_nce_loss(weights, biases, labels, inputs, sampled_values, params):
@@ -525,53 +538,57 @@ def create_optimizer(features, params):
     lr = opts.lr
     optimizer_type = opts.optimizer_type
 
-    if optimizer_type == model_keys.OptimizerType.ADA:
-        optimizer = tf.train.AdagradOptimizer(
-            learning_rate=lr, name='adagrad_{}'.format(_call_model_fn_times))
-    elif optimizer_type == model_keys.OptimizerType.ADADELTA:
-        optimizer = tf.train.AdadeltaOptimizer(
-            learning_rate=lr,
-            rho=0.95,
-            epsilon=0.00001,
-            name='adadelta_{}'.format(_call_model_fn_times))
-    elif optimizer_type == model_keys.OptimizerType.ADAM:
-        optimizer = tf.train.AdamOptimizer(
-            learning_rate=lr, name='adam_{}'.format(_call_model_fn_times))
-    elif optimizer_type == model_keys.OptimizerType.SGD:
-        if opts.sgd_lr_decay_type == model_keys.SGDLrDecayType.FASTTEXT_DECAY:
-            sgd_lr = sgd_lr_fasttext_decay(features, params)
-        elif (opts.sgd_lr_decay_type
-              == model_keys.SGDLrDecayType.EXPONENTIAL_DECAY):
-            sgd_lr = tf.train.exponential_decay(
-                lr, tf.train.get_global_step(),
-                decay_steps=opts.sgd_lr_decay_steps,
-                decay_rate=opts.sgd_lr_decay_rate)
-        elif opts.sgd_lr_decay_type == model_keys.SGDLrDecayType.NONE:
-            sgd_lr = lr
-        elif (opts.sgd_lr_decay_type
-              == model_keys.SGDLrDecayType.POLYNOMIAL_DECAY):
-            sgd_lr = tf.train.polynomial_decay(
-                lr, tf.train.get_global_step(),
-                decay_steps=opts.sgd_lr_decay_steps,
-                end_learning_rate=opts.sgd_lr_decay_end_learning_rate,
-                power=opts.sgd_lr_decay_power,
-                cycle=False)
+    with tf.name_scope('optimizer_layer'):
+        if optimizer_type == model_keys.OptimizerType.ADA:
+            optimizer = tf.train.AdagradOptimizer(
+                learning_rate=lr,
+                name='adagrad_{}'.format(_call_model_fn_times))
+        elif optimizer_type == model_keys.OptimizerType.ADADELTA:
+            optimizer = tf.train.AdadeltaOptimizer(
+                learning_rate=lr,
+                rho=0.95,
+                epsilon=0.00001,
+                name='adadelta_{}'.format(_call_model_fn_times))
+        elif optimizer_type == model_keys.OptimizerType.ADAM:
+            optimizer = tf.train.AdamOptimizer(
+                learning_rate=lr, name='adam_{}'.format(_call_model_fn_times))
+        elif optimizer_type == model_keys.OptimizerType.SGD:
+            if (opts.sgd_lr_decay_type
+                    == model_keys.SGDLrDecayType.FASTTEXT_DECAY):
+                sgd_lr = sgd_lr_fasttext_decay(features, params)
+            elif (opts.sgd_lr_decay_type
+                  == model_keys.SGDLrDecayType.EXPONENTIAL_DECAY):
+                sgd_lr = tf.train.exponential_decay(
+                    lr, tf.train.get_global_step(),
+                    decay_steps=opts.sgd_lr_decay_steps,
+                    decay_rate=opts.sgd_lr_decay_rate)
+            elif opts.sgd_lr_decay_type == model_keys.SGDLrDecayType.NONE:
+                sgd_lr = lr
+            elif (opts.sgd_lr_decay_type
+                  == model_keys.SGDLrDecayType.POLYNOMIAL_DECAY):
+                sgd_lr = tf.train.polynomial_decay(
+                    lr, tf.train.get_global_step(),
+                    decay_steps=opts.sgd_lr_decay_steps,
+                    end_learning_rate=opts.sgd_lr_decay_end_learning_rate,
+                    power=opts.sgd_lr_decay_power,
+                    cycle=False)
+            else:
+                raise ValueError("Unsurpported sgd lr decay type '{}'"
+                                 .format(opts.sgd_lr_decay_type))
+            optimizer = tf.train.GradientDescentOptimizer(
+                learning_rate=sgd_lr,
+                name='sgd_{}'.format(_call_model_fn_times))
+            tf.summary.scalar("sgd_lr", sgd_lr)
+        elif optimizer_type == model_keys.OptimizerType.RMSPROP:
+            optimizer = tf.train.RMSPropOptimizer(
+                learning_rate=lr,
+                decay=0.95,
+                momentum=0.001,
+                epsilon=1e-10,
+                name='rmsprop_{}'.format(_call_model_fn_times))
         else:
-            raise ValueError("Unsurpported sgd lr decay type '{}'"
-                             .format(opts.sgd_lr_decay_type))
-        optimizer = tf.train.GradientDescentOptimizer(
-            learning_rate=sgd_lr, name='sgd_{}'.format(_call_model_fn_times))
-        tf.summary.scalar("sgd_lr", sgd_lr)
-    elif optimizer_type == model_keys.OptimizerType.RMSPROP:
-        optimizer = tf.train.RMSPropOptimizer(
-            learning_rate=lr,
-            decay=0.95,
-            momentum=0.001,
-            epsilon=1e-10,
-            name='rmsprop_{}'.format(_call_model_fn_times))
-    else:
-        raise ValueError('OptimizerType "{}" not surpported.'
-                         .format(optimizer_type))
+            raise ValueError('OptimizerType "{}" not surpported.'
+                             .format(optimizer_type))
 
     return optimizer
 
@@ -661,10 +678,11 @@ def compute_top_k(nce_weights, nce_biases, user_vector, params):
 
     opts = params['opts']
 
-    logits = tf.nn.xw_plus_b(
-        user_vector, tf.transpose(nce_weights), nce_biases)
-    scores, ids = tf.nn.top_k(
-        logits, opts.recall_k, name="top_k_{}".format(opts.recall_k))
+    with tf.name_scope('top_k_layer'):
+        logits = tf.nn.xw_plus_b(
+            user_vector, tf.transpose(nce_weights), nce_biases)
+        scores, ids = tf.nn.top_k(
+            logits, opts.recall_k, name="top_k_{}".format(opts.recall_k))
     return logits, scores, ids
 
 

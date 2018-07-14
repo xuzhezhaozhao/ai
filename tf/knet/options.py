@@ -78,6 +78,10 @@ class Options(object):
         self.negative_sampler_type = 'fixed'
         self.sgd_lr_decay_end_learning_rate = 0.0001
         self.sgd_lr_decay_power = 1.0
+        self.use_user_features = False
+        self.user_features_file = ''
+        self.use_age_feature = False
+        self.use_gender_feature = False
 
         # non-cmd args
         self.estimator = None
@@ -155,6 +159,10 @@ class Options(object):
         negative_sampler_type = {} \n \
         sgd_lr_decay_end_learning_rate = {} \n \
         sgd_lr_decay_power = {} \n \
+        use_user_features = {} \n \
+        user_features_file = {} \n \
+        use_age_feature = {} \n \
+        use_gender_feature = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -228,6 +236,10 @@ class Options(object):
                 self.negative_sampler_type,
                 self.sgd_lr_decay_end_learning_rate,
                 self.sgd_lr_decay_power,
+                self.use_user_features,
+                self.user_features_file,
+                self.use_age_feature,
+                self.use_gender_feature,
                 # non-cmd args
                 self.estimator,
                 self.hooks,

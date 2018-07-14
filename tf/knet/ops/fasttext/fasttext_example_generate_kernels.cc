@@ -43,6 +43,10 @@ class FasttextExampleGenerateOp : public OpKernel {
       SaveDictionary(args_->dict_dir, dict_);
     } else {
       LoadDictionary(ctx);
+
+      if (args_->use_user_features) {
+        LoadUserFeatures(ctx);
+      }
     }
 
     LOG(ERROR) << "nwords = " << dict_->nwords();
@@ -55,12 +59,15 @@ class FasttextExampleGenerateOp : public OpKernel {
     if (!args_->use_saved_dict) {
       TensorShape shape;
       Tensor* records_tensor = NULL;
-      OP_REQUIRES_OK(ctx, ctx->allocate_output(0, shape, &records_tensor));
       Tensor* labels_tensor = NULL;
-      OP_REQUIRES_OK(ctx, ctx->allocate_output(1, shape, &labels_tensor));
-
       Tensor* tokens_tensor = NULL;
+      Tensor* age_tensor = NULL;
+      Tensor* gender_tensor = NULL;
+      OP_REQUIRES_OK(ctx, ctx->allocate_output(0, shape, &records_tensor));
+      OP_REQUIRES_OK(ctx, ctx->allocate_output(1, shape, &labels_tensor));
       OP_REQUIRES_OK(ctx, ctx->allocate_output(2, shape, &tokens_tensor));
+      OP_REQUIRES_OK(ctx, ctx->allocate_output(3, shape, &age_tensor));
+      OP_REQUIRES_OK(ctx, ctx->allocate_output(4, shape, &gender_tensor));
 
       return;
     }
@@ -75,11 +82,27 @@ class FasttextExampleGenerateOp : public OpKernel {
 
     std::vector<int32_t> words;
     std::vector<std::vector<int>> insts;
+    std::vector<float> ages;
+    std::vector<int64> genders;
+
     int ntokens = 0;
     for (int i = 0; i < flat_input.size(); ++i) {
       words.clear();
       std::stringstream ss(flat_input(i));
-      ntokens += dict_->getLine(ss, words, rng_);
+
+      std::string label;
+      ntokens += dict_->getLine(ss, words, label, rng_);
+
+      auto age = DEFAULT_AGE;
+      auto gender = DEFAULT_GENDER;
+      if (label != "") {
+        uint32_t uin = std::stoll(label);
+        auto it = user_features_.find(uin);
+        if (it != user_features_.end()) {
+          age = it->second.age;
+          gender = it->second.gender;
+        }
+      }
 
       std::vector<int> bow;
       std::uniform_int_distribution<> uniform(args_->lower_ws, args_->ws);
@@ -108,6 +131,8 @@ class FasttextExampleGenerateOp : public OpKernel {
         }
 
         insts.push_back(bow);
+        ages.push_back(age);
+        genders.push_back(gender);
       }
     }
 
@@ -125,17 +150,7 @@ class FasttextExampleGenerateOp : public OpKernel {
     Tensor* labels_tensor = NULL;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(1, labels_shape, &labels_tensor));
 
-    // scalar
-    TensorShape tokens_shape;
-    tokens_shape.AddDim(insts.size());
-    tokens_shape.AddDim(1);
-    Tensor* tokens_tensor = NULL;
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(2, tokens_shape, &tokens_tensor));
-    auto flat_tokens = tokens_tensor->flat<float>();
-    for (int i = 0; i < flat_tokens.size(); ++i) {
-      flat_tokens(i) = static_cast<float>(ntokens) / insts.size();
-    }
-
+    // fill records and labels
     auto matrix_records = records_tensor->matrix<int32>();
     auto matrix_labels = labels_tensor->matrix<int64>();
     for (int inst_index = 0; inst_index < insts.size(); ++inst_index) {
@@ -143,21 +158,49 @@ class FasttextExampleGenerateOp : public OpKernel {
       OP_REQUIRES(ctx, inst.size() >= args_->ntargets,
                   errors::InvalidArgument(
                       "inst size should larger or equal than ntargets"));
-      // fill labels
       for (int t = 0; t < args_->ntargets; ++t) {
         int index = inst.size() - args_->ntargets + t;
         matrix_labels(inst_index, t) = transform_id(inst[index]);
       }
-
-      // fill records
       for (int i = 0; i < inst.size() - args_->ntargets; ++i) {
         matrix_records(inst_index, i) = transform_id(inst[i]);
       }
-
       // padding records
       for (int i = inst.size() - args_->ntargets; i < args_->ws; ++i) {
         matrix_records(inst_index, i) = PADDING_INDEX;
       }
+    }
+
+    // fill ntokens
+    TensorShape ntokens_shape;
+    ntokens_shape.AddDim(insts.size());
+    ntokens_shape.AddDim(1);
+    Tensor* ntokens_tensor = NULL;
+    OP_REQUIRES_OK(ctx,
+                   ctx->allocate_output(2, ntokens_shape, &ntokens_tensor));
+    auto flat_ntokens = ntokens_tensor->flat<float>();
+    for (int i = 0; i < flat_ntokens.size(); ++i) {
+      flat_ntokens(i) = static_cast<float>(ntokens) / insts.size();
+    }
+
+    TensorShape age_shape;
+    age_shape.AddDim(insts.size());
+    age_shape.AddDim(1);
+    Tensor* age_tensor = NULL;
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(3, age_shape, &age_tensor));
+    auto flat_age = age_tensor->flat<float>();
+    for (int i = 0; i < ages.size(); ++i) {
+      flat_age(i) = ages[i];
+    }
+
+    TensorShape gender_shape;
+    gender_shape.AddDim(insts.size());
+    gender_shape.AddDim(1);
+    Tensor* gender_tensor = NULL;
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(4, gender_shape, &gender_tensor));
+    auto flat_gender = gender_tensor->flat<int64>();
+    for (int i = 0; i < genders.size(); ++i) {
+      flat_gender(i) = genders[i];
     }
   }
 
@@ -200,6 +243,14 @@ class FasttextExampleGenerateOp : public OpKernel {
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("sample_dropout", &args_->sample_dropout));
     LOG(INFO) << "sample_dropout: " << args_->sample_dropout;
+
+    OP_REQUIRES_OK(
+        ctx, ctx->GetAttr("use_user_features", &args_->use_user_features));
+    LOG(INFO) << "use_user_features: " << args_->use_user_features;
+
+    OP_REQUIRES_OK(
+        ctx, ctx->GetAttr("user_features_file", &args_->user_features_file));
+    LOG(INFO) << "user_features_file: " << args_->user_features_file;
   }
 
   inline int transform_id(int id) { return id + 1; }
@@ -218,11 +269,71 @@ class FasttextExampleGenerateOp : public OpKernel {
     LOG(INFO) << "Load dictionary OK";
   }
 
+
+  void LoadUserFeatures(OpKernelConstruction* ctx) {
+    LOG(ERROR) << "Load user features from '" << args_->user_features_file
+               << "' ...";
+    std::ifstream ifs(args_->user_features_file);
+    OP_REQUIRES(
+        ctx, ifs.is_open(),
+        errors::Unavailable(args_->user_features_file + " open failed"));
+    std::string line;
+    int64 nline = 0;
+    while (!ifs.eof()) {
+      ++nline;
+      if (nline % 1000000 == 0) {
+        LOG(ERROR) << "Load user features " << nline / 10000 << "w lines...";
+      }
+      std::getline(ifs, line);
+      str_util::StripTrailingWhitespace(&line);
+      if (line.empty()) {
+        continue;
+      }
+      auto tokens = str_util::Split(line, "\t ");
+      if (tokens.size() < 3) {
+        LOG(ERROR) << "Tokens less than 3. line = " << line;
+        continue;
+      }
+      try {
+        uint32_t uin = std::stoll(tokens[0]);
+        short age = std::stoi(tokens[1]);
+        short gender = std::stoi(tokens[2]);
+        user_features_.insert({uin, {age, gender}});
+      } catch (const std::exception& e) {
+        LOG(ERROR) << "parse user features error, line << " << line;
+        continue;
+      }
+    }
+    LOG(ERROR) << "Load user size = " << user_features_.size();
+
+    int cnt = 0;
+    for (auto& p : user_features_) {
+      LOG(ERROR) << p.first << ": " << p.second.age << ", " << p.second.gender;
+      ++cnt;
+      if (cnt > 10) {
+        break;
+      }
+    }
+
+    LOG(ERROR) << "Load user features OK";
+  }
+  struct UserFeatures {
+    UserFeatures(short age_, short gender_) : age(age_), gender(gender_) {}
+    short age;
+    short gender;
+  };
+
+
   std::shared_ptr<::fasttext::Args> args_;
   std::shared_ptr<::fasttext::Dictionary> dict_;
 
   std::minstd_rand rng_;
   std::atomic<int64> global_lines_;
+
+  std::unordered_map<uint32_t, UserFeatures> user_features_;
+  const float DEFAULT_AGE = 0.0;
+  const int64 DEFAULT_GENDER = 0;
+
 };
 REGISTER_KERNEL_BUILDER(Name("FasttextExampleGenerate").Device(DEVICE_CPU),
                         FasttextExampleGenerateOp);

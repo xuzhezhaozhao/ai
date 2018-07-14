@@ -100,6 +100,11 @@ parser.add_argument('--sgd_lr_decay_end_learning_rate',
                     default=0.0001, type=float, help='')
 parser.add_argument('--sgd_lr_decay_power', default=1.0, type=float, help='')
 
+parser.add_argument('--use_user_features', default=0, type=int, help='')
+parser.add_argument('--user_features_file', default='', type=str, help='')
+parser.add_argument('--use_age_feature', default=0, type=int, help='')
+parser.add_argument('--use_gender_feature', default=0, type=int, help='')
+
 opts = Options()
 
 
@@ -182,6 +187,10 @@ def parse_args(argv):
     opts.negative_sampler_type = args.negative_sampler_type
     opts.sgd_lr_decay_end_learning_rate = args.sgd_lr_decay_end_learning_rate
     opts.sgd_lr_decay_power = args.sgd_lr_decay_power
+    opts.use_user_features = bool(args.use_user_features)
+    opts.user_features_file = args.user_features_file
+    opts.use_age_feature = bool(args.use_age_feature)
+    opts.use_gender_feature = bool(args.use_gender_feature)
 
 
 def validate_opts():

@@ -16,13 +16,31 @@ import custom_ops
 def feature_columns(opts):
     """Return a tuple of feature_columns. One for train, one for predict."""
 
-    my_feature_columns = []
-    predict_feature_columns = []
-    my_feature_columns.append(tf.feature_column.numeric_column(
-        key=model_keys.RECORDS_COL, shape=[opts.train_ws], dtype=tf.int32))
-    predict_feature_columns.append(tf.feature_column.numeric_column(
-        key=model_keys.RECORDS_COL, shape=[opts.predict_ws], dtype=tf.int32))
-    return my_feature_columns, predict_feature_columns
+    records_column = tf.feature_column.numeric_column(
+        key=model_keys.RECORDS_COL, shape=[opts.train_ws], dtype=tf.int32)
+    predict_records_column = tf.feature_column.numeric_column(
+        key=model_keys.RECORDS_COL, shape=[opts.predict_ws], dtype=tf.int32)
+
+    def normalizer_fn(x):
+        return tf.concat([(x-30.0)/100.0, (x*x - 400.0)/10000.0], axis=1)
+
+    age_dim = 2
+    age_column = tf.feature_column.numeric_column(
+        key=model_keys.AGE_COL, shape=[age_dim], dtype=tf.float32,
+        normalizer_fn=normalizer_fn)
+
+    gender_vocabulary = [0, 1, 2]
+    gender_dim = len(gender_vocabulary)
+    gender_column = tf.feature_column.categorical_column_with_vocabulary_list(
+        key=model_keys.GENDER_COL, vocabulary_list=gender_vocabulary,
+        default_value=0, dtype=tf.int64)
+    one_hot_gender_column = tf.feature_column.indicator_column(gender_column)
+
+    user_features_dim = age_dim + gender_dim
+    user_features_columns = [age_column, one_hot_gender_column]
+
+    return ([records_column], [predict_records_column],
+            user_features_columns, user_features_dim)
 
 
 def pack_fasttext_params(opts, is_eval):
@@ -38,6 +56,9 @@ def pack_fasttext_params(opts, is_eval):
     params['label'] = opts.label
     params['ntargets'] = opts.ntargets
     params['sample_dropout'] = opts.sample_dropout
+
+    params['use_user_features'] = opts.use_user_features
+    params['user_features_file'] = opts.user_features_file
 
     if is_eval:
         params['t'] = 1.0
@@ -84,14 +105,17 @@ def map_generate_example(line, opts, is_eval):
     params['input'] = line
     params['use_saved_dict'] = True
 
-    records, labels, ntokens = custom_ops.fasttext_example_generate(**params)
-    return (records, labels, ntokens)
+    (records, labels, ntokens,
+     age, gender) = custom_ops.fasttext_example_generate(**params)
+    return (records, labels, ntokens, age, gender)
 
 
-def flat_map_example(records, labels, ntokens):
+def flat_map_example(records, labels, ntokens, age, gender):
     dataset = tf.data.Dataset.from_tensor_slices(
         ({model_keys.RECORDS_COL: records,
-          model_keys.TOKENS_COL: ntokens}, labels))
+          model_keys.TOKENS_COL: ntokens,
+          model_keys.AGE_COL: age,
+          model_keys.GENDER_COL: gender}, labels))
     return dataset
 
 
@@ -191,6 +215,12 @@ def build_serving_input_fn(opts):
             model_keys.WORDS_COL: tf.FixedLenFeature(shape=[opts.receive_ws],
                                                      dtype=tf.string)
         }
+
+        if opts.use_user_features:
+            feature_spec[model_keys.AGE_COL] = tf.FixedLenFeature(
+                shape=[1], dtype=tf.float32)
+            feature_spec[model_keys.GENDER_COL] = tf.FixedLenFeature(
+                shape=[1], dtype=tf.int64)
 
         serialized_tf_example = tf.placeholder(dtype=tf.string,
                                                shape=[None],
