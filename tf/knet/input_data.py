@@ -13,7 +13,7 @@ import model_keys
 import custom_ops
 
 
-def feature_columns(opts):
+def input_feature_columns(opts):
     """Return a tuple of feature_columns. One for train, one for predict."""
 
     records_column = tf.feature_column.numeric_column(
@@ -93,13 +93,16 @@ def parse_dict_meta(opts):
     return dict_meta
 
 
+def need_ntokens(opts):
+    if (opts.optimizer_type == model_keys.OptimizerType.SGD
+            and (opts.sgd_lr_decay_type
+                 == model_keys.SGDLrDecayType.FASTTEXT_DECAY)):
+        return True
+    return False
+
+
 def map_generate_example(line, opts, is_eval):
-    """
-    测试时需要使用 initializable iterator
-        it = ds.make_initializable_iterator()
-        sess.run(it.initializer)
-        sess.run(it.get_next())
-    """
+    """Map a single line to features tuple."""
 
     params = pack_fasttext_params(opts, is_eval)
     params['input'] = line
@@ -107,15 +110,38 @@ def map_generate_example(line, opts, is_eval):
 
     (records, labels, ntokens,
      age, gender) = custom_ops.fasttext_example_generate(**params)
-    return (records, labels, ntokens, age, gender)
+
+    results = [records, labels]
+    if need_ntokens(opts):
+        results.append(ntokens)
+
+    if opts.use_user_features:
+        results.append(age)
+        results.append(gender)
+
+    return tuple(results)
 
 
-def flat_map_example(records, labels, ntokens, age, gender):
-    dataset = tf.data.Dataset.from_tensor_slices(
-        ({model_keys.RECORDS_COL: records,
-          model_keys.TOKENS_COL: ntokens,
-          model_keys.AGE_COL: age,
-          model_keys.GENDER_COL: gender}, labels))
+def flat_map_example(opts, x):
+    """Deal with features tuple returned by map_generate_example.
+
+    Returns:
+        A 'Dataset'.
+    """
+
+    features_dict = {model_keys.RECORDS_COL: x[0]}
+    labels = x[1]
+
+    bias = 0
+    if need_ntokens(opts):
+        features_dict[model_keys.TOKENS_COL] = x[2]
+        bias += 1
+
+    if opts.use_user_features:
+        features_dict[model_keys.AGE_COL] = x[2+bias]
+        features_dict[model_keys.GENDER_COL] = x[3+bias]
+
+    dataset = tf.data.Dataset.from_tensor_slices((features_dict, labels))
     return dataset
 
 
@@ -137,7 +163,8 @@ def fasttext_train_input_fn(opts, skip_rows=0):
     # ref: https://stackoverflow.com/questions/47411383/parallel-threads-with-tensorflow-dataset-api-and-flat-map/47414078
     ds = ds.map(lambda line: map_generate_example(line, opts, False),
                 num_parallel_calls=opts.map_num_parallel_calls)
-    ds = ds.prefetch(opts.prefetch_size).flat_map(flat_map_example)
+    ds = ds.prefetch(opts.prefetch_size).flat_map(
+        lambda *x: flat_map_example(opts, x))
 
     if opts.shuffle_batch:
         ds = ds.shuffle(buffer_size=opts.shuffle_size)
@@ -183,7 +210,8 @@ def eval_input_fn(opts, skip_rows=0):
     ds = tf.data.TextLineDataset(eval_data_path).skip(skip_rows)
     ds = ds.map(lambda line: map_generate_example(line, opts, True),
                 num_parallel_calls=opts.map_num_parallel_calls)
-    ds = ds.prefetch(opts.prefetch_size).flat_map(flat_map_example)
+    ds = ds.prefetch(opts.prefetch_size).flat_map(
+        lambda *x: flat_map_example(opts, x))
     ds = ds.batch(batch_size)
     return ds
 

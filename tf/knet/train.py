@@ -41,7 +41,7 @@ def build_estimator(opts):
     dict_meta = input_data.parse_dict_meta(opts)
     (records_column, predict_records_column,
      user_features_columns,
-     user_features_dim) = input_data.feature_columns(opts)
+     user_features_dim) = input_data.input_feature_columns(opts)
     """ session config
     session_config = tf.ConfigProto(device_count={"CPU": 1},
                                     inter_op_parallelism_threads=1,

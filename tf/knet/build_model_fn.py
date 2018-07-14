@@ -157,10 +157,12 @@ def create_input_layer(mode, features, params, embeddings):
                 embeds_mean, training, "bn_input")
 
         if opts.use_user_features:
+            tf.logging.info("Use user features")
             user_features = tf.feature_column.input_layer(
                 features, params['user_features_columns'])
             concat_features = [embeds_mean, user_features]
-            input_layer = tf.concat(concat_features, axis=1)
+            input_layer = tf.concat(concat_features, axis=1,
+                                    name='concat_user_features')
         else:
             input_layer = embeds_mean
 
