@@ -88,12 +88,14 @@ def get_nce_weights_and_biases(params):
     else:
         nce_dim = opts.hidden_units[-1]
 
+    opts.nce_dim = nce_dim
+
     tf.logging.info("nce_dim = {}".format(nce_dim))
 
     with tf.variable_scope("nce_layer_variables", reuse=tf.AUTO_REUSE):
         nce_weights = tf.get_variable(
             model_keys.NCE_WEIGHTS_NAME,
-            initializer=tf.zeros([num_classes, opts.embedding_dim]))
+            initializer=tf.zeros([num_classes, nce_dim]))
         nce_biases = tf.get_variable(
             model_keys.NCE_BIASES_NAME, initializer=tf.zeros([num_classes]),
             trainable=opts.train_nce_biases)
@@ -493,7 +495,7 @@ def fasttext_nce_loss(weights, biases, labels, inputs, params):
 
     # Sampled logits: [batch_size, num_sampled]
     sampled_b_vec = tf.reshape(sampled_b, [-1, opts.num_sampled])
-    broadcast_inputs = tf.reshape(inputs, [-1, 1, opts.embedding_dim])
+    broadcast_inputs = tf.reshape(inputs, [-1, 1, opts.nce_dim])
     sampled_logits = tf.multiply(broadcast_inputs, sampled_w)
     sampled_logits = tf.reduce_sum(sampled_logits, -1) + sampled_b_vec
 

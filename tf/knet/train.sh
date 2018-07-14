@@ -10,34 +10,37 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 MODEL_DIR=`pwd`/model_dir
 EXPORT_MODEL_DIR=`pwd`/export_model_dir
 
-if [ $# != 0 ] ; then
-    train_data_path=../../data/train_data.mini.in
-    eval_data_path=../../data/eval_data.mini.in
-    epoch=1
-    recall_k=50
-    min_count=50
+if [[ $# != 0 ]] ; then
+    if [[ $1 == "user" ]]; then
+        echo "Use new train data ..."
+        train_data_path=../../data/train_data.in.new
+        eval_data_path=../../data/eval_data.in.new
+    else
+        echo "Usage: [user]"
+        exit -1
+    fi
 else
     train_data_path=../../data/train_data.in
     eval_data_path=../../data/eval_data.in
-    epoch=5
-    recall_k=10
-    min_count=30
 fi
 
-lr=0.05
+lr=0.5
 embedding_dim=128
 train_ws=20
 train_lower_ws=1
+min_count=30
 t=0.025
 batch_size=64
 num_sampled=5
-hidden_units="256,128"
+epoch=5
+hidden_units=""
 prefetch_size=1000
 shuffle_size=1000
 max_train_steps=-1
 save_summary_steps=100
 save_checkpoints_secs=600
 log_step_count_steps=1000
+recall_k=10
 dict_dir=`pwd`/dict_dir
 use_saved_dict=0
 use_profile_hook=0
