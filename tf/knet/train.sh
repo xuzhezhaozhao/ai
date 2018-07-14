@@ -85,7 +85,7 @@ negative_sampler_type='fixed'  # fixed(better), log_uniform
 use_user_features=1
 user_features_file="../../data/user_features.tsv"
 use_age_feature=0
-use_gender_feature=0
+use_gender_feature=1
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1

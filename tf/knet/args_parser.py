@@ -209,6 +209,10 @@ def validate_opts():
         raise ValueError(
             "option normalize_nce_weights and train_nce_biases conflicts.")
 
+    if opts.use_user_features:
+        if not opts.use_age_feature and not opts.use_gender_feature:
+            raise ValueError("None user features can be used.")
+
 
 def parse_tf_config():
     """Parse environment TF_CONFIG. config put in opts."""

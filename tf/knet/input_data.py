@@ -36,8 +36,14 @@ def input_feature_columns(opts):
         default_value=0, dtype=tf.int64)
     one_hot_gender_column = tf.feature_column.indicator_column(gender_column)
 
-    user_features_dim = age_dim + gender_dim
-    user_features_columns = [age_column, one_hot_gender_column]
+    user_features_dim = 0
+    user_features_columns = []
+    if opts.use_age_feature:
+        user_features_dim += age_dim
+        user_features_columns.append(age_column)
+    if opts.use_gender_feature:
+        user_features_dim += gender_dim
+        user_features_columns.append(one_hot_gender_column)
 
     return ([records_column], [predict_records_column],
             user_features_columns, user_features_dim)
