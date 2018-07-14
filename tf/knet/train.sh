@@ -87,7 +87,7 @@ nce_loss_type='fasttext'  # 'word2vec', 'fasttext', 'default'
 negative_sampler_type='fixed'  # fixed(better), log_uniform
 use_user_features=1
 user_features_file="../../data/user_features.tsv"
-use_age_feature=0
+use_age_feature=1
 use_gender_feature=1
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
