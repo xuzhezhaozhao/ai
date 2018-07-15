@@ -1,5 +1,5 @@
 
-num_worker=1
+num_worker=2
 
 MODEL_DIR=`pwd`/model_dir
 chief_lock=${MODEL_DIR}/chief.lock
