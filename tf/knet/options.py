@@ -82,6 +82,7 @@ class Options(object):
         self.user_features_file = ''
         self.use_age_feature = False
         self.use_gender_feature = False
+        self.age_feature_type = ''
 
         # non-cmd args
         self.estimator = None
@@ -163,6 +164,7 @@ class Options(object):
         user_features_file = {} \n \
         use_age_feature = {} \n \
         use_gender_feature = {} \n \
+        age_feature_type = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -240,6 +242,7 @@ class Options(object):
                 self.user_features_file,
                 self.use_age_feature,
                 self.use_gender_feature,
+                self.age_feature_type,
                 # non-cmd args
                 self.estimator,
                 self.hooks,

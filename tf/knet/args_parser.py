@@ -104,6 +104,7 @@ parser.add_argument('--use_user_features', default=0, type=int, help='')
 parser.add_argument('--user_features_file', default='', type=str, help='')
 parser.add_argument('--use_age_feature', default=0, type=int, help='')
 parser.add_argument('--use_gender_feature', default=0, type=int, help='')
+parser.add_argument('--age_feature_type', default='', type=str, help='')
 
 opts = Options()
 
@@ -191,6 +192,7 @@ def parse_args(argv):
     opts.user_features_file = args.user_features_file
     opts.use_age_feature = bool(args.use_age_feature)
     opts.use_gender_feature = bool(args.use_gender_feature)
+    opts.age_feature_type = args.age_feature_type
 
 
 def validate_opts():

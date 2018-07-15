@@ -110,3 +110,10 @@ class NceLossType(object):
     DEFAULT = 'default'
     WORD2VEC = 'word2vec'
     FASTTEXT = 'fasttext'
+
+
+class AgeFeatureType(object):
+    """Age feature type."""
+
+    indicator = 'indicator'
+    numeric = 'numeric'

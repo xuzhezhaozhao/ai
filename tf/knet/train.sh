@@ -89,6 +89,8 @@ use_user_features=1
 user_features_file="../../data/user_features.tsv"
 use_age_feature=1
 use_gender_feature=1
+# 'indicator', 'numeric'
+age_feature_type='numeric'
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
@@ -183,4 +185,5 @@ python main.py \
     --use_user_features ${use_user_features} \
     --user_features_file ${user_features_file} \
     --use_age_feature ${use_age_feature} \
-    --use_gender_feature ${use_gender_feature}
+    --use_gender_feature ${use_gender_feature} \
+    --age_feature_type ${age_feature_type}

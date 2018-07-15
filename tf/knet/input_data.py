@@ -21,20 +21,14 @@ def input_feature_columns(opts):
     predict_records_column = tf.feature_column.numeric_column(
         key=model_keys.RECORDS_COL, shape=[opts.predict_ws], dtype=tf.int32)
 
-    def normalizer_fn(x):
-        return tf.concat([(x-30.0)/100.0, (x*x - 400.0)/10000.0], axis=1)
+    if opts.age_feature_type == model_keys.AgeFeatureType.indicator:
+        age_column, age_dim = age_indicator_column()
+    elif opts.age_feature_type == model_keys.AgeFeatureType.numeric:
+        age_column, age_dim = age_numeric_column()
+    else:
+        raise ValueError("Unsurpported age feature type.")
 
-    age_dim = 2
-    age_column = tf.feature_column.numeric_column(
-        key=model_keys.AGE_COL, shape=[age_dim], dtype=tf.float32,
-        normalizer_fn=normalizer_fn)
-
-    gender_vocabulary = [0, 1, 2]
-    gender_dim = len(gender_vocabulary)
-    gender_column = tf.feature_column.categorical_column_with_vocabulary_list(
-        key=model_keys.GENDER_COL, vocabulary_list=gender_vocabulary,
-        default_value=0, dtype=tf.int64)
-    one_hot_gender_column = tf.feature_column.indicator_column(gender_column)
+    gender_column, gender_dim = gender_indicator_column()
 
     user_features_dim = 0
     user_features_columns = []
@@ -43,10 +37,45 @@ def input_feature_columns(opts):
         user_features_columns.append(age_column)
     if opts.use_gender_feature:
         user_features_dim += gender_dim
-        user_features_columns.append(one_hot_gender_column)
+        user_features_columns.append(gender_column)
 
     return ([records_column], [predict_records_column],
             user_features_columns, user_features_dim)
+
+
+def age_numeric_column():
+    def normalizer_fn(x):
+        return tf.concat([(x-30.0)/100.0, (x*x - 400.0)/10000.0], axis=1)
+    age_dim = 2
+    age_numeric_column = tf.feature_column.numeric_column(
+        key=model_keys.AGE_COL, shape=[age_dim], dtype=tf.float32,
+        normalizer_fn=normalizer_fn)
+
+    return age_numeric_column, age_dim
+
+
+def age_indicator_column():
+    age = tf.feature_column.numeric_column(key=model_keys.AGE_COL,
+                                           shape=[1],
+                                           dtype=tf.float32)
+    boundaries = [10, 13, 16, 18, 20, 24, 28, 35, 40]
+    age_buckets = tf.feature_column.bucketized_column(
+        age, boundaries=boundaries)
+    age_indicator_column = tf.feature_column.indicator_column(age_buckets)
+    age_dim = len(boundaries) + 1
+    return age_indicator_column, age_dim
+
+
+def gender_indicator_column():
+    gender_vocabulary = [0, 1, 2]
+    gender_dim = len(gender_vocabulary)
+    gender_column = tf.feature_column.categorical_column_with_vocabulary_list(
+        key=model_keys.GENDER_COL, vocabulary_list=gender_vocabulary,
+        default_value=0, dtype=tf.int64)
+    gender_indicator_column = tf.feature_column.indicator_column(gender_column)
+
+    return gender_indicator_column, gender_dim
+
 
 
 def pack_fasttext_params(opts, is_eval):
