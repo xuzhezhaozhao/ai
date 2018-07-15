@@ -58,7 +58,7 @@ def age_indicator_column():
     age = tf.feature_column.numeric_column(key=model_keys.AGE_COL,
                                            shape=[1],
                                            dtype=tf.float32)
-    boundaries = [10, 13, 16, 18, 20, 24, 28, 35, 40]
+    boundaries = [10, 13, 15, 18, 20, 24, 28, 35, 40]
     age_buckets = tf.feature_column.bucketized_column(
         age, boundaries=boundaries)
     age_indicator_column = tf.feature_column.indicator_column(age_buckets)
