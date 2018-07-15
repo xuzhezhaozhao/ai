@@ -215,15 +215,18 @@ def validate_opts():
         if not opts.use_age_feature and not opts.use_gender_feature:
             raise ValueError("None user features can be used.")
 
+    if (opts.tf_config is not None and
+            opts.train_parallel_mode != model_keys.TrainParallelMode.DEFAULT):
+        raise ValueError(
+            "Distribute mode only surpport 'default' train parallel mode.")
+
 
 def parse_tf_config():
     """Parse environment TF_CONFIG. config put in opts."""
 
-    try:
-        tf_config = os.environ.get('TF_CONFIG')
+    tf_config = os.environ.get('TF_CONFIG')
+    if tf_config is not None:
         tf_config = json.loads(tf_config)
-    except Exception:
-        tf_config = None
 
     opts.tf_config = tf_config
     opts.task_type = model_keys.TaskType.LOCAL  # default mode
