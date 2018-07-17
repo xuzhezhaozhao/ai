@@ -35,14 +35,22 @@ class PredictionClient {
     auto features = example.mutable_features();
     auto feature = features->mutable_feature();
     ::tensorflow::Feature words;
+    ::tensorflow::Feature age;
+    ::tensorflow::Feature gender;
     auto bytes_list = words.mutable_bytes_list();
-    const int recieve_ws = 100;
+    auto age_float_list = age.mutable_float_list();
+    auto gender_int_list = gender.mutable_int64_list();
 
+    const int recieve_ws = 100;
     for (int i = 0; i < recieve_ws; ++i) {
       bytes_list->add_value("");
     }
     bytes_list->set_value(0, "6215a4e92df895aa");
+    age_float_list->add_value(7.0);
+    gender_int_list->add_value(1);
     (*feature)["words"] = words;
+    (*feature)["age"] = age;
+    (*feature)["gender"] = gender;
 
     std::string serialized;
     example.SerializeToString(&serialized);
