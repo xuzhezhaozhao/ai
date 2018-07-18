@@ -117,10 +117,8 @@ class FasttextNegativeSamplerOp : public OpKernel {
   int GetNegative(int32_t target) {
     int negative;
     do {
-      size_t pos = negpos_.load(std::memory_order::memory_order_relaxed);
-      pos = pos % negatives_.size();
-      negative = negatives_[pos];
-      ++negpos_;
+      negative = negatives_[negpos_];
+      negpos_ = (negpos_ + 1) % negatives_.size();
     } while (target == negative);
     return negative;
   }
@@ -136,7 +134,7 @@ class FasttextNegativeSamplerOp : public OpKernel {
 
   std::vector<int> negatives_;
   std::minstd_rand rng_;
-  std::atomic<size_t> negpos_;
+  size_t negpos_;
 };
 
 REGISTER_KERNEL_BUILDER(Name("FasttextNegativeSampler").Device(DEVICE_CPU),
