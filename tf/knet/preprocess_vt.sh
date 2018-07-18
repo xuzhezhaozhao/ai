@@ -25,7 +25,7 @@ train_lower_ws=1
 min_count=100
 t=0.0001
 batch_size=64
-num_sampled=10
+num_sampled=20
 epoch=1
 hidden_units=""
 prefetch_size=100000
@@ -78,7 +78,7 @@ normalize_nce_weights=0
 normalize_embeddings=0
 nce_loss_type='fasttext'  # 'word2vec', 'fasttext', 'default'
 negative_sampler_type='fixed'  # fixed(better), log_uniform
-use_user_features=1
+use_user_features=0
 use_age_feature=1
 use_gender_feature=1
 # 'indicator', 'numeric'
