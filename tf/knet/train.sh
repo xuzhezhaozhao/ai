@@ -30,7 +30,7 @@ train_ws=20
 train_lower_ws=1
 min_count=30
 t=0.025
-batch_size=128
+batch_size=64
 num_sampled=5
 epoch=5
 hidden_units=""
@@ -65,7 +65,7 @@ train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 map_num_parallel_calls=1
 # 'default', 'train_op_parallel', 'multi_thread'
 train_parallel_mode='train_op_parallel'
-num_parallel=8
+num_parallel=4
 use_batch_normalization=1
 # 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'
 sgd_lr_decay_type='fasttext_decay'
