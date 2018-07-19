@@ -23,13 +23,13 @@ embedding_dim=128
 train_ws=20
 train_lower_ws=1
 min_count=100
-t=0.0001
-batch_size=64
+t=1.0
+batch_size=128
 num_sampled=20
 epoch=1
 hidden_units=""
-prefetch_size=100000
-shuffle_size=100000
+prefetch_size=10000
+shuffle_size=10000
 max_train_steps=-1
 save_summary_steps=100000000
 save_checkpoints_secs=7200
@@ -58,7 +58,7 @@ train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 map_num_parallel_calls=2
 # 'default', 'train_op_parallel', 'multi_thread'
 train_parallel_mode='multi_thread'
-num_parallel=16
+num_parallel=8
 use_batch_normalization=0
 # 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'
 sgd_lr_decay_type='fasttext_decay'
