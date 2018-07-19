@@ -44,9 +44,11 @@ def input_feature_columns(opts):
 
 
 def age_numeric_column():
+    age_dim = 5
+
     def normalizer_fn(x):
-        return tf.concat([(x-30.0)/100.0, (x*x - 400.0)/10000.0], axis=1)
-    age_dim = 2
+        return tf.concat([x, x*x, tf.sqrt(x), tf.sin(x), tf.cos(x)], axis=1)
+
     age_numeric_column = tf.feature_column.numeric_column(
         key=model_keys.AGE_COL, shape=[age_dim], dtype=tf.float32,
         normalizer_fn=normalizer_fn)
@@ -75,7 +77,6 @@ def gender_indicator_column():
     gender_indicator_column = tf.feature_column.indicator_column(gender_column)
 
     return gender_indicator_column, gender_dim
-
 
 
 def pack_fasttext_params(opts, is_eval):
