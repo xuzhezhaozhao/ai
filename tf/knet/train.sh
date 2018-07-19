@@ -64,7 +64,7 @@ num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 map_num_parallel_calls=1
 # 'default', 'train_op_parallel', 'multi_thread', 'multi_thread_v2'
-train_parallel_mode='multi_thread_v2'
+train_parallel_mode='multi_thread'
 num_parallel=4
 use_batch_normalization=0
 # 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'

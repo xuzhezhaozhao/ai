@@ -25,7 +25,7 @@ train_lower_ws=1
 min_count=100
 t=1.0
 batch_size=128
-num_sampled=20
+num_sampled=10
 epoch=1
 hidden_units=""
 prefetch_size=10000
@@ -55,10 +55,10 @@ optimizer_type='ada'
 tfrecord_file=${raw_data_dir}/train_data.vt.tfrecord
 num_tfrecord_file=42
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
-map_num_parallel_calls=2
+map_num_parallel_calls=1
 # 'default', 'train_op_parallel', 'multi_thread', 'multi_thread_v2'
-train_parallel_mode='multi_thread_v2'
-num_parallel=16
+train_parallel_mode='train_op_parallel'
+num_parallel=8
 use_batch_normalization=0
 # 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'
 sgd_lr_decay_type='fasttext_decay'
