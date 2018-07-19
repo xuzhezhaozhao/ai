@@ -32,7 +32,7 @@ min_count=30
 t=0.025
 batch_size=64
 num_sampled=5
-epoch=5
+epoch=10
 hidden_units=""
 prefetch_size=10000
 shuffle_size=10000
@@ -63,17 +63,17 @@ tfrecord_file='../../data/train_data.tfrecord'
 num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 map_num_parallel_calls=1
-# 'default', 'train_op_parallel', 'multi_thread'
-train_parallel_mode='train_op_parallel'
+# 'default', 'train_op_parallel', 'multi_thread', 'multi_thread_v2'
+train_parallel_mode='multi_thread_v2'
 num_parallel=4
-use_batch_normalization=1
+use_batch_normalization=0
 # 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'
 sgd_lr_decay_type='fasttext_decay'
 sgd_lr_decay_steps=7600
 sgd_lr_decay_rate=0.95
 sgd_lr_decay_end_learning_rate=0.0001
 sgd_lr_decay_power=1.0
-use_clip_gradients=1
+use_clip_gradients=0
 clip_norm=1000.0
 filter_with_rowkey_info=0
 filter_with_rowkey_info_exposure_thr=10000

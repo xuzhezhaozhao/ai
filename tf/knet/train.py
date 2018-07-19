@@ -87,6 +87,12 @@ def build_estimator(opts):
         estimator_keys['config'] = config
         estimator_keys['num_thread'] = opts.num_parallel
         estimator = MultiThreadEstimator(**estimator_keys)
+    elif train_parallel_mode == model_keys.TrainParallelMode.MULTI_THREAD_V2:
+        from estimator_v3.estimator import TrainOpParallelEstimator
+        config = tf.estimator.RunConfig(**config_keys)
+        estimator_keys['config'] = config
+        estimator_keys['num_train_op_parallel'] = opts.num_parallel
+        estimator = TrainOpParallelEstimator(**estimator_keys)
     else:
         raise ValueError("train_parallel_mode '{}' not surpported.".format(
             train_parallel_mode))
