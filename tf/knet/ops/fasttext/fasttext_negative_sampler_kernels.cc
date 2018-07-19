@@ -22,8 +22,10 @@ class FasttextNegativeSamplerOp : public OpKernel {
         range_max_(0),
         num_reserved_ids_(0),
         seed_(0),
-        unique_(true) {
+        unique_(true),
+        negpos_(0) {
     LOG(ERROR) << "Init FasttextNegativeSamplerOp ...";
+    LOG(ERROR) << "this = " << this;
     negatives_.clear();
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("num_true", &num_true_));
