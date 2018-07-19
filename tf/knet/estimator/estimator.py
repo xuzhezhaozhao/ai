@@ -1348,8 +1348,14 @@ class TrainOpParallelEstimator(object):
         train_ops.append(item.train_op)
       for item in estimator_specs:
         train_ops.append(item.loss)
+
+      def step_fn(step_context):
+        result = step_context.session.run([train_ops])
+        return result
+
       while not mon_sess.should_stop():
-        result = mon_sess.run(train_ops)
+        # result = mon_sess.run(train_ops)
+        result = mon_sess.run_step_fn(step_fn)
 
     loss = sum(result[len(estimator_specs):], 0.0) / len(estimator_specs)
     return loss
