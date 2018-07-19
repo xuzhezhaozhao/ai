@@ -64,7 +64,7 @@ num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 map_num_parallel_calls=1
 # 'default', 'train_op_parallel', 'multi_thread'
-train_parallel_mode='default'
+train_parallel_mode='multi_thread'
 num_parallel=4
 use_batch_normalization=1
 # 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'
@@ -85,7 +85,7 @@ normalize_nce_weights=0
 normalize_embeddings=0
 nce_loss_type='fasttext'  # 'word2vec', 'fasttext', 'default'
 negative_sampler_type='fixed'  # fixed(better), log_uniform
-use_user_features=1
+use_user_features=0
 user_features_file="../../data/user_features.tsv"
 use_age_feature=1
 use_gender_feature=1
