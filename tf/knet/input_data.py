@@ -47,6 +47,7 @@ def age_numeric_column():
     age_dim = 5
 
     def normalizer_fn(x):
+        x = x / 50.0
         return tf.concat([x, x*x, tf.sqrt(x), tf.sin(x), tf.cos(x)], axis=1)
 
     age_numeric_column = tf.feature_column.numeric_column(
