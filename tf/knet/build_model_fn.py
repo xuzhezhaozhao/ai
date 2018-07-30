@@ -191,11 +191,13 @@ def create_hidden_layer(mode, input_layer, params):
             dropout = 0.0 if is_last_layer else dropout
 
             hidden = tf.layers.dense(
-                hidden, units=units, activation=activation,
+                hidden, units=units, activation=None,
                 name="fc{}_{}".format(index, units), reuse=tf.AUTO_REUSE)
             if use_batch_normalization:
                 hidden = batch_normalization(
                     hidden, training, "bn{}_{}".format(index, units))
+            if activation is not None:
+                hidden = activation(hidden)
 
             if dropout > 0.0:
                 hidden = tf.layers.dropout(
