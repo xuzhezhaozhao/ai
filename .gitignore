@@ -39,3 +39,4 @@ mnist_convnet_model
 *.bz2
 *.tgz
 tf/knet/ops/fasttext/tfrecord_writer
+*.npy
