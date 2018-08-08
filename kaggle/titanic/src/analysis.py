@@ -1,27 +1,8 @@
-# data analysis and wrangling
 import pandas as pd
-import numpy as np
-import random as rnd
-
-# visualization
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-# machine learning
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC, LinearSVC
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.linear_model import Perceptron
-from sklearn.linear_model import SGDClassifier
-from sklearn.tree import DecisionTreeClassifier
-
 
 train_df = pd.read_csv('../input/train.csv')
 test_df = pd.read_csv('../input/test.csv')
 combine = [train_df, test_df]
-
 
 # Which features are available in the dataset?
 # Which features are categorical?
@@ -70,3 +51,16 @@ train_df[["Parch", "Survived"]] \
     .groupby(['Parch'], as_index=False) \
     .mean() \
     .sort_values(by='Survived', ascending=False)
+
+train_df.Age.value_counts()
+train_df.Age.var()
+
+
+train_df.var()
+train_df.mean()
+train_df.median()
+train_df.min()
+train_df.max()
+train_df.cov()
+train_df.corr()
+train_df.Survived.corr(train_df.Age)
