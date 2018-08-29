@@ -10,7 +10,7 @@ export ANACONDA2_ROOT=/usr/local/services/kd_anaconda2-1.0/lib/anaconda2
 export PATH="${ANACONDA2_ROOT}/bin:$PATH"
 export PYTHONPATH="${ANACONDA2_ROOT}/lib/python2.7/site-packages:$PYTHONPATH"
 
-raw_data_dir=raw_data
+raw_data_dir=`pwd`/raw_data
 model_dir=`pwd`/video_tab/model_dir
 export_model_dir=`pwd`/video_tab/export_model_dir
 dict_dir=`pwd`/video_tab/dict_dir
