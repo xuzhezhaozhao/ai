@@ -89,6 +89,15 @@ def alexnet_model_fn(features, labels, mode, params):
              trainable=trainable,
              pre_weights=pre_weights, pre_biases=pre_biases)
 
+    if mode == tf.estimator.ModeKeys.PREDICT:
+        return create_predict_estimator_spec(mode)
+
+    if mode == tf.estimator.ModeKeys.EVAL:
+        return create_eval_estimator_spec(mode)
+
+    if mode == tf.estimator.ModeKeys.TRAIN:
+        return create_train_estimator_spec(mode, fc8, labels, params)
+
 
 def load_initial_weights(opts):
     """Load weights from file.
@@ -203,3 +212,24 @@ def dropout(x, keep_prob):
     """Create a dropout layer."""
 
     return tf.nn.dropout(x, keep_prob)
+
+
+def create_predict_estimator_spec(mode):
+    pass
+
+
+def create_eval_estimator_spec(mode):
+    pass
+
+
+def create_train_estimator_spec(mode, score, labels, params):
+    opts = params['opts']
+
+    loss = tf.reduce_mean(
+        tf.nn.softmax_cross_entropy_with_logits(logits=score, labels=labels))
+    optimizer = tf.train.GradientDescentOptimizer(opts.learning_rate)
+    train_op = optimizer.minimize(
+        loss=loss,
+        global_step=tf.train.get_global_step())
+
+    return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
