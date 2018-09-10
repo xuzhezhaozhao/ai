@@ -40,8 +40,6 @@ def build_estimator(opts):
     config = tf.estimator.RunConfig(**config_keys)
     estimator_keys['config'] = config
 
-    # from estimator.estimator import Estimator
-    # estimator = Estimator(**estimator_keys)
     estimator = tf.estimator.Estimator(**estimator_keys)
 
     return estimator

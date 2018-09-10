@@ -12,10 +12,10 @@ EXPORT_MODEL_DIR=`pwd`/export_model_dir
 
 train_data_path=`pwd`/train.txt
 eval_data_path=`pwd`/eval.txt
-lr=0.001
+lr=0.1
 batch_size=64
 epoch=5
-model_dir=`pwd`/model_dir
+model_dir=`pwd`/model_
 export_model_dir=`pwd`/export_model_dir
 prefetch_size=1000
 shuffle_size=1000
@@ -32,8 +32,8 @@ shuffle_batch=1
 optimizer_type='sgd'
 map_num_parallel_calls=1
 num_classes=2
-pretrained_weights_path='./pretrained_weights/bvlc_alexnet.npy'
-train_layers='fc6,fc7,fc8'
+pretrained_weights_path=`pwd`/pretrained_weights/bvlc_alexnet.npy
+train_layers='fc8'
 
 python main.py \
     --train_data_path ${train_data_path} \
