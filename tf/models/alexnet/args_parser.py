@@ -58,6 +58,9 @@ parser.add_argument('--clip_norm', default=5.0, type=float, help='')
 parser.add_argument('--sgd_lr_decay_end_learning_rate',
                     default=0.0001, type=float, help='')
 parser.add_argument('--sgd_lr_decay_power', default=1.0, type=float, help='')
+parser.add_argument('--num_classes', default=1, type=int, help='')
+parser.add_argument('--pretrained_weights_path', default='', type=str, help='')
+parser.add_argument('--train_layers', default='', type=str, help='')
 
 opts = Options()
 
@@ -91,7 +94,6 @@ def parse_args(argv):
             and opts.max_distribute_train_steps < 0):
         opts.max_distribute_train_steps = None
     opts.shuffle_batch = bool(args.shuffle_batch)
-    opts.predict_ws = args.predict_ws
     opts.optimizer_type = args.optimizer_type
     opts.tfrecord_file = args.tfrecord_file
     opts.num_tfrecord_file = args.num_tfrecord_file
@@ -106,6 +108,9 @@ def parse_args(argv):
     opts.clip_norm = args.clip_norm
     opts.sgd_lr_decay_end_learning_rate = args.sgd_lr_decay_end_learning_rate
     opts.sgd_lr_decay_power = args.sgd_lr_decay_power
+    opts.num_classes = args.num_classes
+    opts.pretrained_weights_path = args.pretrained_weights_path
+    opts.train_layers = args.train_layers.split(',')
 
 
 def validate_opts():

@@ -44,6 +44,9 @@ class Options(object):
         self.clip_norm = 5.0
         self.sgd_lr_decay_end_learning_rate = 0.0001
         self.sgd_lr_decay_power = 1.0
+        self.num_classes = 1
+        self.pretrained_weights_path = ''
+        self.train_layers = []
 
         # non-cmd args
         self.estimator = None
@@ -88,6 +91,9 @@ class Options(object):
         clip_norm = {} \n \
         sgd_lr_decay_end_learning_rate = {} \n \
         sgd_lr_decay_power = {} \n \
+        num_classes = {} \n \
+        pretrained_weights_path = {} \n \
+        train_layers = {} \n \
         \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -128,6 +134,9 @@ class Options(object):
                 self.clip_norm,
                 self.sgd_lr_decay_end_learning_rate,
                 self.sgd_lr_decay_power,
+                self.num_classes,
+                self.pretrained_weights_path,
+                self.train_layers,
                 # non-cmd args
                 self.estimator,
                 self.hooks,

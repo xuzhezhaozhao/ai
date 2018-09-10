@@ -70,7 +70,7 @@ def alexnet_model_fn(features, labels, mode, params):
              trainable=trainable,
              pre_weights=pre_weights, pre_biases=pre_biases)
 
-    dropout6 = dropout(fc6, opts.keep_prob)
+    dropout6 = dropout(fc6, 1-opts.dropout)
 
     # 7th Layer: FC (w ReLu) -> Dropout
     pre_weights = weights_dict['fc7'][0]
@@ -79,7 +79,7 @@ def alexnet_model_fn(features, labels, mode, params):
     fc7 = fc(dropout6, 4096, 4096, name='fc7',
              trainable=trainable,
              pre_weights=pre_weights, pre_biases=pre_biases)
-    dropout7 = dropout(fc7, opts.keep_prob)
+    dropout7 = dropout(fc7, 1-opts.dropout)
 
     # 8th Layer: FC and return unscaled activations
     pre_weights = weights_dict['fc8'][0]
@@ -93,7 +93,7 @@ def alexnet_model_fn(features, labels, mode, params):
         return create_predict_estimator_spec(mode)
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        return create_eval_estimator_spec(mode)
+        return create_eval_estimator_spec(mode, fc8, labels, params)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         return create_train_estimator_spec(mode, fc8, labels, params)
@@ -129,16 +129,25 @@ def conv(x, filter_height, filter_width, num_filters,
     def convolve(i, k): return tf.nn.conv2d(
             i, k, strides=[1, stride_y, stride_x, 1], padding=padding)
 
+    if trainable:
+        weights_shape = [filter_height, filter_width,
+                         input_channels/groups, num_filters]
+        biases_shape = [num_filters]
+        pre_weights = None
+        pre_biases = None
+    else:
+        weights_shape = None
+        biases_shape = None
+
     with tf.variable_scope(name) as scope:
         # Create tf variables for the weights and biases of the conv layer
         weights = tf.get_variable('weights',
                                   initializer=pre_weights,
-                                  shape=[filter_height, filter_width,
-                                         input_channels/groups, num_filters],
+                                  shape=weights_shape,
                                   trainable=trainable)
         biases = tf.get_variable('biases',
                                  initializer=pre_biases,
-                                 shape=[num_filters],
+                                 shape=biases_shape,
                                  trainable=trainable)
 
     if groups == 1:
@@ -169,16 +178,25 @@ def fc(x, num_in, num_out, name, relu=True,
        trainable=True, pre_weights=None, pre_biases=None):
     """Create a fully connected layer."""
 
+    if trainable:
+        weights_shape = [num_in, num_out]
+        biases_shape = [num_out]
+        pre_weights = None
+        pre_biases = None
+    else:
+        weights_shape = None
+        biases_shape = None
+
     with tf.variable_scope(name) as scope:
 
         # Create tf variables for the weights and biases
         weights = tf.get_variable('weights',
                                   initializer=pre_weights,
-                                  shape=[num_in, num_out],
+                                  shape=weights_shape,
                                   trainable=trainable)
         biases = tf.get_variable('biases',
                                  initializer=pre_biases,
-                                 shape=[num_out],
+                                 shape=biases_shape,
                                  trainable=trainable)
 
         # Matrix multiply weights and inputs and add bias
@@ -218,18 +236,35 @@ def create_predict_estimator_spec(mode):
     pass
 
 
-def create_eval_estimator_spec(mode):
-    pass
+def create_eval_estimator_spec(mode, score, labels, params):
+    """Create eval EstimatorSpec."""
+    accuracy = tf.metrics.accuracy(labels=tf.argmax(labels, 1),
+                                   predictions=tf.argmax(score, 1))
+    metrics = {
+        'accuracy': accuracy
+    }
+
+    loss = tf.reduce_mean(
+        tf.nn.softmax_cross_entropy_with_logits(logits=score, labels=labels))
+
+    return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
 
 
 def create_train_estimator_spec(mode, score, labels, params):
+    """Create train EstimatorSpec."""
+
     opts = params['opts']
 
     loss = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(logits=score, labels=labels))
-    optimizer = tf.train.GradientDescentOptimizer(opts.learning_rate)
-    train_op = optimizer.minimize(
-        loss=loss,
-        global_step=tf.train.get_global_step())
+    optimizer = tf.train.GradientDescentOptimizer(opts.lr)
+
+    gradients, variables = zip(*optimizer.compute_gradients(
+        loss, gate_gradients=tf.train.Optimizer.GATE_GRAPH))
+    train_op = optimizer.apply_gradients(
+        zip(gradients, variables), global_step=tf.train.get_global_step())
+
+    for var, grad in zip(variables, gradients):
+        tf.summary.histogram(var.name.replace(':', '_') + '/gradient', grad)
 
     return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)

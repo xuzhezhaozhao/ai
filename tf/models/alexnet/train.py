@@ -7,7 +7,6 @@ from __future__ import print_function
 
 
 import tensorflow as tf
-import os
 
 import build_model_fn
 import hook
@@ -38,6 +37,9 @@ def build_estimator(opts):
     estimator_keys['params'] = {'opts': opts}
     config = tf.estimator.RunConfig(**config_keys)
     estimator_keys['config'] = config
+
+    # from estimator.estimator import Estimator
+    # estimator = Estimator(**estimator_keys)
     estimator = tf.estimator.Estimator(**estimator_keys)
 
     return estimator
@@ -66,11 +68,6 @@ def train_and_eval_in_local_mode(opts):
                          max_steps=opts.max_train_steps,
                          hooks=opts.hooks)
     tf.logging.info("Train model OK")
-
-    tf.logging.info("Save nce weights and biases ...")
-    build_model_fn.save_model_nce_params(opts.estimator, opts)
-    build_model_fn.save_model_embeddings(opts.estimator, opts)
-    tf.logging.info("Save nce weights and biases OK")
 
     # evaluate model
     tf.logging.info("Beginning evaluate model ...")
