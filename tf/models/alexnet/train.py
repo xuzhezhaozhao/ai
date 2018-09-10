@@ -7,6 +7,8 @@ from __future__ import print_function
 
 
 import tensorflow as tf
+import shutil
+import os
 
 import build_model_fn
 import hook
@@ -62,6 +64,14 @@ def create_hooks(opts):
 
 def train_and_eval_in_local_mode(opts):
     """Train and eval model in lcoal mode."""
+
+    if opts.remove_model_dir:
+        tf.logging.info("Remove model dir ...")
+        shutil.rmtree(opts.model_dir, ignore_errors=True)
+        tf.logging.info("Remove model dir OK")
+        os.makedirs(opts.model_dir)
+    else:
+        tf.logging.info("Don't remove model dir.")
 
     tf.logging.info("Beginning train model ...")
     opts.estimator.train(input_fn=lambda: input_data.train_input_fn(opts),
