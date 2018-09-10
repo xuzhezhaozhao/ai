@@ -19,7 +19,7 @@ model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
 prefetch_size=1000
 shuffle_size=1000
-max_train_steps=1
+max_train_steps=-1
 save_summary_steps=50
 save_checkpoints_secs=600
 keep_checkpoint_max=2
@@ -33,7 +33,7 @@ optimizer_type='sgd'
 map_num_parallel_calls=1
 num_classes=2
 pretrained_weights_path='./pretrained_weights/bvlc_alexnet.npy'
-train_layers='fc7,fc8'
+train_layers='fc6,fc7,fc8'
 
 python main.py \
     --train_data_path ${train_data_path} \

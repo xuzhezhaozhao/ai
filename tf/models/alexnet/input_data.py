@@ -8,7 +8,7 @@ from __future__ import print_function
 import tensorflow as tf
 import numpy as np
 
-import model_key
+import model_keys
 
 
 def parse_line(img_path, label, opts):
@@ -26,7 +26,7 @@ def parse_line(img_path, label, opts):
     # RGB -> BGR
     img_bgr = img_centered[:, :, ::-1]
 
-    return {model_key.DATA_COL: img_bgr}, one_hot
+    return {model_keys.DATA_COL: img_bgr}, one_hot
 
 
 def read_txt_file(txt_file):
@@ -98,8 +98,8 @@ def eval_input_fn(opts):
 def build_serving_input_fn(opts):
     def serving_input_receiver_fn():
         feature_spec = {
-            model_key.DATA_COL: tf.FixedLenFeature(shape=[227, 227, 3],
-                                                   dtype=tf.float32)
+            model_keys.DATA_COL: tf.FixedLenFeature(shape=[227, 227, 3],
+                                                    dtype=tf.float32)
         }
 
         serialized_tf_example = tf.placeholder(dtype=tf.string,

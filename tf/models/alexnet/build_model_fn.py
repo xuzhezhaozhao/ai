@@ -8,13 +8,15 @@ from __future__ import print_function
 import tensorflow as tf
 import numpy as np
 
+import model_keys
+
 
 def alexnet_model_fn(features, labels, mode, params):
     """Build model graph."""
 
     opts = params['opts']
     weights_dict = load_initial_weights(opts)
-    data = features[model_key.DATA_COL]
+    data = features[model_keys.DATA_COL]
 
     # Create the network graph.
     # 1st Layer: Conv (w ReLu) -> Lrn -> Pool
