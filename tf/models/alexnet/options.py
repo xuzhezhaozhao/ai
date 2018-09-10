@@ -15,10 +15,10 @@ class Options(object):
         self.eval_data_path = ""
         self.lr = 0.05
         self.batch_size = 1
-        self.max_train_steps = None
         self.epoch = 1
         self.model_dir = 'model_dir'
         self.export_model_dir = 'export_model_dir'
+        self.max_train_steps = None
         self.prefetch_size = 1000
         self.shuffle_size = 1000
         self.save_summary_steps = 100
@@ -31,19 +31,7 @@ class Options(object):
         self.dropout = 0.1
         self.shuffle_batch = False
         self.optimizer_type = 'ada'
-        self.tfrecord_file = ''
-        self.num_tfrecord_file = 1
-        self.train_data_format = 'fasttext'
         self.map_num_parallel_calls = 1
-        self.train_parallel_mode = 'default'
-        self.num_parallel = 1
-        self.sgd_lr_decay_type = 'exponential_decay'
-        self.sgd_lr_decay_steps = 100
-        self.sgd_lr_decay_rate = 0.99
-        self.use_clip_gradients = 0
-        self.clip_norm = 5.0
-        self.sgd_lr_decay_end_learning_rate = 0.0001
-        self.sgd_lr_decay_power = 1.0
         self.num_classes = 1
         self.pretrained_weights_path = ''
         self.train_layers = []
@@ -78,19 +66,7 @@ class Options(object):
         dropout = {} \n \
         shuffle_batch = {} \n \
         optimizer_type = {} \n \
-        tfrecord_file = {} \n \
-        num_tfrecord_file = {} \n \
-        train_data_format = {} \n \
         map_num_parallel_calls = {} \n \
-        train_parallel_mode = {} \n \
-        num_parallel = {} \n \
-        sgd_lr_decay_type = {} \n \
-        sgd_lr_decay_steps = {} \n \
-        sgd_lr_decay_rate = {} \n \
-        use_clip_gradients = {} \n \
-        clip_norm = {} \n \
-        sgd_lr_decay_end_learning_rate = {} \n \
-        sgd_lr_decay_power = {} \n \
         num_classes = {} \n \
         pretrained_weights_path = {} \n \
         train_layers = {} \n \
@@ -121,19 +97,7 @@ class Options(object):
                 self.dropout,
                 self.shuffle_batch,
                 self.optimizer_type,
-                self.tfrecord_file,
-                self.num_tfrecord_file,
-                self.train_data_format,
                 self.map_num_parallel_calls,
-                self.train_parallel_mode,
-                self.num_parallel,
-                self.sgd_lr_decay_type,
-                self.sgd_lr_decay_steps,
-                self.sgd_lr_decay_rate,
-                self.use_clip_gradients,
-                self.clip_norm,
-                self.sgd_lr_decay_end_learning_rate,
-                self.sgd_lr_decay_power,
                 self.num_classes,
                 self.pretrained_weights_path,
                 self.train_layers,

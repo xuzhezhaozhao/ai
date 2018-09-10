@@ -236,6 +236,13 @@ def create_predict_estimator_spec(mode):
     pass
 
 
+def cross_entropy(score, labels):
+    loss = tf.reduce_mean(
+        tf.nn.softmax_cross_entropy_with_logits_v2(logits=score,
+                                                   labels=labels))
+    return loss
+
+
 def create_eval_estimator_spec(mode, score, labels, params):
     """Create eval EstimatorSpec."""
     accuracy = tf.metrics.accuracy(labels=tf.argmax(labels, 1),
@@ -244,8 +251,7 @@ def create_eval_estimator_spec(mode, score, labels, params):
         'accuracy': accuracy
     }
 
-    loss = tf.reduce_mean(
-        tf.nn.softmax_cross_entropy_with_logits(logits=score, labels=labels))
+    loss = cross_entropy(score, labels)
 
     return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
 
@@ -255,8 +261,7 @@ def create_train_estimator_spec(mode, score, labels, params):
 
     opts = params['opts']
 
-    loss = tf.reduce_mean(
-        tf.nn.softmax_cross_entropy_with_logits(logits=score, labels=labels))
+    loss = cross_entropy(score, labels)
     optimizer = tf.train.GradientDescentOptimizer(opts.lr)
 
     gradients, variables = zip(*optimizer.compute_gradients(

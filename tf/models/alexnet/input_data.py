@@ -59,6 +59,8 @@ def shuffle_lists(img_paths, labels):
 
 def train_input_fn(opts):
     img_paths, img_labels = read_txt_file(opts.train_data_path)
+    img_paths, img_labels = shuffle_lists(img_paths, img_labels)
+
     img_paths = tf.convert_to_tensor(img_paths, dtype=tf.string)
     labels = tf.convert_to_tensor(img_labels, dtype=tf.int32)
 
@@ -67,14 +69,6 @@ def train_input_fn(opts):
 
     ds = ds.map(lambda filename, label: parse_line(filename, label, opts),
                 num_parallel_calls=opts.map_num_parallel_calls)
-
-    # a = map(float, range(64*3*227*227))
-    # b = [0 for i in range(64)]
-
-    # a = tf.convert_to_tensor(a, dtype=tf.float32)
-    # b = tf.convert_to_tensor(b, dtype=tf.int32)
-
-    # ds = tf.data.Dataset.from_tensor_slices((tf.reshape(a, [64,227,227,3]), b))
 
     ds = ds.prefetch(opts.prefetch_size)
     if opts.shuffle_batch:
