@@ -12,7 +12,7 @@ EXPORT_MODEL_DIR=`pwd`/export_model_dir
 
 train_data_path=`pwd`/train.txt
 eval_data_path=`pwd`/eval.txt
-lr=0.1
+lr=0.001
 batch_size=64
 epoch=5
 model_dir=`pwd`/model_dir
