@@ -14,13 +14,14 @@ def alexnet_model_fn(features, labels, mode, params):
 
     opts = params['opts']
     weights_dict = load_initial_weights(opts)
+    data = features[model_key.DATA_COL]
 
     # Create the network graph.
     # 1st Layer: Conv (w ReLu) -> Lrn -> Pool
     pre_weights = weights_dict['conv1'][0]
     pre_biases = weights_dict['conv1'][1]
     trainable = True if 'conv1' in opts.train_layers else False
-    conv1 = conv(features, 11, 11, 96, 4, 4, padding='VALID', name='conv1',
+    conv1 = conv(data, 11, 11, 96, 4, 4, padding='VALID', name='conv1',
                  trainable=trainable,
                  pre_weights=pre_weights, pre_biases=pre_biases)
     norm1 = lrn(conv1, 2, 2e-05, 0.75, name='norm1')
@@ -90,7 +91,7 @@ def alexnet_model_fn(features, labels, mode, params):
              pre_weights=pre_weights, pre_biases=pre_biases)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
-        return create_predict_estimator_spec(mode)
+        return create_predict_estimator_spec(mode, fc8, labels, params)
 
     if mode == tf.estimator.ModeKeys.EVAL:
         return create_eval_estimator_spec(mode, fc8, labels, params)
@@ -232,10 +233,6 @@ def dropout(x, keep_prob):
     return tf.nn.dropout(x, keep_prob)
 
 
-def create_predict_estimator_spec(mode):
-    pass
-
-
 def cross_entropy(score, labels):
     loss = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits_v2(logits=score,
@@ -243,8 +240,28 @@ def cross_entropy(score, labels):
     return loss
 
 
+def create_predict_estimator_spec(mode, score, labels, params):
+    """Create predict EstimatorSpec."""
+
+    predictions = {
+        'score': score,
+    }
+
+    export_outputs = {
+        'predicts': tf.estimator.export.PredictOutput(
+            outputs={
+                'score': score,
+            }
+        )
+    }
+
+    return tf.estimator.EstimatorSpec(mode, predictions=predictions,
+                                      export_outputs=export_outputs)
+
+
 def create_eval_estimator_spec(mode, score, labels, params):
     """Create eval EstimatorSpec."""
+
     accuracy = tf.metrics.accuracy(labels=tf.argmax(labels, 1),
                                    predictions=tf.argmax(score, 1))
     metrics = {

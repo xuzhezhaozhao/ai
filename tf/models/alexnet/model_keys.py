@@ -2,6 +2,9 @@
 # -*- coding=utf8 -*-
 
 
+DATA_COL = 'data'
+
+
 class TaskType(object):
     """Distribute task type."""
 

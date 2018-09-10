@@ -8,6 +8,8 @@ from __future__ import print_function
 import tensorflow as tf
 import numpy as np
 
+import model_key
+
 
 def parse_line(img_path, label, opts):
 
@@ -24,7 +26,7 @@ def parse_line(img_path, label, opts):
     # RGB -> BGR
     img_bgr = img_centered[:, :, ::-1]
 
-    return img_bgr, one_hot
+    return {model_key.DATA_COL: img_bgr}, one_hot
 
 
 def read_txt_file(txt_file):
@@ -95,6 +97,19 @@ def eval_input_fn(opts):
 
 def build_serving_input_fn(opts):
     def serving_input_receiver_fn():
-        pass
+        feature_spec = {
+            model_key.DATA_COL: tf.FixedLenFeature(shape=[227, 227, 3],
+                                                   dtype=tf.float32)
+        }
+
+        serialized_tf_example = tf.placeholder(dtype=tf.string,
+                                               shape=[None],
+                                               name='input_example_tensor')
+
+        receiver_tensors = {'examples': serialized_tf_example}
+        features = tf.parse_example(serialized_tf_example, feature_spec)
+
+        return tf.estimator.export.ServingInputReceiver(features,
+                                                        receiver_tensors)
 
     return serving_input_receiver_fn
