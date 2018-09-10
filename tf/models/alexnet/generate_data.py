@@ -26,13 +26,17 @@ train_dogs = dogs[0:split]
 eval_dogs = dogs[split:]
 
 with open('train.txt', 'w') as f:
-    train_data = train_cats + train_dogs
-    for item in train_data:
+    for item in train_cats:
         f.write(item + ' ' + '0\n')
 
+    for item in train_dogs:
+        f.write(item + ' ' + '1\n')
+
 with open('eval.txt', 'w') as f:
-    eval_data = eval_cats + eval_dogs
-    for item in eval_data:
+    for item in eval_cats:
+        f.write(item + ' ' + '0\n')
+
+    for item in eval_dogs:
         f.write(item + ' ' + '1\n')
 
 
