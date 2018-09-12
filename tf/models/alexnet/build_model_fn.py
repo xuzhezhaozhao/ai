@@ -14,6 +14,8 @@ import model_keys
 def alexnet_model_fn(features, labels, mode, params):
     """Build model graph."""
 
+    tf.summary.image('images', features[model_keys.DATA_COL])
+
     opts = params['opts']
     weights_dict = load_initial_weights(opts)
     data = features[model_keys.DATA_COL]
@@ -281,7 +283,8 @@ def create_train_estimator_spec(mode, score, labels, params):
     opts = params['opts']
 
     loss = cross_entropy(score, labels)
-    optimizer = tf.train.GradientDescentOptimizer(opts.lr)
+    # optimizer = tf.train.GradientDescentOptimizer(opts.lr)
+    optimizer = tf.train.AdagradOptimizer(opts.lr)
 
     gradients, variables = zip(*optimizer.compute_gradients(
         loss, gate_gradients=tf.train.Optimizer.GATE_GRAPH))
