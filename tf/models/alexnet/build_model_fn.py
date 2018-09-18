@@ -281,15 +281,15 @@ def create_train_estimator_spec(mode, score, labels, params):
     """Create train EstimatorSpec."""
 
     opts = params['opts']
-
+    global_step = tf.train.get_global_step()
     loss = cross_entropy(score, labels)
-    # optimizer = tf.train.GradientDescentOptimizer(opts.lr)
-    optimizer = tf.train.AdagradOptimizer(opts.lr)
-
+    lr = tf.train.exponential_decay(opts.lr, global_step, 50, 0.8)
+    tf.summary.scalar('lr', lr)
+    optimizer = tf.train.MomentumOptimizer(lr, 0.8)
     gradients, variables = zip(*optimizer.compute_gradients(
         loss, gate_gradients=tf.train.Optimizer.GATE_GRAPH))
     train_op = optimizer.apply_gradients(
-        zip(gradients, variables), global_step=tf.train.get_global_step())
+        zip(gradients, variables), global_step=global_step)
 
     for var, grad in zip(variables, gradients):
         tf.summary.histogram(var.name.replace(':', '_') + '/gradient', grad)
