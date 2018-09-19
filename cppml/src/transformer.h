@@ -6,7 +6,7 @@
 #include <limits>
 #include <string>
 #include <unordered_map>
-#include <iostream>
+#include <fstream>
 
 namespace cppml {
 
@@ -207,6 +207,14 @@ class MinCountStringIndexer {
       }
       strings_.push_back(s);
       table_[s] = i;
+    }
+  }
+
+  void dump(const std::string& filename) const {
+    std::ofstream ofs(filename);
+    for (auto& s : strings_) {
+      ofs.write(s.data(), s.size() * sizeof(char));
+      ofs.write("\n", 1);
     }
   }
 

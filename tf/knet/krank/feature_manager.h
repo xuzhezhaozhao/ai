@@ -43,7 +43,7 @@ struct TransformedFeature {
 
 class FeaturePipline {
  public:
-  FeaturePipline() : rowkey_indexer_() {}
+  FeaturePipline(int min_count = 0) : rowkey_indexer_(min_count) {}
 
   void feed(const std::string& line) {
     std::vector<StringPiece> features = Split(line, '\t');
@@ -105,8 +105,16 @@ class FeaturePipline {
     return transformed_feature;
   }
 
-  void save() const {}
-  void load() {}
+  void save(std::ofstream& out) const {
+    rowkey_indexer_.save(out);
+  }
+  void load(std::ifstream& in) {
+    rowkey_indexer_.load(in);
+  }
+
+  void dump_rowkeys(const std::string& filename) const {
+    rowkey_indexer_.dump(filename);
+  }
 
  private:
   cppml::MinCountStringIndexer rowkey_indexer_;
@@ -114,7 +122,7 @@ class FeaturePipline {
 
 class FeatureManager {
  public:
-  FeatureManager() {}
+  FeatureManager(int min_count = 0) : feature_pipline_(min_count) {}
 
   void ReadFromFile(const std::string& filename) {
     std::ifstream ifs(filename);
@@ -126,9 +134,33 @@ class FeatureManager {
     std::string line;
     while (!ifs.eof()) {
       std::getline(ifs, line);
+      if (line.empty()) {
+        continue;
+      }
       feature_pipline_.feed(line);
     }
     feature_pipline_.feed_end();
+  }
+
+  void save(const std::string& filename) const {
+    std::ofstream ofs(filename);
+    if (!ofs.is_open()) {
+      std::cerr<< "Save FeatureManager failed (open file failed)." << std::endl;
+      exit(-1);
+    }
+    feature_pipline_.save(ofs);
+  }
+  void load(const std::string& filename) {
+    std::ifstream ifs(filename, std::ios::in & std::ios::binary);
+    if (!ifs.is_open()) {
+      std::cerr<< "Load FeatureManager failed (open file failed)." << std::endl;
+      exit(-1);
+    }
+    feature_pipline_.load(ifs);
+  }
+
+  void dump_rowkeys(const std::string& filename) const {
+    feature_pipline_.dump_rowkeys(filename);
   }
 
  private:
