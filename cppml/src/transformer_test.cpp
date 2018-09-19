@@ -79,6 +79,7 @@ TEST(MinCountStringIndexer, Serialize) {
   ASSERT_EQ(loader.getMinCount(), 0);
   std::ifstream ifs(test_file, std::ios::in & std::ios::binary);
   loader.load(ifs);
+  ifs.close();
   ASSERT_EQ(loader.getMinCount(), 2);
   std::set<int> indexes;
   for (const auto& s : strs) {
