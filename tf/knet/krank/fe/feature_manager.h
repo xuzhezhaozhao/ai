@@ -24,10 +24,11 @@ struct UserAction {
 };
 
 struct TransformedUserAction {
-  TransformedUserAction(int id_, bool label_, bool isvideo_)
-      : id(id_), label(label_), isvideo(isvideo_) {}
+  TransformedUserAction(int id_, bool label_, bool unlike_, bool isvideo_)
+      : id(id_), label(label_), unlike(unlike_), isvideo(isvideo_) {}
   int id;
   bool label;
+  bool unlike;
   bool isvideo;
 };
 
@@ -88,7 +89,9 @@ class FeaturePipline {
       float rinfo1 = std::stof(std::string(tokens[2]));
       float rinfo2 = std::stof(std::string(tokens[3]));
       bool label = GetLabel(isvideo, rinfo1, rinfo2);
-      TransformedUserAction action(id, label, isvideo);
+      bool unlike = GetUnlike(isvideo, rinfo1, rinfo2);
+
+      TransformedUserAction action(id, label, unlike, isvideo);
 
       transformed_feature.actions.push_back(action);
     }
@@ -109,12 +112,23 @@ class FeaturePipline {
     return label;
   }
 
+  bool GetUnlike(bool isvideo, float rinfo1, float rinfo2) const {
+    bool unlike = false;
+    if (isvideo) {
+      unlike = (rinfo2 <= 4);
+    } else {
+      unlike = (rinfo2 <= 5);
+    }
+    return unlike;
+  }
+
   TransformedFeature transform(const RawFeature& feature) const {
     TransformedFeature transformed_feature;
     for (auto& action : feature.actions) {
       int id = rowkey_indexer_.transform(action.rowkey).as_integer();
       bool label = GetLabel(action.isvideo, action.rinfo1, action.rinfo2);
-      transformed_feature.actions.push_back({id, label, action.isvideo});
+      bool unlike = GetUnlike(action.isvideo, action.rinfo1, action.rinfo2);
+      transformed_feature.actions.push_back({id, label, unlike, action.isvideo});
     }
     return transformed_feature;
   }
