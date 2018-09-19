@@ -1,5 +1,7 @@
 
 #include <gtest/gtest.h>
+#include <iostream>
+#include <fstream>
 
 #include "transformer.h"
 
@@ -31,15 +33,17 @@ TEST(MinCountStringIndexer, minCount0) {
   }
   strindexer0.feed_end();
   std::set<int> indexes;
+  strs.push_back("unknown");
   for (const auto& s : strs) {
     indexes.insert(strindexer0.transform(s).as_integer());
   }
-  ASSERT_EQ(indexes.size(), 5);
+  ASSERT_EQ(indexes.size(), 6);
   ASSERT_EQ(indexes.count(0), 1);
   ASSERT_EQ(indexes.count(1), 1);
   ASSERT_EQ(indexes.count(2), 1);
   ASSERT_EQ(indexes.count(3), 1);
   ASSERT_EQ(indexes.count(4), 1);
+  ASSERT_EQ(indexes.count(5), 1);
 }
 TEST(MinCountStringIndexer, minCount2) {
   cppml::MinCountStringIndexer strindexer2(2);
@@ -53,8 +57,38 @@ TEST(MinCountStringIndexer, minCount2) {
   for (const auto& s : strs) {
     indexes.insert(strindexer2.transform(s).as_integer());
   }
-  ASSERT_EQ(indexes.size(), 1);
+  ASSERT_EQ(indexes.size(), 2);
   ASSERT_EQ(indexes.count(0), 1);
+  ASSERT_EQ(indexes.count(1), 1);
+}
+
+TEST(MinCountStringIndexer, Serialize) {
+  cppml::MinCountStringIndexer saver(2);
+  ASSERT_EQ(saver.getMinCount(), 2);
+  std::vector<std::string> strs = {"a", "a",  "b", "c", "c", "d", "e", "e"};
+  for (const auto& s : strs) {
+    saver.feed(s);
+  }
+  saver.feed_end();
+  std::string test_file = "test_min_count_string_indexer_serialize.bin";
+  std::ofstream ofs(test_file);
+  saver.save(ofs);
+  ofs.close();
+
+  cppml::MinCountStringIndexer loader(0);
+  ASSERT_EQ(loader.getMinCount(), 0);
+  std::ifstream ifs(test_file, std::ios::in & std::ios::binary);
+  loader.load(ifs);
+  ASSERT_EQ(loader.getMinCount(), 2);
+  std::set<int> indexes;
+  for (const auto& s : strs) {
+    indexes.insert(loader.transform(s).as_integer());
+  }
+  ASSERT_EQ(indexes.size(), 4);
+  ASSERT_EQ(indexes.count(0), 1);
+  ASSERT_EQ(indexes.count(1), 1);
+  ASSERT_EQ(indexes.count(2), 1);
+  ASSERT_EQ(indexes.count(3), 1);
 }
 
 int main(int argc, char **argv) {

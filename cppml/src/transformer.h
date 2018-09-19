@@ -6,6 +6,7 @@
 #include <limits>
 #include <string>
 #include <unordered_map>
+#include <iostream>
 
 namespace cppml {
 
@@ -163,6 +164,7 @@ class MinCountStringIndexer {
         strings_.push_back(p.first);
       }
     }
+    counts_.clear();
     feed_end_ = true;
   }
 
@@ -173,22 +175,51 @@ class MinCountStringIndexer {
     if (it == table_.end()) {
       return UNKNOWN_ID;
     }
-    return it->second;
+    return it->second + 1;
   }
 
   int getMinCount() const { return min_count_; }
+  virtual void save(std::ostream& out) const {
+    int32_t sz = table_.size();
+    assert(sz == (int32_t)strings_.size());
+    out.write((char*) &sz, sizeof(int32_t));
+    out.write((char*) &min_count_, sizeof(int32_t));
+    out.write((char*) &feed_end_, sizeof(bool));
+    for (auto& s : strings_) {
+      out.write(s.data(), s.size() * sizeof(char));
+      out.put(0);
+    }
+  }
 
-  virtual void save(const std::string& /* filename */) const {}
-  virtual void load(const std::string& /* filename */) {}
+  virtual void load(std::istream& in) {
+    strings_.clear();
+    table_.clear();
+    counts_.clear();
+    int32_t sz = 0;
+    in.read((char*) &sz, sizeof(int32_t));
+    in.read((char*) &min_count_, sizeof(int32_t));
+    in.read((char*) &feed_end_, sizeof(bool));
+    for (int32_t i = 0; i < sz; ++i) {
+      char c;
+      std::string s;
+      while ((c = in.get()) != 0) {
+        s.push_back(c);
+      }
+      strings_.push_back(s);
+      table_[s] = i;
+    }
+  }
 
  private:
-  int min_count_;
+  int32_t min_count_;
   bool feed_end_;
 
   // TODO(zhezhaoxu) 先用简单 hash 表实现，上线后再考虑是否需要优化？（使用
   // vector 紧密存储）
   std::unordered_map<std::string, int> counts_;
   std::unordered_map<std::string, int> table_;
+
+  // TODO use entry instead of string to store word count
   std::vector<std::string> strings_;
 };
 
