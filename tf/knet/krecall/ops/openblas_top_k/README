@@ -1,0 +1,38 @@
+
+NOTE:该操作符需要在 tf serving 中调用，所以每次更新需要重新编译 tf serving
+
+编译过程：
+
+tensorflow_serving/model_servers/BUILD 中修改规则
+SUPPORTED_TENSORFLOW_OPS = [
+    "@org_tensorflow//tensorflow/contrib:contrib_kernels",  # 做的时候参考了这个的写法
+    "@org_tensorflow//tensorflow/contrib:contrib_ops_op_lib",
+    "//tensorflow_serving/openblas_top_k:openblas_top_k_ops",  # Add this line
+]
+
+tensorflow_serving/openbals_top_k/BUILD 文件内容如下：
+
+package(
+    default_visibility = [
+        "//tensorflow_serving:internal",
+    ],
+    features = ["-layering_check"],
+)
+
+cc_library(
+    name = "myOp.so",
+    visibility = ["//visibility:public"],
+    srcs = glob(["*.h", "*.cc", "deps/openblas/include/*.h"]),
+    copts = ["-std=c++11"],
+    linkopts = ["-L/home/xzz/tf_serving/tensorflow_serving/myOp/", "-lopenblas"], # -L 需要是绝对路径
+    deps = ["@org_tensorflow//tensorflow/core:framework_headers_lib",
+            "@org_tensorflow//tensorflow/core/util/ctc",
+            "@org_tensorflow//third_party/eigen3",
+    ],
+    alwayslink = 1,  # 非常关键，强制链接进二进制，不加这行还是无效
+)
+
+编译：
+tf serving 1.7 使用 bazel 0.11.1 可以编译通过
+
+bazel build -c opt tensorflow_serving/...

@@ -1,0 +1,8 @@
+
+编译有几个点需要注意:
+
+tesla 上的 tensorflow 1.6 版本 ABI 是 1, 需要使用 ubuntu 16.04 机器编译, 在
+14.04 上机器上尝试了各种方法还是不行
+
+1. 查看 tensorflow 编译使用的 ABI 版本:
+tf.sysconfig.get_compile_flags()

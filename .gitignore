@@ -38,7 +38,7 @@ mnist_convnet_model
 *.tar.gz
 *.bz2
 *.tgz
-tf/knet/ops/fasttext/tfrecord_writer
+tf/knet/krecall/ops/fasttext/tfrecord_writer
 *.npy
 datasets/cat-dog-dataset/train
 datasets/cat-dog-dataset/test
