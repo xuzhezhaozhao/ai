@@ -9,5 +9,7 @@ echo "compile krank_input_ops.so ..."
 g++ -std=c++11 -shared \
     krank_input_kernels.cc \
     krank_input_ops.cc \
+    ../../fe/stringpiece.cpp \
+    ../../fe/str_util.cpp \
     -o krank_input_ops.so \
     -fPIC ${TF_CFLAGS[@]} ${TF_LFLAGS[@]} -O2
