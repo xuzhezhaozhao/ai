@@ -1,10 +1,11 @@
 #ifndef _CPPML_TRANSFORMER_H_
 #define _CPPML_TRANSFORMER_H_
 
+#include <assert.h>
 #include <algorithm>
 #include <limits>
 #include <string>
-#include <assert.h>
+#include <unordered_map>
 
 namespace cppml {
 
@@ -12,110 +13,107 @@ class TType {
  public:
   // default constructor
   TType() {
-    type_ = INT32;
-    value_.i32 = 0;
+    type_ = INTEGER;
+    value_.i64 = 0;
   }
 
   // implicit constructor
-  TType(int32_t i32) {
-    type_ = INT32;
-    value_.i32 = i32;
+  TType(int i) {
+    type_ = INTEGER;
+    value_.i64 = i;
   }
   TType(int64_t i64) {
-    type_ = INT64;
+    type_ = INTEGER;
     value_.i64 = i64;
   }
   TType(float f) {
-    type_ = FLOAT;
-    value_.f = f;
+    type_ = NUMERIC;
+    value_.d = f;
   }
   TType(double d) {
-    type_ = DOUBLE;
+    type_ = NUMERIC;
     value_.d = d;
   }
-  TType(char* s) {
+  TType(const char* s) {
     type_ = STRING;
     value_.s = s;
   }
 
-  int32_t as_int32() {
-    assert(type_ == INT32);
-    return value_.i32;
+  TType(const std::string& s) {
+    type_ = STRING;
+    value_.s = s.data();
   }
-  int64_t as_int64() {
-    assert(type_ == INT64);
+
+  int64_t as_integer() {
+    assert(type_ == INTEGER);
     return value_.i64;
   }
-  float as_float() {
-    assert(type_ == FLOAT);
-    return value_.f;
-  }
-  double as_double() {
-    assert(type_ == DOUBLE);
+  double as_numeric() {
+    assert(type_ == NUMERIC);
     return value_.d;
   }
-  char* as_string() {
+  const char* as_string() {
     assert(type_ == STRING);
     return value_.s;
   }
 
  private:
   union {
-    int32_t i32;
     int64_t i64;
-    float f;
     double d;
-    char* s;
+    const char* s;
   } value_;
 
-  enum {
-    INT32 = 0,
-    INT64,
-    FLOAT,
-    DOUBLE,
-    STRING
-  } type_;
+  enum { INTEGER = 0, NUMERIC, STRING } type_;
 };
 
 class Transformer {
  public:
   virtual void feed(TType t) = 0;
-  virtual TType transform(TType t) = 0;
+  virtual TType transform(TType t) const = 0;
 
-  virtual void save(const std::string& filename) = 0;
+  virtual void save(const std::string& filename) const = 0;
   virtual void load(const std::string& filename) = 0;
 };
 
-// see:
-// https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.ml.feature.MinMaxScaler
-// scale feature to [min, max]
+// Rescale features to [min, max], features outside the interval are clipped to
+// the interval edges, which is also known as min-max normalization or
+// Rescaling.
 class MinMaxScaler : public Transformer {
  public:
-  MinMaxScaler(double mmin, double mmax)
+  MinMaxScaler(double mmin = 0.0, double mmax = 1.0)
       : mmin_(mmin),
         mmax_(mmax),
-        emin_(std::numeric_limits<double>::max()/2.0),
-        emax_(std::numeric_limits<double>::min()/2.0) {}
+        emin_(std::numeric_limits<double>::max() / 3.0),
+        emax_(std::numeric_limits<double>::min() / 3.0) {
+    assert(mmin <= mmax);
+  }
 
   virtual void feed(TType t) {
-    emax_ = std::max(emax_, t.as_double());
-    emin_ = std::min(emin_, t.as_double());
+    emax_ = std::max(emax_, t.as_numeric());
+    emin_ = std::min(emin_, t.as_numeric());
   }
 
-  virtual TType transform(TType t) {
-    TType ret;
+  virtual TType transform(TType t) const {
     if (emin_ == emax_) {
-      ret = (mmin_ + mmax_) / 2.0;
-      return ret;
+      return (mmin_ + mmax_) / 2.0;
     }
-
-    ret = (t.as_double() - emin_) / (emax_ - emin_) * (mmax_ - mmin_) + mmin_;
-    return ret;
+    double v = t.as_numeric();
+    if (v < emin_) {
+      return mmin_;
+    }
+    if (v > emax_) {
+      return mmax_;
+    }
+    return (v - emin_) / (emax_ - emin_) * (mmax_ - mmin_) + mmin_;
   }
 
-  virtual void save(const std::string& filename) {}
+  double getMin() const { return emin_; }
+  double getMax() const { return emax_; }
 
-  virtual void load(const std::string& filename) {}
+  // TODO(zhezhaoxu) implement
+  virtual void save(const std::string& /* filename */) const {}
+  virtual void load(const std::string& /* filename */) {}
 
  private:
   // user setting
@@ -125,6 +123,73 @@ class MinMaxScaler : public Transformer {
   // from data
   double emin_;
   double emax_;
+};
+
+// TODO
+class Imputer {};
+
+// TODO
+// Rescale each feature individually to range [-1, 1] by dividing through the
+// largest maximum absolute value in each feature. It does not shift/center the
+// data, and thus does not destroy any sparsity.
+class MaxAbsScaler {};
+
+// TODO
+// QuantileDiscretizer takes a column with continuous features and outputs a
+// column with binned categorical features.
+class QuantileDiscretizer {};
+
+// TODO
+// Standardizes features by removing the mean and scaling to unit variance.
+class StandardScaler {};
+
+class MinCountStringIndexer {
+ public:
+  static constexpr int UNKNOWN_ID = 0;
+
+  MinCountStringIndexer(int min_count = 0)
+      : min_count_(min_count), feed_end_(false) {}
+
+  virtual void feed(TType t) {
+    assert(!feed_end_);
+    ++counts_[t.as_string()];
+  }
+
+  // call this when you end up feeding data
+  void feed_end() {
+    for (auto p : counts_) {
+      if (p.second >= min_count_) {
+        table_[p.first] = strings_.size();
+        strings_.push_back(p.first);
+      }
+    }
+    feed_end_ = true;
+  }
+
+  virtual TType transform(TType t) const {
+    assert(feed_end_);
+
+    auto it = table_.find(t.as_string());
+    if (it == table_.end()) {
+      return UNKNOWN_ID;
+    }
+    return it->second;
+  }
+
+  int getMinCount() const { return min_count_; }
+
+  virtual void save(const std::string& /* filename */) const {}
+  virtual void load(const std::string& /* filename */) {}
+
+ private:
+  int min_count_;
+  bool feed_end_;
+
+  // TODO(zhezhaoxu) 先用简单 hash 表实现，上线后再考虑是否需要优化？（使用
+  // vector 紧密存储）
+  std::unordered_map<std::string, int> counts_;
+  std::unordered_map<std::string, int> table_;
+  std::vector<std::string> strings_;
 };
 
 }  // namespace cppml
