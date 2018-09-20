@@ -6,6 +6,7 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+import numpy as np
 
 import model_keys
 import custom_ops
@@ -72,6 +73,28 @@ def input_fn(opts, is_eval):
         ds = ds.repeat(opts.epoch)
 
     return ds
+
+
+def train_random_numpy_input_fn(opts):
+    """Generate dummy train examples for performence profile, see cpu usage."""
+
+    n = 100000
+    positive_records = np.random.randint(1, 100, [n, opts.train_ws])
+    negative_records = np.random.randint(1, 100, [n, opts.train_ws])
+    targets = np.random.randint(1, 100, [n, 1])
+    labels = np.random.random([n, 1]).astype(np.float32)
+
+    return tf.estimator.inputs.numpy_input_fn(
+        x={
+            model_keys.POSITIVE_RECORDS_COL: positive_records,
+            model_keys.NEGATIVE_RECORDS_COL: negative_records,
+            model_keys.TARGETS_COL: targets
+        },
+        y=labels,
+        batch_size=opts.batch_size,
+        num_epochs=opts.epoch,
+        shuffle=True
+    )
 
 
 def build_serving_input_fn(opts):
