@@ -97,18 +97,21 @@ class KrankInputOp : public OpKernel {
     auto matrix_targets = targets_tensor->matrix<int64>();
     auto matrix_labels = labels_tensor->matrix<float>();
 
-    matrix_positive_records.setZero();  // padding zeros
-    matrix_negative_records.setZero();  // padding zeros
-
     for (int i = 0; i < positive_records.size(); ++i) {
       for (int j = 0; j < positive_records[i].size(); ++j) {
         matrix_positive_records(i, j) = positive_records[i][j];
+      }
+      for (int j = positive_records[i].size(); j < ws_; ++j) {
+        matrix_positive_records(i, j) = 0;
       }
     }
 
     for (int i = 0; i < negative_records.size(); ++i) {
       for (int j = 0; j < negative_records[i].size(); ++j) {
         matrix_negative_records(i, j) = negative_records[i][j];
+      }
+      for (int j = negative_records[i].size(); j < ws_; ++j) {
+        matrix_negative_records(i, j) = 0;
       }
     }
 
