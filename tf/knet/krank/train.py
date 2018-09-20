@@ -9,6 +9,7 @@ from __future__ import print_function
 import tensorflow as tf
 import shutil
 import os
+import time
 
 import build_model_fn
 import hook
@@ -75,6 +76,7 @@ def train_and_eval_in_local_mode(opts):
     if opts.remove_model_dir:
         tf.logging.info("Remove model dir ...")
         shutil.rmtree(opts.model_dir, ignore_errors=True)
+        time.sleep(1)
         tf.logging.info("Remove model dir OK")
         os.makedirs(opts.model_dir)
     else:
@@ -116,5 +118,6 @@ def train(opts, export=True):
 
     result = train_and_eval_in_local_mode(opts)
     if export:
-        export_model_in_local_mode(opts)
+        # export_model_in_local_mode(opts)
+        pass
     return result

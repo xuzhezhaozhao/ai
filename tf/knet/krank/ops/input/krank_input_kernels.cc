@@ -41,30 +41,41 @@ class KrankInputOp : public OpKernel {
     const std::string& s = flat_input(0);
 
     fe::TransformedFeature feature = feature_manager_.transform(s);
+
     std::vector<std::vector<int>> positive_records;
     std::vector<std::vector<int>> negative_records;
     std::vector<int64> targets;
     std::vector<bool> labels;
-
     std::uniform_int_distribution<> uniform(1, ws_);
     for (int w = 1; w < feature.actions.size(); ++w) {
       if (feature.actions[w].id == 0) {
-        // ignore non-valid target id
+        // ignore non-valid id
         continue;
       }
 
       int boundary = std::min(w, uniform(rng_));
       std::vector<int> pos;
       std::vector<int> neg;
-      for (int c = -boundary; c < 0; ++c) {
-        int id = feature.actions[w + c].id;
-        if (feature.actions[w + c].label) {
+      int added = 0;
+      for (int b = w - 1; b >= 0; --b) {
+        int id = feature.actions[b].id;
+        if (id == 0) {
+          // ignore non-valid id
+          continue;
+        }
+        if (feature.actions[b].label) {
           pos.push_back(id);
         }
-        if (feature.actions[w + c].unlike) {
+        if (feature.actions[b].unlike) {
           neg.push_back(id);
         }
+        ++added;
+
+        if (added >= boundary) {
+          break;
+        }
       }
+
       targets.push_back(feature.actions[w].id);
       labels.push_back(feature.actions[w].label);
       positive_records.push_back(pos);

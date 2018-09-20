@@ -43,7 +43,7 @@ def krank_model_fn(features, labels, mode, params):
         rowkey_embeddings, rowkey_embedding_dim, tf.reshape(targets, [-1]), 0)
 
     concat_features = [positive_embeds_mean,
-                       negative_embeds_mean,
+                       # negative_embeds_mean,
                        targets_embeds]
 
     input_layer = tf.concat(concat_features, 1)
@@ -73,12 +73,15 @@ def krank_model_fn(features, labels, mode, params):
         labels=tf.reshape(labels, [-1]), logits=logits)
     loss = tf.reduce_mean(loss)
 
+    global_step = tf.train.get_global_step()
     if mode == tf.estimator.ModeKeys.TRAIN:
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate=opts.lr)
+        optimizer = tf.train.AdamOptimizer(learning_rate=opts.lr,
+                                           beta1=0.9,
+                                           beta2=0.999,
+                                           epsilon=1e-08)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
         with tf.control_dependencies(update_ops):
-            global_step = tf.train.get_global_step()
             gradients, variables = zip(*optimizer.compute_gradients(
                 loss, gate_gradients=tf.train.Optimizer.GATE_GRAPH))
             train_op = optimizer.apply_gradients(

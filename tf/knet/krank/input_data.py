@@ -105,6 +105,20 @@ def build_serving_input_fn(opts):
         Note: Set serialized_tf_example shape as [None] to handle variable
         batch size
         """
-        pass
+        feature_spec = {
+            model_keys.POSITIVE_RECORDS_COL: tf.FixedLenFeature(
+                shape=[opts.train_ws], dtype=tf.string),
+            model_keys.NEGATIVE_RECORDS_COL: tf.FixedLenFeature(
+                shape=[opts.train_ws], dtype=tf.string),
+            model_keys.TARGETS_COL: tf.FixedLenFeature(
+                shape=[1], dtype=tf.string)
+        }
+
+        serialized_tf_example = tf.placeholder(dtype=tf.string,
+                                               shape=[None],
+                                               name='input_example_tensor')
+        receiver_tensors = {'examples': serialized_tf_example}
+        features = tf.parse_example(serialized_tf_example, feature_spec)
+        # TODO(zhezhaoxu) many things to do
 
     return serving_input_receiver_fn

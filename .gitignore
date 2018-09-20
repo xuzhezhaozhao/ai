@@ -45,3 +45,4 @@ datasets/cat-dog-dataset/test
 tf/models/alexnet/train.txt
 tf/models/alexnet/test.txt
 tf/models/alexnet/eval.txt
+fe_dir/
