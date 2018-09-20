@@ -1,4 +1,3 @@
-
 #include "tensorflow/core/framework/op.h"
 
 namespace tensorflow {

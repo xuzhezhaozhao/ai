@@ -43,30 +43,32 @@ class KrankInputOp : public OpKernel {
     fe::TransformedFeature feature = feature_manager_.transform(s);
     std::vector<std::vector<int>> positive_records;
     std::vector<std::vector<int>> negative_records;
-    std::vector<int> targets;
+    std::vector<int64> targets;
     std::vector<bool> labels;
+
     std::uniform_int_distribution<> uniform(1, ws_);
     for (int w = 1; w < feature.actions.size(); ++w) {
-      // TODO how to hand non-valid target id?
-      //if (feature.actions[w].id == 0) {
-        //// non-valid target id
-        //continue;
-      //}
+      if (feature.actions[w].id == 0) {
+        // ignore non-valid target id
+        continue;
+      }
 
       int boundary = std::min(w, uniform(rng_));
-      positive_records.push_back({});
-      negative_records.push_back({});
-      targets.push_back(feature.actions[w].id);
-      labels.push_back(feature.actions[w].label);
+      std::vector<int> pos;
+      std::vector<int> neg;
       for (int c = -boundary; c < 0; ++c) {
         int id = feature.actions[w + c].id;
         if (feature.actions[w + c].label) {
-          positive_records.back().push_back(id);
+          pos.push_back(id);
         }
         if (feature.actions[w + c].unlike) {
-          negative_records.back().push_back(id);
+          neg.push_back(id);
         }
       }
+      targets.push_back(feature.actions[w].id);
+      labels.push_back(feature.actions[w].label);
+      positive_records.push_back(pos);
+      negative_records.push_back(neg);
     }
 
     // Create output tensors
@@ -75,34 +77,44 @@ class KrankInputOp : public OpKernel {
     Tensor* targets_tensor = NULL;
     Tensor* labels_tensor = NULL;
 
-    TensorShape shape;
-    shape.Clear();
-    shape.AddDim(positive_records.size());
-    shape.AddDim(ws_);
-    OP_REQUIRES_OK(ctx,
-                   ctx->allocate_output(0, shape, &positive_records_tensor));
+    int batch_size = positive_records.size();
+    TensorShape positive_records_shape;
+    positive_records_shape.AddDim(batch_size);
+    positive_records_shape.AddDim(ws_);
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, positive_records_shape,
+                                             &positive_records_tensor));
 
-    OP_REQUIRES_OK(ctx,
-                   ctx->allocate_output(1, shape, &negative_records_tensor));
+    TensorShape negative_records_shape;
+    negative_records_shape.AddDim(batch_size);
+    negative_records_shape.AddDim(ws_);
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(1, negative_records_shape,
+                                             &negative_records_tensor));
 
-    shape.Clear();
-    shape.AddDim(targets.size());
-    shape.AddDim(1);
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(2, shape, &targets_tensor));
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(3, shape, &labels_tensor));
+    TensorShape targets_shape;
+    targets_shape.AddDim(batch_size);
+    targets_shape.AddDim(1);
+    OP_REQUIRES_OK(ctx,
+                   ctx->allocate_output(2, targets_shape, &targets_tensor));
+
+    TensorShape label_shape;
+    label_shape.AddDim(batch_size);
+    label_shape.AddDim(1);
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(3, label_shape, &labels_tensor));
 
     // Fill output tensors
     auto matrix_positive_records = positive_records_tensor->matrix<int32>();
     auto matrix_negative_records = negative_records_tensor->matrix<int32>();
-    auto matrix_targets = targets_tensor->matrix<int64>();
-    auto matrix_labels = labels_tensor->matrix<float>();
+    auto flat_targets = targets_tensor->flat<int64>();
+    auto flat_labels = labels_tensor->flat<float>();
+
+    matrix_positive_records.setZero();
+    matrix_negative_records.setZero();
+    flat_targets.setZero();
+    flat_labels.setZero();
 
     for (int i = 0; i < positive_records.size(); ++i) {
       for (int j = 0; j < positive_records[i].size(); ++j) {
         matrix_positive_records(i, j) = positive_records[i][j];
-      }
-      for (int j = positive_records[i].size(); j < ws_; ++j) {
-        matrix_positive_records(i, j) = 0;
       }
     }
 
@@ -110,16 +122,13 @@ class KrankInputOp : public OpKernel {
       for (int j = 0; j < negative_records[i].size(); ++j) {
         matrix_negative_records(i, j) = negative_records[i][j];
       }
-      for (int j = negative_records[i].size(); j < ws_; ++j) {
-        matrix_negative_records(i, j) = 0;
-      }
     }
 
     for (int i = 0; i < targets.size(); ++i) {
-      matrix_targets(i, 1) = targets[i];
+      flat_targets(i) = targets[i];
     }
     for (int i = 0; i < labels.size(); ++i) {
-      matrix_labels(i, 1) = (labels[i] ? 1.0 : 0.0);
+      flat_labels(i) = (labels[i] ? 1.0 : 0.0);
     }
   }
 
