@@ -18,7 +18,7 @@ import utils
 _call_model_fn_times = 0
 
 
-def knet_model_fn(features, labels, mode, params):
+def krecall_model_fn(features, labels, mode, params):
     """Build model graph."""
 
     global _call_model_fn_times

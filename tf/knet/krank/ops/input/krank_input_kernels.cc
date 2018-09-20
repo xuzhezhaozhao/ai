@@ -47,6 +47,12 @@ class KrankInputOp : public OpKernel {
     std::vector<bool> labels;
     std::uniform_int_distribution<> uniform(1, ws_);
     for (int w = 1; w < feature.actions.size(); ++w) {
+      // TODO how to hand non-valid target id?
+      //if (feature.actions[w].id == 0) {
+        //// non-valid target id
+        //continue;
+      //}
+
       int boundary = std::min(w, uniform(rng_));
       positive_records.push_back({});
       negative_records.push_back({});
@@ -89,7 +95,7 @@ class KrankInputOp : public OpKernel {
     auto matrix_positive_records = positive_records_tensor->matrix<int32>();
     auto matrix_negative_records = negative_records_tensor->matrix<int32>();
     auto matrix_targets = targets_tensor->matrix<int64>();
-    auto matrix_labels = labels_tensor->matrix<int64>();
+    auto matrix_labels = labels_tensor->matrix<float>();
 
     matrix_positive_records.setZero();  // padding zeros
     matrix_negative_records.setZero();  // padding zeros
@@ -110,7 +116,7 @@ class KrankInputOp : public OpKernel {
       matrix_targets(i, 1) = targets[i];
     }
     for (int i = 0; i < labels.size(); ++i) {
-      matrix_labels(i, 1) = labels[i];
+      matrix_labels(i, 1) = (labels[i] ? 1.0 : 0.0);
     }
   }
 

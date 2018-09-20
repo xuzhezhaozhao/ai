@@ -59,7 +59,7 @@ def build_estimator(opts):
     config_keys['log_step_count_steps'] = opts.log_step_count_steps
 
     estimator_keys = {}
-    estimator_keys['model_fn'] = build_model_fn.knet_model_fn
+    estimator_keys['model_fn'] = build_model_fn.krecall_model_fn
     estimator_keys['params'] = {
         'records_column': records_column,
         'predict_records_column': predict_records_column,

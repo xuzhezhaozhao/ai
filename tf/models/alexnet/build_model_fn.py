@@ -239,8 +239,8 @@ def dropout(x, keep_prob):
 
 def cross_entropy(score, labels):
     loss = tf.reduce_mean(
-        tf.nn.softmax_cross_entropy_with_logits_v2(logits=score,
-                                                   labels=labels))
+        tf.nn.sparse_softmax_cross_entropy_with_logits(
+            logits=score, labels=tf.argmax(labels, 1)))
     return loss
 
 
