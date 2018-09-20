@@ -67,7 +67,8 @@ class FeaturePipline {
       std::vector<StringPiece> tokens = Split(s, ':');
       // tokens: rowkey, isvideo, duration(ratio), watch_time(stay_time)
       if (tokens.size() != 4) {
-        std::cerr << "rowkey list format error." << std::endl;
+        std::cerr << "rowkey list format error. tokens.size = " << tokens.size()
+                  << ", piece = " << s << std::endl;
         exit(-1);
       }
       rowkey_indexer_.feed(std::string(tokens[0]));
@@ -128,7 +129,8 @@ class FeaturePipline {
       int id = rowkey_indexer_.transform(action.rowkey).as_integer();
       bool label = GetLabel(action.isvideo, action.rinfo1, action.rinfo2);
       bool unlike = GetUnlike(action.isvideo, action.rinfo1, action.rinfo2);
-      transformed_feature.actions.push_back({id, label, unlike, action.isvideo});
+      transformed_feature.actions.push_back(
+          {id, label, unlike, action.isvideo});
     }
     return transformed_feature;
   }

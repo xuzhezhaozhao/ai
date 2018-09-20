@@ -19,7 +19,9 @@ def krank_model_fn(features, labels, mode, params):
     positive_records = features[model_keys.POSITIVE_RECORDS_COL]
     negative_records = features[model_keys.NEGATIVE_RECORDS_COL]
     targets = features[model_keys.TARGETS_COL]
-    labels = features[model_keys.LABELS_COL]
+
+    positive_records.set_shape([None, opts.train_ws])
+    negative_records.set_shape([None, opts.train_ws])
 
     positive_nonzeros = tf.count_nonzero(positive_records, 1, keepdims=True)
     positive_nonzeros = tf.maximum(positive_nonzeros, 1)
@@ -43,6 +45,7 @@ def krank_model_fn(features, labels, mode, params):
     concat_features = [positive_embeds_mean,
                        negative_embeds_mean,
                        targets_embeds]
+
     input_layer = tf.concat(concat_features, 1)
 
     training = (mode == tf.estimator.ModeKeys.TRAIN)
@@ -55,7 +58,7 @@ def krank_model_fn(features, labels, mode, params):
                                      name='fc{}_{}'.format(index, units),
                                      reuse=tf.AUTO_REUSE)
             hidden = batch_normalization(hidden, training,
-                                         name='bn{}_{bn}'.format(index, units))
+                                         name='bn{}_{}'.format(index, units))
             hidden = tf.nn.relu(hidden)
             hidden = tf.layers.dropout(
                 hidden, opts.dropout, training=training,
