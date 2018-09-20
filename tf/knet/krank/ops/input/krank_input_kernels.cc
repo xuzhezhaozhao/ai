@@ -20,7 +20,7 @@ namespace tensorflow {
 class KrankInputOp : public OpKernel {
  public:
   explicit KrankInputOp(OpKernelConstruction* ctx)
-      : OpKernel(ctx), feature_manager_(), ws_(0) {
+      : OpKernel(ctx), feature_manager_(), ws_(0), is_eval_(false) {
     LOG(INFO) << "Init KrankInputOp ...";
 
     rng_.seed(time(NULL));
@@ -28,6 +28,7 @@ class KrankInputOp : public OpKernel {
     std::string fm_path;
     OP_REQUIRES_OK(ctx, ctx->GetAttr("feature_manager_path", &fm_path));
     OP_REQUIRES_OK(ctx, ctx->GetAttr("ws", &ws_));
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("is_eval", &is_eval_));
     feature_manager_.load(fm_path);
 
     LOG(INFO) << "Init KrankInputOp OK.";
@@ -48,8 +49,9 @@ class KrankInputOp : public OpKernel {
     std::vector<bool> labels;
     std::uniform_int_distribution<> uniform(1, ws_);
     for (int w = 1; w < feature.actions.size(); ++w) {
-      if (feature.actions[w].id == 0) {
-        // ignore non-valid id
+      if (feature.actions[w].id == 0 && !is_eval_) {
+          // We don't predict invalid id when training, but it should be
+          // included when evaluating the model.
         continue;
       }
 
@@ -60,7 +62,7 @@ class KrankInputOp : public OpKernel {
       for (int b = w - 1; b >= 0; --b) {
         int id = feature.actions[b].id;
         if (id == 0) {
-          // ignore non-valid id
+          // We ignore invalid id when constructing session feature.
           continue;
         }
         if (feature.actions[b].label) {
@@ -145,6 +147,7 @@ class KrankInputOp : public OpKernel {
   fe::FeatureManager feature_manager_;
   std::minstd_rand rng_;
   int ws_;
+  bool is_eval_;
 };
 
 REGISTER_KERNEL_BUILDER(Name("KrankInput").Device(DEVICE_CPU), KrankInputOp);

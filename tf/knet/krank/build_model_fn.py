@@ -103,8 +103,8 @@ def krank_model_fn(features, labels, mode, params):
                              num_thresholds=1000)
 
         metrics = {
-            'auc': auc,
             'accuracy': accuracy,
+            'auc': auc,
         }
 
         return tf.estimator.EstimatorSpec(mode, loss=loss,

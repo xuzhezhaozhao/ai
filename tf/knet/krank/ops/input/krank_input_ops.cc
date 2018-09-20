@@ -11,6 +11,7 @@ REGISTER_OP("KrankInput")
     .SetIsStateful()
     .Attr("feature_manager_path: string = ''")
     .Attr("ws: int = 5")
+    .Attr("is_eval: bool = false")
     .Doc(R"doc(
 )doc");
 

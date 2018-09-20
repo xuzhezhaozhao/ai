@@ -35,7 +35,7 @@ def map_generate_example(line, opts, is_eval):
     (positive_records, negative_records,
      targets, labels) = custom_ops.krank_input(
         input=line, feature_manager_path=opts.feature_manager_path,
-        ws=opts.train_ws)
+        ws=opts.train_ws, is_eval=is_eval)
 
     return (positive_records, negative_records, targets, labels)
 
@@ -62,7 +62,7 @@ def input_fn(opts, is_eval):
     batch_size = opts.batch_size
 
     ds = tf.data.TextLineDataset(train_data_path)
-    ds = ds.map(lambda line: map_generate_example(line, opts, False),
+    ds = ds.map(lambda line: map_generate_example(line, opts, is_eval),
                 num_parallel_calls=opts.map_num_parallel_calls)
     ds = ds.prefetch(opts.prefetch_size).flat_map(
         lambda *x: flat_map_example(opts, x))
@@ -81,8 +81,10 @@ def train_random_numpy_input_fn(opts):
     """Generate dummy train examples for performence profile, see cpu usage."""
 
     n = 100000
-    positive_records = np.random.randint(0, opts.num_rowkey, [n, opts.train_ws])
-    negative_records = np.random.randint(0, opts.num_rowkey, [n, opts.train_ws])
+    positive_records = np.random.randint(0, opts.num_rowkey,
+                                         [n, opts.train_ws])
+    negative_records = np.random.randint(0, opts.num_rowkey,
+                                         [n, opts.train_ws])
     targets = np.random.randint(1, 100, [n, 1])
     labels = np.random.random([n, 1]).astype(np.float32)
 
