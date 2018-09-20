@@ -22,6 +22,7 @@ def krank_model_fn(features, labels, mode, params):
 
     positive_records.set_shape([None, opts.train_ws])
     negative_records.set_shape([None, opts.train_ws])
+    targets.set_shape([None])
 
     positive_nonzeros = tf.count_nonzero(positive_records, 1, keepdims=True)
     positive_nonzeros = tf.maximum(positive_nonzeros, 1)
@@ -40,10 +41,10 @@ def krank_model_fn(features, labels, mode, params):
                                                          tf.float32)
 
     targets_embeds = mask_padding_embedding_lookup(
-        rowkey_embeddings, rowkey_embedding_dim, tf.reshape(targets, [-1]), 0)
+        rowkey_embeddings, rowkey_embedding_dim, targets, 0)
 
     concat_features = [positive_embeds_mean,
-                       # negative_embeds_mean,
+                       negative_embeds_mean,
                        targets_embeds]
 
     input_layer = tf.concat(concat_features, 1)
@@ -70,7 +71,7 @@ def krank_model_fn(features, labels, mode, params):
     logits = tf.reduce_sum(hidden * lr_weights, 1)
     logits = logits + lr_biases
     loss = tf.nn.sigmoid_cross_entropy_with_logits(
-        labels=tf.reshape(labels, [-1]), logits=logits)
+        labels=tf.cast(labels, tf.float32), logits=logits)
     loss = tf.reduce_mean(loss)
 
     global_step = tf.train.get_global_step()
@@ -94,12 +95,16 @@ def krank_model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        auc = tf.metrics.auc(labels=tf.reshape(labels, [-1]),
-                             predictions=tf.nn.sigmoid(logits),
-                             num_thresholds=500)
+        score = tf.nn.sigmoid(logits)
+        accuracy = tf.metrics.accuracy(labels=labels,
+                                       predictions=tf.to_int32(score > 0.5))
+        auc = tf.metrics.auc(labels=labels,
+                             predictions=score,
+                             num_thresholds=1000)
 
         metrics = {
             'auc': auc,
+            'accuracy': accuracy,
         }
 
         return tf.estimator.EstimatorSpec(mode, loss=loss,

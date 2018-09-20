@@ -103,20 +103,18 @@ class KrankInputOp : public OpKernel {
 
     TensorShape targets_shape;
     targets_shape.AddDim(batch_size);
-    targets_shape.AddDim(1);
     OP_REQUIRES_OK(ctx,
                    ctx->allocate_output(2, targets_shape, &targets_tensor));
 
     TensorShape label_shape;
     label_shape.AddDim(batch_size);
-    label_shape.AddDim(1);
     OP_REQUIRES_OK(ctx, ctx->allocate_output(3, label_shape, &labels_tensor));
 
     // Fill output tensors
     auto matrix_positive_records = positive_records_tensor->matrix<int32>();
     auto matrix_negative_records = negative_records_tensor->matrix<int32>();
-    auto flat_targets = targets_tensor->flat<int64>();
-    auto flat_labels = labels_tensor->flat<float>();
+    auto flat_targets = targets_tensor->flat<int32>();
+    auto flat_labels = labels_tensor->flat<int32>();
 
     matrix_positive_records.setZero();
     matrix_negative_records.setZero();
@@ -139,7 +137,7 @@ class KrankInputOp : public OpKernel {
       flat_targets(i) = targets[i];
     }
     for (int i = 0; i < labels.size(); ++i) {
-      flat_labels(i) = (labels[i] ? 1.0 : 0.0);
+      flat_labels(i) = (labels[i] ? 1 : 0);
     }
   }
 

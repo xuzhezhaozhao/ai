@@ -9,10 +9,11 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
+fe_dir=`pwd`/fe_dir
 
 train_data_path=../../../data/krank_train_data.in
 eval_data_path=../../../data/krank_eval_data.in
-feature_manager_path=./fe_dir/feature_manager.bin
+feature_manager_path=${fe_dir}/feature_manager.bin
 lr=0.025
 rowkey_embedding_dim=32
 train_ws=20
@@ -34,8 +35,9 @@ dropout=0.5
 map_num_parallel_calls=1
 
 min_count=30
-rowkey_dict_path=./fe_dir/rowkey_dict.txt
+rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 
+mkdir -p ${fe_dir}
 echo "Preprocess features ..."
 ./fe/build/preprocess \
     ${train_data_path} \

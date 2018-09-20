@@ -171,8 +171,8 @@ class FeatureManager {
   void save(const std::string& filename) const {
     std::ofstream ofs(filename);
     if (!ofs.is_open()) {
-      std::cerr << "Save FeatureManager failed (open file failed)."
-                << std::endl;
+      std::cerr << "Save FeatureManager failed (open file '" << filename
+                << "' failed)." << std::endl;
       exit(-1);
     }
     feature_pipline_.save(ofs);
