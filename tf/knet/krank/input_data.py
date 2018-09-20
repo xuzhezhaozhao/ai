@@ -32,10 +32,12 @@ def input_feature_columns(opts):
 def map_generate_example(line, opts, is_eval):
     """Map a single line to features tuple."""
 
-    out1, out2, out3, out4 = custom_ops.krank_input(
+    (positive_records, negative_records,
+     targets, labels) = custom_ops.krank_input(
         input=line, feature_manager_path=opts.feature_manager_path,
         ws=opts.train_ws)
-    return (out1, out2, out3, out4)
+
+    return (positive_records, negative_records, targets, labels)
 
 
 def flat_map_example(opts, x):
@@ -47,7 +49,7 @@ def flat_map_example(opts, x):
     feature_dict = {
         model_keys.POSITIVE_RECORDS_COL: x[0],
         model_keys.NEGATIVE_RECORDS_COL: x[1],
-        model_keys.TARGETS_COL: x[2],
+        model_keys.TARGETS_COL: x[2]
     }
     labels = x[3]
     dataset = tf.data.Dataset.from_tensor_slices((feature_dict, labels))
@@ -79,8 +81,8 @@ def train_random_numpy_input_fn(opts):
     """Generate dummy train examples for performence profile, see cpu usage."""
 
     n = 100000
-    positive_records = np.random.randint(1, 100, [n, opts.train_ws])
-    negative_records = np.random.randint(1, 100, [n, opts.train_ws])
+    positive_records = np.random.randint(0, opts.num_rowkey, [n, opts.train_ws])
+    negative_records = np.random.randint(0, opts.num_rowkey, [n, opts.train_ws])
     targets = np.random.randint(1, 100, [n, 1])
     labels = np.random.random([n, 1]).astype(np.float32)
 
