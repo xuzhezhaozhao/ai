@@ -42,9 +42,16 @@ struct TransformedFeature {
 
 class FeaturePipline {
  public:
-  FeaturePipline(int min_count = 0) : rowkey_indexer_(min_count) {}
+  FeaturePipline(int min_count = 0)
+      : rowkey_indexer_(min_count), processed_lines_(0) {}
 
   void feed(const std::string& line) {
+    ++processed_lines_;
+    if (processed_lines_ % 50000 == 0) {
+      std::cerr << "[FeaturePipline] " << processed_lines_
+                << " lines processed." << std::endl;
+    }
+
     std::vector<StringPiece> features = Split(line, '\t');
     // features[0]: uin
     // features[1]: rowkey list
@@ -144,6 +151,7 @@ class FeaturePipline {
 
  private:
   cppml::MinCountStringIndexer rowkey_indexer_;
+  int64_t processed_lines_;
 };
 
 class FeatureManager {
