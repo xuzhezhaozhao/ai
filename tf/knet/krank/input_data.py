@@ -61,18 +61,19 @@ def input_fn(opts, is_eval):
     train_data_path = opts.train_data_path
     batch_size = opts.batch_size
 
-    ds = tf.data.TextLineDataset(train_data_path)
-    ds = ds.map(lambda line: map_generate_example(line, opts, is_eval),
-                num_parallel_calls=opts.map_num_parallel_calls)
-    ds = ds.prefetch(opts.prefetch_size).flat_map(
-        lambda *x: flat_map_example(opts, x))
+    with tf.name_scope("input_fn"):
+        ds = tf.data.TextLineDataset(train_data_path)
+        ds = ds.map(lambda line: map_generate_example(line, opts, is_eval),
+                    num_parallel_calls=opts.map_num_parallel_calls)
+        ds = ds.prefetch(opts.prefetch_size).flat_map(
+            lambda *x: flat_map_example(opts, x))
 
-    if opts.shuffle_batch and not is_eval:
-        ds = ds.shuffle(buffer_size=opts.shuffle_size)
+        if opts.shuffle_batch and not is_eval:
+            ds = ds.shuffle(buffer_size=opts.shuffle_size)
 
-    ds = ds.batch(batch_size)
-    if not is_eval:
-        ds = ds.repeat(opts.epoch)
+        ds = ds.batch(batch_size)
+        if not is_eval:
+            ds = ds.repeat(opts.epoch)
 
     return ds
 

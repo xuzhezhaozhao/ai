@@ -14,16 +14,16 @@ fe_dir=`pwd`/fe_dir
 train_data_path=../../../data/krank_train_data.in
 eval_data_path=../../../data/krank_eval_data.in
 feature_manager_path=${fe_dir}/feature_manager.bin
-lr=0.025
-rowkey_embedding_dim=32
-train_ws=20
-batch_size=256
+lr=1.0
+rowkey_embedding_dim=64
+train_ws=50
+batch_size=128
 max_train_steps=-1
 epoch=5
-hidden_units="64"
-prefetch_size=100000
+hidden_units="128,64"
+prefetch_size=200000
 shuffle_batch=1
-shuffle_size=100000
+shuffle_size=200000
 save_summary_steps=100
 save_checkpoints_secs=600
 keep_checkpoint_max=3
@@ -31,11 +31,15 @@ log_step_count_steps=100
 use_profile_hook=0
 profile_steps=500
 remove_model_dir=1
-dropout=0.5
+dropout=0.0
 map_num_parallel_calls=1
 
 min_count=30
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
+
+if [[ ${remove_model_dir} == '1' ]]; then
+    rm -rf ${model_dir}
+fi
 
 mkdir -p ${fe_dir}
 echo "Preprocess features ..."
@@ -55,7 +59,7 @@ python main.py \
     --batch_size ${batch_size} \
     --max_train_steps ${max_train_steps} \
     --epoch ${epoch} \
-    --hidden_units ${hidden_units} \
+    --hidden_units "${hidden_units}" \
     --model_dir ${model_dir} \
     --export_model_dir ${export_model_dir} \
     --prefetch_size ${prefetch_size} \

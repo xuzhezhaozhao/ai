@@ -34,6 +34,7 @@ class Options(object):
         self.dropout = 0.3
         self.map_num_parallel_calls = 1
         self.rowkey_dict_path = ''
+        self.num_rowkey = 0
 
         # non-cmd args
         self.estimator = None
@@ -67,6 +68,7 @@ class Options(object):
         dropout = {} \n \
         map_num_parallel_calls = {} \n \
         rowkey_dict_path = {} \n \
+        num_rowkey = {} \n \
         estimator = {} \n \
         hooks = {} \n \
         ".format(
@@ -95,6 +97,7 @@ class Options(object):
                 self.dropout,
                 self.map_num_parallel_calls,
                 self.rowkey_dict_path,
+                self.num_rowkey,
 
                 # non-cmd args
                 self.estimator,

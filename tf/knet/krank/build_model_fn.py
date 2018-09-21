@@ -47,25 +47,17 @@ def krank_model_fn(features, labels, mode, params):
                        negative_embeds_mean,
                        targets_embeds]
 
-    input_layer = tf.concat(concat_features, 1)
-
+    hidden = tf.concat(concat_features, 1)
+    num_in = hidden.shape[-1].value
     training = (mode == tf.estimator.ModeKeys.TRAIN)
-    lr_dim = input_layer.shape[-1].value
 
-    with tf.name_scope('hidden_layers'):
-        hidden = input_layer
-        for index, units in enumerate(opts.hidden_units):
-            hidden = tf.layers.dense(hidden, units=units, activation=None,
-                                     name='fc{}_{}'.format(index, units),
-                                     reuse=tf.AUTO_REUSE)
-            hidden = batch_normalization(hidden, training,
-                                         name='bn{}_{}'.format(index, units))
-            hidden = tf.nn.relu(hidden)
-            hidden = tf.layers.dropout(
-                hidden, opts.dropout, training=training,
-                name='dropout{}_{}'.format(index, units))
-            lr_dim = units
+    for index, units in enumerate(opts.hidden_units):
+        hidden = fc(hidden, num_in, units, "fc_{}".format(index),
+                    bn=True, relu=True, training=training,
+                    dropout=opts.dropout)
+        num_in = units
 
+    lr_dim = hidden.shape[-1].value
     lr_weights, lr_biases = get_lr_weights_and_biases(params, lr_dim)
 
     logits = tf.reduce_sum(hidden * lr_weights, 1)
@@ -76,10 +68,11 @@ def krank_model_fn(features, labels, mode, params):
 
     global_step = tf.train.get_global_step()
     if mode == tf.estimator.ModeKeys.TRAIN:
-        optimizer = tf.train.AdamOptimizer(learning_rate=opts.lr,
-                                           beta1=0.9,
-                                           beta2=0.999,
-                                           epsilon=1e-08)
+        # optimizer = tf.train.AdamOptimizer(learning_rate=opts.lr,
+                                           # beta1=0.9,
+                                           # beta2=0.99,
+                                           # epsilon=1e-05)
+        optimizer = tf.train.AdagradOptimizer(learning_rate=opts.lr)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
         with tf.control_dependencies(update_ops):
@@ -142,6 +135,7 @@ def get_rowkey_embeddings(params):
             "embeddings",
             initializer=tf.random_uniform([num_rowkey, dim],
                                           -init_width, init_width))
+        tf.summary.histogram("embeddings", embeddings)
     return embeddings
 
 
@@ -164,7 +158,7 @@ def mask_padding_embedding_lookup(embeddings, embedding_dim,
     return output
 
 
-def batch_normalization(input, training, name):
+def batch_normalization(input, training, name='bn'):
     """batch normalization layer."""
 
     bn = tf.layers.batch_normalization(
@@ -179,6 +173,35 @@ def get_lr_weights_and_biases(params, dim):
 
     with tf.variable_scope('logiistic_regression', reuse=tf.AUTO_REUSE):
         weights = tf.get_variable('weights', initializer=tf.zeros([dim]))
-        biases = tf.get_variable('biases', initializer=[1.0], dtype=tf.float32)
+        biases = tf.get_variable('biases', initializer=[0.0], dtype=tf.float32)
 
-        return weights, biases
+        tf.summary.histogram("weights", weights)
+        tf.summary.histogram("biases", biases)
+    return weights, biases
+
+
+def fc(x, num_in, num_out, name, bn=True, relu=True,
+       training=True, dropout=0.0):
+    """Create a fully connected layer."""
+
+    with tf.variable_scope(name, reuse=tf.AUTO_REUSE) as scope:
+        w = tf.sqrt(12.0 / (num_in + num_out))
+        weights = tf.get_variable('weights',
+                                  initializer=tf.random_uniform(
+                                      [num_in, num_out], -w, w))
+        biases = tf.get_variable('biases',
+                                 initializer=tf.zeros([num_out]))
+        # Matrix multiply weights and inputs and add bias
+        act = tf.nn.xw_plus_b(x, weights, biases, name=scope.name)
+
+        if bn:
+            act = batch_normalization(act, training)
+
+        if relu:
+            # Apply ReLu non linearity
+            act = tf.nn.relu(act)
+
+        if dropout > 0.0:
+            act = tf.layers.dropout(act, dropout, training=training)
+
+        return act
