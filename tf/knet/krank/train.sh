@@ -14,7 +14,7 @@ fe_dir=`pwd`/fe_dir
 train_data_path=../../../data/krank_train_data.in
 eval_data_path=../../../data/krank_eval_data.in
 feature_manager_path=${fe_dir}/feature_manager.bin
-lr=1.0
+lr=0.01
 rowkey_embedding_dim=64
 train_ws=50
 batch_size=128
@@ -34,7 +34,7 @@ remove_model_dir=1
 dropout=0.0
 map_num_parallel_calls=1
 
-min_count=100
+min_count=30
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 
 if [[ ${remove_model_dir} == '1' ]]; then
