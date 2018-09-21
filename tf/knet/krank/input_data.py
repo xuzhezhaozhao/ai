@@ -58,11 +58,11 @@ def flat_map_example(opts, x):
 
 
 def input_fn(opts, is_eval):
-    train_data_path = opts.train_data_path
+    data_path = opts.eval_data_path if is_eval else opts.train_data_path
     batch_size = opts.batch_size
 
     with tf.name_scope("input_fn"):
-        ds = tf.data.TextLineDataset(train_data_path)
+        ds = tf.data.TextLineDataset(data_path)
         ds = ds.map(lambda line: map_generate_example(line, opts, is_eval),
                     num_parallel_calls=opts.map_num_parallel_calls)
         ds = ds.prefetch(opts.prefetch_size).flat_map(
