@@ -52,17 +52,7 @@ class FeaturePipline {
       std::cerr << "[FeaturePipline] " << processed_lines_
                 << " lines processed." << std::endl;
     }
-
-    std::vector<StringPiece> features = Split(line, '\t');
-    // features[0]: uin
-    // features[1]: rowkey list
-
-    if (features.size() != 2) {
-      std::cerr << "line format error. line = " << line << std::endl;
-      return;
-    }
-    std::vector<StringPiece> h = Split(GetRowkeyListToken(features), ' ');
-    ParseRowkeyList(h);
+    rowkey_indexer_.feed(line);
   }
 
   StringPiece GetRowkeyListToken(
@@ -70,18 +60,6 @@ class FeaturePipline {
     return features[1];
   }
 
-  void ParseRowkeyList(const std::vector<StringPiece>& h) {
-    for (auto& s : h) {
-      std::vector<StringPiece> tokens = Split(s, ':');
-      // tokens: rowkey, isvideo, duration(ratio), watch_time(stay_time)
-      if (tokens.size() != 4) {
-        std::cerr << "rowkey list format error. tokens.size = " << tokens.size()
-                  << ", piece = " << s << std::endl;
-        continue;
-      }
-      rowkey_indexer_.feed(std::string(tokens[0]));
-    }
-  }
   void feed_end() { rowkey_indexer_.feed_end(); }
 
   TransformedFeature transform(const std::string& line) const {

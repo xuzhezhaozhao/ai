@@ -11,6 +11,7 @@ model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
 fe_dir=`pwd`/fe_dir
 
+rowkey_count_path=../../../data/krank_rowkey_count.csv
 train_data_path=../../../data/krank_train_data.in
 eval_data_path=../../../data/krank_eval_data.in
 feature_manager_path=${fe_dir}/feature_manager.bin
@@ -44,7 +45,7 @@ fi
 mkdir -p ${fe_dir}
 echo "Preprocess features ..."
 ./fe/build/preprocess \
-    ${train_data_path} \
+    ${rowkey_count_path} \
     ${min_count} \
     ${feature_manager_path} \
     ${rowkey_dict_path}
