@@ -86,16 +86,14 @@ rm -rf ${tmp_hdfs_dir}/${base_hdfs_data_path}
 rm -rf ${tmp_hdfs_dir}/${base_rowkey_count_path}
 echo "fetch video and article watch data done."
 
-echo "shuf ..."
-shuf ${data_dir}/data.in -o ${data_dir}/data.in.shuf
-total_lines=$(wc -l ${data_dir}/data.in.shuf | awk '{print $1}')
+total_lines=$(wc -l ${data_dir}/data.in | awk '{print $1}')
 eval_lines=100000
 train_lines=$((total_lines-eval_lines))
 
 echo "generate train_data ..."
-head ${data_dir}/data.in.shuf -n ${train_lines} > ${data_dir}/train_data.in
+head ${data_dir}/data.in -n ${train_lines} > ${data_dir}/train_data.in
 
 num_workers=2
 echo "generate eval_data ..."
-tail ${data_dir}/data.in.shuf -n ${eval_lines} > ${data_dir}/eval_data.in
-# rm -rf ${data_dir}/data.in.shuf
+tail ${data_dir}/data.in -n ${eval_lines} > ${data_dir}/eval_data.in
+# rm -rf ${data_dir}/data.in

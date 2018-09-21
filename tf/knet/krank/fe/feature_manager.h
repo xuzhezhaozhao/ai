@@ -43,7 +43,8 @@ struct TransformedFeature {
 class FeaturePipline {
  public:
   FeaturePipline(int min_count = 0)
-      : rowkey_indexer_(min_count), processed_lines_(0) {}
+      : rowkey_indexer_(min_count, cppml::MinCountStringIndexer::MODE::COUNTER),
+        processed_lines_(0) {}
 
   void feed(const std::string& line) {
     ++processed_lines_;
@@ -158,10 +159,10 @@ class FeatureManager {
  public:
   FeatureManager(int min_count = 0) : feature_pipline_(min_count) {}
 
-  void ReadFromFile(const std::string& filename) {
-    std::ifstream ifs(filename);
+  void ReadFromFiles(const std::string& rowkey_count_file) {
+    std::ifstream ifs(rowkey_count_file);
     if (!ifs.is_open()) {
-      std::cerr << "Open " << filename << " failed." << std::endl;
+      std::cerr << "Open " << rowkey_count_file << " failed." << std::endl;
       exit(-1);
     }
 

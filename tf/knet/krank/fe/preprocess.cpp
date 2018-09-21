@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
   fe::FeatureManager feature_manager(std::stoi(argv[2]));
-  feature_manager.ReadFromFile(argv[1]);
+  feature_manager.ReadFromFiles(argv[1]);
   feature_manager.save(argv[3]);
   feature_manager.dump_rowkeys(argv[4]);
 

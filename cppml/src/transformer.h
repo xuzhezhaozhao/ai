@@ -3,10 +3,11 @@
 
 #include <assert.h>
 #include <algorithm>
+#include <fstream>
+#include <iostream>
 #include <limits>
 #include <string>
 #include <unordered_map>
-#include <fstream>
 
 namespace cppml {
 
@@ -148,12 +149,37 @@ class MinCountStringIndexer {
  public:
   static constexpr int UNKNOWN_ID = 0;
 
-  MinCountStringIndexer(int min_count = 0)
-      : min_count_(min_count), feed_end_(false) {}
+  enum MODE {
+    DEFAULT = 0,  // feed single string of "word"
+    COUNTER,      // feed a string of format "word\tcount"
+    UNKNOWN
+  };
+
+  MinCountStringIndexer(int min_count = 0, MODE mode = MODE::DEFAULT)
+      : min_count_(min_count), mode_(mode), feed_end_(false) {}
 
   virtual void feed(TType t) {
     assert(!feed_end_);
-    ++counts_[t.as_string()];
+    if (mode_ == MODE::DEFAULT) {
+      ++counts_[t.as_string()];
+    } else if (mode_ == MODE::COUNTER) {
+      std::string s = t.as_string();
+      size_t p = s.find("\t");
+      if (p == std::string::npos) {
+        std::cerr << "[MinCountStringIndexer] format error. piece = " << s
+                  << std::endl;
+        return;
+      }
+      int cnt = 0;
+      try {
+        cnt = std::stoi(s.substr(p + 1));
+      } catch (const std::exception& e) {
+        std::cerr << "[MinCountStringIndexer] format error. piece = " << s
+                  << std::endl;
+        return;
+      }
+      counts_[s.substr(0, p)] = cnt;
+    }
   }
 
   // call this when you end up feeding data
@@ -182,9 +208,9 @@ class MinCountStringIndexer {
   virtual void save(std::ostream& out) const {
     int32_t sz = table_.size();
     assert(sz == (int32_t)strings_.size());
-    out.write((char*) &sz, sizeof(int32_t));
-    out.write((char*) &min_count_, sizeof(int32_t));
-    out.write((char*) &feed_end_, sizeof(bool));
+    out.write((char*)&sz, sizeof(int32_t));
+    out.write((char*)&min_count_, sizeof(int32_t));
+    out.write((char*)&feed_end_, sizeof(bool));
     for (auto& s : strings_) {
       out.write(s.data(), s.size() * sizeof(char));
       out.put(0);
@@ -196,9 +222,9 @@ class MinCountStringIndexer {
     table_.clear();
     counts_.clear();
     int32_t sz = 0;
-    in.read((char*) &sz, sizeof(int32_t));
-    in.read((char*) &min_count_, sizeof(int32_t));
-    in.read((char*) &feed_end_, sizeof(bool));
+    in.read((char*)&sz, sizeof(int32_t));
+    in.read((char*)&min_count_, sizeof(int32_t));
+    in.read((char*)&feed_end_, sizeof(bool));
     for (int32_t i = 0; i < sz; ++i) {
       char c;
       std::string s;
@@ -220,6 +246,7 @@ class MinCountStringIndexer {
 
  private:
   int32_t min_count_;
+  MODE mode_;
   bool feed_end_;
 
   // TODO(zhezhaoxu) 先用简单 hash 表实现，上线后再考虑是否需要优化？（使用
