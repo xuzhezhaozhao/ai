@@ -57,8 +57,8 @@ class FeaturePipline {
     // features[1]: rowkey list
 
     if (features.size() != 2) {
-      std::cerr << "line format error." << std::endl;
-      exit(-1);
+      std::cerr << "line format error. line = " << line << std::endl;
+      return;
     }
     std::vector<StringPiece> h = Split(GetRowkeyListToken(features), ' ');
     ParseRowkeyList(h);
@@ -76,7 +76,7 @@ class FeaturePipline {
       if (tokens.size() != 4) {
         std::cerr << "rowkey list format error. tokens.size = " << tokens.size()
                   << ", piece = " << s << std::endl;
-        exit(-1);
+        continue;
       }
       rowkey_indexer_.feed(std::string(tokens[0]));
     }

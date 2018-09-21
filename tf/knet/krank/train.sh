@@ -21,9 +21,9 @@ batch_size=128
 max_train_steps=-1
 epoch=5
 hidden_units="256,256"
-prefetch_size=200000
+prefetch_size=20000
 shuffle_batch=1
-shuffle_size=200000
+shuffle_size=20000
 save_summary_steps=100
 save_checkpoints_secs=600
 keep_checkpoint_max=3
@@ -34,7 +34,7 @@ remove_model_dir=1
 dropout=0.0
 map_num_parallel_calls=1
 
-min_count=30
+min_count=50
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 
 if [[ ${remove_model_dir} == '1' ]]; then
