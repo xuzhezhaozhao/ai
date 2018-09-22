@@ -64,6 +64,8 @@ parser.add_argument('--optimizer_momentum_momentum',
                     default=0.9, type=float, help='')
 parser.add_argument('--optimizer_momentum_use_nesterov',
                     default=0, type=int, help='')
+parser.add_argument('--clip_gradients', default=0, type=int, help='')
+parser.add_argument('--clip_gradients_norm', default=5.0, type=float, help='')
 
 opts = Options()
 
@@ -115,6 +117,8 @@ def parse_args(argv):
     opts.optimizer_momentum_momentum = args.optimizer_momentum_momentum
     opts.optimizer_momentum_use_nesterov = \
         bool(args.optimizer_momentum_use_nesterov)
+    opts.clip_gradients = args.clip_gradients
+    opts.clip_gradients_norm = bool(args.clip_gradients_norm)
 
     opts.num_rowkey = 1 + len([line for line in open(opts.rowkey_dict_path)
                                if line != ''])  # plus one for padding

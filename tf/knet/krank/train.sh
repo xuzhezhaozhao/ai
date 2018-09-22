@@ -47,7 +47,9 @@ optimizer_rmsprop_decay=0.9
 optimizer_rmsprop_momentum=0.0
 optimizer_rmsprop_centered=0  # bool value
 optimizer_momentum_momentum=0.9
-optimizer_momentum_use_nesterov=0
+optimizer_momentum_use_nesterov=0 # bool value
+clip_gradients=1 # bool value
+clip_gradients_norm=5.0
 
 min_count=50
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
@@ -103,4 +105,6 @@ python main.py \
     --optimizer_rmsprop_momentum ${optimizer_rmsprop_momentum} \
     --optimizer_rmsprop_centered ${optimizer_rmsprop_centered} \
     --optimizer_momentum_momentum ${optimizer_momentum_momentum} \
-    --optimizer_momentum_use_nesterov ${optimizer_momentum_use_nesterov}
+    --optimizer_momentum_use_nesterov ${optimizer_momentum_use_nesterov} \
+    --clip_gradients ${clip_gradients} \
+    --clip_gradients_norm ${clip_gradients_norm}

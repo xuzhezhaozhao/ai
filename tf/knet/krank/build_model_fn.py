@@ -93,6 +93,9 @@ def krank_model_fn(features, labels, mode, params):
         with tf.control_dependencies(update_ops):
             gradients, variables = zip(*optimizer.compute_gradients(
                 loss, gate_gradients=tf.train.Optimizer.GATE_GRAPH))
+            if opts.clip_gradients:
+                gradients, _ = tf.clip_by_global_norm(
+                    gradients, opts.clip_gradients_norm)
             train_op = optimizer.apply_gradients(
                 zip(gradients, variables),
                 global_step=tf.train.get_global_step())
@@ -182,7 +185,7 @@ def get_lr_weights_and_biases(params, dim):
         weights = tf.get_variable('weights',
                                   initializer=tf.random_uniform([dim],
                                                                 -0.1, 0.1))
-        biases = tf.get_variable('biases', initializer=[0.5], dtype=tf.float32)
+        biases = tf.get_variable('biases', initializer=[0.0], dtype=tf.float32)
 
         tf.summary.histogram("weights", weights)
         tf.summary.histogram("biases", biases)

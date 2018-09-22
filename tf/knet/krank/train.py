@@ -94,7 +94,7 @@ def train_and_eval_in_local_mode(opts):
     """Train and eval model in lcoal mode."""
 
     for epoch in range(opts.epoch):
-        tf.logging.info("Beginning train model, epoch {} ...".format(epoch))
+        tf.logging.info("Training model, epoch {} ...".format(epoch+1))
         build_model_fn.clear_model_fn_times()
         opts.estimator.train(input_fn=input_data.input_fn(opts, False, 1),
                              max_steps=opts.max_train_steps,
@@ -102,7 +102,7 @@ def train_and_eval_in_local_mode(opts):
         tf.logging.info("Train model OK")
 
         # evaluate model
-        tf.logging.info("Beginning evaluate model, epoch {} ...".format(epoch))
+        tf.logging.info("Evaluating model, epoch {} ...".format(epoch+1))
         result = opts.estimator.evaluate(
             input_fn=input_data.input_fn(opts, True),
             hooks=opts.hooks)
