@@ -9,8 +9,8 @@ package(
 cc_library(
     name = "krank_predict_input_ops",
     visibility = ["//visibility:public"],
-    srcs = glob(["*.cc", "fe/*.cpp"]),
-    copts = ["-std=c++11"],
+    srcs = glob(["*.cc", "fe/*.cpp", "fe/*.h", "cppml/*.h"]),
+    copts = ["-std=c++11 -I."],
     deps = ["@org_tensorflow//tensorflow/core:framework_headers_lib",
             "@org_tensorflow//tensorflow/core/util/ctc",
             "@org_tensorflow//third_party/eigen3",
