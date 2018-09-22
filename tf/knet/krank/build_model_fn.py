@@ -83,11 +83,14 @@ def krank_model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(mode, predictions=predictions,
                                           export_outputs=export_outputs)
 
-    loss = tf.reduce_mean(
+    ce_loss = tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
             labels=tf.cast(labels, tf.float32), logits=logits))
     l2_loss = tf.losses.get_regularization_loss()
-    loss += l2_loss
+    loss = ce_loss + l2_loss
+    tf.summary.scalar('ce_loss', ce_loss)
+    tf.summary.scalar('l2_loss', ce_loss)
+    tf.summary.scalar('total_loss', loss)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         optimizer = create_optimizer(params)
