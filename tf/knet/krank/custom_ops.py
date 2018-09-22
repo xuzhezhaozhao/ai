@@ -9,3 +9,7 @@ import tensorflow as tf
 
 krank_input_ops = tf.load_op_library('./ops/input/krank_input_ops.so')
 krank_input = krank_input_ops.krank_input
+
+krank_predict_input_ops = tf.load_op_library(
+    './ops/predict/krank_predict_input_ops.so')
+krank_predict_input = krank_predict_input_ops.krank_predict_input

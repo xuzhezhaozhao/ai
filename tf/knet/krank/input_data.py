@@ -109,13 +109,20 @@ def build_serving_input_fn(opts):
         Note: Set serialized_tf_example shape as [None] to handle variable
         batch size
         """
+
         feature_spec = {
-            model_keys.POSITIVE_RECORDS_COL: tf.FixedLenFeature(
-                shape=[opts.train_ws], dtype=tf.string),
-            model_keys.NEGATIVE_RECORDS_COL: tf.FixedLenFeature(
-                shape=[opts.train_ws], dtype=tf.string),
-            model_keys.TARGETS_COL: tf.FixedLenFeature(
-                shape=[1], dtype=tf.string)
+            'watched_rowkes': tf.FixedLenFeature(
+                shape=[opts.inference_actions_len], dtype=tf.string),
+            'rinfo1': tf.FixedLenFeature(shape=[opts.inference_actions_len],
+                                         dtype=tf.float32),
+            'rinfo2': tf.FixedLenFeature(shape=[opts.inference_actions_len],
+                                         dtype=tf.float32),
+            'rinfo2': tf.FixedLenFeature(shape=[opts.inference_actions_len],
+                                         dtype=tf.float32),
+            'is_video': tf.FixedLenFeature(shape=[opts.inference_actions_len],
+                                           dtype=tf.bool),
+            'targets_rowkeys': tf.FixedLenFeature(
+                shape=[10], dtype=tf.string),
         }
 
         serialized_tf_example = tf.placeholder(dtype=tf.string,
@@ -123,6 +130,20 @@ def build_serving_input_fn(opts):
                                                name='input_example_tensor')
         receiver_tensors = {'examples': serialized_tf_example}
         features = tf.parse_example(serialized_tf_example, feature_spec)
-        # TODO(zhezhaoxu) many things to do
+
+        (positive_records, negative_records,
+         targets) = custom_ops.krank_predict_input(
+             watched_rowkes=features['watched_rowkes'],
+             rinfo1=features['rinfo1'],
+             rinfo2=features['rinfo2'],
+             is_video=features['is_video'],
+             feature_manager_path=opts.feature_manager_path,
+             ws=opts.train_ws)
+        features[model_keys.POSITIVE_RECORDS_COL] = positive_records
+        features[model_keys.NEGATIVE_RECORDS_COL] = negative_records
+        features[model_keys.TARGETS_COL] = targets
+
+        return tf.estimator.export.ServingInputReceiver(features,
+                                                        receiver_tensors)
 
     return serving_input_receiver_fn

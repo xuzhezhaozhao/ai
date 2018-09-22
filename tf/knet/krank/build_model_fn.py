@@ -1,5 +1,5 @@
-#! /usr/bin/env python
-# -*- coding=utf8 -*-
+#!/ usr / bin / env python
+#- * - coding = utf8 - * -
 
 from __future__ import absolute_import
 from __future__ import division
@@ -51,7 +51,7 @@ def krank_model_fn(features, labels, mode, params):
     num_in = hidden.shape[-1].value
     training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-    # use bn for input
+#use bn for input
     hidden = batch_normalization(hidden, training, 'bn_input')
     for index, units in enumerate(opts.hidden_units):
         use_relu = False if index == (len(opts.hidden_units) - 1) else True
@@ -71,10 +71,10 @@ def krank_model_fn(features, labels, mode, params):
 
     global_step = tf.train.get_global_step()
     if mode == tf.estimator.ModeKeys.TRAIN:
-        # optimizer = tf.train.AdamOptimizer(learning_rate=opts.lr,
-                                           # beta1=0.9,
-                                           # beta2=0.99,
-                                           # epsilon=1e-05)
+#optimizer = tf.train.AdamOptimizer(learning_rate = opts.lr,
+#beta1 = 0.9,
+#beta2 = 0.99,
+#epsilon = 1e-05)
         optimizer = tf.train.AdagradOptimizer(learning_rate=opts.lr)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
@@ -175,8 +175,10 @@ def get_lr_weights_and_biases(params, dim):
     """Get logistic regression weights and biases."""
 
     with tf.variable_scope('logiistic_regression', reuse=tf.AUTO_REUSE):
-        weights = tf.get_variable('weights', initializer=tf.zeros([dim]))
-        biases = tf.get_variable('biases', initializer=[0.0], dtype=tf.float32)
+        weights = tf.get_variable('weights',
+                                  initializer=tf.random_uniform([dim],
+                                                                -0.1, 0.1))
+        biases = tf.get_variable('biases', initializer=[0.5], dtype=tf.float32)
 
         tf.summary.histogram("weights", weights)
         tf.summary.histogram("biases", biases)
@@ -194,15 +196,16 @@ def fc(x, num_in, num_out, name, bn=True, relu=True,
                                       [num_in, num_out], -w, w))
         biases = tf.get_variable('biases',
                                  initializer=tf.zeros([num_out]))
-        # Matrix multiply weights and inputs and add bias
+#Matrix multiply weights and inputs and add bias
         act = tf.nn.xw_plus_b(x, weights, biases, name=scope.name)
 
         if bn:
             act = batch_normalization(act, training)
 
         if relu:
-            # Apply ReLu non linearity
-            act = tf.nn.relu(act)
+#Apply ReLu non linearity
+#act = tf.nn.relu(act)
+            act = tf.nn.leaky_relu(act)
 
         if dropout > 0.0:
             act = tf.layers.dropout(act, dropout, training=training)

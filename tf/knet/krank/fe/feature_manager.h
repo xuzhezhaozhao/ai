@@ -121,6 +121,10 @@ class FeaturePipline {
     return transformed_feature;
   }
 
+  int getRowkeyId(const std::string& rowkey) const {
+    return rowkey_indexer_.transform(rowkey).as_integer();
+  }
+
   void save(std::ofstream& out) const { rowkey_indexer_.save(out); }
   void load(std::ifstream& in) { rowkey_indexer_.load(in); }
 
@@ -184,6 +188,10 @@ class FeatureManager {
 
   TransformedFeature transform(const RawFeature& feature) const {
     return feature_pipline_.transform(feature);
+  }
+
+  int getRowkeyId(const std::string& rowkey) const {
+    return feature_pipline_.getRowkeyId(rowkey);
   }
 
  private:
