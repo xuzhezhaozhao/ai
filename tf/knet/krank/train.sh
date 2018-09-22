@@ -38,7 +38,7 @@ inference_actions_len=100
 inference_num_targets=200
 train_parallel_mode='train_op_parallel'
 train_num_parallel=8
-optimizer_type='ada'  # 'ada', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum'
+optimizer_type='momentum'  # 'ada', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum'
 optimizer_epsilon=0.00001
 optimizer_adadelta_rho=0.95
 optimizer_adam_beta1=0.9
@@ -47,6 +47,7 @@ optimizer_rmsprop_decay=0.9
 optimizer_rmsprop_momentum=0.0
 optimizer_rmsprop_centered=0  # bool value
 optimizer_momentum_momentum=0.9
+optimizer_momentum_use_nesterov=0
 
 min_count=50
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
@@ -101,4 +102,5 @@ python main.py \
     --optimizer_rmsprop_decay ${optimizer_rmsprop_decay} \
     --optimizer_rmsprop_momentum ${optimizer_rmsprop_momentum} \
     --optimizer_rmsprop_centered ${optimizer_rmsprop_centered} \
-    --optimizer_momentum_momentum ${optimizer_momentum_momentum}
+    --optimizer_momentum_momentum ${optimizer_momentum_momentum} \
+    --optimizer_momentum_use_nesterov ${optimizer_momentum_use_nesterov}

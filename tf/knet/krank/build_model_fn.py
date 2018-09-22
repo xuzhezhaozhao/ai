@@ -253,7 +253,9 @@ def create_optimizer(params):
         elif optimizer_type == model_keys.OptimizerType.MOMENTUM:
             optimizer = tf.train.MomentumOptimizer(
                 learning_rate=opts.lr,
-                momentum=opts.optimizer_momentum_momentum)
+                momentum=opts.optimizer_momentum_momentum,
+                use_nesterov=opts.optimizer_momentum_use_nesterov,
+                name='momentum_{}'.format(_call_model_fn_times))
         else:
             raise ValueError('OptimizerType "{}" not surpported.'
                              .format(optimizer_type))
