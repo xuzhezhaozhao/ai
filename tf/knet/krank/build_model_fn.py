@@ -218,34 +218,42 @@ def create_optimizer(params):
     """Create optimizer."""
 
     opts = params['opts']
-    lr = opts.lr
     optimizer_type = opts.optimizer_type
 
     with tf.name_scope('optimizer_layer'):
         if optimizer_type == model_keys.OptimizerType.ADA:
             optimizer = tf.train.AdagradOptimizer(
-                learning_rate=lr,
+                learning_rate=opts.lr,
                 name='adagrad_{}'.format(_call_model_fn_times))
         elif optimizer_type == model_keys.OptimizerType.ADADELTA:
             optimizer = tf.train.AdadeltaOptimizer(
-                learning_rate=lr,
-                rho=0.95,
-                epsilon=0.00001,
+                learning_rate=opts.lr,
+                rho=opts.optimizer_adadelta_rho,
+                epsilon=opts.optimizer_epsilon,
                 name='adadelta_{}'.format(_call_model_fn_times))
         elif optimizer_type == model_keys.OptimizerType.ADAM:
             optimizer = tf.train.AdamOptimizer(
-                learning_rate=lr, name='adam_{}'.format(_call_model_fn_times))
+                learning_rate=opts.lr,
+                beta1=opts.optimizer_adam_beta1,
+                beta2=opts.optimizer_adam_beta2,
+                epsilon=opts.optimizer_epsilon,
+                name='adam_{}'.format(_call_model_fn_times))
         elif optimizer_type == model_keys.OptimizerType.SGD:
             optimizer = tf.train.GradientDescentOptimizer(
                 learning_rate=opts.lr,
                 name='sgd_{}'.format(_call_model_fn_times))
         elif optimizer_type == model_keys.OptimizerType.RMSPROP:
             optimizer = tf.train.RMSPropOptimizer(
-                learning_rate=lr,
-                decay=0.95,
-                momentum=0.001,
-                epsilon=1e-10,
+                learning_rate=opts.lr,
+                decay=opts.optimizer_rmsprop_decay,
+                momentum=opts.optimizer_rmsprop_momentum,
+                epsilon=opts.optimizer_epsilon,
+                centered=opts.optimizer_rmsprop_centered,
                 name='rmsprop_{}'.format(_call_model_fn_times))
+        elif optimizer_type == model_keys.OptimizerType.MOMENTUM:
+            optimizer = tf.train.MomentumOptimizer(
+                learning_rate=opts.lr,
+                momentum=opts.optimizer_momentum_momentum)
         else:
             raise ValueError('OptimizerType "{}" not surpported.'
                              .format(optimizer_type))

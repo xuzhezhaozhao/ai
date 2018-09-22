@@ -47,6 +47,21 @@ parser.add_argument('--train_parallel_mode',
                     default='default', type=str, help='')
 parser.add_argument('--train_num_parallel', default=1, type=int, help='')
 parser.add_argument('--optimizer_type', default='sgd', type=str, help='')
+parser.add_argument('--optimizer_epsilon', default=1e-8, type=float, help='')
+parser.add_argument('--optimizer_adadelta_rho',
+                    default=0.95, type=float, help='')
+parser.add_argument('--optimizer_adam_beta1',
+                    default=0.9, type=float, help='')
+parser.add_argument('--optimizer_adam_beta2',
+                    default=0.999, type=float, help='')
+parser.add_argument('--optimizer_rmsprop_decay',
+                    default=0.9, type=float, help='')
+parser.add_argument('--optimizer_rmsprop_momentum',
+                    default=0.0, type=float, help='')
+parser.add_argument('--optimizer_rmsprop_centered',
+                    default=0, type=int, help='')
+parser.add_argument('--optimizer_momentum_momentum',
+                    default=0.9, type=float, help='')
 
 opts = Options()
 
@@ -89,6 +104,13 @@ def parse_args(argv):
     opts.train_parallel_mode = args.train_parallel_mode
     opts.train_num_parallel = args.train_num_parallel
     opts.optimizer_type = args.optimizer_type
+    opts.optimizer_epsilon = args.optimizer_epsilon
+    opts.optimizer_adam_beta1 = args.optimizer_adam_beta1
+    opts.optimizer_adam_beta2 = args.optimizer_adam_beta2
+    opts.optimizer_rmsprop_decay = args.optimizer_rmsprop_decay
+    opts.optimizer_rmsprop_momentum = args.optimizer_rmsprop_momentum
+    opts.optimizer_rmsprop_centered = bool(args.optimizer_rmsprop_centered)
+    opts.optimizer_momentum_momentum = args.optimizer_momentum_momentum
 
     opts.num_rowkey = 1 + len([line for line in open(opts.rowkey_dict_path)
                                if line != ''])  # plus one for padding

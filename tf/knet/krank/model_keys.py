@@ -26,3 +26,4 @@ class OptimizerType(object):
     ADAM = 'adam'
     SGD = 'sgd'
     RMSPROP = 'rmsprop'
+    MOMENTUM = 'momentum'
