@@ -7,8 +7,6 @@ from __future__ import print_function
 
 
 import tensorflow as tf
-import os
-import time
 
 import build_model_fn
 import hook
@@ -80,11 +78,11 @@ def train_and_eval_in_local_mode(opts):
 
     # evaluate model
     tf.logging.info("Beginning evaluate model ...")
-    # result = opts.estimator.evaluate(
-        # input_fn=lambda: input_data.input_fn(opts, True),
-        # hooks=opts.hooks)
+    result = opts.estimator.evaluate(
+        input_fn=lambda: input_data.input_fn(opts, True),
+        hooks=opts.hooks)
     tf.logging.info("Evaluate model OK")
-    # return result
+    return result
 
 
 def export_model_in_local_mode(opts):

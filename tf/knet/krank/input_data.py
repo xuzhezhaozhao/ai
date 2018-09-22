@@ -113,16 +113,16 @@ def build_serving_input_fn(opts):
         feature_spec = {
             'watched_rowkes': tf.FixedLenFeature(
                 shape=[opts.inference_actions_len], dtype=tf.string),
-            'rinfo1': tf.FixedLenFeature(shape=[opts.inference_actions_len],
-                                         dtype=tf.float32),
-            'rinfo2': tf.FixedLenFeature(shape=[opts.inference_actions_len],
-                                         dtype=tf.float32),
-            'rinfo2': tf.FixedLenFeature(shape=[opts.inference_actions_len],
-                                         dtype=tf.float32),
-            'is_video': tf.FixedLenFeature(shape=[opts.inference_actions_len],
-                                           dtype=tf.int64),
+            'rinfo1': tf.FixedLenFeature(
+                shape=[opts.inference_actions_len], dtype=tf.float32),
+            'rinfo2': tf.FixedLenFeature(
+                shape=[opts.inference_actions_len], dtype=tf.float32),
+            'rinfo2': tf.FixedLenFeature(
+                shape=[opts.inference_actions_len], dtype=tf.float32),
+            'is_video': tf.FixedLenFeature(
+                shape=[opts.inference_actions_len], dtype=tf.int64),
             'target_rowkeys': tf.FixedLenFeature(
-                shape=[10], dtype=tf.string),
+                shape=[opts.inference_num_targets], dtype=tf.string),
         }
 
         serialized_tf_example = tf.placeholder(dtype=tf.string,
@@ -144,7 +144,7 @@ def build_serving_input_fn(opts):
         features[model_keys.NEGATIVE_RECORDS_COL] = negative_records
         features[model_keys.TARGETS_COL] = targets
 
-        return tf.estimator.export.ServingInputReceiver(features,
-                                                        receiver_tensors)
+        return tf.estimator.export.ServingInputReceiver(
+            features, receiver_tensors)
 
     return serving_input_receiver_fn

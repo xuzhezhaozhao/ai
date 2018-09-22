@@ -36,6 +36,7 @@ class Options(object):
         self.rowkey_dict_path = ''
         self.num_rowkey = 0
         self.inference_actions_len = 5
+        self.inference_num_targets = 100
 
         # non-cmd args
         self.estimator = None
@@ -70,6 +71,7 @@ class Options(object):
         map_num_parallel_calls = {} \n \
         rowkey_dict_path = {} \n \
         inference_actions_len = {} \n \
+        inference_num_targets = {} \n \
         num_rowkey = {} \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -100,6 +102,7 @@ class Options(object):
                 self.map_num_parallel_calls,
                 self.rowkey_dict_path,
                 self.inference_actions_len,
+                self.inference_num_targets,
                 self.num_rowkey,
 
                 # non-cmd args

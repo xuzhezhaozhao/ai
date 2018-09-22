@@ -14,7 +14,7 @@
 
 #include <time.h>
 
-#include "../../fe/feature_manager.h"
+#include "fe/feature_manager.h"
 
 namespace tensorflow {
 class KrankPredictInputOp : public OpKernel {

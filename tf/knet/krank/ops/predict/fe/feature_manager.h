@@ -8,7 +8,7 @@
 #include "str_util.h"
 #include "stringpiece.h"
 
-#include "../../../../cppml/src/transformer.h"
+#include "../cppml/src/transformer.h"
 
 namespace fe {
 

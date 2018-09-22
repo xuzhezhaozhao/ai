@@ -51,7 +51,7 @@ def krank_model_fn(features, labels, mode, params):
     num_in = hidden.shape[-1].value
     training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-#use bn for input
+    # TODO
     hidden = batch_normalization(hidden, training, 'bn_input')
     for index, units in enumerate(opts.hidden_units):
         use_relu = False if index == (len(opts.hidden_units) - 1) else True
@@ -65,16 +65,31 @@ def krank_model_fn(features, labels, mode, params):
 
     logits = tf.reduce_sum(hidden * lr_weights, 1)
     logits = logits + lr_biases
+
+    if mode == tf.estimator.ModeKeys.PREDICT:
+        predictions = {
+            'logits': logits,
+            'score': tf.nn.sigmoid(logits),
+        }
+
+        export_outputs = {
+            'predicts': tf.estimator.export.PredictOutput(
+                outputs={
+                    'logits': logits,
+                    'score': tf.nn.sigmoid(logits),
+                }
+            )
+        }
+
+        return tf.estimator.EstimatorSpec(mode, predictions=predictions,
+                                          export_outputs=export_outputs)
+
     loss = tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.cast(labels, tf.float32), logits=logits)
     loss = tf.reduce_mean(loss)
 
     global_step = tf.train.get_global_step()
     if mode == tf.estimator.ModeKeys.TRAIN:
-#optimizer = tf.train.AdamOptimizer(learning_rate = opts.lr,
-#beta1 = 0.9,
-#beta2 = 0.99,
-#epsilon = 1e-05)
         optimizer = tf.train.AdagradOptimizer(learning_rate=opts.lr)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
@@ -105,24 +120,6 @@ def krank_model_fn(features, labels, mode, params):
 
         return tf.estimator.EstimatorSpec(mode, loss=loss,
                                           eval_metric_ops=metrics)
-
-    if mode == tf.estimator.ModeKeys.PREDICT:
-        predictions = {
-            'logits': logits,
-            'score': tf.nn.sigmoid(logits),
-        }
-
-        export_outputs = {
-            'predicts': tf.estimator.export.PredictOutput(
-                outputs={
-                    'logits': logits,
-                    'score': tf.nn.sigmoid(logits),
-                }
-            )
-        }
-
-        return tf.estimator.EstimatorSpec(mode, predictions=predictions,
-                                          export_outputs=export_outputs)
 
 
 def get_rowkey_embeddings(params):
