@@ -46,6 +46,7 @@ parser.add_argument('--inference_num_targets', default=100, type=int, help='')
 parser.add_argument('--train_parallel_mode',
                     default='default', type=str, help='')
 parser.add_argument('--train_num_parallel', default=1, type=int, help='')
+parser.add_argument('--optimizer_type', default='sgd', type=str, help='')
 
 opts = Options()
 
@@ -87,6 +88,7 @@ def parse_args(argv):
     opts.inference_num_targets = args.inference_num_targets
     opts.train_parallel_mode = args.train_parallel_mode
     opts.train_num_parallel = args.train_num_parallel
+    opts.optimizer_type = args.optimizer_type
 
     opts.num_rowkey = 1 + len([line for line in open(opts.rowkey_dict_path)
                                if line != ''])  # plus one for padding

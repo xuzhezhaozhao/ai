@@ -38,6 +38,7 @@ inference_actions_len=100
 inference_num_targets=200
 train_parallel_mode='train_op_parallel'
 train_num_parallel=8
+optimizer_type='ada'  # 'ada', 'sgd', 'adadelta', 'adam', 'rmsprop'
 
 min_count=50
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
@@ -83,4 +84,5 @@ python main.py \
     --inference_actions_len ${inference_actions_len} \
     --inference_num_targets ${inference_num_targets} \
     --train_parallel_mode ${train_parallel_mode} \
-    --train_num_parallel ${train_num_parallel}
+    --train_num_parallel ${train_num_parallel} \
+    --optimizer_type ${optimizer_type}

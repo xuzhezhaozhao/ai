@@ -39,6 +39,7 @@ class Options(object):
         self.inference_num_targets = 100
         self.train_parallel_mode = 'default'
         self.train_num_parallel = 1
+        self.optimizer_type = 'sgd'
 
         # non-cmd args
         self.estimator = None
@@ -76,6 +77,7 @@ class Options(object):
         inference_num_targets = {} \n \
         train_parallel_mode = {} \n \
         train_num_parallel = {} \n \
+        optimizer_type = {} \n \
         num_rowkey = {} \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -109,6 +111,7 @@ class Options(object):
                 self.inference_num_targets,
                 self.train_parallel_mode,
                 self.train_num_parallel,
+                self.optimizer_type,
                 self.num_rowkey,
 
                 # non-cmd args

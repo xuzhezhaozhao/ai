@@ -12,6 +12,11 @@ import model_keys
 _call_model_fn_times = 0
 
 
+def clear_model_fn_times():
+    global _call_model_fn_times
+    _call_model_fn_times = 0
+
+
 def krank_model_fn(features, labels, mode, params):
     """Build model graph."""
 
@@ -30,22 +35,12 @@ def krank_model_fn(features, labels, mode, params):
     negative_records.set_shape([None, opts.train_ws])
     targets.set_shape([None])
 
-    positive_nonzeros = tf.count_nonzero(positive_records, 1, keepdims=True)
-    positive_nonzeros = tf.maximum(positive_nonzeros, 1)
-    positive_embeds = mask_padding_embedding_lookup(
-        rowkey_embeddings, rowkey_embedding_dim, positive_records, 0)
-    positive_embeds_sum = tf.reduce_sum(positive_embeds, 1)
-    positive_embeds_mean = positive_embeds_sum / tf.cast(positive_nonzeros,
-                                                         tf.float32)
-
-    negative_nonzeros = tf.count_nonzero(negative_records, 1, keepdims=True)
-    negative_nonzeros = tf.maximum(negative_nonzeros, 1)
-    negative_embeds = mask_padding_embedding_lookup(
-        rowkey_embeddings, rowkey_embedding_dim, negative_records, 0)
-    negative_embeds_sum = tf.reduce_sum(negative_embeds, 1)
-    negative_embeds_mean = negative_embeds_sum / tf.cast(negative_nonzeros,
-                                                         tf.float32)
-
+    positive_embeds_mean = non_zero_mean(rowkey_embeddings,
+                                         rowkey_embedding_dim,
+                                         positive_records)
+    negative_embeds_mean = non_zero_mean(rowkey_embeddings,
+                                         rowkey_embedding_dim,
+                                         positive_records)
     targets_embeds = mask_padding_embedding_lookup(
         rowkey_embeddings, rowkey_embedding_dim, targets, 0)
 
@@ -68,9 +63,7 @@ def krank_model_fn(features, labels, mode, params):
 
     lr_dim = hidden.shape[-1].value
     lr_weights, lr_biases = get_lr_weights_and_biases(params, lr_dim)
-
-    logits = tf.reduce_sum(hidden * lr_weights, 1)
-    logits = logits + lr_biases
+    logits = tf.reduce_sum(hidden * lr_weights, 1) + lr_biases
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         predictions = {
@@ -90,22 +83,19 @@ def krank_model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(mode, predictions=predictions,
                                           export_outputs=export_outputs)
 
-    loss = tf.nn.sigmoid_cross_entropy_with_logits(
-        labels=tf.cast(labels, tf.float32), logits=logits)
-    loss = tf.reduce_mean(loss)
-
-    global_step = tf.train.get_global_step()
+    loss = tf.reduce_mean(
+        tf.nn.sigmoid_cross_entropy_with_logits(
+            labels=tf.cast(labels, tf.float32), logits=logits))
     if mode == tf.estimator.ModeKeys.TRAIN:
-        optimizer = tf.train.AdagradOptimizer(
-            learning_rate=opts.lr,
-            name='adagrad_{}'.format(_call_model_fn_times))
+        optimizer = create_optimizer(params)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
         with tf.control_dependencies(update_ops):
             gradients, variables = zip(*optimizer.compute_gradients(
                 loss, gate_gradients=tf.train.Optimizer.GATE_GRAPH))
             train_op = optimizer.apply_gradients(
-                zip(gradients, variables), global_step=global_step)
+                zip(gradients, variables),
+                global_step=tf.train.get_global_step())
 
             for var, grad in zip(variables, gradients):
                 tf.summary.histogram(var.name.replace(':', '_') + '/gradient',
@@ -145,6 +135,15 @@ def get_rowkey_embeddings(params):
                                           -init_width, init_width))
         tf.summary.histogram("embeddings", embeddings)
     return embeddings
+
+
+def non_zero_mean(embeddings, dim, records):
+    nonzeros = tf.count_nonzero(records, 1, keepdims=True)
+    nonzeros = tf.maximum(nonzeros, 1)
+    embeds = mask_padding_embedding_lookup(embeddings, dim, records, 0)
+    embeds_sum = tf.reduce_sum(embeds, 1)
+    embeds_mean = embeds_sum / tf.cast(nonzeros, tf.float32)
+    return embeds_mean
 
 
 def mask_padding_embedding_lookup(embeddings, embedding_dim,
@@ -201,18 +200,54 @@ def fc(x, num_in, num_out, name, bn=True, relu=True,
                                       [num_in, num_out], -w, w))
         biases = tf.get_variable('biases',
                                  initializer=tf.zeros([num_out]))
-#Matrix multiply weights and inputs and add bias
         act = tf.nn.xw_plus_b(x, weights, biases, name=scope.name)
 
         if bn:
             act = batch_normalization(act, training)
 
         if relu:
-#Apply ReLu non linearity
-#act = tf.nn.relu(act)
             act = tf.nn.leaky_relu(act)
 
         if dropout > 0.0:
             act = tf.layers.dropout(act, dropout, training=training)
 
         return act
+
+
+def create_optimizer(params):
+    """Create optimizer."""
+
+    opts = params['opts']
+    lr = opts.lr
+    optimizer_type = opts.optimizer_type
+
+    with tf.name_scope('optimizer_layer'):
+        if optimizer_type == model_keys.OptimizerType.ADA:
+            optimizer = tf.train.AdagradOptimizer(
+                learning_rate=lr,
+                name='adagrad_{}'.format(_call_model_fn_times))
+        elif optimizer_type == model_keys.OptimizerType.ADADELTA:
+            optimizer = tf.train.AdadeltaOptimizer(
+                learning_rate=lr,
+                rho=0.95,
+                epsilon=0.00001,
+                name='adadelta_{}'.format(_call_model_fn_times))
+        elif optimizer_type == model_keys.OptimizerType.ADAM:
+            optimizer = tf.train.AdamOptimizer(
+                learning_rate=lr, name='adam_{}'.format(_call_model_fn_times))
+        elif optimizer_type == model_keys.OptimizerType.SGD:
+            optimizer = tf.train.GradientDescentOptimizer(
+                learning_rate=opts.lr,
+                name='sgd_{}'.format(_call_model_fn_times))
+        elif optimizer_type == model_keys.OptimizerType.RMSPROP:
+            optimizer = tf.train.RMSPropOptimizer(
+                learning_rate=lr,
+                decay=0.95,
+                momentum=0.001,
+                epsilon=1e-10,
+                name='rmsprop_{}'.format(_call_model_fn_times))
+        else:
+            raise ValueError('OptimizerType "{}" not surpported.'
+                             .format(optimizer_type))
+
+    return optimizer

@@ -95,6 +95,7 @@ def train_and_eval_in_local_mode(opts):
 
     for epoch in range(opts.epoch):
         tf.logging.info("Beginning train model, epoch {} ...".format(epoch))
+        build_model_fn.clear_model_fn_times()
         opts.estimator.train(input_fn=input_data.input_fn(opts, False, 1),
                              max_steps=opts.max_train_steps,
                              hooks=opts.hooks)
