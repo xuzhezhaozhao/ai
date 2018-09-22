@@ -1,5 +1,5 @@
 #!/ usr / bin / env python
-#- * - coding = utf8 - * -
+# -*- coding=utf8 -*-
 
 from __future__ import absolute_import
 from __future__ import division
@@ -9,8 +9,14 @@ import tensorflow as tf
 import model_keys
 
 
+_call_model_fn_times = 0
+
+
 def krank_model_fn(features, labels, mode, params):
     """Build model graph."""
+
+    global _call_model_fn_times
+    _call_model_fn_times += 1
 
     opts = params['opts']
     rowkey_embedding_dim = opts.rowkey_embedding_dim
@@ -90,7 +96,9 @@ def krank_model_fn(features, labels, mode, params):
 
     global_step = tf.train.get_global_step()
     if mode == tf.estimator.ModeKeys.TRAIN:
-        optimizer = tf.train.AdagradOptimizer(learning_rate=opts.lr)
+        optimizer = tf.train.AdagradOptimizer(
+            learning_rate=opts.lr,
+            name='adagrad_{}'.format(_call_model_fn_times))
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
         with tf.control_dependencies(update_ops):

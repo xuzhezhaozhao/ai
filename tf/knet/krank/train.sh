@@ -36,6 +36,8 @@ dropout=0.0
 map_num_parallel_calls=1
 inference_actions_len=100
 inference_num_targets=200
+train_parallel_mode='train_op_parallel'
+train_num_parallel=8
 
 min_count=50
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
@@ -79,4 +81,6 @@ python main.py \
     --map_num_parallel_calls ${map_num_parallel_calls} \
     --rowkey_dict_path ${rowkey_dict_path} \
     --inference_actions_len ${inference_actions_len} \
-    --inference_num_targets ${inference_num_targets}
+    --inference_num_targets ${inference_num_targets} \
+    --train_parallel_mode ${train_parallel_mode} \
+    --train_num_parallel ${train_num_parallel}

@@ -37,6 +37,8 @@ class Options(object):
         self.num_rowkey = 0
         self.inference_actions_len = 5
         self.inference_num_targets = 100
+        self.train_parallel_mode = 'default'
+        self.train_num_parallel = 1
 
         # non-cmd args
         self.estimator = None
@@ -72,6 +74,8 @@ class Options(object):
         rowkey_dict_path = {} \n \
         inference_actions_len = {} \n \
         inference_num_targets = {} \n \
+        train_parallel_mode = {} \n \
+        train_num_parallel = {} \n \
         num_rowkey = {} \n \
         estimator = {} \n \
         hooks = {} \n \
@@ -103,6 +107,8 @@ class Options(object):
                 self.rowkey_dict_path,
                 self.inference_actions_len,
                 self.inference_num_targets,
+                self.train_parallel_mode,
+                self.train_num_parallel,
                 self.num_rowkey,
 
                 # non-cmd args

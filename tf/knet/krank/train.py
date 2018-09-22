@@ -44,10 +44,33 @@ def build_estimator(opts):
         model_keys.TARGETS_COL: targets_col,
         'opts': opts
     }
-    config = tf.estimator.RunConfig(**config_keys)
-    estimator_keys['config'] = config
 
-    estimator = tf.estimator.Estimator(**estimator_keys)
+    train_parallel_mode = opts.train_parallel_mode
+    if train_parallel_mode == model_keys.TrainParallelMode.DEFAULT:
+        config = tf.estimator.RunConfig(**config_keys)
+        estimator_keys['config'] = config
+        estimator = tf.estimator.Estimator(**estimator_keys)
+    elif train_parallel_mode == model_keys.TrainParallelMode.TRAIN_OP_PARALLEL:
+        from estimator.estimator import TrainOpParallelEstimator
+        config = tf.estimator.RunConfig(**config_keys)
+        estimator_keys['config'] = config
+        estimator_keys['num_train_op_parallel'] = opts.train_num_parallel
+        estimator = TrainOpParallelEstimator(**estimator_keys)
+    elif train_parallel_mode == model_keys.TrainParallelMode.MULTI_THREAD:
+        from estimator_v2.estimator import Estimator as MultiThreadEstimator
+        config = tf.estimator.RunConfig(**config_keys)
+        estimator_keys['config'] = config
+        estimator_keys['num_thread'] = opts.train_num_parallel
+        estimator = MultiThreadEstimator(**estimator_keys)
+    elif train_parallel_mode == model_keys.TrainParallelMode.MULTI_THREAD_V2:
+        from estimator_v3.estimator import TrainOpParallelEstimator
+        config = tf.estimator.RunConfig(**config_keys)
+        estimator_keys['config'] = config
+        estimator_keys['num_train_op_parallel'] = opts.train_num_parallel
+        estimator = TrainOpParallelEstimator(**estimator_keys)
+    else:
+        raise ValueError("train_parallel_mode '{}' not surpported.".format(
+            train_parallel_mode))
 
     return estimator
 
@@ -70,18 +93,20 @@ def create_hooks(opts):
 def train_and_eval_in_local_mode(opts):
     """Train and eval model in lcoal mode."""
 
-    tf.logging.info("Beginning train model ...")
-    opts.estimator.train(input_fn=lambda: input_data.input_fn(opts, False),
-                         max_steps=opts.max_train_steps,
-                         hooks=opts.hooks)
-    tf.logging.info("Train model OK")
+    for epoch in range(opts.epoch):
+        tf.logging.info("Beginning train model, epoch {} ...".format(epoch))
+        opts.estimator.train(input_fn=input_data.input_fn(opts, False, 1),
+                             max_steps=opts.max_train_steps,
+                             hooks=opts.hooks)
+        tf.logging.info("Train model OK")
 
-    # evaluate model
-    tf.logging.info("Beginning evaluate model ...")
-    result = opts.estimator.evaluate(
-        input_fn=lambda: input_data.input_fn(opts, True),
-        hooks=opts.hooks)
-    tf.logging.info("Evaluate model OK")
+        # evaluate model
+        tf.logging.info("Beginning evaluate model, epoch {} ...".format(epoch))
+        result = opts.estimator.evaluate(
+            input_fn=input_data.input_fn(opts, True),
+            hooks=opts.hooks)
+        tf.logging.info("Evaluate model OK")
+
     return result
 
 
