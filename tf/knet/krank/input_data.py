@@ -120,8 +120,8 @@ def build_serving_input_fn(opts):
             'rinfo2': tf.FixedLenFeature(shape=[opts.inference_actions_len],
                                          dtype=tf.float32),
             'is_video': tf.FixedLenFeature(shape=[opts.inference_actions_len],
-                                           dtype=tf.bool),
-            'targets_rowkeys': tf.FixedLenFeature(
+                                           dtype=tf.int64),
+            'target_rowkeys': tf.FixedLenFeature(
                 shape=[10], dtype=tf.string),
         }
 
@@ -133,9 +133,10 @@ def build_serving_input_fn(opts):
 
         (positive_records, negative_records,
          targets) = custom_ops.krank_predict_input(
-             watched_rowkes=features['watched_rowkes'],
+             watched_rowkeys=features['watched_rowkes'],
              rinfo1=features['rinfo1'],
              rinfo2=features['rinfo2'],
+             target_rowkeys=features['target_rowkeys'],
              is_video=features['is_video'],
              feature_manager_path=opts.feature_manager_path,
              ws=opts.train_ws)

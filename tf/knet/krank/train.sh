@@ -19,7 +19,7 @@ lr=0.01
 rowkey_embedding_dim=64
 train_ws=50
 batch_size=128
-max_train_steps=-1
+max_train_steps=500
 epoch=5
 hidden_units="256,256"
 prefetch_size=20000
@@ -34,6 +34,7 @@ profile_steps=500
 remove_model_dir=1
 dropout=0.0
 map_num_parallel_calls=1
+inference_actions_len=100
 
 min_count=50
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
@@ -75,4 +76,5 @@ python main.py \
     --remove_model_dir ${remove_model_dir} \
     --dropout ${dropout} \
     --map_num_parallel_calls ${map_num_parallel_calls} \
-    --rowkey_dict_path ${rowkey_dict_path}
+    --rowkey_dict_path ${rowkey_dict_path} \
+    --inference_actions_len ${inference_actions_len}

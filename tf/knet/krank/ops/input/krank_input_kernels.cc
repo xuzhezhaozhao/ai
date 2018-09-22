@@ -174,7 +174,7 @@ class KrankInputOp : public OpKernel {
     auto g = global_lines_.load(std::memory_order_relaxed);
     auto p = num_positive_.load(std::memory_order_relaxed);
     auto n = num_negative_.load(std::memory_order_relaxed);
-    if (g % 1000 == 0) {
+    if (g % 10000 == 0) {
       LOG(ERROR) << "global lines = " << g << ", num_positive = " << p
                  << ", num_negative_ = " << n << ", pos/neg = " << 1.0 * p / n
                  << ", samples/line = " << 1.0 * (p + n) / g;

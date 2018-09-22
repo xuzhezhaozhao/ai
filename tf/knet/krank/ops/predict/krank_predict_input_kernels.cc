@@ -56,7 +56,7 @@ class KrankPredictInputOp : public OpKernel {
     auto matrix_rinfo1 = rinfo1_tensor.matrix<float>();
     auto matrix_rinfo2 = rinfo2_tensor.matrix<float>();
     auto matrix_target_rowkeys = target_rowkeys_tensor.matrix<std::string>();
-    auto is_video_matrix = is_video_tensor.matrix<bool>();
+    auto is_video_matrix = is_video_tensor.matrix<int64>();
 
     Tensor* positive_records_tensor = NULL;
     Tensor* negative_records_tensor = NULL;

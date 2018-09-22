@@ -41,6 +41,7 @@ parser.add_argument('--remove_model_dir', default=1, type=int, help='')
 parser.add_argument('--dropout', default=0.3, type=float, help='')
 parser.add_argument('--map_num_parallel_calls', default=1, type=int, help='')
 parser.add_argument('--rowkey_dict_path', default='', type=str, help='')
+parser.add_argument('--inference_actions_len', default=5, type=int, help='')
 
 opts = Options()
 
@@ -78,6 +79,8 @@ def parse_args(argv):
     opts.dropout = args.dropout
     opts.map_num_parallel_calls = args.map_num_parallel_calls
     opts.rowkey_dict_path = args.rowkey_dict_path
+    opts.inference_actions_len = args.inference_actions_len
+
     opts.num_rowkey = 1 + len([line for line in open(opts.rowkey_dict_path)
                                if line != ''])  # plus one for padding
 
