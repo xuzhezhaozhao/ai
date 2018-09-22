@@ -35,18 +35,21 @@ def run():
     request.model_spec.signature_name = 'predicts'
     input_name = 'examples'
 
-    receive_ws = 100
+    watched_rowkeys = ['' for i in range(100)]
+    watched_rowkeys[0] = '8575b81e0d8430aj'
+    rinfo1 = [10.0 for i in range(100)]
+    rinfo2 = [10.0 for i in range(100)]
+    is_video = [1 for i in range(100)]
+    target_rowkeys = ['' for i in range(200)]
+    target_rowkeys[0] = '8575b81e0d8430aj'
 
-    x = ['' for i in range(receive_ws)]
-    x[0] = '8575b81e0d8430aj'
-    is_video = [True for i in range(receive_ws)]
     example1 = tf.train.Example(
         features=tf.train.Features(
             feature={
-                'watched_rowkeys': _bytes_feature(x),
-                'rinfo1': _float_feature([1.0]),
-                'rinfo2': _float_feature([1]),
-                'target_rowkeys': _bytes_feature(x),
+                'watched_rowkeys': _bytes_feature(watched_rowkeys),
+                'rinfo1': _float_feature(rinfo1),
+                'rinfo2': _float_feature(rinfo2),
+                'target_rowkeys': _bytes_feature(target_rowkeys),
                 'is_video': _int64_feature(is_video)
             }
         )

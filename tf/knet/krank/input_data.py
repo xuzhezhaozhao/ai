@@ -111,7 +111,7 @@ def build_serving_input_fn(opts):
         """
 
         feature_spec = {
-            'watched_rowkes': tf.FixedLenFeature(
+            'watched_rowkeys': tf.FixedLenFeature(
                 shape=[opts.inference_actions_len], dtype=tf.string),
             'rinfo1': tf.FixedLenFeature(
                 shape=[opts.inference_actions_len], dtype=tf.float32),
@@ -133,7 +133,7 @@ def build_serving_input_fn(opts):
 
         (positive_records, negative_records,
          targets) = custom_ops.krank_predict_input(
-             watched_rowkeys=features['watched_rowkes'],
+             watched_rowkeys=features['watched_rowkeys'],
              rinfo1=features['rinfo1'],
              rinfo2=features['rinfo2'],
              target_rowkeys=features['target_rowkeys'],
