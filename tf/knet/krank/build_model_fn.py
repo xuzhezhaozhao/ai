@@ -56,7 +56,7 @@ def krank_model_fn(features, labels, mode, params):
     hidden = batch_normalization(hidden, training, 'bn_input')
     for index, units in enumerate(opts.hidden_units):
         use_relu = False if index == (len(opts.hidden_units) - 1) else True
-        hidden = fc(hidden, num_in, units, "fc_{}".format(index),
+        hidden = fc(params, hidden, num_in, units, "fc_{}".format(index),
                     bn=use_relu, relu=use_relu, training=training,
                     dropout=opts.dropout)
         num_in = units
@@ -86,6 +86,9 @@ def krank_model_fn(features, labels, mode, params):
     loss = tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
             labels=tf.cast(labels, tf.float32), logits=logits))
+    l2_loss = tf.losses.get_regularization_loss()
+    loss += l2_loss
+
     if mode == tf.estimator.ModeKeys.TRAIN:
         optimizer = create_optimizer(params)
 
@@ -123,6 +126,16 @@ def krank_model_fn(features, labels, mode, params):
                                           eval_metric_ops=metrics)
 
 
+def l2_regularizer(params):
+    """Return L2 regularizer."""
+
+    opts = params['opts']
+    if opts.l2_regularizer > 0.0:
+        return tf.contrib.layers.l2_regularizer(scale=opts.l2_regularizer)
+    else:
+        return None
+
+
 def get_rowkey_embeddings(params):
     """Get rowkey embeddings variables."""
 
@@ -135,7 +148,8 @@ def get_rowkey_embeddings(params):
         embeddings = tf.get_variable(
             "embeddings",
             initializer=tf.random_uniform([num_rowkey, dim],
-                                          -init_width, init_width))
+                                          -init_width, init_width),
+            regularizer=l2_regularizer(params))
         tf.summary.histogram("embeddings", embeddings)
     return embeddings
 
@@ -182,9 +196,10 @@ def get_lr_weights_and_biases(params, dim):
     """Get logistic regression weights and biases."""
 
     with tf.variable_scope('logiistic_regression', reuse=tf.AUTO_REUSE):
-        weights = tf.get_variable('weights',
-                                  initializer=tf.random_uniform([dim],
-                                                                -0.1, 0.1))
+        weights = tf.get_variable(
+            'weights',
+            initializer=tf.random_uniform([dim], -0.1, 0.1),
+            regularizer=l2_regularizer(params))
         biases = tf.get_variable('biases', initializer=[0.0], dtype=tf.float32)
 
         tf.summary.histogram("weights", weights)
@@ -192,17 +207,20 @@ def get_lr_weights_and_biases(params, dim):
     return weights, biases
 
 
-def fc(x, num_in, num_out, name, bn=True, relu=True,
+def fc(params, x, num_in, num_out, name, bn=True, relu=True,
        training=True, dropout=0.0):
     """Create a fully connected layer."""
 
     with tf.variable_scope(name, reuse=tf.AUTO_REUSE) as scope:
         w = tf.sqrt(12.0 / (num_in + num_out))
-        weights = tf.get_variable('weights',
-                                  initializer=tf.random_uniform(
-                                      [num_in, num_out], -w, w))
-        biases = tf.get_variable('biases',
-                                 initializer=tf.zeros([num_out]))
+        weights = tf.get_variable(
+            'weights',
+            initializer=tf.random_uniform([num_in, num_out], -w, w),
+            regularizer=l2_regularizer(params))
+        biases = tf.get_variable(
+            'biases',
+            initializer=tf.zeros([num_out]),
+            regularizer=l2_regularizer(params))
         act = tf.nn.xw_plus_b(x, weights, biases, name=scope.name)
 
         if bn:
