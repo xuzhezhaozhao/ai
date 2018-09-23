@@ -89,7 +89,7 @@ def krank_model_fn(features, labels, mode, params):
     l2_loss = tf.losses.get_regularization_loss()
     loss = ce_loss + l2_loss
     tf.summary.scalar('ce_loss', ce_loss)
-    tf.summary.scalar('l2_loss', ce_loss)
+    tf.summary.scalar('l2_loss', l2_loss)
     tf.summary.scalar('total_loss', loss)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
@@ -151,8 +151,7 @@ def get_rowkey_embeddings(params):
         embeddings = tf.get_variable(
             "embeddings",
             initializer=tf.random_uniform([num_rowkey, dim],
-                                          -init_width, init_width),
-            regularizer=l2_regularizer(params))
+                                          -init_width, init_width))
         tf.summary.histogram("embeddings", embeddings)
     return embeddings
 
