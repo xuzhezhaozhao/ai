@@ -9,7 +9,6 @@ from __future__ import print_function
 import tensorflow as tf
 
 import build_model_fn
-import hook
 import input_data
 import model_keys
 import easy_estimator
@@ -22,10 +21,9 @@ def build_estimator(opts):
     config_keys['model_dir'] = opts.model_dir
     config_keys['tf_random_seed'] = None
     config_keys['save_summary_steps'] = opts.save_summary_steps
-    config_keys['save_checkpoints_secs'] = opts.save_checkpoints_secs
+    config_keys['save_checkpoints_steps'] = opts.save_checkpoints_steps
     config_keys['session_config'] = None
     config_keys['keep_checkpoint_max'] = opts.keep_checkpoint_max
-    config_keys['keep_checkpoint_every_n_hours'] = 10000
     config_keys['log_step_count_steps'] = opts.log_step_count_steps
     config = tf.estimator.RunConfig(**config_keys)
 
@@ -58,13 +56,12 @@ def train_and_eval_in_local_mode(opts):
     tf.logging.info("Train model OK")
 
     # evaluate model
-    # tf.logging.info("Evaluating model ...")
-    # result = opts.estimator.evaluate(
-        # input_fn=input_data.input_fn(opts, True),
-        # hooks=opts.hooks)
-    # tf.logging.info("Evaluate model OK")
+    tf.logging.info("Evaluating model ...")
+    result = opts.estimator.evaluate(
+        input_fn=input_data.input_fn(opts, True))
+    tf.logging.info("Evaluate model OK")
 
-    return None
+    return result
 
 
 def export_model_in_local_mode(opts):

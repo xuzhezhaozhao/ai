@@ -19,19 +19,17 @@ lr=0.01
 rowkey_embedding_dim=64
 train_ws=50
 batch_size=128
-eval_batch_size=1024
+eval_batch_size=4096
 max_train_steps=10000
 epoch=5
 hidden_units="256,256"
 prefetch_size=20000
 shuffle_batch=1
-shuffle_size=20000
-save_summary_steps=1000
-save_checkpoints_secs=600
+shuffle_size=50000
+save_summary_steps=2000
+save_checkpoints_steps=10000
 keep_checkpoint_max=3
 log_step_count_steps=1000
-use_profile_hook=0
-profile_steps=500
 remove_model_dir=0
 dropout=0.0
 map_num_parallel_calls=1
@@ -90,11 +88,9 @@ python main.py \
     --shuffle_batch ${shuffle_batch} \
     --shuffle_size ${shuffle_size} \
     --save_summary_steps ${save_summary_steps} \
-    --save_checkpoints_secs ${save_checkpoints_secs} \
+    --save_checkpoints_steps ${save_checkpoints_steps} \
     --keep_checkpoint_max ${keep_checkpoint_max} \
     --log_step_count_steps ${log_step_count_steps} \
-    --use_profile_hook ${use_profile_hook} \
-    --profile_steps ${profile_steps} \
     --remove_model_dir ${remove_model_dir} \
     --dropout ${dropout} \
     --map_num_parallel_calls ${map_num_parallel_calls} \
