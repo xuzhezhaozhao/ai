@@ -20,7 +20,8 @@ rowkey_embedding_dim=64
 train_ws=50
 batch_size=128
 eval_batch_size=4096
-max_train_steps=10000
+max_train_steps=1000
+max_eval_steps=1000
 epoch=5
 hidden_units="256,256"
 prefetch_size=20000
@@ -30,7 +31,7 @@ save_summary_steps=2000
 save_checkpoints_steps=10000
 keep_checkpoint_max=3
 log_step_count_steps=1000
-remove_model_dir=0
+remove_model_dir=1
 dropout=0.0
 map_num_parallel_calls=1
 inference_actions_len=100
@@ -80,6 +81,7 @@ python main.py \
     --batch_size ${batch_size} \
     --eval_batch_size ${eval_batch_size} \
     --max_train_steps ${max_train_steps} \
+    --max_eval_steps ${max_eval_steps} \
     --epoch ${epoch} \
     --hidden_units "${hidden_units}" \
     --model_dir ${model_dir} \
