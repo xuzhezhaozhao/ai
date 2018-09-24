@@ -78,25 +78,23 @@ class EasyEstimator(object):
               steps=None,
               max_steps=None):
         with context.graph_mode():
+            if (steps is not None) and (max_steps is not None):
+                raise ValueError(
+                    'Can not provide both steps and max_steps.')
+            if steps is not None and steps <= 0:
+                raise ValueError(
+                    'Must specify steps > 0, given: {}'.format(steps))
+            if max_steps is not None and max_steps <= 0:
+                raise ValueError('Must specify max_steps > 0, given: {}'
+                                 .format(max_steps))
 
-            with context.graph_mode():
-                if (steps is not None) and (max_steps is not None):
-                    raise ValueError(
-                        'Can not provide both steps and max_steps.')
-                if steps is not None and steps <= 0:
-                    raise ValueError(
-                        'Must specify steps > 0, given: {}'.format(steps))
-                if max_steps is not None and max_steps <= 0:
-                    raise ValueError('Must specify max_steps > 0, given: {}'
-                                     .format(max_steps))
-
-                if max_steps is not None:
-                    start_step = _load_global_step_from_checkpoint_dir(
-                        self._model_dir)
-                    if max_steps <= start_step:
-                        tf.logging.info('Skipping training since max_steps '
-                                        'has already saved.')
-                        return self
+            if max_steps is not None:
+                start_step = _load_global_step_from_checkpoint_dir(
+                    self._model_dir)
+                if max_steps <= start_step:
+                    tf.logging.info('Skipping training since max_steps '
+                                    'has already saved.')
+                    return self
 
             loss = self._train_model(input_fn)
             tf.logging.info('Loss for final step: %s.', loss)
@@ -313,8 +311,7 @@ class EasyEstimator(object):
             estimator_spec = self._call_model_fn(
                 features=input_receiver.features,
                 labels=getattr(input_receiver, 'labels', None),
-                mode=mode,
-                config=self.config)
+                mode=mode)
 
             export_outputs = self._get_export_outputs_for_spec(estimator_spec)
 
