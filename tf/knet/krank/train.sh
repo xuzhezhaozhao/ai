@@ -55,8 +55,7 @@ clip_gradients=1 # bool value
 clip_gradients_norm=5.0
 l2_regularizer=0.0
 use_early_stopping=0
-early_stopping_start_delay_secs=120
-early_stopping_throttle_secs=600
+auc_num_thresholds=1000
 
 min_count=10
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
@@ -118,5 +117,4 @@ python main.py \
     --clip_gradients_norm ${clip_gradients_norm} \
     --l2_regularizer ${l2_regularizer} \
     --use_early_stopping ${use_early_stopping} \
-    --early_stopping_start_delay_secs ${early_stopping_start_delay_secs} \
-    --early_stopping_throttle_secs ${early_stopping_throttle_secs}
+    --auc_num_thresholds ${auc_num_thresholds}

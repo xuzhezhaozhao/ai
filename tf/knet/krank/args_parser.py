@@ -69,10 +69,7 @@ parser.add_argument('--clip_gradients', default=0, type=int, help='')
 parser.add_argument('--clip_gradients_norm', default=5.0, type=float, help='')
 parser.add_argument('--l2_regularizer', default=0.0001, type=float, help='')
 parser.add_argument('--use_early_stopping', default=0, type=int, help='')
-parser.add_argument('--early_stopping_start_delay_secs',
-                    default=120, type=int, help='')
-parser.add_argument('--early_stopping_throttle_secs',
-                    default=600, type=int, help='')
+parser.add_argument('--auc_num_thresholds', default=200, type=int, help='')
 
 opts = Options()
 
@@ -132,8 +129,6 @@ def parse_args(argv):
     opts.clip_gradients_norm = args.clip_gradients_norm
     opts.l2_regularizer = args.l2_regularizer
     opts.use_early_stopping = bool(args.use_early_stopping)
-    opts.early_stopping_start_delay_secs = args.early_stopping_start_delay_secs
-    opts.early_stopping_throttle_secs = args.early_stopping_throttle_secs
 
     opts.num_rowkey = 1 + len([line for line in open(opts.rowkey_dict_path)
                                if line != ''])  # plus one for padding

@@ -118,7 +118,7 @@ def krank_model_fn(features, labels, mode, params):
                                        predictions=tf.to_int32(score > 0.5))
         auc = tf.metrics.auc(labels=labels,
                              predictions=score,
-                             num_thresholds=1000)
+                             num_thresholds=opts.auc_num_thresholds)
 
         metrics = {
             'accuracy': accuracy,
