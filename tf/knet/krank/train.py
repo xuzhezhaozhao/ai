@@ -58,7 +58,8 @@ def train_and_eval_in_local_mode(opts):
     # evaluate model
     tf.logging.info("Evaluating model ...")
     result = opts.estimator.evaluate(
-        input_fn=input_data.input_fn(opts, True))
+        input_fn=input_data.input_fn(opts, True),
+        steps=30)
     tf.logging.info("Evaluate model OK")
 
     return result
