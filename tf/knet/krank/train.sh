@@ -37,6 +37,7 @@ dropout=0.0
 map_num_parallel_calls=1
 inference_actions_len=100
 inference_num_targets=200
+# 'default', 'train_op_parallel', 'multi_thread', 'multi_thread_v2'
 train_parallel_mode='default'
 train_num_parallel=8
 optimizer_type='ada'  # 'ada', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum'
