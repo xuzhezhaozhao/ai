@@ -51,8 +51,8 @@ def train_and_eval_in_local_mode(opts):
     tf.logging.info("Training model ...")
     build_model_fn.clear_model_fn_times()
 
-    opts.estimator.train(input_fn=input_data.input_fn(opts, False, 1),
-                         max_steps=opts.max_train_steps)
+    opts.estimator.easy_train(input_fn=input_data.input_fn(opts, False, 1),
+                              max_steps=opts.max_train_steps)
     tf.logging.info("Train model OK")
 
     # evaluate model
