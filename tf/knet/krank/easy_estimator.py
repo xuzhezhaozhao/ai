@@ -15,11 +15,13 @@ from tensorflow.python.eager import context
 
 class EasyEstimator(tf.estimator.Estimator):
     def __init__(self, model_fn, model_dir=None, config=None, params=None,
-                 warm_start_from=None):
+                 warm_start_from=None, num_parallel=1):
 
         super(EasyEstimator, self).__init__(
             model_fn=model_fn, model_dir=model_dir, config=config,
             params=params, warm_start_from=warm_start_from)
+
+        self._num_parallel = num_parallel
 
     def easy_train(self, input_fn, steps=None, max_steps=None):
         with context.graph_mode():
@@ -52,8 +54,10 @@ class EasyEstimator(tf.estimator.Estimator):
             (features,
              labels) = self._easy_get_features_and_labels_from_input_fn(
                  input_fn, tf.estimator.ModeKeys.TRAIN)
-            estimator_spec = self._easy_call_model_fn(
-                features, labels, tf.estimator.ModeKeys.TRAIN)
+
+            estimator_spec = self._call_model_fn(
+                features, labels, tf.estimator.ModeKeys.TRAIN, self.config)
+
             merged_summary = tf.summary.merge_all()
             summary_writer = tf.summary.FileWriter(self._model_dir)
             saver = tf.train.Saver(
@@ -123,17 +127,6 @@ class EasyEstimator(tf.estimator.Estimator):
             return data[0], data[1]
         return data, None
 
-    def _easy_call_model_fn(self, features, labels, mode):
-        tf.logging.info('Calling model_fn.')
-        model_fn_results = self._model_fn(
-            features=features, labels=labels, params=self._params, mode=mode)
-        tf.logging.info('Done calling model_fn.')
-
-        if not isinstance(model_fn_results, tf.estimator.EstimatorSpec):
-            raise ValueError('model_fn should return an EstimatorSpec.')
-
-        return model_fn_results
-
     def _easy_maybe_restore_model(self, sess, saver):
         lastest_path = tf.train.latest_checkpoint(self._model_dir)
         if lastest_path is not None:
@@ -160,6 +153,9 @@ class EasyEstimator(tf.estimator.Estimator):
 
     def _check_global_steps(self, global_steps, steps):
         return True if global_steps % steps == 0 else False
+
+    def _train_thread_body(self, sess):
+        pass
 
 
 def _load_global_step_from_checkpoint_dir(checkpoint_dir):
