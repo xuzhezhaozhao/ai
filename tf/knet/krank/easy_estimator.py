@@ -18,6 +18,10 @@ from tensorflow.core.protobuf import config_pb2
 from tensorflow.core.protobuf.rewriter_config_pb2 import RewriterConfig
 from tensorflow.python.training import device_setter
 from tensorflow.core.framework import summary_pb2
+from tensorflow.python.eager import context
+from tensorflow.python.estimator.export import export as export_helpers
+from tensorflow.python.estimator.export import export_output
+from tensorflow.python.estimator import model_fn as model_fn_lib
 
 
 class EasyEstimator(object):
@@ -65,14 +69,38 @@ class EasyEstimator(object):
     def params(self):
         return copy.deepcopy(self._params)
 
+    @property
+    def config(self):
+        return copy.deepcopy(self._config)
+
     def train(self,
               input_fn,
               steps=None,
               max_steps=None):
+        with context.graph_mode():
 
-        loss = self._train_model(input_fn)
-        tf.logging.info('Loss for final step: %s.', loss)
-        return self
+            with context.graph_mode():
+                if (steps is not None) and (max_steps is not None):
+                    raise ValueError(
+                        'Can not provide both steps and max_steps.')
+                if steps is not None and steps <= 0:
+                    raise ValueError(
+                        'Must specify steps > 0, given: {}'.format(steps))
+                if max_steps is not None and max_steps <= 0:
+                    raise ValueError('Must specify max_steps > 0, given: {}'
+                                     .format(max_steps))
+
+                if max_steps is not None:
+                    start_step = _load_global_step_from_checkpoint_dir(
+                        self._model_dir)
+                    if max_steps <= start_step:
+                        tf.logging.info('Skipping training since max_steps '
+                                        'has already saved.')
+                        return self
+
+            loss = self._train_model(input_fn)
+            tf.logging.info('Loss for final step: %s.', loss)
+            return self
 
     def evaluate(self,
                  input_fn,
@@ -80,32 +108,286 @@ class EasyEstimator(object):
                  hooks=None,
                  checkpoint_path=None,
                  name=None):
-        hooks = _check_hooks_type(hooks)
-        hooks.extend(self._convert_eval_steps_to_hooks(steps))
+        with context.graph_mode():
+            hooks = _check_hooks_type(hooks)
+            hooks.extend(self._convert_eval_steps_to_hooks(steps))
 
-        if not checkpoint_path:
-            latest_path = tf.train.latest_checkpoint(self._model_dir)
-            if not latest_path:
-                raise ValueError('Could not find trained model in'
-                                 'model_dir: {}'.format(self._model_dir))
-            checkpoint_path = latest_path
+            if not checkpoint_path:
+                latest_path = tf.train.latest_checkpoint(self._model_dir)
+                if not latest_path:
+                    raise ValueError('Could not find trained model in'
+                                     'model_dir: {}'.format(self._model_dir))
+                checkpoint_path = latest_path
 
-        with tf.Graph().as_default():
-            (scaffold, update_op,
-             eval_dict, all_hooks) = self._evaluate_build_graph(
-                 input_fn, hooks, checkpoint_path)
+            with tf.Graph().as_default():
+                (scaffold, update_op,
+                 eval_dict, all_hooks) = self._evaluate_build_graph(
+                     input_fn, hooks, checkpoint_path)
 
-            return self._evaluate_run(
-                checkpoint_path=checkpoint_path,
-                scaffold=scaffold,
-                update_op=update_op,
-                eval_dict=eval_dict,
-                all_hooks=all_hooks,
-                output_dir=self.eval_dir(name))
+                return self._evaluate_run(
+                    checkpoint_path=checkpoint_path,
+                    scaffold=scaffold,
+                    update_op=update_op,
+                    eval_dict=eval_dict,
+                    all_hooks=all_hooks,
+                    output_dir=self.eval_dir(name))
 
     def eval_dir(self, name):
         return os.path.join(self._model_dir,
                             'eval' if not name else 'eval_' + name)
+
+    def predict(self,
+                input_fn,
+                predict_keys=None,
+                hooks=None,
+                checkpoint_path=None,
+                yield_single_examples=True):
+        with context.graph_mode():
+            hooks = _check_hooks_type(hooks)
+            # Check that model has been trained.
+            if not checkpoint_path:
+                checkpoint_path = tf.train.latest_checkpoint(self._model_dir)
+            if not checkpoint_path:
+                tf.logging.info(
+                    'Could not find trained model in model_dir: {},'
+                    ' running initialization to predict.'
+                    .format(self._model_dir))
+            with tf.Graph().as_default() as g:
+                tf.set_random_seed(self._config.tf_random_seed)
+                self._create_and_assert_global_step(g)
+                features, input_hooks = self._get_features_from_input_fn(
+                    input_fn, tf.estimator.ModeKeys.PREDICT)
+
+                estimator_spec = self._call_model_fn(
+                    features, None, tf.estimator.ModeKeys.PREDICT, self.config)
+
+                # Call to warm_start has to be after model_fn is called.
+                self._maybe_warm_start(checkpoint_path)
+
+                predictions = self._extract_keys(
+                    estimator_spec.predictions, predict_keys)
+                all_hooks = list(input_hooks)
+                all_hooks.extend(hooks)
+                all_hooks.extend(list(estimator_spec.prediction_hooks or []))
+                with tf.train.MonitoredSession(
+                        session_creator=tf.train.ChiefSessionCreator(
+                            checkpoint_filename_with_path=checkpoint_path,
+                            master=self._config.master,
+                            scaffold=estimator_spec.scaffold,
+                            config=self._session_config),
+                        hooks=all_hooks) as mon_sess:
+                    while not mon_sess.should_stop():
+                        preds_evaluated = mon_sess.run(predictions)
+                        if not yield_single_examples:
+                            yield preds_evaluated
+                        elif not isinstance(predictions, dict):
+                            for pred in preds_evaluated:
+                                yield pred
+                        else:
+                            for i in range(self._extract_batch_length(
+                                    preds_evaluated)):
+                                yield {
+                                    key: value[i]
+                                    for key, value in six.iteritems(
+                                        preds_evaluated)
+                                }
+
+    def export_savedmodel(
+            self, export_dir_base, serving_input_receiver_fn,
+            assets_extra=None,
+            as_text=False,
+            checkpoint_path=None,
+            strip_default_attrs=False):
+        return self._export_saved_model_for_mode(
+            export_dir_base,
+            serving_input_receiver_fn,
+            assets_extra=assets_extra,
+            as_text=as_text,
+            checkpoint_path=checkpoint_path,
+            strip_default_attrs=strip_default_attrs,
+            mode=tf.estimator.ModeKeys.PREDICT)
+
+    def _export_saved_model_for_mode(
+            self, export_dir_base, input_receiver_fn,
+            assets_extra=None,
+            as_text=False,
+            checkpoint_path=None,
+            strip_default_attrs=False,
+            mode=tf.estimator.ModeKeys.PREDICT):
+        if not input_receiver_fn:
+            raise ValueError('An input_receiver_fn must be defined.')
+
+        input_receiver_fn_map = {mode: input_receiver_fn}
+
+        return self._export_all_saved_models(
+            export_dir_base,
+            input_receiver_fn_map,
+            assets_extra=assets_extra,
+            as_text=as_text,
+            checkpoint_path=checkpoint_path,
+            strip_default_attrs=strip_default_attrs)
+
+    def _export_all_saved_models(
+            self, export_dir_base, input_receiver_fn_map,
+            assets_extra=None,
+            as_text=False,
+            checkpoint_path=None,
+            strip_default_attrs=False):
+
+        with context.graph_mode():
+            if not checkpoint_path:
+                # Locate the latest checkpoint
+                checkpoint_path = tf.train.latest_checkpoint(self._model_dir)
+            if not checkpoint_path:
+                raise ValueError(
+                    "Couldn't find trained model at %s." % self._model_dir)
+
+            export_dir = export_helpers.get_timestamped_export_dir(
+                export_dir_base)
+            temp_export_dir = export_helpers.get_temp_export_dir(export_dir)
+            builder = tf.saved_model.builder.SavedModelBuilder(temp_export_dir)
+
+            save_variables = True
+
+            if input_receiver_fn_map.get(tf.estimator.ModeKeys.TRAIN):
+                self._add_meta_graph_for_mode(
+                    builder, input_receiver_fn_map, checkpoint_path,
+                    strip_default_attrs, save_variables,
+                    mode=tf.estimator.ModeKeys.TRAIN)
+                save_variables = False
+            if input_receiver_fn_map.get(tf.estimator.ModeKeys.EVAL):
+                self._add_meta_graph_for_mode(
+                    builder, input_receiver_fn_map, checkpoint_path,
+                    strip_default_attrs, save_variables,
+                    mode=tf.estimator.ModeKeys.EVAL)
+                save_variables = False
+            if input_receiver_fn_map.get(tf.estimator.ModeKeys.PREDICT):
+                self._add_meta_graph_for_mode(
+                    builder, input_receiver_fn_map, checkpoint_path,
+                    strip_default_attrs, save_variables,
+                    mode=tf.estimator.ModeKeys.PREDICT)
+            save_variables = False
+
+            if save_variables:
+                raise ValueError('No valid modes for exporting found. Got {}.'
+                                 .format(input_receiver_fn_map.keys()))
+
+            builder.save(as_text)
+
+            # Add the extra assets
+            if assets_extra:
+                assets_extra_path = os.path.join(
+                    tf.compat.as_bytes(temp_export_dir),
+                    tf.compat.as_bytes('assets.extra'))
+                for dest_relative, source in assets_extra.items():
+                    dest_absolute = os.path.join(
+                        tf.compat.as_bytes(assets_extra_path),
+                        tf.compat.as_bytes(dest_relative))
+                    dest_path = os.path.dirname(dest_absolute)
+                    tf.gfile.MakeDirs(dest_path)
+                    tf.gfile.Copy(source, dest_absolute)
+
+            tf.gfile.Rename(temp_export_dir, export_dir)
+            return export_dir
+
+    def _add_meta_graph_for_mode(self,
+                                 builder,
+                                 input_receiver_fn_map,
+                                 checkpoint_path,
+                                 strip_default_attrs,
+                                 save_variables=True,
+                                 mode=tf.estimator.ModeKeys.PREDICT,
+                                 export_tags=None,
+                                 check_variables=True):
+        if export_tags is None:
+            export_tags = model_fn_lib.EXPORT_TAG_MAP[mode]
+        input_receiver_fn = input_receiver_fn_map[mode]
+
+        with tf.Graph().as_default() as g:
+            self._create_and_assert_global_step(g)
+            tf.set_random_seed(self._config.tf_random_seed)
+
+            input_receiver = input_receiver_fn()
+
+            # Call the model_fn and collect the export_outputs.
+            estimator_spec = self._call_model_fn(
+                features=input_receiver.features,
+                labels=getattr(input_receiver, 'labels', None),
+                mode=mode,
+                config=self.config)
+
+            export_outputs = self._get_export_outputs_for_spec(estimator_spec)
+
+            # Build the SignatureDefs from receivers and all outputs
+            signature_def_map = export_helpers.build_all_signature_defs(
+                input_receiver.receiver_tensors,
+                export_outputs,
+                getattr(input_receiver, 'receiver_tensors_alternatives', None),
+                serving_only=(mode == model_fn_lib.ModeKeys.PREDICT))
+
+            with tf.Session(config=self._session_config) as session:
+
+                local_init_op = (
+                    estimator_spec.scaffold.local_init_op or
+                    tf.train.Scaffold.default_local_init_op())
+
+                graph_saver = estimator_spec.scaffold.saver or tf.train.Saver(
+                    sharded=True)
+
+                if save_variables and not check_variables:
+                    raise ValueError('If `save_variables` is `True, '
+                                     '`check_variables` must not be `False`.')
+                if check_variables:
+                    try:
+                        graph_saver.restore(session, checkpoint_path)
+                    except tf.errors.NotFoundError as e:
+                        msg = ('Could not load all requested variables '
+                               'from checkpoint. Please make sure your '
+                               'model_fn does not expect variables '
+                               'that were not saved in the checkpoint.\n\n'
+                               'Encountered error with mode `{}` while '
+                               'restoring checkpoint from: `{}`. '
+                               'Full Traceback:\n\n{}').format(
+                            mode, checkpoint_path, e)
+                        raise ValueError(msg)
+
+                builder._add_train_op(estimator_spec.train_op)
+
+                meta_graph_kwargs = dict(
+                    tags=export_tags,
+                    signature_def_map=signature_def_map,
+                    assets_collection=tf.get_collection(
+                        tf.GraphKeys.ASSET_FILEPATHS),
+                    strip_default_attrs=strip_default_attrs,
+                    legacy_init_op=local_init_op,
+                    saver=graph_saver)
+
+                if save_variables:
+                    builder.add_meta_graph_and_variables(
+                        session, **meta_graph_kwargs)
+                else:
+                    builder.add_meta_graph(**meta_graph_kwargs)
+
+    def _get_export_outputs_for_spec(self, estimator_spec):
+        mode = estimator_spec.mode
+        if mode == model_fn_lib.ModeKeys.PREDICT:
+            outputs = estimator_spec.export_outputs
+        else:
+            if mode == tf.estimator.ModeKeys.TRAIN:
+                output_class = export_output.TrainOutput
+            elif mode == tf.estimator.ModeKeys.EVAL:
+                output_class = export_output.EvalOutput
+            else:
+                raise ValueError(
+                    'Export output type not found for mode: {}'.format(mode))
+
+            export_out = output_class(
+                loss=estimator_spec.loss,
+                predictions=estimator_spec.predictions,
+                metrics=estimator_spec.eval_metric_ops)
+            outputs = {mode: export_out}
+
+        return outputs
 
     def _train_model(self, input_fn):
         with tf.Graph().as_default() as g:
@@ -136,6 +418,7 @@ class EasyEstimator(object):
                         _, loss = sess.run([estimator_spec.train_op,
                                             estimator_spec.loss])
                         global_steps = sess.run(global_step_tensor)
+                        break
                     except tf.errors.OutOfRangeError:
                         break
 
@@ -163,6 +446,12 @@ class EasyEstimator(object):
 
         return self._parse_input_fn_result(result)
 
+    def _get_features_from_input_fn(self, input_fn, mode):
+        """Extracts the `features` from return values of `input_fn`."""
+        result = self._call_input_fn(input_fn, mode)
+        result, _, hooks = self._parse_input_fn_result(result)
+        return result, hooks
+
     def _call_input_fn(self, input_fn, mode):
         with tf.device('/cpu:0'):
             return input_fn()
@@ -172,6 +461,13 @@ class EasyEstimator(object):
         self._iterator_initializer = iterator.initializer
         data = iterator.get_next()
         input_hooks = [_DatasetInitializerHook(iterator)]
+
+        if isinstance(data, (list, tuple)):
+            if len(data) != 2:
+                raise ValueError('input_fn should return (features, labels)'
+                                 ' as a len 2 tuple.')
+            return data[0], data[1], input_hooks
+        return data, None, input_hooks
 
         return data[0], data[1], input_hooks
 
@@ -292,6 +588,34 @@ class EasyEstimator(object):
                             (self._warm_start_settings,))
             tf.train.warm_start(*self._warm_start_settings)
 
+    def _extract_keys(self, predictions, predict_keys):
+        """Extracts `predict_keys` from `predictions`."""
+        if not predict_keys:
+            return predictions
+        if not isinstance(predictions, dict):
+            raise ValueError('predict_keys argument is not valid in case of'
+                             ' non-dict predictions.')
+        existing_keys = predictions.keys()
+        predictions = {
+            key: value
+            for key, value in six.iteritems(predictions) if key in predict_keys
+        }
+        if not predictions:
+            raise ValueError('Expected to run at least one output from %s, '
+                             'provided %s.' % (existing_keys, predict_keys))
+        return predictions
+
+    def _extract_batch_length(self, preds_evaluated):
+        """Extracts batch length of predictions."""
+        batch_length = None
+        for key, value in six.iteritems(preds_evaluated):
+            batch_length = batch_length or value.shape[0]
+            if value.shape[0] != batch_length:
+                raise ValueError('Batch length of predictions should be same.'
+                                 ' %s has different batch length than others.'
+                                 % key)
+        return batch_length
+
 
 def _extract_metric_update_ops(eval_dict):
     """Separate update operations from metric value operations."""
@@ -321,19 +645,7 @@ def _check_hooks_type(hooks):
 
 
 def _get_default_warm_start_settings(warm_start_from):
-    """Returns default WarmStartSettings.
 
-    Args:
-      warm_start_from: Either a string representing the filepath of a checkpoint
-        or SavedModel to initialize from, or an instance of WarmStartSettings.
-
-    Returns:
-      Either None or an instance of WarmStartSettings.
-
-    Raises:
-      ValueError: If warm_start_from is not None but is neither a string nor an
-        instance of WarmStartSettings.
-    """
     if warm_start_from is None:
         return None
     if isinstance(warm_start_from, (six.string_types, six.binary_type)):
@@ -341,19 +653,23 @@ def _get_default_warm_start_settings(warm_start_from):
         # 'variables/variables.index' exists, and if so, construct the
         # WarmStartSettings pointing to export_path + 'variables/variables'.
         if tf.gfile.Exists(os.path.join(tf.compat.as_bytes(warm_start_from),
-                                        tf.compat.as_bytes('variables/variables.index'))):
-            logging.info('Warm-starting from a SavedModel')
-            return tf.estimator.WarmStartSettings(ckpt_to_initialize_from=os.path.join(
-                tf.compat.as_bytes(warm_start_from),
-                tf.compat.as_bytes('{}/{}'.format(
-                    tf.saved_model.constants.VARIABLES_DIRECTORY,
-                    tf.saved_model.constants.VARIABLES_FILENAME))))
-        return tf.estimator.WarmStartSettings(ckpt_to_initialize_from=warm_start_from)
+                                        tf.compat.as_bytes(
+                                            'variables/variables.index'))):
+            tf.logging.info('Warm-starting from a SavedModel')
+            return tf.estimator.WarmStartSettings(
+                ckpt_to_initialize_from=os.path.join(
+                    tf.compat.as_bytes(warm_start_from),
+                    tf.compat.as_bytes('{}/{}'.format(
+                        tf.saved_model.constants.VARIABLES_DIRECTORY,
+                        tf.saved_model.constants.VARIABLES_FILENAME))))
+        return tf.estimator.WarmStartSettings(
+            ckpt_to_initialize_from=warm_start_from)
     elif isinstance(warm_start_from, tf.estimator.WarmStartSettings):
         return warm_start_from
     else:
-        raise ValueError('warm_start_from must be a string or a WarmStartSettings, '
-                         'instead got {}'.format(type(warm_start_from)))
+        raise ValueError('warm_start_from must be a string or a '
+                         'WarmStartSettings, instead got {}'
+                         .format(type(warm_start_from)))
 
 
 class _DatasetInitializerHook(tf.train.SessionRunHook):
@@ -371,18 +687,6 @@ class _DatasetInitializerHook(tf.train.SessionRunHook):
 
 
 def _get_replica_device_setter(config):
-    """Creates a replica device setter if required as a default device_fn.
-
-    `Estimator` uses ReplicaDeviceSetter as a default device placer. It sets the
-    distributed related arguments such as number of ps_replicas based on given
-    config.
-
-    Args:
-      config: A `RunConfig` instance.
-
-    Returns:
-      A replica device setter, or None.
-    """
     if config.task_type:
         worker_device = '/job:%s/task:%d' % (config.task_type, config.task_id)
     else:
@@ -484,3 +788,12 @@ def _write_checkpoint_path_to_summary(output_dir, checkpoint_path,
     summary_writer = tf.summary.FileWriterCache.get(output_dir)
     summary_writer.add_summary(summary_proto, current_global_step)
     summary_writer.flush()
+
+
+def _load_global_step_from_checkpoint_dir(checkpoint_dir):
+    try:
+        checkpoint_reader = tf.train.NewCheckpointReader(
+            tf.train.latest_checkpoint(checkpoint_dir))
+        return checkpoint_reader.get_tensor(tf.GraphKeys.GLOBAL_STEP)
+    except Exception:
+        return 0
