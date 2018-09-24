@@ -104,7 +104,7 @@ class FeaturePipline {
     if (isvideo) {
       unlike = (rinfo2 <= 4);
     } else {
-      unlike = (rinfo2 <= 5);
+      unlike = (rinfo2 <= 10);
     }
     return unlike;
   }

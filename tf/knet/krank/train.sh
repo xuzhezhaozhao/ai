@@ -19,7 +19,8 @@ lr=0.01
 rowkey_embedding_dim=64
 train_ws=50
 batch_size=128
-max_train_steps=-1
+eval_batch_size=1024
+max_train_steps=10000
 epoch=5
 hidden_units="256,256"
 prefetch_size=20000
@@ -51,6 +52,9 @@ optimizer_momentum_use_nesterov=0 # bool value
 clip_gradients=1 # bool value
 clip_gradients_norm=5.0
 l2_regularizer=0.0
+use_early_stopping=0
+early_stopping_start_delay_secs=120
+early_stopping_throttle_secs=600
 
 min_count=50
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
@@ -75,6 +79,7 @@ python main.py \
     --rowkey_embedding_dim ${rowkey_embedding_dim} \
     --train_ws ${train_ws} \
     --batch_size ${batch_size} \
+    --eval_batch_size ${eval_batch_size} \
     --max_train_steps ${max_train_steps} \
     --epoch ${epoch} \
     --hidden_units "${hidden_units}" \
@@ -109,4 +114,7 @@ python main.py \
     --optimizer_momentum_use_nesterov ${optimizer_momentum_use_nesterov} \
     --clip_gradients ${clip_gradients} \
     --clip_gradients_norm ${clip_gradients_norm} \
-    --l2_regularizer ${l2_regularizer}
+    --l2_regularizer ${l2_regularizer} \
+    --use_early_stopping ${use_early_stopping} \
+    --early_stopping_start_delay_secs ${early_stopping_start_delay_secs} \
+    --early_stopping_throttle_secs ${early_stopping_throttle_secs}

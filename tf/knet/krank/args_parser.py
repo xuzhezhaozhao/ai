@@ -21,7 +21,8 @@ parser.add_argument('--feature_manager_path', default='', type=str, help='')
 parser.add_argument('--lr', default=0.025, type=float, help='learning rate')
 parser.add_argument('--rowkey_embedding_dim', default=100, type=int, help='')
 parser.add_argument('--train_ws', default=5, type=int, help='')
-parser.add_argument('--batch_size', default=64, type=int, help='batch size')
+parser.add_argument('--batch_size', default=64, type=int, help='')
+parser.add_argument('--eval_batch_size', default=64, type=int, help='')
 parser.add_argument('--max_train_steps', default=None, type=int, help='')
 parser.add_argument('--epoch', default=1, type=int, help='')
 parser.add_argument('--hidden_units', default="64,64", type=str, help='')
@@ -67,6 +68,11 @@ parser.add_argument('--optimizer_momentum_use_nesterov',
 parser.add_argument('--clip_gradients', default=0, type=int, help='')
 parser.add_argument('--clip_gradients_norm', default=5.0, type=float, help='')
 parser.add_argument('--l2_regularizer', default=0.0001, type=float, help='')
+parser.add_argument('--use_early_stopping', default=0, type=int, help='')
+parser.add_argument('--early_stopping_start_delay_secs',
+                    default=120, type=int, help='')
+parser.add_argument('--early_stopping_throttle_secs',
+                    default=600, type=int, help='')
 
 opts = Options()
 
@@ -80,6 +86,7 @@ def parse_args(argv):
     opts.rowkey_embedding_dim = args.rowkey_embedding_dim
     opts.train_ws = args.train_ws
     opts.batch_size = args.batch_size
+    opts.eval_batch_size = args.eval_batch_size
     opts.max_train_steps = args.max_train_steps
     if opts.max_train_steps is not None and opts.max_train_steps < 0:
         opts.max_train_steps = None
@@ -121,6 +128,9 @@ def parse_args(argv):
     opts.clip_gradients = bool(args.clip_gradients)
     opts.clip_gradients_norm = args.clip_gradients_norm
     opts.l2_regularizer = args.l2_regularizer
+    opts.use_early_stopping = bool(args.use_early_stopping)
+    opts.early_stopping_start_delay_secs = args.early_stopping_start_delay_secs
+    opts.early_stopping_throttle_secs = args.early_stopping_throttle_secs
 
     opts.num_rowkey = 1 + len([line for line in open(opts.rowkey_dict_path)
                                if line != ''])  # plus one for padding

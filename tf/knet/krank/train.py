@@ -85,28 +85,53 @@ def create_hooks(opts):
                                          output_dir=opts.model_dir,
                                          show_dataflow=True,
                                          show_memory=True)
-    hooks = [meta_hook, profile_hook] if opts.use_profile_hook else None
+    early_stopping = tf.contrib.estimator.stop_if_no_decrease_hook(
+        opts.estimator,
+        metric_name='loss',
+        max_steps_without_decrease=1000,
+        min_steps=1000)
 
-    return hooks
+    hooks = []
+    if opts.use_profile_hook:
+        hooks.append(meta_hook, profile_hook)
+
+    if opts.use_early_stopping:
+        hooks.append(early_stopping)
+
+    return hooks if len(hooks) > 0 else None
 
 
 def train_and_eval_in_local_mode(opts):
     """Train and eval model in lcoal mode."""
 
-    for epoch in range(opts.epoch):
-        tf.logging.info("Training model, epoch {} ...".format(epoch+1))
-        build_model_fn.clear_model_fn_times()
-        opts.estimator.train(input_fn=input_data.input_fn(opts, False, 1),
-                             max_steps=opts.max_train_steps,
-                             hooks=opts.hooks)
-        tf.logging.info("Train model OK")
+    train_spec = tf.estimator.TrainSpec(input_data.input_fn(opts, False, 1),
+                                        max_steps=opts.max_train_steps,
+                                        hooks=opts.hooks)
+    eval_spec = tf.estimator.EvalSpec(
+        input_data.input_fn(opts, True),
+        steps=None,
+        name='Validation',
+        start_delay_secs=opts.early_stopping_start_delay_secs,
+        throttle_secs=opts.early_stopping_throttle_secs)
+    result = tf.estimator.train_and_evaluate(
+        opts.estimator,
+        train_spec,
+        eval_spec)
 
-        # evaluate model
-        tf.logging.info("Evaluating model, epoch {} ...".format(epoch+1))
-        result = opts.estimator.evaluate(
-            input_fn=input_data.input_fn(opts, True),
-            hooks=opts.hooks)
-        tf.logging.info("Evaluate model OK")
+    # for epoch in range(opts.epoch):
+        # tf.logging.info("Training model, epoch {} ...".format(epoch+1))
+        # build_model_fn.clear_model_fn_times()
+        # opts.estimator.train(input_fn=input_data.input_fn(opts, False, 1),
+                             # max_steps=opts.max_train_steps,
+                             # hooks=opts.hooks)
+        # tf.logging.info("Train model OK")
+
+        # # evaluate model
+        # tf.logging.info("Evaluating model, epoch {} ...".format(epoch+1))
+        # result = opts.estimator.evaluate(
+            # input_fn=input_data.input_fn(opts, True),
+            # hooks=opts.hooks)
+        # tf.logging.info("Evaluate model OK")
 
     return result
 
