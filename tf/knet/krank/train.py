@@ -83,6 +83,5 @@ def train(opts, export=True):
 
     result = train_and_eval_in_local_mode(opts)
     if export:
-        # export_model_in_local_mode(opts)
-        pass
+        export_model_in_local_mode(opts)
     return result

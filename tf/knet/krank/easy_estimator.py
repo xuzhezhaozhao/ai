@@ -154,7 +154,7 @@ class EasyEstimator(object):
                     .format(self._model_dir))
             with tf.Graph().as_default() as g:
                 tf.set_random_seed(self._config.tf_random_seed)
-                self._create_and_assert_global_step(g)
+                tf.train.create_global_step(graph=g)
                 features, input_hooks = self._get_features_from_input_fn(
                     input_fn, tf.estimator.ModeKeys.PREDICT)
 
@@ -304,7 +304,7 @@ class EasyEstimator(object):
         input_receiver_fn = input_receiver_fn_map[mode]
 
         with tf.Graph().as_default() as g:
-            self._create_and_assert_global_step(g)
+            tf.train.create_global_step(g)
             tf.set_random_seed(self._config.tf_random_seed)
 
             input_receiver = input_receiver_fn()
