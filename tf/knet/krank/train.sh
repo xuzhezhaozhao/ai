@@ -22,24 +22,26 @@ batch_size=128
 eval_batch_size=4096
 max_train_steps=-1
 max_eval_steps=-1
-epoch=5
+epoch=1
 hidden_units="256,256"
 prefetch_size=20000
 shuffle_batch=1
 shuffle_size=50000
 save_summary_steps=2000
-save_checkpoints_steps=10000
+save_checkpoints_secs=60
 keep_checkpoint_max=3
 log_step_count_steps=1000
+log_step_count_secs=10
 remove_model_dir=1
 dropout=0.0
 map_num_parallel_calls=1
 inference_actions_len=100
 inference_num_targets=200
-# 'default', 'train_op_parallel', 'multi_thread', 'multi_thread_v2'
-train_parallel_mode='default'
-train_num_parallel=8
-optimizer_type='ada'  # 'ada', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum'
+# 'default', 'multi_thread'
+train_parallel_mode='multi_thread'
+train_num_parallel=4
+# 'ada', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum'
+optimizer_type='ada'
 optimizer_epsilon=0.00001
 optimizer_adadelta_rho=0.95
 optimizer_adam_beta1=0.9
@@ -56,7 +58,7 @@ use_early_stopping=0
 early_stopping_start_delay_secs=120
 early_stopping_throttle_secs=600
 
-min_count=50
+min_count=10
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 
 if [[ ${remove_model_dir} == '1' ]]; then
@@ -90,9 +92,10 @@ python main.py \
     --shuffle_batch ${shuffle_batch} \
     --shuffle_size ${shuffle_size} \
     --save_summary_steps ${save_summary_steps} \
-    --save_checkpoints_steps ${save_checkpoints_steps} \
+    --save_checkpoints_secs ${save_checkpoints_secs} \
     --keep_checkpoint_max ${keep_checkpoint_max} \
     --log_step_count_steps ${log_step_count_steps} \
+    --log_step_count_secs ${log_step_count_secs} \
     --remove_model_dir ${remove_model_dir} \
     --dropout ${dropout} \
     --map_num_parallel_calls ${map_num_parallel_calls} \

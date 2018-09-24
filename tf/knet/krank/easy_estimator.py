@@ -8,20 +8,25 @@ from __future__ import print_function
 
 import tensorflow as tf
 import os
+import threading
+import time
+import Queue
 
 from datetime import datetime
 from tensorflow.python.eager import context
+from tensorflow.python.util import function_utils
 
 
 class EasyEstimator(tf.estimator.Estimator):
     def __init__(self, model_fn, model_dir=None, config=None, params=None,
-                 warm_start_from=None, num_parallel=1):
+                 warm_start_from=None, num_parallel=1, log_step_count_secs=10):
 
         super(EasyEstimator, self).__init__(
             model_fn=model_fn, model_dir=model_dir, config=config,
             params=params, warm_start_from=warm_start_from)
 
         self._num_parallel = num_parallel
+        self._log_step_count_secs = log_step_count_secs
 
     def easy_train(self, input_fn, steps=None, max_steps=None):
         with context.graph_mode():
@@ -55,7 +60,7 @@ class EasyEstimator(tf.estimator.Estimator):
              labels) = self._easy_get_features_and_labels_from_input_fn(
                  input_fn, tf.estimator.ModeKeys.TRAIN)
 
-            estimator_spec = self._call_model_fn(
+            estimator_spec = self._easy_call_model_fn(
                 features, labels, tf.estimator.ModeKeys.TRAIN, self.config)
 
             merged_summary = tf.summary.merge_all()
@@ -74,34 +79,71 @@ class EasyEstimator(tf.estimator.Estimator):
 
                 tf.logging.info('{} Start training ...'.format(datetime.now()))
 
-                current_steps = 0
+                workers = []
+                queue = Queue.Queue()
+                init_steps = sess.run(global_step_tensor)
+                self._should_stop = False
+
+                for tid in range(self._num_parallel):
+                    tf.logging.info('Start thread {} ...'.format(tid))
+                    worker = threading.Thread(
+                        target=self._train_thread_body,
+                        args=(tid, sess, estimator_spec, queue))
+                    worker.start()
+                    workers.append(worker)
+
+                last_steps = init_steps
+                last_time = time.time()
                 while True:
+                    time.sleep(self._log_step_count_secs)
                     try:
                         _, loss = sess.run([estimator_spec.train_op,
                                             estimator_spec.loss])
                         global_steps = sess.run(global_step_tensor)
-                        current_steps += 1
-                        if _check_stop(current_steps, global_steps,
-                                       steps, max_steps):
+                        current_time = time.time()
+
+                        self._loss_logging(sess, global_steps, loss)
+
+                        if max_steps and (global_steps >= max_steps):
+                            self._should_stop = True
+                        if steps and (global_steps - init_steps >= steps):
+                            self._should_stop = True
+
+                        if self._should_stop:
                             break
+
+                        if (global_steps - last_steps
+                                >= self._config.save_summary_steps):
+                            self._save_summary(
+                                sess, global_steps,
+                                summary_writer, merged_summary)
+
+                        if (current_time - last_time
+                                >= self._config.save_checkpoints_secs):
+                            self._save_ckpt(sess, global_steps, saver)
+
+                        last_steps = global_steps
+                        last_time = current_time
                     except tf.errors.OutOfRangeError:
                         break
 
-                    if self._check_global_steps(
-                            global_steps, self._config.log_step_count_steps):
-                        self._logging(sess, global_steps, loss)
+                for worker in workers:
+                    worker.join()
 
-                    if self._check_global_steps(
-                            global_steps, self._config.save_checkpoints_steps):
-                        self._save_ckpt(sess, global_steps, saver)
+                cnt = 0
+                loss = 0.0
+                while not queue.empty():
+                    single_loss = queue.get()
+                    tf.logging.info('thread loss: {}'.format(single_loss))
+                    if single_loss is None:
+                        continue
+                    loss += single_loss
+                    cnt += 1
 
-                    if self._check_global_steps(
-                            global_steps, self._config.save_summary_steps):
-                        self._save_summary(
-                            sess, global_steps, summary_writer, merged_summary)
+                loss = (loss / cnt if cnt != 0 else None)
 
-                self._logging(sess, global_steps, loss)
-                self._save_ckpt(sess, global_steps, saver)
+                self._loss_logging(sess, global_steps, loss)
+                self._save_checkpoint(sess, global_steps, saver)
                 summary_writer.close()
 
             return loss
@@ -114,6 +156,31 @@ class EasyEstimator(tf.estimator.Estimator):
     def _easy_call_input_fn(self, input_fn, mode):
         with tf.device('/cpu:0'):
             return input_fn()
+
+    def _easy_call_model_fn(self, features, labels, mode, config):
+        model_fn_args = function_utils.fn_args(self._model_fn)
+        kwargs = {}
+        if 'labels' in model_fn_args:
+            kwargs['labels'] = labels
+        else:
+            if labels is not None:
+                raise ValueError('model_fn does not take labels, '
+                                 'but input_fn returns labels.')
+        if 'mode' in model_fn_args:
+            kwargs['mode'] = mode
+        if 'params' in model_fn_args:
+            kwargs['params'] = self.params
+        if 'config' in model_fn_args:
+            kwargs['config'] = config
+
+        tf.logging.info('Calling model_fn.')
+        model_fn_results = self._model_fn(features=features, **kwargs)
+        tf.logging.info('Done calling model_fn.')
+
+        if not isinstance(model_fn_results, tf.estimator.EstimatorSpec):
+            raise ValueError('model_fn should return an EstimatorSpec.')
+
+        return model_fn_results
 
     def _easy_parse_input_fn_result(self, result):
         iterator = result.make_initializable_iterator()
@@ -134,11 +201,11 @@ class EasyEstimator(tf.estimator.Estimator):
                             .format(lastest_path))
             saver.restore(sess, lastest_path)
 
-    def _logging(self, sess, global_steps, loss):
+    def _loss_logging(self, sess, global_steps, loss):
         tf.logging.info('{} global_steps = {}, loss = {}'
                         .format(datetime.now(), global_steps, loss))
 
-    def _save_ckpt(self, sess, global_steps, saver):
+    def _save_checkpoint(self, sess, global_steps, saver):
         ckpt_name = os.path.join(self._model_dir,
                                  'model.ckpt-{}'.format(global_steps))
         ckpt_path = saver.save(sess, ckpt_name)
@@ -154,8 +221,21 @@ class EasyEstimator(tf.estimator.Estimator):
     def _check_global_steps(self, global_steps, steps):
         return True if global_steps % steps == 0 else False
 
-    def _train_thread_body(self, sess):
-        pass
+    def _train_thread_body(self, tid, sess, estimator_spec, queue):
+        loss = None
+        while not self._should_stop:
+            try:
+                _, loss = sess.run(
+                    [estimator_spec.train_op, estimator_spec.loss])
+            except tf.errors.OutOfRangeError:
+                tf.logging.info(
+                    "_train_thread_body {} catch 'OutOfRangeError'"
+                    .format(tid))
+                break
+
+        queue.put(loss)
+        tf.logging.info('thread {} exit.'.format(tid))
+        return loss
 
 
 def _load_global_step_from_checkpoint_dir(checkpoint_dir):

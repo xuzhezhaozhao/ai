@@ -7,6 +7,7 @@ from __future__ import print_function
 
 
 import tensorflow as tf
+import numpy as np
 
 import build_model_fn
 import input_data
@@ -19,9 +20,9 @@ def build_estimator(opts):
 
     config_keys = {}
     config_keys['model_dir'] = opts.model_dir
-    config_keys['tf_random_seed'] = None
+    config_keys['tf_random_seed'] = np.random.randint(100000)
     config_keys['save_summary_steps'] = opts.save_summary_steps
-    config_keys['save_checkpoints_steps'] = opts.save_checkpoints_steps
+    config_keys['save_checkpoints_secs'] = opts.save_checkpoints_secs
     config_keys['session_config'] = None
     config_keys['keep_checkpoint_max'] = opts.keep_checkpoint_max
     config_keys['log_step_count_steps'] = opts.log_step_count_steps
@@ -40,7 +41,15 @@ def build_estimator(opts):
         'opts': opts
     }
     estimator_keys['config'] = config
-    estimator = easy_estimator.EasyEstimator(**estimator_keys)
+
+    if opts.train_parallel_mode == model_keys.TrainParallelMode.DEFAULT:
+        estimator = tf.estimator.Estimator(**estimator_keys)
+    elif opts.train_parallel_mode == model_keys.TrainParallelMode.MULTI_THREAD:
+        estimator_keys['num_parallel'] = opts.train_num_parallel
+        estimator_keys['log_step_count_secs'] = opts.log_step_count_secs
+        estimator = easy_estimator.EasyEstimator(**estimator_keys)
+    else:
+        raise ValueError('Unsurpported train_parallel_mode.')
 
     return estimator
 
@@ -51,8 +60,14 @@ def train_and_eval_in_local_mode(opts):
     tf.logging.info("Training model ...")
     build_model_fn.clear_model_fn_times()
 
-    opts.estimator.easy_train(input_fn=input_data.input_fn(opts, False, 1),
-                              max_steps=opts.max_train_steps)
+    if isinstance(opts.estimator, easy_estimator.EasyEstimator):
+        opts.estimator.easy_train(
+            input_fn=input_data.input_fn(opts, False, 1),
+            max_steps=opts.max_train_steps)
+    else:
+        opts.estimator.train(
+            input_fn=input_data.input_fn(opts, False, 1),
+            max_steps=opts.max_train_steps)
     tf.logging.info("Train model OK")
 
     # evaluate model

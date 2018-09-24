@@ -34,9 +34,10 @@ parser.add_argument('--prefetch_size', default=10000, type=int, help='')
 parser.add_argument('--shuffle_batch', default=1, type=int, help='')
 parser.add_argument('--shuffle_size', default=10000, type=int, help='')
 parser.add_argument('--save_summary_steps', default=100, type=int, help='')
-parser.add_argument('--save_checkpoints_steps', default=100, type=int, help='')
+parser.add_argument('--save_checkpoints_secs', default=100, type=int, help='')
 parser.add_argument('--keep_checkpoint_max', default=3, type=int, help='')
 parser.add_argument('--log_step_count_steps', default=100, type=int, help='')
+parser.add_argument('--log_step_count_secs', default=10, type=int, help='')
 parser.add_argument('--remove_model_dir', default=1, type=int, help='')
 parser.add_argument('--dropout', default=0.3, type=float, help='')
 parser.add_argument('--map_num_parallel_calls', default=1, type=int, help='')
@@ -105,9 +106,10 @@ def parse_args(argv):
     opts.save_summary_steps = args.save_summary_steps
     if opts.save_summary_steps < 0:
         opts.save_summary_steps = None
-    opts.save_checkpoints_steps = args.save_checkpoints_steps
+    opts.save_checkpoints_secs = args.save_checkpoints_secs
     opts.keep_checkpoint_max = args.keep_checkpoint_max
     opts.log_step_count_steps = args.log_step_count_steps
+    opts.log_step_count_secs = args.log_step_count_secs
     opts.remove_model_dir = bool(args.remove_model_dir)
     opts.dropout = args.dropout
     opts.map_num_parallel_calls = args.map_num_parallel_calls
