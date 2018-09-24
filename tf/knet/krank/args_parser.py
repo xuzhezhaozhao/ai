@@ -129,6 +129,7 @@ def parse_args(argv):
     opts.clip_gradients_norm = args.clip_gradients_norm
     opts.l2_regularizer = args.l2_regularizer
     opts.use_early_stopping = bool(args.use_early_stopping)
+    opts.auc_num_thresholds = args.auc_num_thresholds
 
     opts.num_rowkey = 1 + len([line for line in open(opts.rowkey_dict_path)
                                if line != ''])  # plus one for padding
