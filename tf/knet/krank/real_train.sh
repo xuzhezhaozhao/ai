@@ -9,6 +9,7 @@ cd ${MYDIR}
 export ANACONDA2_ROOT=/usr/local/services/kd_anaconda2-1.0/lib/anaconda2
 export PATH="${ANACONDA2_ROOT}/bin:$PATH"
 export PYTHONPATH="${ANACONDA2_ROOT}/lib/python2.7/site-packages:$PYTHONPATH"
+raw_data_dir=raw_data
 
 echo 'TF_CONFIG = ' ${TF_CONFIG}
 
@@ -16,37 +17,36 @@ model_dir=`pwd`/data/model_dir
 export_model_dir=`pwd`/data/export_model_dir
 fe_dir=`pwd`/data/fe_dir
 
-raw_data_dir=raw_data
-
 rowkey_count_path=${raw_data_dir}/rowkey_count.csv
 train_data_path=${raw_data_dir}/train_data.in
 eval_data_path=${raw_data_dir}/eval_data.in
 feature_manager_path=${fe_dir}/feature_manager.bin
-lr=0.001
+lr=0.01
 rowkey_embedding_dim=64
 train_ws=50
 batch_size=128
-eval_batch_size=8192
+eval_batch_size=524288
 max_train_steps=-1
 max_eval_steps=-1
+max_eval_steps_on_train_dataset=1000000
 epoch=1
-hidden_units="256,256"
+hidden_units=""
 prefetch_size=20000
 shuffle_batch=1
 shuffle_size=50000
-save_summary_steps=1000
-save_checkpoints_secs=600
+save_summary_steps=300000
+save_checkpoints_secs=1800
 keep_checkpoint_max=3
 log_step_count_steps=1000
-log_step_count_secs=20
+log_step_count_secs=60
 remove_model_dir=1
 dropout=0.0
 map_num_parallel_calls=1
 inference_actions_len=100
-inference_num_targets=200
+inference_num_targets=300
 # 'default', 'multi_thread'
 train_parallel_mode='multi_thread'
-train_num_parallel=4
+train_num_parallel=8
 # 'ada', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
 optimizer_type='ftrl'
 optimizer_epsilon=0.00001
@@ -71,8 +71,10 @@ auc_num_thresholds=1000
 optimizer_exponential_decay_steps=10000
 optimizer_exponential_decay_rate=0.96
 optimizer_exponential_decay_staircase=0  # bool value
+evaluate_every_secs=180
+leaky_relu_alpha=0.1
 
-min_count=10
+min_count=50
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 
 if [[ ${remove_model_dir} == '1' ]]; then
@@ -98,6 +100,7 @@ python main.py \
     --eval_batch_size ${eval_batch_size} \
     --max_train_steps ${max_train_steps} \
     --max_eval_steps ${max_eval_steps} \
+    --max_eval_steps_on_train_dataset ${max_eval_steps_on_train_dataset} \
     --epoch ${epoch} \
     --hidden_units "${hidden_units}" \
     --model_dir ${model_dir} \
@@ -140,4 +143,6 @@ python main.py \
     --optimizer_ftrl_initial_accumulator_value ${optimizer_ftrl_initial_accumulator_value} \
     --optimizer_ftrl_l1_regularization ${optimizer_ftrl_l1_regularization} \
     --optimizer_ftrl_l2_regularization ${optimizer_ftrl_l2_regularization} \
-    --optimizer_ftrl_l2_shrinkage_regularization ${optimizer_ftrl_l2_shrinkage_regularization}
+    --optimizer_ftrl_l2_shrinkage_regularization ${optimizer_ftrl_l2_shrinkage_regularization} \
+    --evaluate_every_secs ${evaluate_every_secs} \
+    --leaky_relu_alpha ${leaky_relu_alpha}
