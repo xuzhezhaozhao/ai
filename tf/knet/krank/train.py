@@ -57,6 +57,12 @@ def build_estimator(opts):
 def train_and_eval_in_local_mode(opts):
     """Train and eval model in lcoal mode."""
 
+    tf.logging.info("Evaluating model in test dataset [startup] ...")
+    result = opts.estimator.evaluate(
+        input_fn=input_data.input_fn(opts, opts.eval_data_path, True),
+        steps=opts.max_eval_steps)
+    tf.logging.info("Evaluate model in test dataset OK [startup]")
+
     tf.logging.info("Training model ...")
     build_model_fn.clear_model_fn_times()
 
@@ -65,7 +71,8 @@ def train_and_eval_in_local_mode(opts):
             input_fn=input_data.input_fn(opts, opts.train_data_path, False, 1),
             max_steps=opts.max_train_steps,
             evaluate_every_secs=opts.evaluate_every_secs,
-            evaluate_input_fn=input_data.input_fn(opts, opts.eval_data_path, True),
+            evaluate_input_fn=input_data.input_fn(
+                opts, opts.eval_data_path, True),
             steps=opts.max_eval_steps)
     else:
         opts.estimator.train(
