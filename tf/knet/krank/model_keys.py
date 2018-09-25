@@ -19,7 +19,7 @@ class TrainParallelMode(object):
 class OptimizerType(object):
     """Optimizer type."""
 
-    ADA = 'ada'
+    ADAGRAD = 'adagrad'
     ADADELTA = 'adadelta'
     ADAM = 'adam'
     SGD = 'sgd'

@@ -41,8 +41,8 @@ inference_num_targets=200
 # 'default', 'multi_thread'
 train_parallel_mode='multi_thread'
 train_num_parallel=4
-# 'ada', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
-optimizer_type='ftrl'
+# 'adagrad', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
+optimizer_type='adagrad'
 optimizer_epsilon=0.00001
 optimizer_adadelta_rho=0.95
 optimizer_adam_beta1=0.9
@@ -68,7 +68,7 @@ optimizer_exponential_decay_staircase=0  # bool value
 evaluate_every_secs=180
 leaky_relu_alpha=0.1
 num_evaluate_target_per_line=10
-log_per_lines=20000
+log_per_lines=100000
 
 min_count=10
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt

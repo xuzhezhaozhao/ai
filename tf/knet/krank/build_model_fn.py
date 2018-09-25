@@ -258,7 +258,7 @@ def create_optimizer(params):
         staircase=opts.optimizer_exponential_decay_staircase)
 
     with tf.name_scope('optimizer_layer'):
-        if optimizer_type == model_keys.OptimizerType.ADA:
+        if optimizer_type == model_keys.OptimizerType.ADAGRAD:
             optimizer = tf.train.AdagradOptimizer(
                 learning_rate=opts.lr,
                 name='adagrad_{}'.format(_call_model_fn_times))

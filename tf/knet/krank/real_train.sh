@@ -47,7 +47,7 @@ inference_num_targets=300
 # 'default', 'multi_thread'
 train_parallel_mode='multi_thread'
 train_num_parallel=8
-# 'ada', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
+# 'adagrad', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
 optimizer_type='ftrl'
 optimizer_epsilon=0.00001
 optimizer_adadelta_rho=0.95
