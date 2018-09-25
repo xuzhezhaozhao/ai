@@ -34,8 +34,12 @@ def map_generate_example(line, opts, is_eval):
 
     (positive_records, negative_records,
      targets, labels) = custom_ops.krank_input(
-        input=line, feature_manager_path=opts.feature_manager_path,
-        ws=opts.train_ws, is_eval=is_eval)
+         input=line,
+         feature_manager_path=opts.feature_manager_path,
+         ws=opts.train_ws,
+         num_evaluate_target_per_line=opts.num_evaluate_target_per_line,
+         log_per_lines=opts.log_per_lines,
+         is_eval=is_eval)
 
     return (positive_records, negative_records, targets, labels)
 

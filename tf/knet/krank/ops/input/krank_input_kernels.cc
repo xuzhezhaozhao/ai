@@ -25,7 +25,9 @@ class KrankInputOp : public OpKernel {
         num_positive_(0),
         num_negative_(0),
         feature_manager_(),
-        ws_(0),
+        ws_(5),
+        num_evaluate_target_per_line_(1),
+        log_per_lines_(10000),
         is_eval_(false) {
     LOG(INFO) << "Init KrankInputOp ...";
 
@@ -34,6 +36,9 @@ class KrankInputOp : public OpKernel {
     std::string fm_path;
     OP_REQUIRES_OK(ctx, ctx->GetAttr("feature_manager_path", &fm_path));
     OP_REQUIRES_OK(ctx, ctx->GetAttr("ws", &ws_));
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("num_evaluate_target_per_line",
+                                     &num_evaluate_target_per_line_));
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("log_per_lines", &log_per_lines_));
     OP_REQUIRES_OK(ctx, ctx->GetAttr("is_eval", &is_eval_));
     feature_manager_.load(fm_path);
 
@@ -56,7 +61,13 @@ class KrankInputOp : public OpKernel {
     std::vector<int64> targets;
     std::vector<bool> labels;
     std::uniform_int_distribution<> uniform(1, ws_);
-    for (int w = 1; w < feature.actions.size(); ++w) {
+
+    int w = 1;
+    if (is_eval_) {
+      w = std::max(w, static_cast<int>(feature.actions.size()) -
+                          num_evaluate_target_per_line_);
+    }
+    for (w = 1; w < feature.actions.size(); ++w) {
       if (!feature.actions[w].isvideo) {
         // We don't predict article
         continue;
@@ -174,7 +185,7 @@ class KrankInputOp : public OpKernel {
     auto g = global_lines_.load(std::memory_order_relaxed);
     auto p = num_positive_.load(std::memory_order_relaxed);
     auto n = num_negative_.load(std::memory_order_relaxed);
-    if (g % 10000 == 0) {
+    if (g % log_per_lines_ == 0) {
       LOG(ERROR) << "global lines = " << g << ", num_positive = " << p
                  << ", num_negative_ = " << n << ", pos/neg = " << 1.0 * p / n
                  << ", samples/line = " << 1.0 * (p + n) / g;
@@ -189,6 +200,8 @@ class KrankInputOp : public OpKernel {
   fe::FeatureManager feature_manager_;
   std::minstd_rand rng_;
   int ws_;
+  int num_evaluate_target_per_line_;
+  int log_per_lines_;
   bool is_eval_;
 };
 

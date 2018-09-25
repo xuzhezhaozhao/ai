@@ -11,6 +11,8 @@ REGISTER_OP("KrankInput")
     .SetIsStateful()
     .Attr("feature_manager_path: string = ''")
     .Attr("ws: int = 5")
+    .Attr("num_evaluate_target_per_line: int = 1")
+    .Attr("log_per_lines: int = 10000")
     .Attr("is_eval: bool = false")
     .Doc(R"doc(
 )doc");

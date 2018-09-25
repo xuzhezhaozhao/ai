@@ -67,6 +67,8 @@ optimizer_exponential_decay_rate=0.96
 optimizer_exponential_decay_staircase=0  # bool value
 evaluate_every_secs=180
 leaky_relu_alpha=0.1
+num_evaluate_target_per_line=10
+log_per_lines=20000
 
 min_count=10
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
@@ -139,4 +141,6 @@ python main.py \
     --optimizer_ftrl_l2_regularization ${optimizer_ftrl_l2_regularization} \
     --optimizer_ftrl_l2_shrinkage_regularization ${optimizer_ftrl_l2_shrinkage_regularization} \
     --evaluate_every_secs ${evaluate_every_secs} \
-    --leaky_relu_alpha ${leaky_relu_alpha}
+    --leaky_relu_alpha ${leaky_relu_alpha} \
+    --num_evaluate_target_per_line ${num_evaluate_target_per_line} \
+    --log_per_lines ${log_per_lines}
