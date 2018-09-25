@@ -89,6 +89,7 @@ parser.add_argument('--optimizer_ftrl_l2_regularization',
 parser.add_argument('--optimizer_ftrl_l2_shrinkage_regularization',
                     default=0.0, type=float, help='')
 parser.add_argument('--evaluation_every_secs', default=30, type=int, help='')
+parser.add_argument('--leaky_relu_alpha', default=0.3, type=float, help='')
 
 opts = Options()
 
@@ -170,6 +171,7 @@ def parse_args(argv):
     opts.optimizer_ftrl_l2_shrinkage_regularization = \
         args.optimizer_ftrl_l2_shrinkage_regularization
     opts.evaluation_every_secs = args.evaluation_every_secs
+    opts.leaky_relu_alpha = args.leaky_relu_alpha
 
     opts.num_rowkey = 1 + len([line for line in open(opts.rowkey_dict_path)
                                if line != ''])  # plus one for padding

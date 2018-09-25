@@ -63,7 +63,8 @@ def train_and_eval_in_local_mode(opts):
     if isinstance(opts.estimator, easy_estimator.EasyEstimator):
         opts.estimator.easy_train(
             input_fn=input_data.input_fn(opts, opts.train_data_path, False, 1),
-            max_steps=opts.max_train_steps)
+            max_steps=opts.max_train_steps,
+            evaluation_every_secs=opts.evaluation_every_secs)
     else:
         opts.estimator.train(
             input_fn=input_data.input_fn(opts, opts.train_data_path, False, 1),

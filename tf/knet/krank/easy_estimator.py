@@ -28,7 +28,8 @@ class EasyEstimator(tf.estimator.Estimator):
         self._num_parallel = num_parallel
         self._log_step_count_secs = log_step_count_secs
 
-    def easy_train(self, input_fn, steps=None, max_steps=None):
+    def easy_train(self, input_fn, steps=None, max_steps=None,
+                   evaluation_every_secs=None):
         with context.graph_mode():
             if (steps is not None) and (max_steps is not None):
                 raise ValueError(

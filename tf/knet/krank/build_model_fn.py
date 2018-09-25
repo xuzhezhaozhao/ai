@@ -214,6 +214,8 @@ def fc(params, x, num_in, num_out, name, bn=True, relu=True,
        training=True, dropout=0.0):
     """Create a fully connected layer."""
 
+    opts = params['opts']
+
     with tf.variable_scope(name, reuse=tf.AUTO_REUSE) as scope:
         w = tf.sqrt(12.0 / (num_in + num_out))
         weights = tf.get_variable(
@@ -230,7 +232,10 @@ def fc(params, x, num_in, num_out, name, bn=True, relu=True,
             act = batch_normalization(act, training)
 
         if relu:
-            act = tf.nn.leaky_relu(act)
+            if opts.leaky_relu_alpha > 0.0:
+                act = tf.nn.leaky_relu(act, alpha=opts.leaky_relu_alpha)
+            else:
+                act = tf.nn.relu(act)
 
         if dropout > 0.0:
             act = tf.layers.dropout(act, dropout, training=training)
