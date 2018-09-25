@@ -71,7 +71,7 @@ auc_num_thresholds=1000
 optimizer_exponential_decay_steps=10000
 optimizer_exponential_decay_rate=0.96
 optimizer_exponential_decay_staircase=0  # bool value
-evaluate_every_secs=180
+evaluate_every_secs=1800
 leaky_relu_alpha=0.1
 
 min_count=50
