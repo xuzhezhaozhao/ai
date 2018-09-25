@@ -63,6 +63,7 @@ class EasyEstimator(tf.estimator.Estimator):
             tf.set_random_seed(self._config.tf_random_seed)
             global_step_tensor = tf.train.get_or_create_global_step(g)
 
+            self._iterator_initializers = []
             (features, labels) = \
                 self._easy_get_features_and_labels_from_input_fn(
                     input_fn, tf.estimator.ModeKeys.TRAIN)
@@ -153,7 +154,7 @@ class EasyEstimator(tf.estimator.Estimator):
 
     def _easy_parse_input_fn_result(self, result):
         iterator = result.make_initializable_iterator()
-        self._iterator_initializer = iterator.initializer
+        self._iterator_initializers.append(iterator.initializer)
         data = iterator.get_next()
 
         if isinstance(data, (list, tuple)):
@@ -192,7 +193,7 @@ class EasyEstimator(tf.estimator.Estimator):
 
     def _session_init(self, sess, summary_writer, saver):
         sess.run(tf.global_variables_initializer())
-        sess.run(self._iterator_initializer)
+        sess.run(self._iterator_initializers)
         summary_writer.add_graph(sess.graph)
         tf.get_default_graph().finalize()
         self._easy_maybe_restore_model(sess, saver)
