@@ -111,7 +111,8 @@ class EasyEstimator(tf.estimator.Estimator):
                         saver, evaluate_input_fn, evaluate_steps)
 
                 loss = self._wait_train_threads(sess, workers, queue)
-                self._close_train(sess, global_steps, loss, saver)
+                self._close_train(sess, global_steps, loss, saver,
+                                  summary_writer)
 
             return loss
 
@@ -232,9 +233,12 @@ class EasyEstimator(tf.estimator.Estimator):
                                      > evaluate_every_secs)):
             self._save_checkpoint(sess, global_steps, saver)
             self._wait_evaluation = True
+            tf.logging.info('{} Starting evaluation ...'
+                            .format(datetime.now()))
             self.evaluate(
                 input_fn=evaluate_input_fn,
                 steps=evaluate_steps)
+            tf.logging.info('{} Evaluation OK'.format(datetime.now()))
             self._last_evaluate_time = time.time()  # evaluate took time
             self._wait_evaluation = False
 
@@ -274,9 +278,9 @@ class EasyEstimator(tf.estimator.Estimator):
         while not self._should_stop:
             try:
                 while self._wait_evaluation:
-                    tf.logging.info(
-                        'thread {} wait evaluation ...'.format(tid))
-                    time.sleep(15)
+                    tf.logging.info('{} thread {} wait evaluation ...'
+                                    .format(datetime.now(), tid))
+                    time.sleep(60)
                 _, loss = sess.run(
                     [estimator_spec.train_op, estimator_spec.loss])
             except tf.errors.OutOfRangeError:
@@ -288,7 +292,7 @@ class EasyEstimator(tf.estimator.Estimator):
         tf.logging.info('thread {} exit.'.format(tid))
         return loss
 
-    def _close_train(self, sess, global_steps, loss, saver):
+    def _close_train(self, sess, global_steps, loss, saver, summary_writer):
         self._loss_logging(sess, global_steps, loss)
         self._save_checkpoint(sess, global_steps, saver)
         summary_writer.close()
