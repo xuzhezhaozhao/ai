@@ -32,7 +32,7 @@ save_summary_steps=1000
 save_checkpoints_secs=600
 keep_checkpoint_max=3
 log_step_count_steps=1000
-log_step_count_secs=30
+log_step_count_secs=10
 remove_model_dir=1
 dropout=0.0
 map_num_parallel_calls=1
@@ -54,7 +54,7 @@ optimizer_momentum_momentum=0.99
 optimizer_momentum_use_nesterov=0 # bool value
 optimizer_ftrl_lr_power=-0.5
 optimizer_ftrl_initial_accumulator_value=0.1
-optimizer_ftrl_l1_regularization=0.0001
+optimizer_ftrl_l1_regularization=0.001
 optimizer_ftrl_l2_regularization=0.0
 optimizer_ftrl_l2_shrinkage_regularization=0.0
 clip_gradients=0 # bool value
@@ -65,7 +65,7 @@ auc_num_thresholds=1000
 optimizer_exponential_decay_steps=10000
 optimizer_exponential_decay_rate=0.96
 optimizer_exponential_decay_staircase=0  # bool value
-evaluation_every_secs=10
+evaluate_every_secs=10
 leaky_relu_alpha=0.1
 
 min_count=10
@@ -138,5 +138,5 @@ python main.py \
     --optimizer_ftrl_l1_regularization ${optimizer_ftrl_l1_regularization} \
     --optimizer_ftrl_l2_regularization ${optimizer_ftrl_l2_regularization} \
     --optimizer_ftrl_l2_shrinkage_regularization ${optimizer_ftrl_l2_shrinkage_regularization} \
-    --evaluation_every_secs ${evaluation_every_secs} \
+    --evaluate_every_secs ${evaluate_every_secs} \
     --leaky_relu_alpha ${leaky_relu_alpha}

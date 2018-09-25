@@ -29,7 +29,8 @@ class EasyEstimator(tf.estimator.Estimator):
         self._log_step_count_secs = log_step_count_secs
 
     def easy_train(self, input_fn, steps=None, max_steps=None,
-                   evaluation_every_secs=None):
+                   evaluate_every_secs=None, evaluate_input_fn=None,
+                   evaluate_steps=None):
         with context.graph_mode():
             if (steps is not None) and (max_steps is not None):
                 raise ValueError(
@@ -49,11 +50,15 @@ class EasyEstimator(tf.estimator.Estimator):
                                     'has already saved.')
                     return self
 
-            loss = self._easy_train_model(input_fn, steps, max_steps)
+            loss = self._easy_train_model(input_fn, steps, max_steps,
+                                          evaluate_every_secs,
+                                          evaluate_input_fn, evaluate_steps)
             tf.logging.info('Loss for final step: %s.', loss)
             return self
 
-    def _easy_train_model(self, input_fn, steps, max_steps):
+    def _easy_train_model(self, input_fn, steps, max_steps,
+                          evaluate_every_secs, evaluate_input_fn,
+                          evaluate_steps):
         with tf.Graph().as_default() as g, g.device(self._device_fn):
             tf.set_random_seed(self._config.tf_random_seed)
             global_step_tensor = tf.train.get_or_create_global_step(g)
@@ -72,82 +77,41 @@ class EasyEstimator(tf.estimator.Estimator):
                 save_relative_paths=True)
 
             with tf.Session() as sess:
-                sess.run(tf.global_variables_initializer())
-                sess.run(self._iterator_initializer)
-                summary_writer.add_graph(sess.graph)
-
-                tf.get_default_graph().finalize()
-
-                self._easy_maybe_restore_model(sess, saver)
+                self._session_init(sess, summary_writer, saver)
 
                 tf.logging.info('{} Start training ...'.format(datetime.now()))
-
-                workers = []
                 queue = Queue.Queue()
                 init_steps = sess.run(global_step_tensor)
-                self._should_stop = False
+                workers = self._start_train_threads(
+                    sess, estimator_spec, queue)
 
-                for tid in range(self._num_parallel):
-                    tf.logging.info('Start thread {} ...'.format(tid))
-                    worker = threading.Thread(
-                        target=self._train_thread_body,
-                        args=(tid, sess, estimator_spec, queue))
-                    worker.start()
-                    workers.append(worker)
+                current_time = time.time()
+                self._last_save_summary_steps = init_steps
+                self._last_save_checkpoint_time = current_time
+                self._last_evaluate_time = current_time
 
-                last_steps = init_steps
-                last_time = time.time()
+                end = False
                 while True:
                     time.sleep(self._log_step_count_secs)
-                    try:
-                        _, loss = sess.run([estimator_spec.train_op,
-                                            estimator_spec.loss])
-                        global_steps = sess.run(global_step_tensor)
-                        current_time = time.time()
+                    current_time = time.time()
+                    loss, global_steps, end = self._run_one_step(
+                        sess, estimator_spec, global_step_tensor)
+                    if end: break
+                    self._loss_logging(sess, global_steps, loss)
+                    self._should_stop = self._check_should_stop(
+                        init_steps, global_steps, steps, max_steps)
+                    if self._should_stop: break
 
-                        self._loss_logging(sess, global_steps, loss)
+                    self._maybe_save_summary(
+                        sess, summary_writer, merged_summary, global_steps)
+                    self._maybe_save_checkpoint(
+                        sess, current_time, global_steps, saver)
+                    self._maybe_evaluate(
+                        sess, evaluate_every_secs, current_time, global_steps,
+                        saver, evaluate_input_fn, evaluate_steps)
 
-                        if max_steps and (global_steps >= max_steps):
-                            self._should_stop = True
-                        if steps and (global_steps - init_steps >= steps):
-                            self._should_stop = True
-
-                        if self._should_stop:
-                            break
-
-                        if (global_steps - last_steps
-                                >= self._config.save_summary_steps):
-                            self._save_summary(
-                                sess, global_steps,
-                                summary_writer, merged_summary)
-
-                        if (current_time - last_time
-                                >= self._config.save_checkpoints_secs):
-                            self._save_ckpt(sess, global_steps, saver)
-
-                        last_steps = global_steps
-                        last_time = current_time
-                    except tf.errors.OutOfRangeError:
-                        break
-
-                for worker in workers:
-                    worker.join()
-
-                cnt = 0
-                loss = 0.0
-                while not queue.empty():
-                    single_loss = queue.get()
-                    tf.logging.info('thread loss: {}'.format(single_loss))
-                    if single_loss is None:
-                        continue
-                    loss += single_loss
-                    cnt += 1
-
-                loss = (loss / cnt if cnt != 0 else None)
-
-                self._loss_logging(sess, global_steps, loss)
-                self._save_checkpoint(sess, global_steps, saver)
-                summary_writer.close()
+                loss = self._wait_train_threads(sess, workers, queue)
+                self._close_train(sess, global_steps, loss, saver)
 
             return loss
 
@@ -224,10 +188,95 @@ class EasyEstimator(tf.estimator.Estimator):
     def _check_global_steps(self, global_steps, steps):
         return True if global_steps % steps == 0 else False
 
+    def _session_init(self, sess, summary_writer, saver):
+        sess.run(tf.global_variables_initializer())
+        sess.run(self._iterator_initializer)
+        summary_writer.add_graph(sess.graph)
+        tf.get_default_graph().finalize()
+        self._easy_maybe_restore_model(sess, saver)
+
+    def _run_one_step(self, sess, estimator_spec, global_step_tensor):
+        try:
+            _, loss = sess.run([estimator_spec.train_op, estimator_spec.loss])
+            global_steps = sess.run(global_step_tensor)
+        except tf.errors.OutOfRangeError:
+            return 0, 0, True
+        return loss, global_steps, False
+
+    def _check_should_stop(self, init_steps, global_steps, steps, max_steps):
+        if max_steps and (global_steps >= max_steps):
+            return True
+        if steps and (global_steps - init_steps >= steps):
+            return True
+        return False
+
+    def _maybe_save_summary(self, sess, summary_writer, merged_summary,
+                            current_steps):
+        last_steps = self._last_save_summary_steps
+        if current_steps - last_steps >= self._config.save_summary_steps:
+            self._save_summary(
+                sess, current_steps, summary_writer, merged_summary)
+            self._last_save_summary_steps = current_steps
+
+    def _maybe_save_checkpoint(self, sess, current_time, current_steps, saver):
+        last_time = self._last_save_checkpoint_time
+        if current_time - last_time >= self._config.save_checkpoints_secs:
+            self._save_checkpoint(sess, current_steps, saver)
+            self._last_save_checkpoint_time = current_time
+
+    def _maybe_evaluate(self, sess, evaluate_every_secs, current_time,
+                        global_steps, saver, evaluate_input_fn,
+                        evaluate_steps):
+        last_evaluation_time = self._last_evaluate_time
+        if (evaluate_every_secs and (current_time - last_evaluation_time
+                                     > evaluate_every_secs)):
+            self._save_checkpoint(sess, global_steps, saver)
+            self._wait_evaluation = True
+            self.evaluate(
+                input_fn=evaluate_input_fn,
+                steps=evaluate_steps)
+            self._last_evaluate_time = time.time()  # evaluate took time
+            self._wait_evaluation = False
+
+    def _start_train_threads(self, sess, estimator_spec, queue):
+        self._should_stop = False
+        self._wait_evaluation = False
+        workers = []
+        for tid in range(self._num_parallel):
+            tf.logging.info('Start thread {} ...'.format(tid))
+            worker = threading.Thread(
+                target=self._train_thread_body,
+                args=(tid, sess, estimator_spec, queue))
+            worker.start()
+            workers.append(worker)
+        return workers
+
+    def _wait_train_threads(self, workers, queue):
+        for worker in workers:
+            worker.join()
+
+        cnt = 0
+        loss = 0.0
+        while not queue.empty():
+            single_loss = queue.get()
+            tf.logging.info('thread loss: {}'.format(single_loss))
+            if single_loss is None:
+                continue
+            loss += single_loss
+            cnt += 1
+
+        loss = (loss / cnt if cnt != 0 else None)
+
+        return loss
+
     def _train_thread_body(self, tid, sess, estimator_spec, queue):
         loss = None
         while not self._should_stop:
             try:
+                while self._wait_evaluation:
+                    tf.logging.info(
+                        'thread {} wait evaluation ...'.format(tid))
+                    time.sleep(15)
                 _, loss = sess.run(
                     [estimator_spec.train_op, estimator_spec.loss])
             except tf.errors.OutOfRangeError:
@@ -238,6 +287,11 @@ class EasyEstimator(tf.estimator.Estimator):
         queue.put(loss)
         tf.logging.info('thread {} exit.'.format(tid))
         return loss
+
+    def _close_train(self, sess, global_steps, loss, saver):
+        self._loss_logging(sess, global_steps, loss)
+        self._save_checkpoint(sess, global_steps, saver)
+        summary_writer.close()
 
 
 def _load_global_step_from_checkpoint_dir(checkpoint_dir):
