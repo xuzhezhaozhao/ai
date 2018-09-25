@@ -124,8 +124,6 @@ def build_serving_input_fn(opts):
                 shape=[opts.inference_actions_len], dtype=tf.float32),
             'rinfo2': tf.FixedLenFeature(
                 shape=[opts.inference_actions_len], dtype=tf.float32),
-            'rinfo2': tf.FixedLenFeature(
-                shape=[opts.inference_actions_len], dtype=tf.float32),
             'is_video': tf.FixedLenFeature(
                 shape=[opts.inference_actions_len], dtype=tf.int64),
             'target_rowkeys': tf.FixedLenFeature(
