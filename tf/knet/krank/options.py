@@ -5,13 +5,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import tensorflow as tf
+
 
 class Options(object):
     def __init__(self):
         pass
 
     def list_all_member(self):
-        print("\nOptions:")
+        tf.logging.info("\tOptions:")
         for name, value in vars(self).items():
-            print('\t{} = {}'.format(name, value))
-        print("\n")
+            tf.logging.info('\t{} = {}'.format(name, value))

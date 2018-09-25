@@ -231,8 +231,7 @@ class EasyEstimator(tf.estimator.Estimator):
                     [estimator_spec.train_op, estimator_spec.loss])
             except tf.errors.OutOfRangeError:
                 tf.logging.info(
-                    "_train_thread_body {} catch 'OutOfRangeError'"
-                    .format(tid))
+                    "thread {} catch 'OutOfRangeError'".format(tid))
                 break
 
         queue.put(loss)

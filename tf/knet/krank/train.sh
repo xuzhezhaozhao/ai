@@ -15,15 +15,16 @@ rowkey_count_path=../../../data/krank_rowkey_count.csv
 train_data_path=../../../data/krank_train_data.in
 eval_data_path=../../../data/krank_eval_data.in
 feature_manager_path=${fe_dir}/feature_manager.bin
-lr=0.001
+lr=0.01
 rowkey_embedding_dim=64
-train_ws=50
-batch_size=64
+train_ws=20
+batch_size=32
 eval_batch_size=8192
 max_train_steps=-1
 max_eval_steps=-1
+max_eval_steps_on_train_dataset=40000
 epoch=1
-hidden_units="256,256"
+hidden_units=""
 prefetch_size=20000
 shuffle_batch=1
 shuffle_size=50000
@@ -31,7 +32,7 @@ save_summary_steps=1000
 save_checkpoints_secs=600
 keep_checkpoint_max=3
 log_step_count_steps=1000
-log_step_count_secs=20
+log_step_count_secs=30
 remove_model_dir=1
 dropout=0.0
 map_num_parallel_calls=1
@@ -64,6 +65,7 @@ auc_num_thresholds=1000
 optimizer_exponential_decay_steps=10000
 optimizer_exponential_decay_rate=0.96
 optimizer_exponential_decay_staircase=0  # bool value
+evaluation_every_secs=10
 
 min_count=10
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
@@ -91,6 +93,7 @@ python main.py \
     --eval_batch_size ${eval_batch_size} \
     --max_train_steps ${max_train_steps} \
     --max_eval_steps ${max_eval_steps} \
+    --max_eval_steps_on_train_dataset ${max_eval_steps_on_train_dataset} \
     --epoch ${epoch} \
     --hidden_units "${hidden_units}" \
     --model_dir ${model_dir} \
@@ -133,4 +136,5 @@ python main.py \
     --optimizer_ftrl_initial_accumulator_value ${optimizer_ftrl_initial_accumulator_value} \
     --optimizer_ftrl_l1_regularization ${optimizer_ftrl_l1_regularization} \
     --optimizer_ftrl_l2_regularization ${optimizer_ftrl_l2_regularization} \
-    --optimizer_ftrl_l2_shrinkage_regularization ${optimizer_ftrl_l2_shrinkage_regularization}
+    --optimizer_ftrl_l2_shrinkage_regularization ${optimizer_ftrl_l2_shrinkage_regularization} \
+    --evaluation_every_secs ${evaluation_every_secs}

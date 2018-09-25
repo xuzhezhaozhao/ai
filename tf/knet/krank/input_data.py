@@ -57,9 +57,8 @@ def flat_map_example(opts, x):
     return dataset
 
 
-def input_fn(opts, is_eval, epoch=1):
+def input_fn(opts, data_path, is_eval, epoch=1):
     def build_input_fn():
-        data_path = opts.eval_data_path if is_eval else opts.train_data_path
         batch_size = opts.eval_batch_size if is_eval else opts.batch_size
 
         with tf.name_scope("input_fn"):

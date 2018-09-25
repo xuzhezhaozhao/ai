@@ -62,20 +62,26 @@ def train_and_eval_in_local_mode(opts):
 
     if isinstance(opts.estimator, easy_estimator.EasyEstimator):
         opts.estimator.easy_train(
-            input_fn=input_data.input_fn(opts, False, 1),
+            input_fn=input_data.input_fn(opts, opts.train_data_path, False, 1),
             max_steps=opts.max_train_steps)
     else:
         opts.estimator.train(
-            input_fn=input_data.input_fn(opts, False, 1),
+            input_fn=input_data.input_fn(opts, opts.train_data_path, False, 1),
             max_steps=opts.max_train_steps)
     tf.logging.info("Train model OK")
 
     # evaluate model
-    tf.logging.info("Evaluating model ...")
+    tf.logging.info("Evaluating model in train dataset ...")
     result = opts.estimator.evaluate(
-        input_fn=input_data.input_fn(opts, True),
+        input_fn=input_data.input_fn(opts, opts.train_data_path, True),
+        steps=opts.max_eval_steps_on_train_dataset)
+    tf.logging.info("Evaluate model in train dataset OK")
+
+    tf.logging.info("Evaluating model in test dataset ...")
+    result = opts.estimator.evaluate(
+        input_fn=input_data.input_fn(opts, opts.eval_data_path, True),
         steps=opts.max_eval_steps)
-    tf.logging.info("Evaluate model OK")
+    tf.logging.info("Evaluate model in test dataset OK")
 
     return result
 

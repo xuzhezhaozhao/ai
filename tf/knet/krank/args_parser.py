@@ -25,6 +25,8 @@ parser.add_argument('--batch_size', default=64, type=int, help='')
 parser.add_argument('--eval_batch_size', default=64, type=int, help='')
 parser.add_argument('--max_train_steps', default=None, type=int, help='')
 parser.add_argument('--max_eval_steps', default=None, type=int, help='')
+parser.add_argument('--max_eval_steps_on_train_dataset',
+                    default=1000, type=int, help='')
 parser.add_argument('--epoch', default=1, type=int, help='')
 parser.add_argument('--hidden_units', default="64,64", type=str, help='')
 parser.add_argument('--model_dir', default="model_dir", type=str, help='')
@@ -86,6 +88,7 @@ parser.add_argument('--optimizer_ftrl_l2_regularization',
                     default=0.0, type=float, help='')
 parser.add_argument('--optimizer_ftrl_l2_shrinkage_regularization',
                     default=0.0, type=float, help='')
+parser.add_argument('--evaluation_every_secs', default=30, type=int, help='')
 
 opts = Options()
 
@@ -107,6 +110,11 @@ def parse_args(argv):
     opts.max_eval_steps = args.max_eval_steps
     if opts.max_eval_steps is not None and opts.max_eval_steps <= 0:
         opts.max_eval_steps = None
+
+    opts.max_eval_steps_on_train_dataset = args.max_eval_steps_on_train_dataset
+    if (opts.max_eval_steps_on_train_dataset is not None
+            and opts.max_eval_steps_on_train_dataset <= 0):
+        opts.max_eval_steps_on_train_dataset = None
 
     opts.epoch = args.epoch
     opts.hidden_units = map(int, filter(lambda x: x != '',
@@ -161,6 +169,7 @@ def parse_args(argv):
         args.optimizer_ftrl_l2_regularization
     opts.optimizer_ftrl_l2_shrinkage_regularization = \
         args.optimizer_ftrl_l2_shrinkage_regularization
+    opts.evaluation_every_secs = args.evaluation_every_secs
 
     opts.num_rowkey = 1 + len([line for line in open(opts.rowkey_dict_path)
                                if line != ''])  # plus one for padding

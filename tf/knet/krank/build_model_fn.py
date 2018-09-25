@@ -52,7 +52,6 @@ def krank_model_fn(features, labels, mode, params):
     num_in = hidden.shape[-1].value
     training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-    # TODO
     hidden = batch_normalization(hidden, training, 'bn_input')
     for index, units in enumerate(opts.hidden_units):
         use_relu = False if index == (len(opts.hidden_units) - 1) else True
