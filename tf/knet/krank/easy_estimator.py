@@ -62,10 +62,10 @@ class EasyEstimator(tf.estimator.Estimator):
         with tf.Graph().as_default() as g, g.device(self._device_fn):
             tf.set_random_seed(self._config.tf_random_seed)
             global_step_tensor = tf.train.get_or_create_global_step(g)
-            (features,
-             labels) = self._easy_get_features_and_labels_from_input_fn(
-                 input_fn, tf.estimator.ModeKeys.TRAIN)
 
+            (features, labels) = \
+                self._easy_get_features_and_labels_from_input_fn(
+                    input_fn, tf.estimator.ModeKeys.TRAIN)
             estimator_spec = self._easy_call_model_fn(
                 features, labels, tf.estimator.ModeKeys.TRAIN, self.config)
 
@@ -90,7 +90,6 @@ class EasyEstimator(tf.estimator.Estimator):
                 self._last_save_checkpoint_time = current_time
                 self._last_evaluate_time = current_time
 
-                end = False
                 while True:
                     time.sleep(self._log_step_count_secs)
                     current_time = time.time()
