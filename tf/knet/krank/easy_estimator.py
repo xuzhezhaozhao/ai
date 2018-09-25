@@ -75,6 +75,8 @@ class EasyEstimator(tf.estimator.Estimator):
                 sess.run(self._iterator_initializer)
                 summary_writer.add_graph(sess.graph)
 
+                tf.get_default_graph().finalize()
+
                 self._easy_maybe_restore_model(sess, saver)
 
                 tf.logging.info('{} Start training ...'.format(datetime.now()))

@@ -289,6 +289,15 @@ def create_optimizer(params):
                 momentum=opts.optimizer_momentum_momentum,
                 use_nesterov=opts.optimizer_momentum_use_nesterov,
                 name='momentum_{}'.format(_call_model_fn_times))
+        elif optimizer_type == model_keys.OptimizerType.FTRL:
+            optimizer = tf.train.FtrlOptimizer(
+                learning_rate=opts.lr,
+                learning_rate_power=opts.optimizer_ftrl_lr_power,
+                initial_accumulator_value=opts.optimizer_ftrl_initial_accumulator_value,
+                l1_regularization_strength=opts.optimizer_ftrl_l1_regularization,
+                l2_regularization_strength=opts.optimizer_ftrl_l2_regularization,
+                name='ftrl_{}'.format(_call_model_fn_times),
+                l2_shrinkage_regularization_strength=opts.optimizer_ftrl_l2_shrinkage_regularization)
         else:
             raise ValueError('OptimizerType "{}" not surpported.'
                              .format(optimizer_type))

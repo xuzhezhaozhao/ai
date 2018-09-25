@@ -25,3 +25,4 @@ class OptimizerType(object):
     SGD = 'sgd'
     RMSPROP = 'rmsprop'
     MOMENTUM = 'momentum'
+    FTRL = 'ftrl'

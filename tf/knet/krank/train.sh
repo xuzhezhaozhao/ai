@@ -19,7 +19,7 @@ lr=0.001
 rowkey_embedding_dim=64
 train_ws=50
 batch_size=128
-eval_batch_size=4096
+eval_batch_size=8192
 max_train_steps=-1
 max_eval_steps=-1
 epoch=1
@@ -40,8 +40,8 @@ inference_num_targets=200
 # 'default', 'multi_thread'
 train_parallel_mode='multi_thread'
 train_num_parallel=4
-# 'ada', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum'
-optimizer_type='sgd'
+# 'ada', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
+optimizer_type='ftrl'
 optimizer_epsilon=0.00001
 optimizer_adadelta_rho=0.95
 optimizer_adam_beta1=0.9
@@ -51,7 +51,12 @@ optimizer_rmsprop_momentum=0.0
 optimizer_rmsprop_centered=0  # bool value
 optimizer_momentum_momentum=0.99
 optimizer_momentum_use_nesterov=0 # bool value
-clip_gradients=1 # bool value
+optimizer_ftrl_lr_power=-0.5
+optimizer_ftrl_initial_accumulator_value=0.1
+optimizer_ftrl_l1_regularization=0.0
+optimizer_ftrl_l2_regularization=0.0
+optimizer_ftrl_l2_shrinkage_regularization=0.0
+clip_gradients=0 # bool value
 clip_gradients_norm=1.0
 l2_regularizer=0.0
 use_early_stopping=0
@@ -123,4 +128,9 @@ python main.py \
     --auc_num_thresholds ${auc_num_thresholds} \
     --optimizer_exponential_decay_steps ${optimizer_exponential_decay_steps} \
     --optimizer_exponential_decay_rate ${optimizer_exponential_decay_rate} \
-    --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase}
+    --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase} \
+    --optimizer_ftrl_lr_power ${optimizer_ftrl_lr_power} \
+    --optimizer_ftrl_initial_accumulator_value ${optimizer_ftrl_initial_accumulator_value} \
+    --optimizer_ftrl_l1_regularization ${optimizer_ftrl_l1_regularization} \
+    --optimizer_ftrl_l2_regularization ${optimizer_ftrl_l2_regularization} \
+    --optimizer_ftrl_l2_shrinkage_regularization ${optimizer_ftrl_l2_shrinkage_regularization}

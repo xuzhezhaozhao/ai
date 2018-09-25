@@ -76,6 +76,16 @@ parser.add_argument('--optimizer_exponential_decay_rate',
                     default=0.96, type=float, help='')
 parser.add_argument('--optimizer_exponential_decay_staircase',
                     default=0, type=int, help='')
+parser.add_argument('--optimizer_ftrl_lr_power',
+                    default=-0.5, type=float, help='')
+parser.add_argument('--optimizer_ftrl_initial_accumulator_value',
+                    default=0.1, type=float, help='')
+parser.add_argument('--optimizer_ftrl_l1_regularization',
+                    default=0.0, type=float, help='')
+parser.add_argument('--optimizer_ftrl_l2_regularization',
+                    default=0.0, type=float, help='')
+parser.add_argument('--optimizer_ftrl_l2_shrinkage_regularization',
+                    default=0.0, type=float, help='')
 
 opts = Options()
 
@@ -142,6 +152,15 @@ def parse_args(argv):
         args.optimizer_exponential_decay_rate
     opts.optimizer_exponential_decay_staircase = \
         bool(args.optimizer_exponential_decay_staircase)
+    opts.optimizer_ftrl_lr_power = args.optimizer_ftrl_lr_power
+    opts.optimizer_ftrl_initial_accumulator_value = \
+        args.optimizer_ftrl_initial_accumulator_value
+    opts.optimizer_ftrl_l1_regularization = \
+        args.optimizer_ftrl_l1_regularization
+    opts.optimizer_ftrl_l2_regularization = \
+        args.optimizer_ftrl_l2_regularization
+    opts.optimizer_ftrl_l2_shrinkage_regularization = \
+        args.optimizer_ftrl_l2_shrinkage_regularization
 
     opts.num_rowkey = 1 + len([line for line in open(opts.rowkey_dict_path)
                                if line != ''])  # plus one for padding
