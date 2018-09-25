@@ -5,20 +5,27 @@ set -e
 MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
+# add Anaconda2
+export ANACONDA2_ROOT=/usr/local/services/kd_anaconda2-1.0/lib/anaconda2
+export PATH="${ANACONDA2_ROOT}/bin:$PATH"
+export PYTHONPATH="${ANACONDA2_ROOT}/lib/python2.7/site-packages:$PYTHONPATH"
+
 echo 'TF_CONFIG = ' ${TF_CONFIG}
 
-model_dir=`pwd`/model_dir
-export_model_dir=`pwd`/export_model_dir
-fe_dir=`pwd`/fe_dir
+model_dir=`pwd`/data/model_dir
+export_model_dir=`pwd`/data/export_model_dir
+fe_dir=`pwd`/data/fe_dir
 
-rowkey_count_path=../../../data/krank_rowkey_count.csv
-train_data_path=../../../data/krank_train_data.in
-eval_data_path=../../../data/krank_eval_data.in
+raw_data_dir=raw_data
+
+rowkey_count_path=${raw_data_dir}/rowkey_count.csv
+train_data_path=${raw_data_dir}/train_data.in
+eval_data_path=${raw_data_dir}/eval_data.in
 feature_manager_path=${fe_dir}/feature_manager.bin
 lr=0.001
 rowkey_embedding_dim=64
 train_ws=50
-batch_size=64
+batch_size=128
 eval_batch_size=8192
 max_train_steps=-1
 max_eval_steps=-1

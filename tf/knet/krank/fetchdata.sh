@@ -10,7 +10,6 @@ cd ${MYDIR}
 parallel=47
 
 raw_data_dir=raw_data
-data_dir=data/data0_ing
 tmp_hdfs_dir=tmp_hdfs
 hadoop_bin=/usr/local/services/hadoop_client_2_2_0-1.0/tdwdfsclient/bin/hadoop
 hdfs_data_path=hdfs://ss-sng-dc-v2/stage/outface/SNG/g_sng_im_sng_imappdev_tribe/zhezhaoxu/preprocessed_data/hbcf2_V2
@@ -79,21 +78,20 @@ if [ $sz -le 10 ]; then
    exit 1
 fi
 
-mkdir -p ${data_dir}
-cat ${tmp_hdfs_dir}/${base_hdfs_data_path}/part* > ${data_dir}/data.in
-cat ${tmp_hdfs_dir}/${base_rowkey_count_path}/part* > ${data_dir}/rowkey_count.csv
+mkdir -p ${raw_data_dir}
+cat ${tmp_hdfs_dir}/${base_hdfs_data_path}/part* > ${raw_data_dir}/data.in
+cat ${tmp_hdfs_dir}/${base_rowkey_count_path}/part* > ${raw_data_dir}/rowkey_count.csv
 rm -rf ${tmp_hdfs_dir}/${base_hdfs_data_path}
 rm -rf ${tmp_hdfs_dir}/${base_rowkey_count_path}
 echo "fetch video and article watch data done."
 
-total_lines=$(wc -l ${data_dir}/data.in | awk '{print $1}')
+total_lines=$(wc -l ${raw_data_dir}/data.in | awk '{print $1}')
 eval_lines=100000
 train_lines=$((total_lines-eval_lines))
 
 echo "generate train_data ..."
-head ${data_dir}/data.in -n ${train_lines} > ${data_dir}/train_data.in
+head ${raw_data_dir}/data.in -n ${train_lines} > ${raw_data_dir}/train_data.in
 
-num_workers=2
 echo "generate eval_data ..."
-tail ${data_dir}/data.in -n ${eval_lines} > ${data_dir}/eval_data.in
-# rm -rf ${data_dir}/data.in
+tail ${raw_data_dir}/data.in -n ${eval_lines} > ${raw_data_dir}/eval_data.in
+rm -rf ${raw_data_dir}/data.in
