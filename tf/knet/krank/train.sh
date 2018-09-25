@@ -15,7 +15,7 @@ rowkey_count_path=../../../data/krank_rowkey_count.csv
 train_data_path=../../../data/krank_train_data.in
 eval_data_path=../../../data/krank_eval_data.in
 feature_manager_path=${fe_dir}/feature_manager.bin
-lr=0.01
+lr=0.001
 rowkey_embedding_dim=64
 train_ws=50
 batch_size=128
@@ -41,7 +41,7 @@ inference_num_targets=200
 train_parallel_mode='multi_thread'
 train_num_parallel=4
 # 'ada', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum'
-optimizer_type='ada'
+optimizer_type='sgd'
 optimizer_epsilon=0.00001
 optimizer_adadelta_rho=0.95
 optimizer_adam_beta1=0.9
@@ -49,13 +49,16 @@ optimizer_adam_beta2=0.999
 optimizer_rmsprop_decay=0.9
 optimizer_rmsprop_momentum=0.0
 optimizer_rmsprop_centered=0  # bool value
-optimizer_momentum_momentum=0.6
+optimizer_momentum_momentum=0.99
 optimizer_momentum_use_nesterov=0 # bool value
 clip_gradients=1 # bool value
-clip_gradients_norm=5.0
+clip_gradients_norm=1.0
 l2_regularizer=0.0
 use_early_stopping=0
 auc_num_thresholds=1000
+optimizer_exponential_decay_steps=10000
+optimizer_exponential_decay_rate=0.96
+optimizer_exponential_decay_staircase=0  # bool value
 
 min_count=10
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
@@ -117,4 +120,7 @@ python main.py \
     --clip_gradients_norm ${clip_gradients_norm} \
     --l2_regularizer ${l2_regularizer} \
     --use_early_stopping ${use_early_stopping} \
-    --auc_num_thresholds ${auc_num_thresholds}
+    --auc_num_thresholds ${auc_num_thresholds} \
+    --optimizer_exponential_decay_steps ${optimizer_exponential_decay_steps} \
+    --optimizer_exponential_decay_rate ${optimizer_exponential_decay_rate} \
+    --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase}

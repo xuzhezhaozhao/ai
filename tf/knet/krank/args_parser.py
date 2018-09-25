@@ -70,6 +70,12 @@ parser.add_argument('--clip_gradients_norm', default=5.0, type=float, help='')
 parser.add_argument('--l2_regularizer', default=0.0001, type=float, help='')
 parser.add_argument('--use_early_stopping', default=0, type=int, help='')
 parser.add_argument('--auc_num_thresholds', default=200, type=int, help='')
+parser.add_argument('--optimizer_exponential_decay_steps',
+                    default=10000, type=int, help='')
+parser.add_argument('--optimizer_exponential_decay_rate',
+                    default=0.96, type=float, help='')
+parser.add_argument('--optimizer_exponential_decay_staircase',
+                    default=0, type=int, help='')
 
 opts = Options()
 
@@ -130,6 +136,12 @@ def parse_args(argv):
     opts.l2_regularizer = args.l2_regularizer
     opts.use_early_stopping = bool(args.use_early_stopping)
     opts.auc_num_thresholds = args.auc_num_thresholds
+    opts.optimizer_exponential_decay_steps = \
+        args.optimizer_exponential_decay_steps
+    opts.optimizer_exponential_decay_rate = \
+        args.optimizer_exponential_decay_rate
+    opts.optimizer_exponential_decay_staircase = \
+        bool(args.optimizer_exponential_decay_staircase)
 
     opts.num_rowkey = 1 + len([line for line in open(opts.rowkey_dict_path)
                                if line != ''])  # plus one for padding

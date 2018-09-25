@@ -97,11 +97,13 @@ def krank_model_fn(features, labels, mode, params):
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
         with tf.control_dependencies(update_ops):
-            gradients, variables = zip(*optimizer.compute_gradients(
-                loss, gate_gradients=tf.train.Optimizer.GATE_GRAPH))
+            gradients, variables = zip(*optimizer.compute_gradients(loss))
             if opts.clip_gradients:
-                gradients, _ = tf.clip_by_global_norm(
-                    gradients, opts.clip_gradients_norm)
+                clip_value = opts.clip_gradients_norm
+                gradients = [
+                    None if gradient is None else tf.clip_by_value(
+                        gradient, -clip_value, clip_value)
+                    for gradient in gradients]
             train_op = optimizer.apply_gradients(
                 zip(gradients, variables),
                 global_step=tf.train.get_global_step())
@@ -243,6 +245,14 @@ def create_optimizer(params):
     opts = params['opts']
     optimizer_type = opts.optimizer_type
 
+    # used for GradientDescentOptimizer and MomentumOptimizer
+    decay_lr = tf.train.exponential_decay(
+        learning_rate=opts.lr,
+        global_step=tf.train.get_global_step(),
+        decay_steps=opts.optimizer_exponential_decay_steps,
+        decay_rate=opts.optimizer_exponential_decay_rate,
+        staircase=opts.optimizer_exponential_decay_staircase)
+
     with tf.name_scope('optimizer_layer'):
         if optimizer_type == model_keys.OptimizerType.ADA:
             optimizer = tf.train.AdagradOptimizer(
@@ -263,7 +273,7 @@ def create_optimizer(params):
                 name='adam_{}'.format(_call_model_fn_times))
         elif optimizer_type == model_keys.OptimizerType.SGD:
             optimizer = tf.train.GradientDescentOptimizer(
-                learning_rate=opts.lr,
+                learning_rate=decay_lr,
                 name='sgd_{}'.format(_call_model_fn_times))
         elif optimizer_type == model_keys.OptimizerType.RMSPROP:
             optimizer = tf.train.RMSPropOptimizer(
@@ -275,7 +285,7 @@ def create_optimizer(params):
                 name='rmsprop_{}'.format(_call_model_fn_times))
         elif optimizer_type == model_keys.OptimizerType.MOMENTUM:
             optimizer = tf.train.MomentumOptimizer(
-                learning_rate=opts.lr,
+                learning_rate=decay_lr,
                 momentum=opts.optimizer_momentum_momentum,
                 use_nesterov=opts.optimizer_momentum_use_nesterov,
                 name='momentum_{}'.format(_call_model_fn_times))
