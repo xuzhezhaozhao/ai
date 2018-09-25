@@ -96,11 +96,13 @@ class EasyEstimator(tf.estimator.Estimator):
                     current_time = time.time()
                     loss, global_steps, end = self._run_one_step(
                         sess, estimator_spec, global_step_tensor)
-                    if end: break
+                    if end:
+                        break
                     self._loss_logging(sess, global_steps, loss)
                     self._should_stop = self._check_should_stop(
                         init_steps, global_steps, steps, max_steps)
-                    if self._should_stop: break
+                    if self._should_stop:
+                        break
 
                     self._maybe_save_summary(
                         sess, summary_writer, merged_summary, global_steps)
@@ -110,7 +112,7 @@ class EasyEstimator(tf.estimator.Estimator):
                         sess, evaluate_every_secs, current_time, global_steps,
                         saver, evaluate_input_fn, evaluate_steps)
 
-                loss = self._wait_train_threads(sess, workers, queue)
+                loss = self._wait_train_threads(workers, queue)
                 self._close_train(sess, global_steps, loss, saver,
                                   summary_writer)
 
