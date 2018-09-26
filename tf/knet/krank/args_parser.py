@@ -20,6 +20,10 @@ parser.add_argument('--eval_data_path', default='', type=str, help='')
 parser.add_argument('--feature_manager_path', default='', type=str, help='')
 parser.add_argument('--lr', default=0.025, type=float, help='learning rate')
 parser.add_argument('--rowkey_embedding_dim', default=100, type=int, help='')
+parser.add_argument('--target_rowkey_embedding_dim',
+                    default=100, type=int, help='')
+parser.add_argument('--target_use_share_embeddings',
+                    default=1, type=int, help='')
 parser.add_argument('--train_ws', default=5, type=int, help='')
 parser.add_argument('--batch_size', default=64, type=int, help='')
 parser.add_argument('--eval_batch_size', default=64, type=int, help='')
@@ -104,6 +108,8 @@ def parse_args(argv):
     opts.feature_manager_path = args.feature_manager_path
     opts.lr = args.lr
     opts.rowkey_embedding_dim = args.rowkey_embedding_dim
+    opts.target_rowkey_embedding_dim = args.target_rowkey_embedding_dim
+    opts.target_use_share_embeddings = bool(args.target_use_share_embeddings)
     opts.train_ws = args.train_ws
     opts.batch_size = args.batch_size
     opts.eval_batch_size = args.eval_batch_size
@@ -187,6 +193,10 @@ def validate_opts():
         raise ValueError("hidden_units contain unit <= 0")
     if opts.dropout < 0.0:
         raise ValueError("dropout should not less than 0")
+    if (opts.target_use_share_embeddings and
+            opts.rowkey_embedding_dim != opts.target_rowkey_embedding_dim):
+        raise ValueError('target and rowkey embedding dim not matched when '
+                         'using shared embeddings')
 
 
 def parse(argv):

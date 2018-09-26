@@ -23,6 +23,8 @@ eval_data_path=${raw_data_dir}/eval_data.in
 feature_manager_path=${fe_dir}/feature_manager.bin
 lr=0.1
 rowkey_embedding_dim=100
+target_rowkey_embedding_dim=64
+target_use_share_embeddings=1
 train_ws=50
 batch_size=128
 eval_batch_size=8192
@@ -97,6 +99,8 @@ python main.py \
     --feature_manager_path ${feature_manager_path} \
     --lr ${lr} \
     --rowkey_embedding_dim ${rowkey_embedding_dim} \
+    --target_rowkey_embedding_dim ${target_rowkey_embedding_dim} \
+    --target_use_share_embeddings ${target_use_share_embeddings} \
     --train_ws ${train_ws} \
     --batch_size ${batch_size} \
     --eval_batch_size ${eval_batch_size} \

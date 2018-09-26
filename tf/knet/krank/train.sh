@@ -17,6 +17,8 @@ eval_data_path=../../../data/krank_eval_data.in
 feature_manager_path=${fe_dir}/feature_manager.bin
 lr=0.01
 rowkey_embedding_dim=64
+target_rowkey_embedding_dim=64
+target_use_share_embeddings=0
 train_ws=20
 batch_size=32
 eval_batch_size=8192
@@ -91,6 +93,8 @@ python main.py \
     --feature_manager_path ${feature_manager_path} \
     --lr ${lr} \
     --rowkey_embedding_dim ${rowkey_embedding_dim} \
+    --target_rowkey_embedding_dim ${target_rowkey_embedding_dim} \
+    --target_use_share_embeddings ${target_use_share_embeddings} \
     --train_ws ${train_ws} \
     --batch_size ${batch_size} \
     --eval_batch_size ${eval_batch_size} \

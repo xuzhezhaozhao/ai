@@ -27,6 +27,14 @@ def krank_model_fn(features, labels, mode, params):
     rowkey_embedding_dim = opts.rowkey_embedding_dim
 
     rowkey_embeddings = get_rowkey_embeddings(params)
+
+    if opts.target_use_share_embeddings:
+        target_rowkey_embeddings = get_target_rowkey_embeddings(params)
+        targte_rowkey_embedding_dim = opts.target_rowkey_embedding_dim
+    else:
+        target_rowkey_embeddings = rowkey_embeddings
+        targte_rowkey_embedding_dim = rowkey_embedding_dim
+
     positive_records = features[model_keys.POSITIVE_RECORDS_COL]
     negative_records = features[model_keys.NEGATIVE_RECORDS_COL]
     targets = features[model_keys.TARGETS_COL]
@@ -42,7 +50,7 @@ def krank_model_fn(features, labels, mode, params):
                                          rowkey_embedding_dim,
                                          positive_records)
     targets_embeds = mask_padding_embedding_lookup(
-        rowkey_embeddings, rowkey_embedding_dim, targets, 0)
+        target_rowkey_embeddings, targte_rowkey_embedding_dim, targets, 0)
 
     concat_features = [positive_embeds_mean,
                        negative_embeds_mean,
@@ -145,6 +153,23 @@ def get_rowkey_embeddings(params):
     dim = opts.rowkey_embedding_dim
 
     with tf.variable_scope("rowkey_embeddings", reuse=tf.AUTO_REUSE):
+        init_width = 1.0 / dim
+        embeddings = tf.get_variable(
+            "embeddings",
+            initializer=tf.random_uniform([num_rowkey, dim],
+                                          -init_width, init_width))
+        tf.summary.histogram("embeddings", embeddings)
+    return embeddings
+
+
+def get_target_rowkey_embeddings(params):
+    """Get target embeddings variables."""
+
+    opts = params['opts']
+    num_rowkey = opts.num_rowkey
+    dim = opts.target_rowkey_embedding_dim
+
+    with tf.variable_scope("target_rowkey_embeddings", reuse=tf.AUTO_REUSE):
         init_width = 1.0 / dim
         embeddings = tf.get_variable(
             "embeddings",
@@ -291,14 +316,18 @@ def create_optimizer(params):
                 use_nesterov=opts.optimizer_momentum_use_nesterov,
                 name='momentum_{}'.format(_call_model_fn_times))
         elif optimizer_type == model_keys.OptimizerType.FTRL:
+            l1 = opts.optimizer_ftrl_l1_regularization
+            l2 = opts.optimizer_ftrl_l2_regularization
+            init_value = opts.optimizer_ftrl_initial_accumulator_value
+            l2_shrinkage = opts.optimizer_ftrl_l2_shrinkage_regularization
             optimizer = tf.train.FtrlOptimizer(
                 learning_rate=opts.lr,
                 learning_rate_power=opts.optimizer_ftrl_lr_power,
-                initial_accumulator_value=opts.optimizer_ftrl_initial_accumulator_value,
-                l1_regularization_strength=opts.optimizer_ftrl_l1_regularization,
-                l2_regularization_strength=opts.optimizer_ftrl_l2_regularization,
+                initial_accumulator_value=init_value,
+                l1_regularization_strength=l1,
+                l2_regularization_strength=l2,
                 name='ftrl_{}'.format(_call_model_fn_times),
-                l2_shrinkage_regularization_strength=opts.optimizer_ftrl_l2_shrinkage_regularization)
+                l2_shrinkage_regularization_strength=l2_shrinkage)
         else:
             raise ValueError('OptimizerType "{}" not surpported.'
                              .format(optimizer_type))
