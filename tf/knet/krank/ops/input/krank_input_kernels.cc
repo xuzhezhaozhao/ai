@@ -185,7 +185,7 @@ class KrankInputOp : public OpKernel {
       flat_targets(i) = targets[i];
     }
     for (int i = 0; i < labels.size(); ++i) {
-      flat_labels(i) = (labels[i] ? 1 : 0);
+      flat_labels(i) = labels[i];
     }
   }
 
