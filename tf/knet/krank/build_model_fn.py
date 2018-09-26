@@ -51,9 +51,9 @@ def krank_model_fn(features, labels, mode, params):
     targets_embeds = mask_padding_embedding_lookup(
         target_rowkey_embeddings, targte_rowkey_embedding_dim, targets, 0)
 
-    tf.summary.histgram('positive_embeds_mean', positive_embeds_mean)
-    tf.summary.histgram('negative_embeds_mean', negative_embeds_mean)
-    tf.summary.histgram('targets_embeds', targets_embeds)
+    tf.summary.histogram('positive_embeds_mean', positive_embeds_mean)
+    tf.summary.histogram('negative_embeds_mean', negative_embeds_mean)
+    tf.summary.histogram('targets_embeds', targets_embeds)
 
     concat_features = [positive_embeds_mean,
                        negative_embeds_mean,
