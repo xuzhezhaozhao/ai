@@ -74,6 +74,8 @@ num_evaluate_target_per_line=10
 log_per_lines=10000
 
 min_count=10
+positive_threhold=0.49
+negative_threhold=0.04
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 
 if [[ ${remove_model_dir} == '1' ]]; then
@@ -85,6 +87,8 @@ echo "Preprocess features ..."
 ./fe/build/preprocess \
     ${rowkey_count_path} \
     ${min_count} \
+    ${positive_threhold} \
+    ${negative_threhold} \
     ${feature_manager_path} \
     ${rowkey_dict_path}
 

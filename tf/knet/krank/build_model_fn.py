@@ -123,9 +123,9 @@ def krank_model_fn(features, labels, mode, params):
 
     if mode == tf.estimator.ModeKeys.EVAL:
         score = tf.nn.sigmoid(logits)
-        bool_labels = tf.to_int32(labels > 0.8)
+        bool_labels = tf.to_int32(labels > 0.42)  # 0.65*0.65
         accuracy = tf.metrics.accuracy(labels=bool_labels,
-                                       predictions=tf.to_int32(score > 0.8))
+                                       predictions=tf.to_int32(score > 0.42))
         auc = tf.metrics.auc(labels=bool_labels,
                              predictions=score,
                              num_thresholds=opts.auc_num_thresholds)

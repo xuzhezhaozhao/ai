@@ -110,7 +110,7 @@ class KrankPredictInputOp : public OpKernel {
           if (action.id == 0) {
             continue;
           }
-          if (action.label) {
+          if (action.is_positive) {
             matrix_positive_records(index, added) = action.id;
             ++added;
           }
@@ -125,7 +125,7 @@ class KrankPredictInputOp : public OpKernel {
           if (action.id == 0) {
             continue;
           }
-          if (action.unlike) {
+          if (action.is_negative) {
             matrix_negative_records(index, added) = action.id;
             ++added;
           }

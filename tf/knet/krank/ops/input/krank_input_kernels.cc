@@ -22,8 +22,11 @@ class KrankInputOp : public OpKernel {
   explicit KrankInputOp(OpKernelConstruction* ctx)
       : OpKernel(ctx),
         global_lines_(0),
-        num_positive_(0),
-        num_negative_(0),
+        num_label_level_1(0),
+        num_label_level_2(0),
+        num_label_level_3(0),
+        num_label_level_4(0),
+        num_label_level_5(0),
         feature_manager_(),
         ws_(5),
         num_evaluate_target_per_line_(1),
@@ -93,10 +96,10 @@ class KrankInputOp : public OpKernel {
           // We ignore invalid id when constructing session feature.
           continue;
         }
-        if (feature.actions[b].label > 0.8) {
+        if (feature.actions[b].is_positive) {
           pos.push_back(id);
         }
-        if (feature.actions[b].unlike) {
+        if (feature.actions[b].is_negative) {
           neg.push_back(id);
         }
         ++added;
@@ -104,20 +107,26 @@ class KrankInputOp : public OpKernel {
           break;
         }
       }
-
       if (pos.empty() && !is_eval_) {
         // We ignore the example that positive session is empty when training
         continue;
       }
+      float label = feature.actions[w].label;
       targets.push_back(feature.actions[w].id);
-      labels.push_back(feature.actions[w].label);
+      labels.push_back(label);
       positive_records.push_back(pos);
       negative_records.push_back(neg);
 
-      if (feature.actions[w].label) {
-        ++num_positive_;
+      if (label < 0.1 * 0.1) {
+        ++num_label_level_1;
+      } else if (label < 0.3 * 0.3) {
+        ++num_label_level_2;
+      } else if (label < 0.5 * 0.5) {
+        ++num_label_level_3;
+      } else if (label < 0.8 * 0.8) {
+        ++num_label_level_4;
       } else {
-        ++num_negative_;
+        ++num_label_level_5;
       }
     }
 
@@ -183,19 +192,36 @@ class KrankInputOp : public OpKernel {
   void CalcStatistic() {
     ++global_lines_;
     auto g = global_lines_.load(std::memory_order_relaxed);
-    auto p = num_positive_.load(std::memory_order_relaxed);
-    auto n = num_negative_.load(std::memory_order_relaxed);
+    auto level_1 = num_label_level_1.load(std::memory_order_relaxed);
+    auto level_2 = num_label_level_2.load(std::memory_order_relaxed);
+    auto level_3 = num_label_level_3.load(std::memory_order_relaxed);
+    auto level_4 = num_label_level_4.load(std::memory_order_relaxed);
+    auto level_5 = num_label_level_5.load(std::memory_order_relaxed);
+    auto total = level_1 + level_2 + level_3 + level_4 + level_5;
     if (g % log_per_lines_ == 0) {
-      LOG(ERROR) << "global lines = " << g << ", num_positive = " << p
-                 << ", num_negative_ = " << n << ", pos/neg = " << 1.0 * p / n
-                 << ", samples/line = " << 1.0 * (p + n) / g;
+      LOG(ERROR) << "global lines = " << g;
+      LOG(ERROR) << "total samples = " << total;
+      LOG(ERROR) << "samples/lines = " << 1.0 * total / g;
+      LOG(ERROR) << "[<10%] num_label_level_1 = " << level_1 << " ("
+                 << 1.0 * level_1 / total << ")";
+      LOG(ERROR) << "[<30%] num_label_level_2 = " << level_2 << " ("
+                 << 1.0 * level_2 / total << ")";
+      LOG(ERROR) << "[<50%] num_label_level_3 = " << level_3 << " ("
+                 << 1.0 * level_3 / total << ")";
+      LOG(ERROR) << "[<80%] num_label_level_4 = " << level_4 << " ("
+                 << 1.0 * level_4 / total << ")";
+      LOG(ERROR) << "[<=100%] num_label_level_5 = " << level_5 << " ("
+                 << 1.0 * level_5 / total << ")";
     }
   }
 
  private:
   std::atomic<int64> global_lines_;
-  std::atomic<int64> num_positive_;
-  std::atomic<int64> num_negative_;
+  std::atomic<int64> num_label_level_1;
+  std::atomic<int64> num_label_level_2;
+  std::atomic<int64> num_label_level_3;
+  std::atomic<int64> num_label_level_4;
+  std::atomic<int64> num_label_level_5;
 
   fe::FeatureManager feature_manager_;
   std::minstd_rand rng_;
