@@ -15,13 +15,13 @@ rowkey_count_path=../../../data/krank_rowkey_count.csv
 train_data_path=../../../data/krank_train_data.in
 eval_data_path=../../../data/krank_eval_data.in
 feature_manager_path=${fe_dir}/feature_manager.bin
-lr=0.01
-rowkey_embedding_dim=64
-target_rowkey_embedding_dim=64
+lr=0.001
+rowkey_embedding_dim=100
+target_rowkey_embedding_dim=100
 target_use_share_embeddings=1  # bool value
-target_skip_connection=1  # bool value
-train_ws=20
-batch_size=32
+target_skip_connection=0  # bool value
+train_ws=30
+batch_size=64
 eval_batch_size=8192
 max_train_steps=-1
 max_eval_steps=-1
@@ -45,7 +45,7 @@ inference_num_targets=200
 train_parallel_mode='multi_thread'
 train_num_parallel=4
 # 'adagrad', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
-optimizer_type='adagrad'
+optimizer_type='sgd'
 optimizer_epsilon=0.00001
 optimizer_adadelta_rho=0.95
 optimizer_adam_beta1=0.9
@@ -74,8 +74,8 @@ num_evaluate_target_per_line=10
 log_per_lines=20000
 
 min_count=10
-positive_threhold=0.49
-negative_threhold=0.04
+positive_threhold=0.65
+negative_threhold=0.15
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 
 if [[ ${remove_model_dir} == '1' ]]; then

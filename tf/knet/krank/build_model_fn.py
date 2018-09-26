@@ -126,8 +126,8 @@ def krank_model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        bool_labels = tf.to_int32(labels > 0.42)  # 0.65*0.65
-        bool_scores = tf.to_int32(scores > 0.42)
+        bool_labels = tf.to_int32(labels > 0.6)
+        bool_scores = tf.to_int32(scores > 0.6)
         accuracy = tf.metrics.accuracy(labels=bool_labels,
                                        predictions=bool_scores)
         mse = tf.metrics.mean_squared_error(labels=labels,

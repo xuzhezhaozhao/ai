@@ -104,18 +104,14 @@ class FeaturePipline {
       // bool o1 = (rinfo1 < 30 && rinfo2 > rinfo1 * 0.8);
       // bool o2 = (rinfo1 >= 30 && rinfo2 > rinfo1 * 0.5);
       // label = o1 || o2;
-      float biases = 5.0;  // add a biases for video duration
-      if (rinfo1 > 6.0) {
-        label = std::min(1.0f, rinfo2 / (rinfo1 + biases));
-      }
+      float biases = 1.0;  // add a biases for video duration
+      label = std::min(1.0f, rinfo2 / (rinfo1 + biases));
     } else {
       // article effective reading
       // label = (rinfo1 > 0.9 || rinfo2 > 40);
       label = rinfo1;
     }
-    // use label^2 as the final label, because x^2 is sharper than x when x is
-    // close to 1.0
-    return label * label;
+    return label;
   }
 
   bool IsPositive(bool isvideo, float rinfo1, float rinfo2, float label) const {

@@ -117,13 +117,13 @@ class KrankInputOp : public OpKernel {
       positive_records.push_back(pos);
       negative_records.push_back(neg);
 
-      if (label < 0.1 * 0.1) {
+      if (label < 0.1) {
         ++num_label_level_1;
-      } else if (label < 0.3 * 0.3) {
+      } else if (label < 0.3) {
         ++num_label_level_2;
-      } else if (label < 0.5 * 0.5) {
+      } else if (label < 0.5) {
         ++num_label_level_3;
-      } else if (label < 0.8 * 0.8) {
+      } else if (label < 0.8) {
         ++num_label_level_4;
       } else {
         ++num_label_level_5;
