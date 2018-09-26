@@ -27,12 +27,12 @@ def krank_model_fn(features, labels, mode, params):
     rowkey_embedding_dim = opts.rowkey_embedding_dim
     rowkey_embeddings = get_rowkey_embeddings(params)
 
-    if not opts.target_use_share_embeddings:
-        target_rowkey_embeddings = get_target_rowkey_embeddings(params)
-        targte_rowkey_embedding_dim = opts.target_rowkey_embedding_dim
-    else:
+    if opts.target_use_share_embeddings:
         target_rowkey_embeddings = rowkey_embeddings
         targte_rowkey_embedding_dim = rowkey_embedding_dim
+    else:
+        target_rowkey_embeddings = get_target_rowkey_embeddings(params)
+        targte_rowkey_embedding_dim = opts.target_rowkey_embedding_dim
 
     positive_records = features[model_keys.POSITIVE_RECORDS_COL]
     negative_records = features[model_keys.NEGATIVE_RECORDS_COL]
@@ -47,9 +47,13 @@ def krank_model_fn(features, labels, mode, params):
                                          positive_records)
     negative_embeds_mean = non_zero_mean(rowkey_embeddings,
                                          rowkey_embedding_dim,
-                                         positive_records)
+                                         negative_records)
     targets_embeds = mask_padding_embedding_lookup(
         target_rowkey_embeddings, targte_rowkey_embedding_dim, targets, 0)
+
+    tf.summary.histgram('positive_embeds_mean', positive_embeds_mean)
+    tf.summary.histgram('negative_embeds_mean', negative_embeds_mean)
+    tf.summary.histgram('targets_embeds', targets_embeds)
 
     concat_features = [positive_embeds_mean,
                        negative_embeds_mean,
