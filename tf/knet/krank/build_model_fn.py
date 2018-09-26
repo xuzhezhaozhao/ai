@@ -74,18 +74,19 @@ def krank_model_fn(features, labels, mode, params):
     lr_dim = hidden.shape[-1].value
     lr_weights, lr_biases = get_lr_weights_and_biases(params, lr_dim)
     logits = tf.reduce_sum(hidden * lr_weights, 1) + lr_biases
+    scores = tf.nn.sigmoid(logits)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         predictions = {
             'logits': logits,
-            'score': tf.nn.sigmoid(logits),
+            'scores': scores,
         }
 
         export_outputs = {
             'predicts': tf.estimator.export.PredictOutput(
                 outputs={
                     'logits': logits,
-                    'score': tf.nn.sigmoid(logits),
+                    'scores': scores,
                 }
             )
         }
@@ -105,6 +106,9 @@ def krank_model_fn(features, labels, mode, params):
     if mode == tf.estimator.ModeKeys.TRAIN:
         optimizer = create_optimizer(params)
 
+        tf.summary.histogram('labels', labels)
+        tf.summary.histogram('scores', scores)
+
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
         with tf.control_dependencies(update_ops):
             gradients, variables = zip(*optimizer.compute_gradients(loss))
@@ -122,15 +126,14 @@ def krank_model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        score = tf.nn.sigmoid(logits)
         bool_labels = tf.to_int32(labels > 0.42)  # 0.65*0.65
-        bool_score = tf.to_int32(score > 0.42)
+        bool_scores = tf.to_int32(scores > 0.42)
         accuracy = tf.metrics.accuracy(labels=bool_labels,
-                                       predictions=bool_score)
+                                       predictions=bool_scores)
         mse = tf.metrics.mean_squared_error(labels=labels,
-                                            predictions=score)
+                                            predictions=scores)
         auc = tf.metrics.auc(labels=bool_labels,
-                             predictions=score,
+                             predictions=scores,
                              num_thresholds=opts.auc_num_thresholds)
 
         metrics = {
@@ -178,7 +181,7 @@ def get_target_rowkey_embeddings(params):
     dim = opts.target_rowkey_embedding_dim
 
     with tf.variable_scope("target_rowkey_embeddings", reuse=tf.AUTO_REUSE):
-        init_width = 1.0 / dim
+        init_width = 0.5 / dim
         embeddings = tf.get_variable(
             "embeddings",
             initializer=tf.random_uniform([num_rowkey, dim],
