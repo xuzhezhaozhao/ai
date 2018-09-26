@@ -25,10 +25,11 @@ def krank_model_fn(features, labels, mode, params):
 
     opts = params['opts']
     rowkey_embedding_dim = opts.rowkey_embedding_dim
-
     rowkey_embeddings = get_rowkey_embeddings(params)
 
-    if opts.target_use_share_embeddings:
+    # labels = tf.to_int32(labels > 0.65)
+
+    if not opts.target_use_share_embeddings:
         target_rowkey_embeddings = get_target_rowkey_embeddings(params)
         targte_rowkey_embedding_dim = opts.target_rowkey_embedding_dim
     else:
