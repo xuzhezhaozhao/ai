@@ -104,7 +104,7 @@ def krank_model_fn(features, labels, mode, params):
     binary_labels = tf.to_int32(labels >= opts.binary_label_threhold)
     if opts.use_binary_label:
         target_labels = binary_labels
-        tf.summary.histogram('binary_labels', target_labels)
+        tf.summary.histogram('binary_labels', binary_labels)
     ce_loss = tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
             labels=tf.cast(target_labels, tf.float32), logits=logits))
