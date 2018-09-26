@@ -24,6 +24,7 @@ parser.add_argument('--target_rowkey_embedding_dim',
                     default=100, type=int, help='')
 parser.add_argument('--target_use_share_embeddings',
                     default=1, type=int, help='')
+parser.add_argument('--target_skip_connection', default=0, type=int, help='')
 parser.add_argument('--train_ws', default=5, type=int, help='')
 parser.add_argument('--batch_size', default=64, type=int, help='')
 parser.add_argument('--eval_batch_size', default=64, type=int, help='')
@@ -110,6 +111,7 @@ def parse_args(argv):
     opts.rowkey_embedding_dim = args.rowkey_embedding_dim
     opts.target_rowkey_embedding_dim = args.target_rowkey_embedding_dim
     opts.target_use_share_embeddings = bool(args.target_use_share_embeddings)
+    opts.target_skip_connection = bool(args.target_skip_connection)
     opts.train_ws = args.train_ws
     opts.batch_size = args.batch_size
     opts.eval_batch_size = args.eval_batch_size

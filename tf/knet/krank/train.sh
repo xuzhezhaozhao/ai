@@ -18,7 +18,8 @@ feature_manager_path=${fe_dir}/feature_manager.bin
 lr=0.01
 rowkey_embedding_dim=64
 target_rowkey_embedding_dim=64
-target_use_share_embeddings=0
+target_use_share_embeddings=1  # bool value
+target_skip_connection=1  # bool value
 train_ws=20
 batch_size=32
 eval_batch_size=8192
@@ -26,7 +27,7 @@ max_train_steps=-1
 max_eval_steps=-1
 max_eval_steps_on_train_dataset=40000
 epoch=1
-hidden_units=""
+hidden_units="256"
 prefetch_size=20000
 shuffle_batch=1
 shuffle_size=50000
@@ -95,6 +96,7 @@ python main.py \
     --rowkey_embedding_dim ${rowkey_embedding_dim} \
     --target_rowkey_embedding_dim ${target_rowkey_embedding_dim} \
     --target_use_share_embeddings ${target_use_share_embeddings} \
+    --target_skip_connection ${target_skip_connection} \
     --train_ws ${train_ws} \
     --batch_size ${batch_size} \
     --eval_batch_size ${eval_batch_size} \

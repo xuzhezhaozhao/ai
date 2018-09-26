@@ -25,6 +25,7 @@ lr=0.1
 rowkey_embedding_dim=100
 target_rowkey_embedding_dim=64
 target_use_share_embeddings=1
+target_skip_connection=0  # bool value
 train_ws=50
 batch_size=128
 eval_batch_size=8192
@@ -101,6 +102,7 @@ python main.py \
     --rowkey_embedding_dim ${rowkey_embedding_dim} \
     --target_rowkey_embedding_dim ${target_rowkey_embedding_dim} \
     --target_use_share_embeddings ${target_use_share_embeddings} \
+    --target_skip_connection ${target_skip_connection} \
     --train_ws ${train_ws} \
     --batch_size ${batch_size} \
     --eval_batch_size ${eval_batch_size} \

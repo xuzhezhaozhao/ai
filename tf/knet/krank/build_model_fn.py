@@ -68,6 +68,9 @@ def krank_model_fn(features, labels, mode, params):
                     dropout=opts.dropout)
         num_in = units
 
+    if opts.target_skip_connection:
+        hidden = tf.concat([hidden, targets_embeds], 1)
+
     lr_dim = hidden.shape[-1].value
     lr_weights, lr_biases = get_lr_weights_and_biases(params, lr_dim)
     logits = tf.reduce_sum(hidden * lr_weights, 1) + lr_biases
@@ -153,7 +156,7 @@ def get_rowkey_embeddings(params):
     dim = opts.rowkey_embedding_dim
 
     with tf.variable_scope("rowkey_embeddings", reuse=tf.AUTO_REUSE):
-        init_width = 1.0 / dim
+        init_width = 0.5 / dim
         embeddings = tf.get_variable(
             "embeddings",
             initializer=tf.random_uniform([num_rowkey, dim],
@@ -221,9 +224,10 @@ def get_lr_weights_and_biases(params, dim):
     """Get logistic regression weights and biases."""
 
     with tf.variable_scope('logiistic_regression', reuse=tf.AUTO_REUSE):
+        init_width = 1.0 / dim
         weights = tf.get_variable(
             'weights',
-            initializer=tf.random_uniform([dim], -0.1, 0.1),
+            initializer=tf.random_uniform([dim], -init_width, init_width),
             regularizer=l2_regularizer(params))
         biases = tf.get_variable('biases', initializer=[0.0], dtype=tf.float32)
 
