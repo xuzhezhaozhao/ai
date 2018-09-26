@@ -90,8 +90,8 @@ def krank_model_fn(features, labels, mode, params):
             )
         }
 
-        return tf.estimator.EstimatorSpec(mode, predictions=predictions,
-                                          export_outputs=export_outputs)
+        return tf.estimator.EstimatorSpec(
+            mode, predictions=predictions, export_outputs=export_outputs)
 
     ce_loss = tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
@@ -124,8 +124,11 @@ def krank_model_fn(features, labels, mode, params):
     if mode == tf.estimator.ModeKeys.EVAL:
         score = tf.nn.sigmoid(logits)
         bool_labels = tf.to_int32(labels > 0.42)  # 0.65*0.65
+        bool_score = tf.to_int32(score > 0.42)
         accuracy = tf.metrics.accuracy(labels=bool_labels,
-                                       predictions=tf.to_int32(score > 0.42))
+                                       predictions=bool_score)
+        mse = tf.metrics.mean_squared_error(labels=labels,
+                                            predictions=score)
         auc = tf.metrics.auc(labels=bool_labels,
                              predictions=score,
                              num_thresholds=opts.auc_num_thresholds)
@@ -133,10 +136,11 @@ def krank_model_fn(features, labels, mode, params):
         metrics = {
             'accuracy': accuracy,
             'auc': auc,
+            'mse': mse,
         }
 
-        return tf.estimator.EstimatorSpec(mode, loss=loss,
-                                          eval_metric_ops=metrics)
+        return tf.estimator.EstimatorSpec(
+            mode, loss=loss, eval_metric_ops=metrics)
 
 
 def l2_regularizer(params):

@@ -71,7 +71,7 @@ optimizer_exponential_decay_staircase=0  # bool value
 evaluate_every_secs=180
 leaky_relu_alpha=0.0
 num_evaluate_target_per_line=10
-log_per_lines=10000
+log_per_lines=20000
 
 min_count=10
 positive_threhold=0.49

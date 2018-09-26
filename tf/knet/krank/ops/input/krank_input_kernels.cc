@@ -70,7 +70,7 @@ class KrankInputOp : public OpKernel {
       w = std::max(w, static_cast<int>(feature.actions.size()) -
                           num_evaluate_target_per_line_);
     }
-    for (w = 1; w < feature.actions.size(); ++w) {
+    for (; w < feature.actions.size(); ++w) {
       if (!feature.actions[w].isvideo) {
         // We don't predict article
         continue;
