@@ -95,7 +95,7 @@ def krank_model_fn(features, labels, mode, params):
 
     ce_loss = tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
-            labels=tf.cast(labels, tf.float32), logits=logits))
+            labels=labels, logits=logits))
     l2_loss = tf.losses.get_regularization_loss()
     loss = ce_loss + l2_loss
     tf.summary.scalar('ce_loss', ce_loss)
@@ -123,9 +123,10 @@ def krank_model_fn(features, labels, mode, params):
 
     if mode == tf.estimator.ModeKeys.EVAL:
         score = tf.nn.sigmoid(logits)
-        accuracy = tf.metrics.accuracy(labels=labels,
-                                       predictions=tf.to_int32(score > 0.5))
-        auc = tf.metrics.auc(labels=labels,
+        bool_labels = tf.to_int32(labels > 0.8)
+        accuracy = tf.metrics.accuracy(labels=bool_labels,
+                                       predictions=tf.to_int32(score > 0.8))
+        auc = tf.metrics.auc(labels=bool_labels,
                              predictions=score,
                              num_thresholds=opts.auc_num_thresholds)
 

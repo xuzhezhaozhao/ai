@@ -34,7 +34,7 @@ max_eval_steps=-1
 max_eval_steps_on_train_dataset=1000000
 epoch=1
 hidden_units=""
-prefetch_size=20000
+prefetch_size=40000
 shuffle_batch=1
 shuffle_size=50000
 save_summary_steps=10000
@@ -76,7 +76,7 @@ optimizer_exponential_decay_rate=0.96
 optimizer_exponential_decay_staircase=0  # bool value
 evaluate_every_secs=1800
 leaky_relu_alpha=0.1
-num_evaluate_target_per_line=5
+num_evaluate_target_per_line=10
 log_per_lines=200000
 
 min_count=50

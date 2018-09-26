@@ -59,7 +59,7 @@ class KrankInputOp : public OpKernel {
     std::vector<std::vector<int>> positive_records;
     std::vector<std::vector<int>> negative_records;
     std::vector<int64> targets;
-    std::vector<bool> labels;
+    std::vector<float> labels;
     std::uniform_int_distribution<> uniform(1, ws_);
 
     int w = 1;
@@ -93,7 +93,7 @@ class KrankInputOp : public OpKernel {
           // We ignore invalid id when constructing session feature.
           continue;
         }
-        if (feature.actions[b].label) {
+        if (feature.actions[b].label > 0.8) {
           pos.push_back(id);
         }
         if (feature.actions[b].unlike) {
@@ -153,7 +153,7 @@ class KrankInputOp : public OpKernel {
     auto matrix_positive_records = positive_records_tensor->matrix<int32>();
     auto matrix_negative_records = negative_records_tensor->matrix<int32>();
     auto flat_targets = targets_tensor->flat<int32>();
-    auto flat_labels = labels_tensor->flat<int32>();
+    auto flat_labels = labels_tensor->flat<float>();
 
     matrix_positive_records.setZero();
     matrix_negative_records.setZero();

@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <algorithm>
 
 #include "str_util.h"
 #include "stringpiece.h"
@@ -24,10 +25,10 @@ struct UserAction {
 };
 
 struct TransformedUserAction {
-  TransformedUserAction(int id_, bool label_, bool unlike_, bool isvideo_)
+  TransformedUserAction(int id_, float label_, bool unlike_, bool isvideo_)
       : id(id_), label(label_), unlike(unlike_), isvideo(isvideo_) {}
   int id;
-  bool label;
+  float label;
   bool unlike;
   bool isvideo;
 };
@@ -75,7 +76,7 @@ class FeaturePipline {
       bool isvideo = (tokens[1][0] == '1');
       float rinfo1 = std::stof(std::string(tokens[2]));
       float rinfo2 = std::stof(std::string(tokens[3]));
-      bool label = GetLabel(isvideo, rinfo1, rinfo2);
+      float label = GetLabel(isvideo, rinfo1, rinfo2);
       bool unlike = GetUnlike(isvideo, rinfo1, rinfo2);
 
       TransformedUserAction action(id, label, unlike, isvideo);
@@ -85,18 +86,23 @@ class FeaturePipline {
     return transformed_feature;
   }
 
-  bool GetLabel(bool isvideo, float rinfo1, float rinfo2) const {
-    bool label = false;
+  float GetLabel(bool isvideo, float rinfo1, float rinfo2) const {
+    float label = 0.0;
     if (isvideo) {
       // video effective play
-      bool o1 = (rinfo1 < 30 && rinfo2 > rinfo1 * 0.8);
-      bool o2 = (rinfo1 >= 30 && rinfo2 > rinfo1 * 0.5);
-      label = o1 || o2;
+      //bool o1 = (rinfo1 < 30 && rinfo2 > rinfo1 * 0.8);
+      //bool o2 = (rinfo1 >= 30 && rinfo2 > rinfo1 * 0.5);
+      //label = o1 || o2;
+      float biases = 5.0;
+      if (rinfo1 > 6.0) {
+        label = std::min(1.0f, rinfo2 / (rinfo1 + biases));
+      }
     } else {
       // article effective reading
-      label = (rinfo1 > 0.9 || rinfo2 > 40);
+      //label = (rinfo1 > 0.9 || rinfo2 > 40);
+      label = rinfo1;
     }
-    return label;
+    return label * label;
   }
 
   bool GetUnlike(bool isvideo, float rinfo1, float rinfo2) const {
@@ -113,7 +119,7 @@ class FeaturePipline {
     TransformedFeature transformed_feature;
     for (auto& action : feature.actions) {
       int id = rowkey_indexer_.transform(action.rowkey).as_integer();
-      bool label = GetLabel(action.isvideo, action.rinfo1, action.rinfo2);
+      float label = GetLabel(action.isvideo, action.rinfo1, action.rinfo2);
       bool unlike = GetUnlike(action.isvideo, action.rinfo1, action.rinfo2);
       transformed_feature.actions.push_back(
           {id, label, unlike, action.isvideo});

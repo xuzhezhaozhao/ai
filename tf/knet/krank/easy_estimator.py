@@ -235,12 +235,13 @@ class EasyEstimator(tf.estimator.Estimator):
                                      > evaluate_every_secs)):
             self._save_checkpoint(sess, global_steps, saver)
             self._wait_evaluation = True
-            tf.logging.info('{} Starting evaluation ...'
+            tf.logging.info('{} Starting evaluation [in training] ...'
                             .format(datetime.now()))
             self.evaluate(
                 input_fn=evaluate_input_fn,
                 steps=evaluate_steps)
-            tf.logging.info('{} Evaluation OK'.format(datetime.now()))
+            tf.logging.info('{} Evaluation OK [in training].'
+                            .format(datetime.now()))
             self._last_evaluate_time = time.time()  # evaluate took time
             self._wait_evaluation = False
 
