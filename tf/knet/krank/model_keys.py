@@ -26,3 +26,10 @@ class OptimizerType(object):
     RMSPROP = 'rmsprop'
     MOMENTUM = 'momentum'
     FTRL = 'ftrl'
+
+
+class LossType(object):
+    """Loss type."""
+
+    CE = 'ce'
+    MSE = 'mse'

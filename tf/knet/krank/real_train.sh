@@ -80,6 +80,7 @@ num_evaluate_target_per_line=10
 log_per_lines=200000
 use_binary_label=1
 binary_label_threhold=0.65
+loss_type='mse'
 
 min_count=50
 positive_threhold=0.49
@@ -163,4 +164,5 @@ python main.py \
     --num_evaluate_target_per_line ${num_evaluate_target_per_line} \
     --log_per_lines ${log_per_lines} \
     --use_binary_label ${use_binary_label} \
-    --binary_label_threhold ${binary_label_threhold}
+    --binary_label_threhold ${binary_label_threhold} \
+    --loss_type ${loss_type}

@@ -105,12 +105,20 @@ def krank_model_fn(features, labels, mode, params):
     if opts.use_binary_label:
         target_labels = binary_labels
         tf.summary.histogram('binary_labels', binary_labels)
-    ce_loss = tf.reduce_mean(
-        tf.nn.sigmoid_cross_entropy_with_logits(
-            labels=tf.cast(target_labels, tf.float32), logits=logits))
+
+    if opts.loss_type == model_keys.LossType.CE:
+        m_loss = tf.reduce_mean(
+            tf.nn.sigmoid_cross_entropy_with_logits(
+                labels=tf.cast(target_labels, tf.float32), logits=logits))
+    elif opts.loss_type == model_keys.LossType.MSE:
+        m_loss = tf.reduce_mean(tf.losses.mean_squared_error(
+            labels=tf.cast(target_labels, tf.float32), predictions=scores))
+    else:
+        raise ValueError("Unsurpported loss type.")
+
     l2_loss = tf.losses.get_regularization_loss()
-    loss = ce_loss + l2_loss
-    tf.summary.scalar('ce_loss', ce_loss)
+    loss = m_loss + l2_loss
+    tf.summary.scalar('m_loss', m_loss)
     tf.summary.scalar('l2_loss', l2_loss)
     tf.summary.scalar('total_loss', loss)
 
