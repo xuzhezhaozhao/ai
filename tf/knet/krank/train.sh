@@ -51,7 +51,7 @@ optimizer_adadelta_rho=0.95
 optimizer_adam_beta1=0.9
 optimizer_adam_beta2=0.999
 optimizer_rmsprop_decay=0.9
-optimizer_rmsprop_momentum=0.0
+optimizer_rmsprop_momentum=0.01
 optimizer_rmsprop_centered=0  # bool value
 optimizer_momentum_momentum=0.90
 optimizer_momentum_use_nesterov=0 # bool value
@@ -74,11 +74,11 @@ num_evaluate_target_per_line=10
 log_per_lines=20000
 use_binary_label=0
 binary_label_threhold=0.65
-loss_type='mse'
+loss_type='ce'  # ce, mse
 
 min_count=10
-positive_threhold=0.65
-negative_threhold=0.15
+positive_threhold=0.70
+negative_threhold=0.10
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 
 if [[ ${remove_model_dir} == '1' ]]; then
