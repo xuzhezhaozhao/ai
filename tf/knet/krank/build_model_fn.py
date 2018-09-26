@@ -27,8 +27,6 @@ def krank_model_fn(features, labels, mode, params):
     rowkey_embedding_dim = opts.rowkey_embedding_dim
     rowkey_embeddings = get_rowkey_embeddings(params)
 
-    # labels = tf.to_int32(labels > 0.65)
-
     if not opts.target_use_share_embeddings:
         target_rowkey_embeddings = get_target_rowkey_embeddings(params)
         targte_rowkey_embedding_dim = opts.target_rowkey_embedding_dim
@@ -77,6 +75,9 @@ def krank_model_fn(features, labels, mode, params):
     logits = tf.reduce_sum(hidden * lr_weights, 1) + lr_biases
     scores = tf.nn.sigmoid(logits)
 
+    tf.summary.histogram('labels', labels)
+    tf.summary.histogram('scores', scores)
+
     if mode == tf.estimator.ModeKeys.PREDICT:
         predictions = {
             'logits': logits,
@@ -95,9 +96,14 @@ def krank_model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(
             mode, predictions=predictions, export_outputs=export_outputs)
 
+    target_labels = labels
+    binary_labels = tf.to_int32(labels >= opts.binary_label_threhold)
+    if opts.use_binary_label:
+        target_labels = binary_labels
+        tf.summary.histogram('binary_labels', target_labels)
     ce_loss = tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
-            labels=labels, logits=logits))
+            labels=tf.cast(target_labels, tf.float32), logits=logits))
     l2_loss = tf.losses.get_regularization_loss()
     loss = ce_loss + l2_loss
     tf.summary.scalar('ce_loss', ce_loss)
@@ -106,9 +112,6 @@ def krank_model_fn(features, labels, mode, params):
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         optimizer = create_optimizer(params)
-
-        tf.summary.histogram('labels', labels)
-        tf.summary.histogram('scores', scores)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
         with tf.control_dependencies(update_ops):
@@ -127,13 +130,12 @@ def krank_model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        bool_labels = tf.to_int32(labels > 0.6)
-        bool_scores = tf.to_int32(scores > 0.6)
-        accuracy = tf.metrics.accuracy(labels=bool_labels,
+        bool_scores = tf.to_int32(scores > 0.5)
+        accuracy = tf.metrics.accuracy(labels=binary_labels,
                                        predictions=bool_scores)
         mse = tf.metrics.mean_squared_error(labels=labels,
                                             predictions=scores)
-        auc = tf.metrics.auc(labels=bool_labels,
+        auc = tf.metrics.auc(labels=binary_labels,
                              predictions=scores,
                              num_thresholds=opts.auc_num_thresholds)
 

@@ -29,7 +29,7 @@ target_skip_connection=0  # bool value
 train_ws=50
 batch_size=128
 eval_batch_size=8192
-max_train_steps=-1
+max_train_steps=15000000
 max_eval_steps=-1
 max_eval_steps_on_train_dataset=1000000
 epoch=1
@@ -78,6 +78,8 @@ evaluate_every_secs=1800
 leaky_relu_alpha=0.1
 num_evaluate_target_per_line=10
 log_per_lines=200000
+use_binary_label=1
+binary_label_threhold=0.65
 
 min_count=50
 positive_threhold=0.49
@@ -159,4 +161,6 @@ python main.py \
     --evaluate_every_secs ${evaluate_every_secs} \
     --leaky_relu_alpha ${leaky_relu_alpha} \
     --num_evaluate_target_per_line ${num_evaluate_target_per_line} \
-    --log_per_lines ${log_per_lines}
+    --log_per_lines ${log_per_lines} \
+    --use_binary_label ${use_binary_label} \
+    --binary_label_threhold ${binary_label_threhold}

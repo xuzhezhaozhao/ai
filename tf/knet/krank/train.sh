@@ -15,7 +15,7 @@ rowkey_count_path=../../../data/krank_rowkey_count.csv
 train_data_path=../../../data/krank_train_data.in
 eval_data_path=../../../data/krank_eval_data.in
 feature_manager_path=${fe_dir}/feature_manager.bin
-lr=0.001
+lr=0.01
 rowkey_embedding_dim=100
 target_rowkey_embedding_dim=100
 target_use_share_embeddings=1  # bool value
@@ -27,7 +27,7 @@ max_train_steps=-1
 max_eval_steps=-1
 max_eval_steps_on_train_dataset=40000
 epoch=1
-hidden_units="256,128"
+hidden_units="256,256"
 prefetch_size=20000
 shuffle_batch=1
 shuffle_size=50000
@@ -45,7 +45,7 @@ inference_num_targets=200
 train_parallel_mode='multi_thread'
 train_num_parallel=4
 # 'adagrad', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
-optimizer_type='sgd'
+optimizer_type='adagrad'
 optimizer_epsilon=0.00001
 optimizer_adadelta_rho=0.95
 optimizer_adam_beta1=0.9
@@ -53,7 +53,7 @@ optimizer_adam_beta2=0.999
 optimizer_rmsprop_decay=0.9
 optimizer_rmsprop_momentum=0.0
 optimizer_rmsprop_centered=0  # bool value
-optimizer_momentum_momentum=0.99
+optimizer_momentum_momentum=0.90
 optimizer_momentum_use_nesterov=0 # bool value
 optimizer_ftrl_lr_power=-0.5
 optimizer_ftrl_initial_accumulator_value=0.1
@@ -65,13 +65,15 @@ clip_gradients_norm=1.0
 l2_regularizer=0.0
 use_early_stopping=0
 auc_num_thresholds=1000
-optimizer_exponential_decay_steps=10000
+optimizer_exponential_decay_steps=1000
 optimizer_exponential_decay_rate=0.96
 optimizer_exponential_decay_staircase=0  # bool value
 evaluate_every_secs=180
 leaky_relu_alpha=0.0
 num_evaluate_target_per_line=10
 log_per_lines=20000
+use_binary_label=1
+binary_label_threhold=0.65
 
 min_count=10
 positive_threhold=0.65
@@ -153,4 +155,6 @@ python main.py \
     --evaluate_every_secs ${evaluate_every_secs} \
     --leaky_relu_alpha ${leaky_relu_alpha} \
     --num_evaluate_target_per_line ${num_evaluate_target_per_line} \
-    --log_per_lines ${log_per_lines}
+    --log_per_lines ${log_per_lines} \
+    --use_binary_label ${use_binary_label} \
+    --binary_label_threhold ${binary_label_threhold}

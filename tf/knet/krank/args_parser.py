@@ -98,6 +98,9 @@ parser.add_argument('--leaky_relu_alpha', default=0.3, type=float, help='')
 parser.add_argument('--num_evaluate_target_per_line',
                     default=1, type=int, help='')
 parser.add_argument('--log_per_lines', default=10000, type=int, help='')
+parser.add_argument('--use_binary_label', default=1, type=int, help='')
+parser.add_argument('--binary_label_threhold',
+                    default=0.5, type=float, help='')
 
 opts = Options()
 
@@ -185,6 +188,8 @@ def parse_args(argv):
     opts.leaky_relu_alpha = args.leaky_relu_alpha
     opts.num_evaluate_target_per_line = args.num_evaluate_target_per_line
     opts.log_per_lines = args.log_per_lines
+    opts.use_binary_label = bool(args.use_binary_label)
+    opts.binary_label_threhold = args.binary_label_threhold
 
     opts.num_rowkey = 1 + len([line for line in open(opts.rowkey_dict_path)
                                if line != ''])  # plus one for padding
