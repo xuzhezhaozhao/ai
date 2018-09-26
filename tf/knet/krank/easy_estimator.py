@@ -47,13 +47,13 @@ class EasyEstimator(tf.estimator.Estimator):
                     self._model_dir)
                 if max_steps <= start_step:
                     tf.logging.info('Skipping training since max_steps '
-                                    'has already saved.')
+                                    'has already saved.\n')
                     return self
 
             loss = self._easy_train_model(input_fn, steps, max_steps,
                                           evaluate_every_secs,
                                           evaluate_input_fn, evaluate_steps)
-            tf.logging.info('Loss for final step: %s.', loss)
+            tf.logging.info('Loss for final step: %s.\n', loss)
             return self
 
     def _easy_train_model(self, input_fn, steps, max_steps,
@@ -145,7 +145,7 @@ class EasyEstimator(tf.estimator.Estimator):
 
         tf.logging.info('Calling model_fn.')
         model_fn_results = self._model_fn(features=features, **kwargs)
-        tf.logging.info('Done calling model_fn.')
+        tf.logging.info('Done calling model_fn.\n')
 
         if not isinstance(model_fn_results, tf.estimator.EstimatorSpec):
             raise ValueError('model_fn should return an EstimatorSpec.')
@@ -235,12 +235,12 @@ class EasyEstimator(tf.estimator.Estimator):
                                      > evaluate_every_secs)):
             self._save_checkpoint(sess, global_steps, saver)
             self._wait_evaluation = True
-            tf.logging.info('{} Starting evaluation [in training] ...'
+            tf.logging.info('\n{} Starting evaluation [in training] ...'
                             .format(datetime.now()))
             self.evaluate(
                 input_fn=evaluate_input_fn,
                 steps=evaluate_steps)
-            tf.logging.info('{} Evaluation OK [in training].'
+            tf.logging.info('{} Evaluation OK [in training].\n'
                             .format(datetime.now()))
             self._last_evaluate_time = time.time()  # evaluate took time
             self._wait_evaluation = False

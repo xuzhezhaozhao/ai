@@ -79,9 +79,6 @@ def krank_model_fn(features, labels, mode, params):
     logits = tf.reduce_sum(hidden * lr_weights, 1) + lr_biases
     scores = tf.nn.sigmoid(logits)
 
-    tf.summary.histogram('labels', labels)
-    tf.summary.histogram('scores', scores)
-
     if mode == tf.estimator.ModeKeys.PREDICT:
         predictions = {
             'logits': logits,
@@ -99,6 +96,9 @@ def krank_model_fn(features, labels, mode, params):
 
         return tf.estimator.EstimatorSpec(
             mode, predictions=predictions, export_outputs=export_outputs)
+
+    tf.summary.histogram('labels', labels)
+    tf.summary.histogram('scores', scores)
 
     target_labels = labels
     binary_labels = tf.to_int32(labels >= opts.binary_label_threhold)

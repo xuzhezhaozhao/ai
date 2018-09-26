@@ -61,7 +61,7 @@ def train_and_eval_in_local_mode(opts):
     result = opts.estimator.evaluate(
         input_fn=input_data.input_fn(opts, opts.eval_data_path, True),
         steps=opts.max_eval_steps)
-    tf.logging.info("Evaluate model in test dataset OK [startup]")
+    tf.logging.info("Evaluate model in test dataset OK [startup]\n")
 
     tf.logging.info("Training model ...")
     build_model_fn.clear_model_fn_times()
@@ -78,20 +78,20 @@ def train_and_eval_in_local_mode(opts):
         opts.estimator.train(
             input_fn=input_data.input_fn(opts, opts.train_data_path, False, 1),
             max_steps=opts.max_train_steps)
-    tf.logging.info("Train model OK")
+    tf.logging.info("Train model OK\n")
 
     # evaluate model
     tf.logging.info("Evaluating model in train dataset ...")
     result = opts.estimator.evaluate(
         input_fn=input_data.input_fn(opts, opts.train_data_path, True),
         steps=opts.max_eval_steps_on_train_dataset)
-    tf.logging.info("Evaluate model in train dataset OK")
+    tf.logging.info("Evaluate model in train dataset OK\n")
 
     tf.logging.info("Evaluating model in test dataset ...")
     result = opts.estimator.evaluate(
         input_fn=input_data.input_fn(opts, opts.eval_data_path, True),
         steps=opts.max_eval_steps)
-    tf.logging.info("Evaluate model in test dataset OK")
+    tf.logging.info("Evaluate model in test dataset OK\n")
 
     return result
 
@@ -104,7 +104,7 @@ def export_model_in_local_mode(opts):
     opts.estimator.export_savedmodel(
         opts.export_model_dir,
         serving_input_receiver_fn=input_data.build_serving_input_fn(opts))
-    tf.logging.info("Export model OK")
+    tf.logging.info("Export model OK\n")
 
 
 def train(opts, export=True):
