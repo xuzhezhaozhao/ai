@@ -80,16 +80,18 @@ def krank_model_fn(features, labels, mode, params):
     scores = tf.nn.sigmoid(logits)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
+        table = create_index_to_string_table(opts.rowkey_dict_path)
+        rowkeys = table.lookup(tf.cast(targets, tf.int64))
         predictions = {
-            'logits': logits,
             'scores': scores,
+            'rowkeys': rowkeys,
         }
 
         export_outputs = {
             'predicts': tf.estimator.export.PredictOutput(
                 outputs={
-                    'logits': logits,
                     'scores': scores,
+                    'rowkeys': rowkeys,
                 }
             )
         }
@@ -360,3 +362,16 @@ def create_optimizer(params):
                              .format(optimizer_type))
 
     return optimizer
+
+
+def create_index_to_string_table(dict_file):
+    """Create index to string[rowkey] table."""
+
+    words = [line.strip() for line in open(dict_file) if line.strip() != '']
+    words.insert(0, '')
+    tf.logging.info("create_index_to_string_table size={}".format(len(words)))
+    table = tf.contrib.lookup.index_to_string_table_from_tensor(
+        mapping=words,
+        default_value='',
+        name="index_to_string_table")
+    return table

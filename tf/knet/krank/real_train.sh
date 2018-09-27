@@ -81,11 +81,11 @@ log_per_lines=200000
 use_binary_label=0
 binary_label_threhold=0.65
 loss_type='ce'
+rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 
 min_count=50
 positive_threhold=0.70
 negative_threhold=0.10
-rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 
 if [[ ${remove_model_dir} == '1' ]]; then
     rm -rf ${model_dir}
