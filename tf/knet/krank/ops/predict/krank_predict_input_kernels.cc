@@ -23,10 +23,10 @@ class KrankPredictInputOp : public OpKernel {
       : OpKernel(ctx), feature_manager_(), ws_(0) {
     LOG(INFO) << "Init KrankPredictInputOp ...";
 
-    std::string fm_path;
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("feature_manager_path", &fm_path));
+    std::string fm;
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("feature_manager", &fm));
     OP_REQUIRES_OK(ctx, ctx->GetAttr("ws", &ws_));
-    feature_manager_.load(fm_path);
+    feature_manager_.load_from_string(fm);
 
     LOG(INFO) << "Init KrankPredictInputOp OK";
   }

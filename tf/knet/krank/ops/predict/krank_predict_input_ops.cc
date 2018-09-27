@@ -12,7 +12,7 @@ REGISTER_OP("KrankPredictInput")
     .Output("negative_records: int32")
     .Output("targets: int32")
     .SetIsStateful()
-    .Attr("feature_manager_path: string = ''")
+    .Attr("feature_manager: string = ''")
     .Attr("ws: int = 5")
     .Doc(R"doc(
 )doc");

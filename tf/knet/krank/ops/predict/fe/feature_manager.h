@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <sstream>
 
 #include "str_util.h"
 #include "stringpiece.h"
@@ -162,7 +163,7 @@ class FeaturePipline {
     out.write((char*)&positive_threshold_, sizeof(float));
     out.write((char*)&negative_threshold_, sizeof(float));
   }
-  void load(std::ifstream& in) {
+  void load(std::istream& in) {
     rowkey_indexer_.load(in);
     in.read((char*)&positive_threshold_, sizeof(float));
     in.read((char*)&negative_threshold_, sizeof(float));
@@ -224,6 +225,11 @@ class FeatureManager {
       exit(-1);
     }
     feature_pipline_.load(ifs);
+  }
+
+  void load_from_string(const std::string& fm) {
+    std::istringstream ss(fm);
+    feature_pipline_.load(ss);
   }
 
   void dump_rowkeys(const std::string& filename) const {

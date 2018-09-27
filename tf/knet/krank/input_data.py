@@ -136,6 +136,8 @@ def build_serving_input_fn(opts):
         receiver_tensors = {'examples': serialized_tf_example}
         features = tf.parse_example(serialized_tf_example, feature_spec)
 
+        f = open(opts.feature_manager_path, 'rb')
+        fe = f.read()
         (positive_records, negative_records,
          targets) = custom_ops.krank_predict_input(
              watched_rowkeys=features['watched_rowkeys'],
@@ -143,7 +145,7 @@ def build_serving_input_fn(opts):
              rinfo2=features['rinfo2'],
              target_rowkeys=features['target_rowkeys'],
              is_video=features['is_video'],
-             feature_manager_path=opts.feature_manager_path,
+             feature_manager=fe,
              ws=opts.train_ws)
         features[model_keys.POSITIVE_RECORDS_COL] = positive_records
         features[model_keys.NEGATIVE_RECORDS_COL] = negative_records

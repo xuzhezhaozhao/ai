@@ -101,9 +101,14 @@ def export_model_in_local_mode(opts):
 
     # export model
     tf.logging.info("Beginning export model ...")
+
+    assets_extra = {}
+    assets_extra['feature_manager.bin'] = opts.feature_manager_path
+    assets_extra['rowkey_dict.txt'] = opts.rowkey_dict_path
     opts.estimator.export_savedmodel(
         opts.export_model_dir,
-        serving_input_receiver_fn=input_data.build_serving_input_fn(opts))
+        serving_input_receiver_fn=input_data.build_serving_input_fn(opts),
+        assets_extra=assets_extra)
     tf.logging.info("Export model OK\n")
 
 
