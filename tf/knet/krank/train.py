@@ -73,7 +73,7 @@ def train_and_eval_in_local_mode(opts):
             evaluate_every_secs=opts.evaluate_every_secs,
             evaluate_input_fn=input_data.input_fn(
                 opts, opts.eval_data_path, True),
-            steps=opts.max_eval_steps)
+            evaluate_steps=opts.max_eval_steps)
     else:
         opts.estimator.train(
             input_fn=input_data.input_fn(opts, opts.train_data_path, False, 1),
