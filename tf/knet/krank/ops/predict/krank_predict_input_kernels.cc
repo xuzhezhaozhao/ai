@@ -61,6 +61,7 @@ class KrankPredictInputOp : public OpKernel {
     Tensor* positive_records_tensor = NULL;
     Tensor* negative_records_tensor = NULL;
     Tensor* targets_tensor = NULL;
+    Tensor* is_target_in_dict_tensor = NULL;
     TensorShape positive_records_shape;
     positive_records_shape.AddDim(batch_size * targets_size);
     positive_records_shape.AddDim(ws_);
@@ -73,14 +74,18 @@ class KrankPredictInputOp : public OpKernel {
     targets_shape.AddDim(batch_size * targets_size);
     OP_REQUIRES_OK(ctx,
                    ctx->allocate_output(2, targets_shape, &targets_tensor));
+    OP_REQUIRES_OK(
+        ctx, ctx->allocate_output(3, targets_shape, &is_target_in_dict_tensor));
 
     auto matrix_positive_records = positive_records_tensor->matrix<int32>();
     auto matrix_negative_records = negative_records_tensor->matrix<int32>();
     auto flat_targets = targets_tensor->flat<int32>();
+    auto flat_is_target_in_dict = is_target_in_dict_tensor->flat<int32>();
 
     matrix_positive_records.setZero();
     matrix_negative_records.setZero();
     flat_targets.setZero();
+    flat_is_target_in_dict.setZero();
 
     for (int b = 0; b < batch_size; ++b) {
       fe::RawFeature raw_feature;
@@ -101,6 +106,8 @@ class KrankPredictInputOp : public OpKernel {
         int index = b * targets_size + i;
         int id = feature_manager_.getRowkeyId(matrix_target_rowkeys(b, i));
         flat_targets(index) = id;
+        flat_is_target_in_dict(index) = (id == 0 ? 0 : 1);
+
         int added = 0;
         for (int w = 0; w < feature.actions.size(); ++w) {
           if (added >= ws_) {

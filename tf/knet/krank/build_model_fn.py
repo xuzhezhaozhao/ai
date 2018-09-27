@@ -80,22 +80,16 @@ def krank_model_fn(features, labels, mode, params):
     scores = tf.nn.sigmoid(logits)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
-        table = create_index_to_string_table(opts.rowkey_dict_path)
-        rowkeys = table.lookup(tf.cast(targets, tf.int64))
-        predictions = {
+        is_target_in_dict = features[model_keys.IS_TARGET_IN_DICT_COL]
+        retdict = {
             'scores': scores,
-            'rowkeys': rowkeys,
+            'rowkeys': features[model_keys.TARGET_ROWKEYS_COL],
+            model_keys.IS_TARGET_IN_DICT_COL: is_target_in_dict,
         }
-
+        predictions = retdict
         export_outputs = {
-            'predicts': tf.estimator.export.PredictOutput(
-                outputs={
-                    'scores': scores,
-                    'rowkeys': rowkeys,
-                }
-            )
+            'predicts': tf.estimator.export.PredictOutput(outputs=retdict)
         }
-
         return tf.estimator.EstimatorSpec(
             mode, predictions=predictions, export_outputs=export_outputs)
 
@@ -362,16 +356,3 @@ def create_optimizer(params):
                              .format(optimizer_type))
 
     return optimizer
-
-
-def create_index_to_string_table(dict_file):
-    """Create index to string[rowkey] table."""
-
-    words = [line.strip() for line in open(dict_file) if line.strip() != '']
-    words.insert(0, '')
-    tf.logging.info("create_index_to_string_table size={}".format(len(words)))
-    table = tf.contrib.lookup.index_to_string_table_from_tensor(
-        mapping=words,
-        default_value='',
-        name="index_to_string_table")
-    return table

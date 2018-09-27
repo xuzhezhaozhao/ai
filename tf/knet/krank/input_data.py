@@ -139,17 +139,18 @@ def build_serving_input_fn(opts):
         f = open(opts.feature_manager_path, 'rb')
         fe = f.read()
         (positive_records, negative_records,
-         targets) = custom_ops.krank_predict_input(
+         targets, is_target_in_dict) = custom_ops.krank_predict_input(
              watched_rowkeys=features['watched_rowkeys'],
              rinfo1=features['rinfo1'],
              rinfo2=features['rinfo2'],
-             target_rowkeys=features['target_rowkeys'],
+             target_rowkeys=features[model_keys.TARGET_ROWKEYS_COL],
              is_video=features['is_video'],
              feature_manager=fe,
              ws=opts.train_ws)
         features[model_keys.POSITIVE_RECORDS_COL] = positive_records
         features[model_keys.NEGATIVE_RECORDS_COL] = negative_records
         features[model_keys.TARGETS_COL] = targets
+        features[model_keys.IS_TARGET_IN_DICT_COL] = is_target_in_dict
 
         return tf.estimator.export.ServingInputReceiver(
             features, receiver_tensors)
