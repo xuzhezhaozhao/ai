@@ -81,10 +81,14 @@ def krank_model_fn(features, labels, mode, params):
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         is_target_in_dict = features[model_keys.IS_TARGET_IN_DICT_COL]
+        num_positive = features[model_keys.NUM_POSITIVE_COL]
+        num_negative = features[model_keys.NUM_NEGATIVE_COl]
         retdict = {
             'scores': scores,
             'rowkeys': features[model_keys.TARGET_ROWKEYS_COL],
             model_keys.IS_TARGET_IN_DICT_COL: is_target_in_dict,
+            model_keys.NUM_POSITIVE_COL: num_positive,
+            model_keys.NUM_NEGATIVE_COl: num_negative,
         }
         predictions = retdict
         export_outputs = {

@@ -62,6 +62,8 @@ class KrankPredictInputOp : public OpKernel {
     Tensor* negative_records_tensor = NULL;
     Tensor* targets_tensor = NULL;
     Tensor* is_target_in_dict_tensor = NULL;
+    Tensor* num_positive_tensor = NULL;
+    Tensor* num_negative_tensor = NULL;
     TensorShape positive_records_shape;
     positive_records_shape.AddDim(batch_size * targets_size);
     positive_records_shape.AddDim(ws_);
@@ -77,15 +79,24 @@ class KrankPredictInputOp : public OpKernel {
     OP_REQUIRES_OK(
         ctx, ctx->allocate_output(3, targets_shape, &is_target_in_dict_tensor));
 
+    TensorShape num_shape;
+    num_shape.AddDim(batch_size);
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(4, num_shape, &num_positive_tensor));
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(5, num_shape, &num_negative_tensor));
+
     auto matrix_positive_records = positive_records_tensor->matrix<int32>();
     auto matrix_negative_records = negative_records_tensor->matrix<int32>();
     auto flat_targets = targets_tensor->flat<int32>();
     auto flat_is_target_in_dict = is_target_in_dict_tensor->flat<int32>();
+    auto flat_num_positive = num_positive_tensor->flat<int32>();
+    auto flat_num_negative = num_negative_tensor->flat<int32>();
 
     matrix_positive_records.setZero();
     matrix_negative_records.setZero();
     flat_targets.setZero();
     flat_is_target_in_dict.setZero();
+    flat_num_positive.setZero();
+    flat_num_negative.setZero();
 
     for (int b = 0; b < batch_size; ++b) {
       fe::RawFeature raw_feature;
@@ -122,6 +133,7 @@ class KrankPredictInputOp : public OpKernel {
             ++added;
           }
         }
+        flat_num_positive(b) = added;
 
         added = 0;
         for (int w = 0; w < feature.actions.size(); ++w) {
@@ -137,6 +149,7 @@ class KrankPredictInputOp : public OpKernel {
             ++added;
           }
         }
+        flat_num_negative(b) = added;
       }
     }
   }

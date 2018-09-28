@@ -9,6 +9,8 @@ NEGATIVE_RECORDS_COL = 'negative_records'
 TARGETS_COL = 'targets'
 TARGET_ROWKEYS_COL = 'target_rowkeys'
 IS_TARGET_IN_DICT_COL = 'is_target_in_dict'
+NUM_POSITIVE_COL = 'num_positive'
+NUM_NEGATIVE_COl = 'num_negative'
 
 
 class TrainParallelMode(object):

@@ -14,7 +14,7 @@ feature_manager_path = '../../fe_dir/feature_manager.bin'
 
 f = open(feature_manager_path, 'rb')
 fe = f.read()
-[out1, out2, out3, out4] = krank_predict_input_ops.krank_predict_input(
+[out1, out2, out3, out4, out5, out6] = krank_predict_input_ops.krank_predict_input(
     watched_rowkeys=[[
         '8575b81e0d8430aj',
         '2975b795930848ah',
@@ -28,16 +28,18 @@ fe = f.read()
         '2415b7d59f8191ah',
     ]],
     rinfo1=[[10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]],
-    rinfo2=[[10.0, 10.0, 1.0, 10.0, 10.0, 1.0, 10.0, 10.0, 1.0, 10.0]],
+    rinfo2=[[10.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, .0, 0.0]],
     target_rowkeys=[['abc', '9575b9ce38d299ah', 'abc']],
     is_video=[[True, True, True, True, True, True, True, True, True, True]],
     feature_manager=fe,
     ws=3
 )
 
-out1, out2, out3, out4 = sess.run([out1, out2, out3, out4])
+out1, out2, out3, out4, out5, out6 = sess.run([out1, out2, out3, out4, out5, out6])
 
 print("positive records: \n", out1)
 print("negative records: \n", out2)
 print("targets: \n", out3)
 print("is_target_in_dict: \n", out4)
+print("num_positive: \n", out5)
+print("num_negative: \n", out6)
