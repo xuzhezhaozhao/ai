@@ -80,10 +80,13 @@ rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 min_count=10
 positive_threhold=0.85
 negative_threhold=0.30
+video_duration_biases=1.0
 
 if [[ ${remove_model_dir} == '1' ]]; then
     rm -rf ${model_dir}.bak
-    mv ${model_dir} ${model_dir}.bak
+    if [[ -d ${model_dir} ]]; then
+        mv ${model_dir} ${model_dir}.bak
+    fi
 fi
 
 mkdir -p ${fe_dir}
@@ -93,6 +96,7 @@ echo "Preprocess features ..."
     ${min_count} \
     ${positive_threhold} \
     ${negative_threhold} \
+    ${video_duration_biases} \
     ${feature_manager_path} \
     ${rowkey_dict_path}
 

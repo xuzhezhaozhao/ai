@@ -4,8 +4,8 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <string>
 #include <sstream>
+#include <string>
 
 #include "str_util.h"
 #include "stringpiece.h"
@@ -51,11 +51,13 @@ struct TransformedFeature {
 class FeaturePipline {
  public:
   FeaturePipline(int min_count = 0, float positive_threshold = 0.49f,
-                 float negative_threshold = 0.04f)
+                 float negative_threshold = 0.04f,
+                 float video_duration_biases = 1.0f)
       : rowkey_indexer_(min_count, cppml::MinCountStringIndexer::MODE::COUNTER),
         processed_lines_(0),
         positive_threshold_(positive_threshold),
-        negative_threshold_(negative_threshold) {}
+        negative_threshold_(negative_threshold),
+        video_duration_biases_(video_duration_biases) {}
 
   void feed(const std::string& line) {
     ++processed_lines_;
@@ -105,8 +107,7 @@ class FeaturePipline {
       // bool o1 = (rinfo1 < 30 && rinfo2 > rinfo1 * 0.8);
       // bool o2 = (rinfo1 >= 30 && rinfo2 > rinfo1 * 0.5);
       // label = o1 || o2;
-      float biases = 1.0;  // add a biases for video duration
-      label = std::min(1.0f, rinfo2 / (rinfo1 + biases));
+      label = std::min(1.0f, rinfo2 / (rinfo1 + video_duration_biases_));
     } else {
       // article effective reading
       // label = (rinfo1 > 0.9 || rinfo2 > 40);
@@ -162,15 +163,19 @@ class FeaturePipline {
     rowkey_indexer_.save(out);
     out.write((char*)&positive_threshold_, sizeof(float));
     out.write((char*)&negative_threshold_, sizeof(float));
+    out.write((char*)&video_duration_biases_, sizeof(float));
   }
   void load(std::istream& in) {
     rowkey_indexer_.load(in);
     in.read((char*)&positive_threshold_, sizeof(float));
     in.read((char*)&negative_threshold_, sizeof(float));
+    in.read((char*)&video_duration_biases_, sizeof(float));
     std::cout << "[FeaturePipline] positive_threhold = " << positive_threshold_
               << std::endl;
     std::cout << "[FeaturePipline] negative_threhold = " << negative_threshold_
               << std::endl;
+    std::cout << "[FeaturePipline] video_duration_biases = "
+              << video_duration_biases_ << std::endl;
   }
 
   void dump_rowkeys(const std::string& filename) const {
@@ -182,13 +187,16 @@ class FeaturePipline {
   int64_t processed_lines_;
   float positive_threshold_;
   float negative_threshold_;
+  float video_duration_biases_;
 };
 
 class FeatureManager {
  public:
-  FeatureManager(int min_count = 1, float positive_threshold = 0.49f,
-                 float negative_threshold = 0.04f)
-      : feature_pipline_(min_count, positive_threshold, negative_threshold) {}
+  FeatureManager(int min_count = 1, float positive_threshold = 0.8,
+                 float negative_threshold = 0.1f,
+                 float video_duration_biases = 1.0f)
+      : feature_pipline_(min_count, positive_threshold, negative_threshold,
+                         video_duration_biases) {}
 
   void ReadFromFiles(const std::string& rowkey_count_file) {
     std::ifstream ifs(rowkey_count_file);
