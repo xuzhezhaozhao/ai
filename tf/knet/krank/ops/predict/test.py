@@ -30,6 +30,7 @@ fe = f.read()
     rinfo1=[[10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]],
     rinfo2=[[10.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, .0, 0.0]],
     target_rowkeys=[['abc', '9575b9ce38d299ah', 'abc']],
+    num_targets=[[2]],
     is_video=[[True, True, True, True, True, True, True, True, True, True]],
     feature_manager=fe,
     ws=3

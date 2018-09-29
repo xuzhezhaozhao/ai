@@ -88,7 +88,8 @@ positive_threhold=0.70
 negative_threhold=0.10
 
 if [[ ${remove_model_dir} == '1' ]]; then
-    rm -rf ${model_dir}
+    rm -rf ${model_dir}.bak
+    mv ${model_dir} ${model_dir}.bak
 fi
 
 mkdir -p ${fe_dir}

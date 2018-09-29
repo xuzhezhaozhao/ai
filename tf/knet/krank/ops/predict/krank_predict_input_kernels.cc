@@ -36,14 +36,18 @@ class KrankPredictInputOp : public OpKernel {
     const Tensor& rinfo1_tensor = ctx->input(1);
     const Tensor& rinfo2_tensor = ctx->input(2);
     const Tensor& target_rowkeys_tensor = ctx->input(3);
-    const Tensor& is_video_tensor = ctx->input(4);
+    const Tensor& num_targets_tensor = ctx->input(4);
+    const Tensor& is_video_tensor = ctx->input(5);
     const TensorShape& watched_rowkeys_shape = watched_rowkeys_tensor.shape();
     OP_REQUIRES(ctx, TensorShapeUtils::IsMatrix(watched_rowkeys_shape),
-                errors::InvalidArgument("input expects a Matrix."));
+                errors::InvalidArgument("watched_rowkeys expects a Matrix."));
+    OP_REQUIRES(ctx, TensorShapeUtils::IsMatrix(num_targets_tensor.shape()),
+                errors::InvalidArgument("num_targets expects a Matrix."));
+    OP_REQUIRES(ctx, num_targets_tensor.shape().dim_size(1) == 1,
+                errors::InvalidArgument("num_targets dim 1 size should be 1."));
 
     int batch_size = watched_rowkeys_shape.dim_size(0);
     int watched_size = watched_rowkeys_shape.dim_size(1);
-    int targets_size = target_rowkeys_tensor.shape().dim_size(1);
 
     OP_REQUIRES(ctx, rinfo1_tensor.shape() == watched_rowkeys_shape,
                 errors::InvalidArgument("rinfo1 shape not matched."));
@@ -56,7 +60,13 @@ class KrankPredictInputOp : public OpKernel {
     auto matrix_rinfo1 = rinfo1_tensor.matrix<float>();
     auto matrix_rinfo2 = rinfo2_tensor.matrix<float>();
     auto matrix_target_rowkeys = target_rowkeys_tensor.matrix<std::string>();
-    auto is_video_matrix = is_video_tensor.matrix<int64>();
+    auto flat_num_targets = num_targets_tensor.flat<int64>();
+    auto matrix_is_video = is_video_tensor.matrix<int64>();
+
+    int total_target_num = 0;
+    for (int i = 0; i < flat_num_targets.size(); ++i) {
+      total_target_num += flat_num_targets(i);
+    }
 
     Tensor* positive_records_tensor = NULL;
     Tensor* negative_records_tensor = NULL;
@@ -65,15 +75,14 @@ class KrankPredictInputOp : public OpKernel {
     Tensor* num_positive_tensor = NULL;
     Tensor* num_negative_tensor = NULL;
     TensorShape positive_records_shape;
-    positive_records_shape.AddDim(batch_size * targets_size);
+    positive_records_shape.AddDim(total_target_num);
     positive_records_shape.AddDim(ws_);
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, positive_records_shape,
                                              &positive_records_tensor));
     OP_REQUIRES_OK(ctx, ctx->allocate_output(1, positive_records_shape,
                                              &negative_records_tensor));
-
     TensorShape targets_shape;
-    targets_shape.AddDim(batch_size * targets_size);
+    targets_shape.AddDim(total_target_num);
     OP_REQUIRES_OK(ctx,
                    ctx->allocate_output(2, targets_shape, &targets_tensor));
     OP_REQUIRES_OK(
@@ -98,6 +107,7 @@ class KrankPredictInputOp : public OpKernel {
     flat_num_positive.setZero();
     flat_num_negative.setZero();
 
+    int target_index = 0;
     for (int b = 0; b < batch_size; ++b) {
       fe::RawFeature raw_feature;
       for (int i = 0; i < watched_size; ++i) {
@@ -107,17 +117,16 @@ class KrankPredictInputOp : public OpKernel {
 
         fe::UserAction action(matrix_rinfo1(b, i), matrix_rinfo2(b, i),
                               matrix_watched_rowkeys(b, i),
-                              is_video_matrix(b, i));
+                              matrix_is_video(b, i));
         raw_feature.actions.push_back(action);
       }
       fe::TransformedFeature feature = feature_manager_.transform(raw_feature);
 
-      // fill targets
-      for (int i = 0; i < targets_size; ++i) {
-        int index = b * targets_size + i;
+      // fill
+      for (int i = 0; i < flat_num_targets(b); ++i) {
         int id = feature_manager_.getRowkeyId(matrix_target_rowkeys(b, i));
-        flat_targets(index) = id;
-        flat_is_target_in_dict(index) = (id == 0 ? 0 : 1);
+        flat_targets(target_index) = id;
+        flat_is_target_in_dict(target_index) = (id == 0 ? 0 : 1);
 
         int added = 0;
         for (int w = 0; w < feature.actions.size(); ++w) {
@@ -129,7 +138,7 @@ class KrankPredictInputOp : public OpKernel {
             continue;
           }
           if (action.is_positive) {
-            matrix_positive_records(index, added) = action.id;
+            matrix_positive_records(target_index, added) = action.id;
             ++added;
           }
         }
@@ -145,11 +154,12 @@ class KrankPredictInputOp : public OpKernel {
             continue;
           }
           if (action.is_negative) {
-            matrix_negative_records(index, added) = action.id;
+            matrix_negative_records(target_index, added) = action.id;
             ++added;
           }
         }
         flat_num_negative(b) = added;
+        ++target_index;
       }
     }
   }

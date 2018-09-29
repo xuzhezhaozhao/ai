@@ -214,8 +214,7 @@ def non_zero_mean(embeddings, dim, records):
     return embeds_mean
 
 
-def mask_padding_embedding_lookup(embeddings, embedding_dim,
-                                  input, padding_id):
+def mask_padding_embedding_lookup(embeddings, dim, input, padding_id):
     """ mask padding tf.nn.embedding_lookup.
     padding_id must be zero.
 
@@ -225,11 +224,10 @@ def mask_padding_embedding_lookup(embeddings, embedding_dim,
     assert padding_id == 0
 
     mask_padding_zero_op = tf.scatter_update(
-        embeddings, padding_id, tf.zeros([embedding_dim], dtype=tf.float32),
+        embeddings, padding_id, tf.zeros([dim], dtype=tf.float32),
         name="mask_padding_zero_op")
     with tf.control_dependencies([mask_padding_zero_op]):
-        output = tf.nn.embedding_lookup(embeddings, input,
-                                        name="embedding_lookup")
+        output = tf.nn.embedding_lookup(embeddings, input)
     return output
 
 

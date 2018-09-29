@@ -128,6 +128,7 @@ def build_serving_input_fn(opts):
                 shape=[opts.inference_actions_len], dtype=tf.int64),
             'target_rowkeys': tf.FixedLenFeature(
                 shape=[opts.inference_num_targets], dtype=tf.string),
+            'num_targets': tf.FixedLenFeature(shape=[1], dtype=tf.int64)
         }
 
         serialized_tf_example = tf.placeholder(dtype=tf.string,
@@ -145,6 +146,7 @@ def build_serving_input_fn(opts):
              rinfo1=features['rinfo1'],
              rinfo2=features['rinfo2'],
              target_rowkeys=features[model_keys.TARGET_ROWKEYS_COL],
+             num_targets=features['num_targets'],
              is_video=features['is_video'],
              feature_manager=fe,
              ws=opts.train_ws)

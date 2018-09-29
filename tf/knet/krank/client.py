@@ -50,6 +50,7 @@ def run():
                 'rinfo1': _float_feature(rinfo1),
                 'rinfo2': _float_feature(rinfo2),
                 'target_rowkeys': _bytes_feature(target_rowkeys),
+                'num_targets': _int64_feature([3]),
                 'is_video': _int64_feature(is_video)
             }
         )
