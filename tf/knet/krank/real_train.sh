@@ -46,7 +46,7 @@ remove_model_dir=1
 dropout=0.0
 map_num_parallel_calls=1
 inference_actions_len=100
-inference_num_targets=300
+inference_num_targets=1000
 # 'default', 'multi_thread'
 train_parallel_mode='multi_thread'
 train_num_parallel=8
