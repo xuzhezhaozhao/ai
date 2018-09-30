@@ -16,7 +16,7 @@ train_data_path=../../../data/krank_train_data.in
 eval_data_path=../../../data/krank_eval_data.in
 feature_manager_path=${fe_dir}/feature_manager.bin
 lr=0.001
-rowkey_embedding_dim=200
+rowkey_embedding_dim=100
 target_rowkey_embedding_dim=${rowkey_embedding_dim}
 target_use_share_embeddings=1  # bool value
 target_skip_connection=0  # bool value
@@ -27,7 +27,7 @@ max_train_steps=-1
 max_eval_steps=-1
 max_eval_steps_on_train_dataset=100
 epoch=1
-hidden_units="1024,512,256"
+hidden_units="256,256"
 prefetch_size=20000
 shuffle_batch=1
 shuffle_size=50000
@@ -73,14 +73,14 @@ leaky_relu_alpha=0.0
 num_evaluate_target_per_line=10
 log_per_lines=20000
 use_binary_label=0
-binary_label_threhold=0.85
+binary_label_threhold=0.60
 loss_type='ce'  # ce, mse
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 
 min_count=10
-positive_threhold=0.85
-negative_threhold=0.30
-video_duration_biases=1.0
+positive_threhold=0.50
+negative_threhold=0.10
+video_duration_biases=5.0
 
 if [[ ${remove_model_dir} == '1' ]]; then
     rm -rf ${model_dir}.bak
