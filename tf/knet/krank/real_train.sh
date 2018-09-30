@@ -86,7 +86,7 @@ rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 min_count=50
 positive_threhold=0.60
 negative_threhold=0.20
-video_duration_biases=1.0
+video_duration_biases=5.0
 
 if [[ ${remove_model_dir} == '1' ]]; then
     rm -rf ${model_dir}.bak
