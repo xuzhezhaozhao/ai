@@ -29,7 +29,7 @@ target_skip_connection=0  # bool value
 train_ws=50
 batch_size=128
 eval_batch_size=8192
-max_train_steps=15000000
+max_train_steps=5000000
 max_eval_steps=-1
 max_eval_steps_on_train_dataset=200
 epoch=1
@@ -84,8 +84,8 @@ loss_type='ce'
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 
 min_count=50
-positive_threhold=0.70
-negative_threhold=0.10
+positive_threhold=0.60
+negative_threhold=0.20
 video_duration_biases=1.0
 
 if [[ ${remove_model_dir} == '1' ]]; then

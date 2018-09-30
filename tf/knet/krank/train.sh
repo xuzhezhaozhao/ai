@@ -78,8 +78,8 @@ loss_type='ce'  # ce, mse
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 
 min_count=10
-positive_threhold=0.50
-negative_threhold=0.10
+positive_threhold=0.60
+negative_threhold=0.20
 video_duration_biases=5.0
 
 if [[ ${remove_model_dir} == '1' ]]; then
