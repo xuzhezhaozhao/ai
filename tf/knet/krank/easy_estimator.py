@@ -193,6 +193,7 @@ class EasyEstimator(tf.estimator.Estimator):
 
     def _session_init(self, sess, summary_writer, saver):
         sess.run(tf.global_variables_initializer())
+        sess.run(tf.local_variables_initializer())
         sess.run(self._iterator_initializers)
         summary_writer.add_graph(sess.graph)
         tf.get_default_graph().finalize()
