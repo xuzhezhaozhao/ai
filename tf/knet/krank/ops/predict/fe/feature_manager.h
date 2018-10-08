@@ -104,10 +104,10 @@ class FeaturePipline {
     float label = 0.0;
     if (isvideo) {
       // video effective play
-      // bool o1 = (rinfo1 < 30 && rinfo2 > rinfo1 * 0.8);
-      // bool o2 = (rinfo1 >= 30 && rinfo2 > rinfo1 * 0.5);
-      // label = o1 || o2;
-      label = std::min(1.0f, rinfo2 / (rinfo1 + video_duration_biases_));
+      bool o1 = (rinfo1 < 20 && rinfo2 > rinfo1 * 0.8);
+      bool o2 = (rinfo2 >= 20);
+      label = (o1 || o2) ? 1.0 : 0.0;
+      //label = std::min(1.0f, rinfo2 / (rinfo1 + video_duration_biases_));
     } else {
       // article effective reading
       // label = (rinfo1 > 0.9 || rinfo2 > 40);

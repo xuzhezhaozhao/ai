@@ -77,7 +77,7 @@ def krank_model_fn(features, labels, mode, params):
     lr_dim = hidden.shape[-1].value
     lr_weights, lr_biases = get_lr_weights_and_biases(params, lr_dim)
     logits = tf.reduce_sum(hidden * lr_weights, 1) + lr_biases
-    scores = tf.nn.sigmoid(logits)
+    scores = tf.clip_by_value(tf.nn.sigmoid(logits), 1e-6, 1-1e-6)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         is_target_in_dict = features[model_keys.IS_TARGET_IN_DICT_COL]
@@ -122,6 +122,17 @@ def krank_model_fn(features, labels, mode, params):
     tf.summary.scalar('l2_loss', l2_loss)
     tf.summary.scalar('total_loss', loss)
 
+    bool_scores = tf.to_int32(scores > 0.5)
+    accuracy = tf.metrics.accuracy(labels=binary_labels,
+                                   predictions=bool_scores)
+    mse = tf.metrics.mean_squared_error(labels=labels,
+                                        predictions=scores)
+    auc = tf.metrics.auc(labels=binary_labels,
+                         predictions=scores,
+                         num_thresholds=opts.auc_num_thresholds)
+    tf.summary.scalar('train_accuracy', tf.reduce_mean(accuracy))
+    tf.summary.scalar('train_auc', tf.reduce_mean(auc))
+
     if mode == tf.estimator.ModeKeys.TRAIN:
         optimizer = create_optimizer(params)
 
@@ -142,15 +153,6 @@ def krank_model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        bool_scores = tf.to_int32(scores > 0.5)
-        accuracy = tf.metrics.accuracy(labels=binary_labels,
-                                       predictions=bool_scores)
-        mse = tf.metrics.mean_squared_error(labels=labels,
-                                            predictions=scores)
-        auc = tf.metrics.auc(labels=binary_labels,
-                             predictions=scores,
-                             num_thresholds=opts.auc_num_thresholds)
-
         metrics = {
             'accuracy': accuracy,
             'auc': auc,
