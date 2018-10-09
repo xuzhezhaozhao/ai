@@ -82,7 +82,6 @@ use_binary_label=1
 binary_label_threhold=0.65
 loss_type='ce'
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
-
 min_count=50
 positive_threhold=0.60
 negative_threhold=0.20
@@ -90,6 +89,7 @@ video_duration_biases=0.1
 use_smooth_label=0
 use_variable_averages=1
 moving_avg_decay=0.99
+use_bn=1
 
 if [[ ${remove_model_dir} == '1' ]]; then
     rm -rf ${model_dir}.bak
@@ -174,4 +174,5 @@ python main.py \
     --binary_label_threhold ${binary_label_threhold} \
     --loss_type ${loss_type} \
     --use_variable_averages ${use_variable_averages} \
-    --moving_avg_decay ${moving_avg_decay}
+    --moving_avg_decay ${moving_avg_decay} \
+    --use_bn ${use_bn}

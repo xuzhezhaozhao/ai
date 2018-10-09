@@ -104,6 +104,7 @@ parser.add_argument('--binary_label_threhold',
 parser.add_argument('--loss_type', default='ce', type=str, help='')
 parser.add_argument('--use_variable_averages', default=0, type=int, help='')
 parser.add_argument('--moving_avg_decay', default=0.99, type=float, help='')
+parser.add_argument('--use_bn', default=1, type=int, help='')
 
 
 opts = Options()
@@ -197,6 +198,7 @@ def parse_args(argv):
     opts.loss_type = args.loss_type
     opts.use_variable_averages = bool(args.use_variable_averages)
     opts.moving_avg_decay = args.moving_avg_decay
+    opts.use_bn = bool(args.use_bn)
 
     opts.num_rowkey = 1 + len([line for line in open(opts.rowkey_dict_path)
                                if line != ''])  # plus one for padding
