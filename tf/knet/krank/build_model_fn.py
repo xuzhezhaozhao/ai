@@ -76,8 +76,11 @@ def krank_model_fn(features, labels, mode, params):
 
     lr_dim = hidden.shape[-1].value
     lr_weights, lr_biases = get_lr_weights_and_biases(params, lr_dim)
-    logits = tf.reduce_sum(hidden * lr_weights, 1) + lr_biases
-    scores = tf.clip_by_value(tf.nn.sigmoid(logits), 1e-6, 1-1e-6)
+    # logits = tf.reduce_sum(hidden * lr_weights, 1) + lr_biases
+    logits = tf.reshape(tf.matmul(hidden, lr_weights) + lr_biases, [-1])
+
+    # scores = tf.clip_by_value(tf.nn.sigmoid(logits), 1e-6, 1-1e-6)
+    scores = tf.nn.sigmoid(logits)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         is_target_in_dict = features[model_keys.IS_TARGET_IN_DICT_COL]
@@ -137,6 +140,14 @@ def krank_model_fn(features, labels, mode, params):
         optimizer = create_optimizer(params)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
+        if opts.use_variable_averages:
+            variable_averages = tf.train.ExponentialMovingAverage(
+                opts.moving_avg_decay, tf.train.get_global_step())
+            variable_averages_op = variable_averages.apply(
+                 [v for v in tf.trainable_variables()
+                  if v.name.find('embedding') < 0])
+            update_ops.append(variable_averages_op)
+
         with tf.control_dependencies(update_ops):
             gradients, variables = zip(*optimizer.compute_gradients(loss))
             if opts.clip_gradients:
@@ -250,7 +261,7 @@ def get_lr_weights_and_biases(params, dim):
         init_width = 1.0 / dim
         weights = tf.get_variable(
             'weights',
-            initializer=tf.random_uniform([dim], -init_width, init_width),
+            initializer=tf.random_uniform([dim, 1], -init_width, init_width),
             regularizer=l2_regularizer(params))
         biases = tf.get_variable('biases', initializer=[0.0], dtype=tf.float32)
 
@@ -305,6 +316,7 @@ def create_optimizer(params):
         decay_steps=opts.optimizer_exponential_decay_steps,
         decay_rate=opts.optimizer_exponential_decay_rate,
         staircase=opts.optimizer_exponential_decay_staircase)
+    tf.summary.scalar("decay_lr", decay_lr)
 
     with tf.name_scope('optimizer_layer'):
         if optimizer_type == model_keys.OptimizerType.ADAGRAD:

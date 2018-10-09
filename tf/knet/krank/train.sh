@@ -15,19 +15,19 @@ rowkey_count_path=../../../data/krank_rowkey_count.csv
 train_data_path=../../../data/krank_train_data.in
 eval_data_path=../../../data/krank_eval_data.in
 feature_manager_path=${fe_dir}/feature_manager.bin
-lr=0.001
+lr=0.1
 rowkey_embedding_dim=100
 target_rowkey_embedding_dim=${rowkey_embedding_dim}
 target_use_share_embeddings=1  # bool value
 target_skip_connection=0  # bool value
-train_ws=3
-batch_size=512
+train_ws=10
+batch_size=64
 eval_batch_size=8192
 max_train_steps=-1
 max_eval_steps=-1
 max_eval_steps_on_train_dataset=100
-epoch=3
-hidden_units="256,256"
+epoch=1
+hidden_units="256,256,128"
 prefetch_size=20000
 shuffle_batch=1
 shuffle_size=50000
@@ -65,22 +65,25 @@ clip_gradients_norm=5.0
 l2_regularizer=0.0
 use_early_stopping=0
 auc_num_thresholds=1000
-optimizer_exponential_decay_steps=1000
-optimizer_exponential_decay_rate=0.96
+optimizer_exponential_decay_steps=2000
+optimizer_exponential_decay_rate=0.98
 optimizer_exponential_decay_staircase=0  # bool value
 evaluate_every_secs=180
-leaky_relu_alpha=0.0
+leaky_relu_alpha=0.1
 num_evaluate_target_per_line=10
-log_per_lines=1000
+log_per_lines=10000
 use_binary_label=1
 binary_label_threhold=0.50
 loss_type='ce'  # ce, mse
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
 
-min_count=10
+min_count=5
 positive_threhold=0.60
 negative_threhold=0.20
 video_duration_biases=1.0
+use_smooth_label=0
+use_variable_averages=1
+moving_avg_decay=0.99
 
 if [[ ${remove_model_dir} == '1' ]]; then
     rm -rf ${model_dir}.bak
@@ -97,6 +100,7 @@ echo "Preprocess features ..."
     ${positive_threhold} \
     ${negative_threhold} \
     ${video_duration_biases} \
+    ${use_smooth_label} \
     ${feature_manager_path} \
     ${rowkey_dict_path}
 
@@ -164,4 +168,6 @@ python main.py \
     --log_per_lines ${log_per_lines} \
     --use_binary_label ${use_binary_label} \
     --binary_label_threhold ${binary_label_threhold} \
-    --loss_type ${loss_type}
+    --loss_type ${loss_type} \
+    --use_variable_averages ${use_variable_averages} \
+    --moving_avg_decay ${moving_avg_decay}

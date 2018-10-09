@@ -52,12 +52,14 @@ class FeaturePipline {
  public:
   FeaturePipline(int min_count = 0, float positive_threshold = 0.49f,
                  float negative_threshold = 0.04f,
-                 float video_duration_biases = 1.0f)
+                 float video_duration_biases = 1.0f,
+                 bool use_smooth_label = false)
       : rowkey_indexer_(min_count, cppml::MinCountStringIndexer::MODE::COUNTER),
         processed_lines_(0),
         positive_threshold_(positive_threshold),
         negative_threshold_(negative_threshold),
-        video_duration_biases_(video_duration_biases) {}
+        video_duration_biases_(video_duration_biases),
+        use_smooth_label_(use_smooth_label) {}
 
   void feed(const std::string& line) {
     ++processed_lines_;
@@ -103,15 +105,21 @@ class FeaturePipline {
   float GetLabel(bool isvideo, float rinfo1, float rinfo2) const {
     float label = 0.0;
     if (isvideo) {
-      // video effective play
-      bool o1 = (rinfo1 < 20 && rinfo2 > rinfo1 * 0.8);
-      bool o2 = (rinfo2 >= 20);
-      label = (o1 || o2) ? 1.0 : 0.0;
-      //label = std::min(1.0f, rinfo2 / (rinfo1 + video_duration_biases_));
+      if (use_smooth_label_) {
+        label = std::min(1.0f, rinfo2 / (rinfo1 + video_duration_biases_));
+      } else {
+        // video effective play
+        bool o1 = (rinfo1 < 20 && rinfo2 > rinfo1 * 0.8);
+        bool o2 = (rinfo2 >= 20 || rinfo2 > rinfo1 * 0.8);
+        label = (o1 || o2) ? 1.0 : 0.0;
+      }
     } else {
-      // article effective reading
-      // label = (rinfo1 > 0.9 || rinfo2 > 40);
-      label = rinfo1;
+      if (use_smooth_label_) {
+        // article effective reading
+        label = (rinfo1 > 0.9 || rinfo2 > 40);
+      } else {
+        label = rinfo1;
+      }
     }
     return label;
   }
@@ -164,20 +172,23 @@ class FeaturePipline {
     out.write((char*)&positive_threshold_, sizeof(float));
     out.write((char*)&negative_threshold_, sizeof(float));
     out.write((char*)&video_duration_biases_, sizeof(float));
+    out.write((char*)&use_smooth_label_, sizeof(bool));
   }
   void load(std::istream& in) {
     rowkey_indexer_.load(in);
     in.read((char*)&positive_threshold_, sizeof(float));
     in.read((char*)&negative_threshold_, sizeof(float));
     in.read((char*)&video_duration_biases_, sizeof(float));
+    in.read((char*)&use_smooth_label_, sizeof(bool));
     std::cout << "[FeaturePipline] positive_threhold = " << positive_threshold_
               << std::endl;
     std::cout << "[FeaturePipline] negative_threhold = " << negative_threshold_
               << std::endl;
     std::cout << "[FeaturePipline] video_duration_biases = "
               << video_duration_biases_ << std::endl;
+    std::cout << "[FeaturePipline] use_smooth_label = " << use_smooth_label_
+              << std::endl;
   }
-
   void dump_rowkeys(const std::string& filename) const {
     rowkey_indexer_.dump(filename);
   }
@@ -188,15 +199,17 @@ class FeaturePipline {
   float positive_threshold_;
   float negative_threshold_;
   float video_duration_biases_;
+  bool use_smooth_label_;
 };
 
 class FeatureManager {
  public:
   FeatureManager(int min_count = 1, float positive_threshold = 0.8,
                  float negative_threshold = 0.1f,
-                 float video_duration_biases = 1.0f)
+                 float video_duration_biases = 1.0f,
+                 bool use_smooth_label = false)
       : feature_pipline_(min_count, positive_threshold, negative_threshold,
-                         video_duration_biases) {}
+                         video_duration_biases, use_smooth_label) {}
 
   void ReadFromFiles(const std::string& rowkey_count_file) {
     std::ifstream ifs(rowkey_count_file);
