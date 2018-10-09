@@ -16,28 +16,31 @@ namespace fe {
 
 struct UserAction {
   UserAction(float rinfo1_, float rinfo2_, const std::string& rowkey_,
-             bool isvideo_)
-      : rinfo1(rinfo1_), rinfo2(rinfo2_), rowkey(rowkey_), isvideo(isvideo_) {}
+             const std::string& first_video_rowkey_)
+      : rinfo1(rinfo1_),
+        rinfo2(rinfo2_),
+        rowkey(rowkey_),
+        first_video_rowkey(first_video_rowkey_) {}
 
   float rinfo1;
   float rinfo2;
   std::string rowkey;
-  bool isvideo;
+  std::string first_video_rowkey;
 };
 
 struct TransformedUserAction {
-  TransformedUserAction(int id_, float label_, bool is_positive_,
-                        bool is_negative_, bool isvideo_)
+  TransformedUserAction(int id_, int first_video_id_, float label_,
+                        bool is_positive_, bool is_negative_)
       : id(id_),
+        first_video_id(first_video_id_),
         label(label_),
         is_positive(is_positive_),
-        is_negative(is_negative_),
-        isvideo(isvideo_) {}
+        is_negative(is_negative_) {}
   int id;
+  int first_video_id;
   float label;
   bool is_positive;
   bool is_negative;
-  bool isvideo;
 };
 
 struct RawFeature {
@@ -82,56 +85,49 @@ class FeaturePipline {
     std::vector<StringPiece> h = Split(GetRowkeyListToken(pieces), ' ');
     TransformedFeature transformed_feature;
     for (auto& s : h) {
-      // tokens: rowkey, isvideo, duration(ratio), watch_time(stay_time)
+      // tokens: rowkey, first_video_rowkey, duration(ratio),
+      // watch_time(stay_time)
       std::vector<StringPiece> tokens = Split(s, ':');
 
       // TODO(zhezhaoxu) Validate data
       int id = rowkey_indexer_.transform(std::string(tokens[0])).as_integer();
-      bool isvideo = (tokens[1][0] == '1');
+      int first_video_id =
+          rowkey_indexer_.transform(std::string(tokens[1])).as_integer();
       float rinfo1 = std::stof(std::string(tokens[2]));
       float rinfo2 = std::stof(std::string(tokens[3]));
-      float label = GetLabel(isvideo, rinfo1, rinfo2);
-      bool is_positive = IsPositive(isvideo, rinfo1, rinfo2, label);
-      bool is_negative = IsNegative(isvideo, rinfo1, rinfo2, label);
+      float label = GetLabel(rinfo1, rinfo2);
+      bool is_positive = IsPositive(rinfo1, rinfo2, label);
+      bool is_negative = IsNegative(rinfo1, rinfo2, label);
 
-      TransformedUserAction action(id, label, is_positive, is_negative,
-                                   isvideo);
+      TransformedUserAction action(id, first_video_id, label, is_positive,
+                                   is_negative);
 
       transformed_feature.actions.push_back(action);
     }
     return transformed_feature;
   }
 
-  float GetLabel(bool isvideo, float rinfo1, float rinfo2) const {
+  float GetLabel(float rinfo1, float rinfo2) const {
     float label = 0.0;
-    if (isvideo) {
-      if (use_smooth_label_) {
-        label = std::min(1.0f, rinfo2 / (rinfo1 + video_duration_biases_));
-      } else {
-        // video effective play
-        bool o1 = (rinfo1 < 20 && rinfo2 > rinfo1 * 0.8);
-        bool o2 = (rinfo2 >= 20 || rinfo2 > rinfo1 * 0.8);
-        label = (o1 || o2) ? 1.0 : 0.0;
-      }
+    if (use_smooth_label_) {
+      label = std::min(1.0f, rinfo2 / (rinfo1 + video_duration_biases_));
     } else {
-      if (use_smooth_label_) {
-        // article effective reading
-        label = (rinfo1 > 0.9 || rinfo2 > 40);
-      } else {
-        label = rinfo1;
-      }
+      // video effective play
+      bool o1 = (rinfo1 < 20 && rinfo2 > rinfo1 * 0.8);
+      bool o2 = (rinfo2 >= 20 || rinfo2 > rinfo1 * 0.8);
+      label = (o1 || o2) ? 1.0 : 0.0;
     }
     return label;
   }
 
-  bool IsPositive(bool isvideo, float rinfo1, float rinfo2, float label) const {
+  bool IsPositive(float rinfo1, float rinfo2, float label) const {
     if (label > positive_threshold_) {
       return true;
     }
     return false;
   }
 
-  bool IsNegative(bool isvideo, float rinfo1, float rinfo2, float label) const {
+  bool IsNegative(float rinfo1, float rinfo2, float label) const {
     if (label < negative_threshold_ || rinfo2 < 5) {
       return true;
     }
@@ -142,13 +138,13 @@ class FeaturePipline {
     TransformedFeature transformed_feature;
     for (auto& action : feature.actions) {
       int id = rowkey_indexer_.transform(action.rowkey).as_integer();
-      float label = GetLabel(action.isvideo, action.rinfo1, action.rinfo2);
-      bool is_positive =
-          IsPositive(action.isvideo, action.rinfo1, action.rinfo2, label);
-      bool is_negative =
-          IsNegative(action.isvideo, action.rinfo1, action.rinfo2, label);
+      int first_video_id =
+          rowkey_indexer_.transform(action.first_video_rowkey).as_integer();
+      float label = GetLabel(action.rinfo1, action.rinfo2);
+      bool is_positive = IsPositive(action.rinfo1, action.rinfo2, label);
+      bool is_negative = IsNegative(action.rinfo1, action.rinfo2, label);
       transformed_feature.actions.push_back(
-          {id, label, is_positive, is_negative, action.isvideo});
+          {id, first_video_id, label, is_positive, is_negative});
     }
     return transformed_feature;
   }

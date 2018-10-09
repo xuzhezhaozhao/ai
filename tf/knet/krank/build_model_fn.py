@@ -37,10 +37,12 @@ def krank_model_fn(features, labels, mode, params):
     positive_records = features[model_keys.POSITIVE_RECORDS_COL]
     negative_records = features[model_keys.NEGATIVE_RECORDS_COL]
     targets = features[model_keys.TARGETS_COL]
+    first_videos = features[model_keys.FIRST_VIDEOS_COL]
 
     positive_records.set_shape([None, opts.train_ws])
     negative_records.set_shape([None, opts.train_ws])
     targets.set_shape([None])
+    first_videos.set_shape([None])
 
     positive_embeds_mean = non_zero_mean(rowkey_embeddings,
                                          rowkey_embedding_dim,
@@ -50,14 +52,20 @@ def krank_model_fn(features, labels, mode, params):
                                          negative_records)
     targets_embeds = mask_padding_embedding_lookup(
         target_rowkey_embeddings, targte_rowkey_embedding_dim, targets, 0)
+    first_videos_embeds = mask_padding_embedding_lookup(
+        rowkey_embeddings, rowkey_embedding_dim, first_videos, 0)
 
     tf.summary.histogram('positive_embeds_mean', positive_embeds_mean)
     tf.summary.histogram('negative_embeds_mean', negative_embeds_mean)
     tf.summary.histogram('targets_embeds', targets_embeds)
+    tf.summary.histogram('first_videos_embeds', first_videos_embeds)
 
-    concat_features = [positive_embeds_mean,
-                       negative_embeds_mean,
-                       targets_embeds]
+    concat_features = [
+        positive_embeds_mean,
+        negative_embeds_mean,
+        first_videos_embeds,
+        targets_embeds
+    ]
 
     hidden = tf.concat(concat_features, 1)
     num_in = hidden.shape[-1].value

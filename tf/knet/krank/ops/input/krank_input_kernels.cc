@@ -62,6 +62,7 @@ class KrankInputOp : public OpKernel {
     std::vector<std::vector<int>> positive_records;
     std::vector<std::vector<int>> negative_records;
     std::vector<int64> targets;
+    std::vector<int64> first_videos;
     std::vector<float> labels;
     std::uniform_int_distribution<> uniform(1, ws_);
 
@@ -71,11 +72,6 @@ class KrankInputOp : public OpKernel {
                           num_evaluate_target_per_line_);
     }
     for (; w < feature.actions.size(); ++w) {
-      if (!feature.actions[w].isvideo) {
-        // We don't predict article
-        continue;
-      }
-
       if (feature.actions[w].id == 0 && !is_eval_) {
         // We don't predict invalid id when training, but it should be
         // included when evaluating the model.
@@ -87,10 +83,6 @@ class KrankInputOp : public OpKernel {
       std::vector<int> neg;
       int added = 0;
       for (int b = w - 1; b >= 0; --b) {
-        if (!feature.actions[b].isvideo) {
-          // We ignore article when constructing session feature.
-          continue;
-        }
         int id = feature.actions[b].id;
         if (id == 0) {
           // We ignore invalid id when constructing session feature.
@@ -113,6 +105,7 @@ class KrankInputOp : public OpKernel {
       }
       float label = feature.actions[w].label;
       targets.push_back(feature.actions[w].id);
+      first_videos.push_back(feature.actions[w].first_video_id);
       labels.push_back(label);
       positive_records.push_back(pos);
       negative_records.push_back(neg);
@@ -134,6 +127,7 @@ class KrankInputOp : public OpKernel {
     Tensor* positive_records_tensor = NULL;
     Tensor* negative_records_tensor = NULL;
     Tensor* targets_tensor = NULL;
+    Tensor* first_videos_tensor = NULL;
     Tensor* labels_tensor = NULL;
 
     int batch_size = positive_records.size();
@@ -153,20 +147,24 @@ class KrankInputOp : public OpKernel {
     targets_shape.AddDim(batch_size);
     OP_REQUIRES_OK(ctx,
                    ctx->allocate_output(2, targets_shape, &targets_tensor));
+    OP_REQUIRES_OK(ctx,
+                   ctx->allocate_output(3, targets_shape, &first_videos_tensor));
 
     TensorShape label_shape;
     label_shape.AddDim(batch_size);
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(3, label_shape, &labels_tensor));
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(4, label_shape, &labels_tensor));
 
     // Fill output tensors
     auto matrix_positive_records = positive_records_tensor->matrix<int32>();
     auto matrix_negative_records = negative_records_tensor->matrix<int32>();
     auto flat_targets = targets_tensor->flat<int32>();
+    auto flat_first_videos = first_videos_tensor->flat<int32>();
     auto flat_labels = labels_tensor->flat<float>();
 
     matrix_positive_records.setZero();
     matrix_negative_records.setZero();
     flat_targets.setZero();
+    flat_first_videos.setZero();
     flat_labels.setZero();
 
     for (int i = 0; i < positive_records.size(); ++i) {
@@ -183,6 +181,9 @@ class KrankInputOp : public OpKernel {
 
     for (int i = 0; i < targets.size(); ++i) {
       flat_targets(i) = targets[i];
+    }
+    for (int i = 0; i < first_videos.size(); ++i) {
+      flat_first_videos(i) = first_videos[i];
     }
     for (int i = 0; i < labels.size(); ++i) {
       flat_labels(i) = labels[i];

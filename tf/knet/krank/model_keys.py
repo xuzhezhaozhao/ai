@@ -7,6 +7,7 @@ PADDING_ID = 0
 POSITIVE_RECORDS_COL = 'positive_records'
 NEGATIVE_RECORDS_COL = 'negative_records'
 TARGETS_COL = 'targets'
+FIRST_VIDEOS_COL = 'first_videos'
 TARGET_ROWKEYS_COL = 'target_rowkeys'
 IS_TARGET_IN_DICT_COL = 'is_target_in_dict'
 NUM_POSITIVE_COL = 'num_positive'

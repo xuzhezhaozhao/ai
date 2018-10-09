@@ -33,11 +33,13 @@ def build_estimator(opts):
     estimator_keys['model_fn'] = build_model_fn.krank_model_fn
     (positive_records_col,
      negative_records_col,
-     targets_col) = input_data.input_feature_columns(opts)
+     targets_col,
+     first_videos_col) = input_data.input_feature_columns(opts)
     estimator_keys['params'] = {
         model_keys.POSITIVE_RECORDS_COL: positive_records_col,
         model_keys.NEGATIVE_RECORDS_COL: negative_records_col,
         model_keys.TARGETS_COL: targets_col,
+        model_keys.FIRST_VIDEOS_COL: first_videos_col,
         'opts': opts
     }
     estimator_keys['config'] = config

@@ -25,15 +25,20 @@ def input_feature_columns(opts):
         key=model_keys.TARGETS_COL,
         shape=[1],
         dtype=tf.int64)
+    first_videos_col = tf.feature_column.numeric_column(
+        key=model_keys.FIRST_VIDEOS_COL,
+        shape=[1],
+        dtype=tf.int64)
 
-    return (positive_records_col, negative_records_col, targets_col)
+    return (positive_records_col, negative_records_col,
+            targets_col, first_videos_col)
 
 
 def map_generate_example(line, opts, is_eval):
     """Map a single line to features tuple."""
 
     (positive_records, negative_records,
-     targets, labels) = custom_ops.krank_input(
+     targets, first_videos, labels) = custom_ops.krank_input(
          input=line,
          feature_manager_path=opts.feature_manager_path,
          ws=opts.train_ws,
@@ -41,7 +46,7 @@ def map_generate_example(line, opts, is_eval):
          log_per_lines=opts.log_per_lines,
          is_eval=is_eval)
 
-    return (positive_records, negative_records, targets, labels)
+    return (positive_records, negative_records, targets, first_videos, labels)
 
 
 def flat_map_example(opts, x):
@@ -53,9 +58,10 @@ def flat_map_example(opts, x):
     feature_dict = {
         model_keys.POSITIVE_RECORDS_COL: x[0],
         model_keys.NEGATIVE_RECORDS_COL: x[1],
-        model_keys.TARGETS_COL: x[2]
+        model_keys.TARGETS_COL: x[2],
+        model_keys.FIRST_VIDEOS_COL: x[3],
     }
-    labels = x[3]
+    labels = x[4]
     dataset = tf.data.Dataset.from_tensor_slices((feature_dict, labels))
 
     return dataset
