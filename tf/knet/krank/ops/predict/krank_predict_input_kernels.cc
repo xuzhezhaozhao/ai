@@ -36,8 +36,9 @@ class KrankPredictInputOp : public OpKernel {
     const Tensor& rinfo1_tensor = ctx->input(1);
     const Tensor& rinfo2_tensor = ctx->input(2);
     const Tensor& target_rowkeys_tensor = ctx->input(3);
-    const Tensor& num_targets_tensor = ctx->input(4);
-    const Tensor& is_video_tensor = ctx->input(5);
+    const Tensor& first_video_rowkeys_tensor = ctx->input(4);
+    const Tensor& num_targets_tensor = ctx->input(5);
+    const Tensor& is_video_tensor = ctx->input(6);
     const TensorShape& watched_rowkeys_shape = watched_rowkeys_tensor.shape();
     OP_REQUIRES(ctx, TensorShapeUtils::IsMatrix(watched_rowkeys_shape),
                 errors::InvalidArgument("watched_rowkeys expects a Matrix."));
@@ -60,6 +61,7 @@ class KrankPredictInputOp : public OpKernel {
     auto matrix_rinfo1 = rinfo1_tensor.matrix<float>();
     auto matrix_rinfo2 = rinfo2_tensor.matrix<float>();
     auto matrix_target_rowkeys = target_rowkeys_tensor.matrix<std::string>();
+    auto matrix_first_video_rowkeys = first_video_rowkeys_tensor.matrix<std::string>();
     auto flat_num_targets = num_targets_tensor.flat<int64>();
     auto matrix_is_video = is_video_tensor.matrix<int64>();
 
@@ -71,6 +73,7 @@ class KrankPredictInputOp : public OpKernel {
     Tensor* positive_records_tensor = NULL;
     Tensor* negative_records_tensor = NULL;
     Tensor* targets_tensor = NULL;
+    Tensor* first_videos_tensor = NULL;
     Tensor* is_target_in_dict_tensor = NULL;
     Tensor* num_positive_tensor = NULL;
     Tensor* num_negative_tensor = NULL;
@@ -85,17 +88,20 @@ class KrankPredictInputOp : public OpKernel {
     targets_shape.AddDim(total_target_num);
     OP_REQUIRES_OK(ctx,
                    ctx->allocate_output(2, targets_shape, &targets_tensor));
+    OP_REQUIRES_OK(ctx,
+                   ctx->allocate_output(3, targets_shape, &first_videos_tensor));
     OP_REQUIRES_OK(
-        ctx, ctx->allocate_output(3, targets_shape, &is_target_in_dict_tensor));
+        ctx, ctx->allocate_output(4, targets_shape, &is_target_in_dict_tensor));
 
     TensorShape num_shape;
     num_shape.AddDim(batch_size);
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(4, num_shape, &num_positive_tensor));
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(5, num_shape, &num_negative_tensor));
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(5, num_shape, &num_positive_tensor));
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(6, num_shape, &num_negative_tensor));
 
     auto matrix_positive_records = positive_records_tensor->matrix<int32>();
     auto matrix_negative_records = negative_records_tensor->matrix<int32>();
     auto flat_targets = targets_tensor->flat<int32>();
+    auto flat_first_videos = first_videos_tensor->flat<int32>();
     auto flat_is_target_in_dict = is_target_in_dict_tensor->flat<int32>();
     auto flat_num_positive = num_positive_tensor->flat<int32>();
     auto flat_num_negative = num_negative_tensor->flat<int32>();
@@ -103,6 +109,7 @@ class KrankPredictInputOp : public OpKernel {
     matrix_positive_records.setZero();
     matrix_negative_records.setZero();
     flat_targets.setZero();
+    flat_first_videos.setZero();
     flat_is_target_in_dict.setZero();
     flat_num_positive.setZero();
     flat_num_negative.setZero();
@@ -114,10 +121,8 @@ class KrankPredictInputOp : public OpKernel {
         if (matrix_watched_rowkeys(b, i) == "") {
           continue;
         }
-
         fe::UserAction action(matrix_rinfo1(b, i), matrix_rinfo2(b, i),
-                              matrix_watched_rowkeys(b, i),
-                              matrix_is_video(b, i));
+                              matrix_watched_rowkeys(b, i), "");
         raw_feature.actions.push_back(action);
       }
       fe::TransformedFeature feature = feature_manager_.transform(raw_feature);
@@ -125,7 +130,9 @@ class KrankPredictInputOp : public OpKernel {
       // fill
       for (int i = 0; i < flat_num_targets(b); ++i) {
         int id = feature_manager_.getRowkeyId(matrix_target_rowkeys(b, i));
+        int first_id = feature_manager_.getRowkeyId(matrix_first_video_rowkeys(b, i));
         flat_targets(target_index) = id;
+        flat_first_videos(target_index) = first_id;
         flat_is_target_in_dict(target_index) = (id == 0 ? 0 : 1);
 
         int added = 0;

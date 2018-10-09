@@ -134,7 +134,9 @@ def build_serving_input_fn(opts):
                 shape=[opts.inference_actions_len], dtype=tf.int64),
             'target_rowkeys': tf.FixedLenFeature(
                 shape=[opts.inference_num_targets], dtype=tf.string),
-            'num_targets': tf.FixedLenFeature(shape=[1], dtype=tf.int64)
+            'num_targets': tf.FixedLenFeature(shape=[1], dtype=tf.int64),
+            'first_video_rowkeys': tf.FixedLenFeature(
+                shape=[opts.inference_num_targets], dtype=tf.string)
         }
 
         serialized_tf_example = tf.placeholder(dtype=tf.string,
@@ -146,12 +148,13 @@ def build_serving_input_fn(opts):
         f = open(opts.feature_manager_path, 'rb')
         fe = f.read()
         (positive_records, negative_records,
-         targets, is_target_in_dict,
+         targets, first_videos, is_target_in_dict,
          num_positive, num_negative) = custom_ops.krank_predict_input(
              watched_rowkeys=features['watched_rowkeys'],
              rinfo1=features['rinfo1'],
              rinfo2=features['rinfo2'],
              target_rowkeys=features[model_keys.TARGET_ROWKEYS_COL],
+             first_video_rowkeys=features['first_video_rowkeys'],
              num_targets=features['num_targets'],
              is_video=features['is_video'],
              feature_manager=fe,
@@ -159,6 +162,7 @@ def build_serving_input_fn(opts):
         features[model_keys.POSITIVE_RECORDS_COL] = positive_records
         features[model_keys.NEGATIVE_RECORDS_COL] = negative_records
         features[model_keys.TARGETS_COL] = targets
+        features[model_keys.FIRST_VIDEOS_COL] = first_videos
         features[model_keys.IS_TARGET_IN_DICT_COL] = is_target_in_dict
         features[model_keys.NUM_POSITIVE_COL] = num_positive
         features[model_keys.NUM_NEGATIVE_COl] = num_negative

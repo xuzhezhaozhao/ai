@@ -61,8 +61,8 @@ def krank_model_fn(features, labels, mode, params):
     tf.summary.histogram('first_videos_embeds', first_videos_embeds)
 
     concat_features = [
-        positive_embeds_mean,
-        negative_embeds_mean,
+        # positive_embeds_mean,
+        # negative_embeds_mean,
         first_videos_embeds,
         targets_embeds
     ]
