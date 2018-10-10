@@ -13,6 +13,8 @@ for line in open('krank_train_data.in', 'r'):
 
 with open('rowkey_count.csv', 'w') as f:
     for k in D:
+        if len(k) < 5:
+            continue
         f.write(k)
         f.write('\t')
         f.write(str(D[k]))

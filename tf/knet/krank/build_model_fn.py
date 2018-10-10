@@ -71,7 +71,8 @@ def krank_model_fn(features, labels, mode, params):
     num_in = hidden.shape[-1].value
     training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-    hidden = batch_normalization(hidden, training, 'bn_input')
+    if opts.use_bn:
+        hidden = batch_normalization(hidden, training, 'bn_input')
     for index, units in enumerate(opts.hidden_units):
         is_last_layer = (True if index == (len(opts.hidden_units) - 1)
                          else False)
@@ -154,9 +155,12 @@ def krank_model_fn(features, labels, mode, params):
         if opts.use_variable_averages:
             variable_averages = tf.train.ExponentialMovingAverage(
                 opts.moving_avg_decay, tf.train.get_global_step())
-            variable_averages_op = variable_averages.apply(
-                 [v for v in tf.trainable_variables()
-                  if v.name.find('embedding') < 0])
+            # aver_vars = [v for v in tf.trainable_variables()
+                         # if v.name.find('embedding') < 0]
+            aver_vars = tf.trainable_variables()
+            tf.logging.info("aver_vars: ")
+            tf.logging.info(aver_vars)
+            variable_averages_op = variable_averages.apply(aver_vars)
             update_ops.append(variable_averages_op)
 
         with tf.control_dependencies(update_ops):
