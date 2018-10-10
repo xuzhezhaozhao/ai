@@ -77,6 +77,9 @@ class KrankInputOp : public OpKernel {
         // included when evaluating the model.
         continue;
       }
+      if (feature.actions[w].first_video_id == 0 && !is_eval_) {
+        continue;
+      }
 
       int boundary = std::min(w, uniform(rng_));
       std::vector<int> pos;
