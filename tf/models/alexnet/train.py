@@ -18,12 +18,6 @@ import input_data
 def build_estimator(opts):
     """Build estimator."""
 
-    """ session config
-    session_config = tf.ConfigProto(device_count={"CPU": 1},
-                                    inter_op_parallelism_threads=1,
-                                    intra_op_parallelism_threads=1,
-                                    log_device_placement=False)
-    """
     config_keys = {}
     config_keys['model_dir'] = opts.model_dir
     config_keys['tf_random_seed'] = None
@@ -41,7 +35,6 @@ def build_estimator(opts):
     estimator_keys['config'] = config
 
     estimator = tf.estimator.Estimator(**estimator_keys)
-
     return estimator
 
 
