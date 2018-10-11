@@ -35,6 +35,13 @@ num_classes=2
 pretrained_weights_path=`pwd`/pretrained_weights/bvlc_alexnet.npy
 train_layers='fc6,fc7,fc8'
 
+if [[ ${remove_model_dir} == '1' ]]; then
+    rm -rf ${model_dir}.bak
+    if [[ -d ${model_dir} ]]; then
+        mv ${model_dir} ${model_dir}.bak
+    fi
+fi
+
 python main.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
