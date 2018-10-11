@@ -173,8 +173,8 @@ def krank_model_fn(features, labels, mode, params):
                 global_step=tf.train.get_global_step())
 
             for var, grad in zip(variables, gradients):
-                tf.summary.histogram(var.name.replace(':', '_') + '/gradient',
-                                     grad)
+                tf.summary.histogram(
+                    var.name.replace(':', '_') + '/gradient', grad)
 
         return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
