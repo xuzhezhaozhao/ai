@@ -7,16 +7,14 @@ cd ${MYDIR}
 
 echo 'TF_CONFIG = ' ${TF_CONFIG}
 
-MODEL_DIR=`pwd`/model_dir
-EXPORT_MODEL_DIR=`pwd`/export_model_dir
+model_dir=`pwd`/model_dir
+export_model_dir=`pwd`/export_model_dir
 
 train_data_path=`pwd`/train.txt
 eval_data_path=`pwd`/eval.txt
 lr=0.001
 batch_size=128
 epoch=5
-model_dir=`pwd`/model_
-export_model_dir=`pwd`/export_model_dir
 prefetch_size=1000
 shuffle_size=1000
 max_train_steps=-1
@@ -36,6 +34,7 @@ pretrained_weights_path=`pwd`/pretrained_weights/bvlc_alexnet.npy
 train_layers='fc6,fc7,fc8'
 
 if [[ ${remove_model_dir} == '1' ]]; then
+    echo "remove model_dir ..."
     rm -rf ${model_dir}.bak
     if [[ -d ${model_dir} ]]; then
         mv ${model_dir} ${model_dir}.bak
@@ -48,8 +47,8 @@ python main.py \
     --lr ${lr} \
     --batch_size ${batch_size} \
     --epoch ${epoch} \
-    --model_dir ${MODEL_DIR} \
-    --export_model_dir ${EXPORT_MODEL_DIR} \
+    --model_dir ${model_dir} \
+    --export_model_dir ${export_model_dir} \
     --prefetch_size ${prefetch_size} \
     --shuffle_size ${shuffle_size} \
     --max_train_steps ${max_train_steps} \
