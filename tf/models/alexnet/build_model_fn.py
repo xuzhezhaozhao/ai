@@ -280,6 +280,10 @@ def create_eval_estimator_spec(mode, score, labels, params):
 def create_train_estimator_spec(mode, score, labels, params):
     """Create train EstimatorSpec."""
 
+    tf.summary.scalar('train_accuracy', tf.reduce_mean(
+        tf.cast(tf.equal(tf.argmax(labels, 1), tf.argmax(score, 1)),
+                tf.float32)))
+
     opts = params['opts']
     global_step = tf.train.get_global_step()
     loss = cross_entropy(score, labels)
