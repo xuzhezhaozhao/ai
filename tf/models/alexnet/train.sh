@@ -32,6 +32,7 @@ map_num_parallel_calls=1
 num_classes=2
 pretrained_weights_path=`pwd`/pretrained_weights/bvlc_alexnet.npy
 train_layers='fc6,fc7,fc8'
+use_data_augmentation=1
 
 if [[ ${remove_model_dir} == '1' ]]; then
     echo "remove model_dir ..."
@@ -65,4 +66,5 @@ python main.py \
     --map_num_parallel_calls ${map_num_parallel_calls} \
     --num_classes ${num_classes} \
     --pretrained_weights_path ${pretrained_weights_path} \
-    --train_layers ${train_layers}
+    --train_layers ${train_layers} \
+    --use_data_augmentation ${use_data_augmentation}

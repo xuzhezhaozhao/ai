@@ -59,6 +59,15 @@ def shuffle_lists(img_paths, labels):
     return shuffle_img_paths, shuffle_labels
 
 
+def data_augmentation(opts, x):
+    image = tf.expand_dims(x[0][model_keys.DATA_COL], 0)
+    labels = tf.expand_dims(x[1], 0)
+
+    ds = tf.data.Dataset.from_tensor_slices((
+        {model_keys.DATA_COL: image}, labels))
+    return ds
+
+
 def train_input_fn(opts):
     img_paths, img_labels = read_txt_file(opts.train_data_path)
     img_paths, img_labels = shuffle_lists(img_paths, img_labels)
@@ -71,8 +80,11 @@ def train_input_fn(opts):
 
     ds = ds.map(lambda filename, label: parse_line(filename, label, opts),
                 num_parallel_calls=opts.map_num_parallel_calls)
-
     ds = ds.prefetch(opts.prefetch_size)
+
+    if opts.use_data_augmentation:
+        ds = ds.flat_map(lambda *x: data_augmentation(opts, x))
+
     if opts.shuffle_batch:
         ds = ds.shuffle(buffer_size=opts.shuffle_size)
     ds = ds.batch(opts.batch_size).repeat(opts.epoch)
