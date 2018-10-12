@@ -18,8 +18,22 @@ def parse_line(img_path, label, opts):
     # load and preprocess the image
     img_string = tf.read_file(img_path)
     img_decoded = tf.image.decode_png(img_string, channels=3)
-    img_resized = tf.image.resize_images(img_decoded, [227, 227])
 
+    # RGB -> BGR
+    img_bgr = img_decoded[:, :, ::-1]
+
+    return {model_keys.DATA_COL: img_bgr}, one_hot
+
+
+def eval_parse_line(img_path, label, opts):
+
+    one_hot = tf.one_hot(label, opts.num_classes)
+
+    # load and preprocess the image
+    img_string = tf.read_file(img_path)
+    img_decoded = tf.image.decode_png(img_string, channels=3)
+
+    img_resized = tf.image.resize_images(img_decoded, [227, 227])
     IMAGENET_MEAN = tf.constant([123.68, 116.779, 103.939], dtype=tf.float32)
     img_centered = tf.subtract(img_resized, IMAGENET_MEAN)
 
@@ -59,12 +73,39 @@ def shuffle_lists(img_paths, labels):
     return shuffle_img_paths, shuffle_labels
 
 
-def data_augmentation(opts, x):
-    image = tf.expand_dims(x[0][model_keys.DATA_COL], 0)
-    labels = tf.expand_dims(x[1], 0)
+def data_augmentation(opts, img, label):
+    aug_imgs = []
+    aug_labels = []
 
+    # aug_img = tf.image.flip_left_right(crop_img)
+
+    return aug_imgs, aug_labels
+
+
+def flat_map_data_augmentation(opts, x):
+    origin_img = x[0][model_keys.DATA_COL]
+    label = x[1]
+
+    final_imgs = []
+    final_labels = []
+
+    img_resized = tf.image.resize_images(origin_img, [227, 227])
+    IMAGENET_MEAN = tf.constant([123.68, 116.779, 103.939], dtype=tf.float32)
+    img_centered = tf.subtract(img_resized, IMAGENET_MEAN)
+
+    final_imgs.append(img_centered)
+    final_labels.append(label)
+
+    if opts.use_data_augmentation:
+        aug_imgs, aug_labels = data_augmentation(opts, origin_img, label)
+        final_imgs.extend(aug_imgs)
+        final_labels.extend(aug_labels)
+
+    final_imgs_tensor = tf.stack(final_imgs)
+    final_labels_tensor = tf.stack(final_labels)
     ds = tf.data.Dataset.from_tensor_slices((
-        {model_keys.DATA_COL: image}, labels))
+        {model_keys.DATA_COL: final_imgs_tensor},
+        final_labels_tensor))
     return ds
 
 
@@ -81,9 +122,7 @@ def train_input_fn(opts):
     ds = ds.map(lambda filename, label: parse_line(filename, label, opts),
                 num_parallel_calls=opts.map_num_parallel_calls)
     ds = ds.prefetch(opts.prefetch_size)
-
-    if opts.use_data_augmentation:
-        ds = ds.flat_map(lambda *x: data_augmentation(opts, x))
+    ds = ds.flat_map(lambda *x: flat_map_data_augmentation(opts, x))
 
     if opts.shuffle_batch:
         ds = ds.shuffle(buffer_size=opts.shuffle_size)
@@ -99,7 +138,7 @@ def eval_input_fn(opts):
 
     # create dataset
     ds = tf.data.Dataset.from_tensor_slices((img_paths, labels))
-    ds = ds.map(lambda filename, label: parse_line(filename, label, opts),
+    ds = ds.map(lambda filename, label: eval_parse_line(filename, label, opts),
                 num_parallel_calls=opts.map_num_parallel_calls)
 
     ds = ds.prefetch(opts.prefetch_size)
