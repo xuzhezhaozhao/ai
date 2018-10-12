@@ -121,7 +121,7 @@ class FeaturePipline {
   }
 
   bool IsPositive(float rinfo1, float rinfo2, float label) const {
-    if (label > positive_threshold_) {
+    if (rinfo2 >= rinfo1 * positive_threshold_ || rinfo2 >= 20.0) {
       return true;
     }
     return false;
