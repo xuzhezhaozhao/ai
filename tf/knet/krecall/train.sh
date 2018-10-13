@@ -24,7 +24,7 @@ else
     eval_data_path=../../../data/eval_data.in
 fi
 
-lr=1.0
+lr=0.1
 embedding_dim=100
 train_ws=20
 train_lower_ws=1
@@ -61,7 +61,7 @@ shuffle_batch=1
 predict_ws=20
 sample_dropout=0.0
 # 'adagrad', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
-optimizer_type='ftrl'
+optimizer_type='adagrad'
 tfrecord_file='../../../data/train_data.tfrecord'
 num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
@@ -96,7 +96,7 @@ add_min_pooling=0
 add_hierarchical_pooling=0
 add_attention_layer=1
 hierarchical_average_window=5
-attention_size=200
+attention_size=500
 log_step_count_secs=10
 evaluate_every_secs=500000
 max_eval_steps_on_train_dataset=1000

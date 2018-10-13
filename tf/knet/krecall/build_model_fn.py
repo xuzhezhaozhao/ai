@@ -854,13 +854,15 @@ def min_pooling(embeds, nonzeros):
 
 
 def attention_layer(embeds, nonzero_mask, opts):
-    with tf.variable_scope('attention_layer', reuse=tf.AUTO_REUSE):
+    with tf.variable_scope('attention_context_variable', reuse=tf.AUTO_REUSE):
         attention_size = opts.attention_size
         u_context = tf.get_variable(
             'u_context', initializer=tf.truncated_normal([attention_size]))
+
         # FC layer transform
         h = tf.contrib.layers.fully_connected(
             embeds, attention_size, activation_fn=tf.nn.tanh)
+
         hu_sum = tf.reduce_sum(
             tf.multiply(h, u_context), axis=2, keepdims=True)
         exp = tf.exp(hu_sum)
