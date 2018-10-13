@@ -151,22 +151,28 @@ def create_input_layer(mode, features, params, embeddings):
                 embeddings, embedding_dim, records_column,
                 model_keys.PADDING_ID)
 
-        embeds_sum = tf.reduce_sum(embeds, 1)
-        embeds_mean = embeds_sum / tf.cast(nonzeros, tf.float32)
+        embeds_mean = average_pooling(embeds, nonzeros)
+        embeds_max = max_pooling(embeds, nonzeros)
+        embeds_concat = []
+        if opts.add_average_pooling:
+            embeds_concat.append(embeds_mean)
+        if opts.add_max_pooling:
+            embeds_concat.append(embeds_max)
+        embeds_pool = tf.concat(embeds_concat, 1)
 
         if use_batch_normalization:
-            embeds_mean = batch_normalization(
-                embeds_mean, training, "bn_input")
+            embeds_pool = batch_normalization(
+                embeds_pool, training, "bn_input")
 
         if opts.use_user_features:
             tf.logging.info("Use user features")
             user_features = tf.feature_column.input_layer(
                 features, params['user_features_columns'])
-            concat_features = [embeds_mean, user_features]
+            concat_features = [embeds_pool, user_features]
             input_layer = tf.concat(concat_features, axis=1,
                                     name='concat_user_features')
         else:
-            input_layer = embeds_mean
+            input_layer = embeds_pool
 
     return input_layer
 
@@ -778,3 +784,16 @@ def get_negative_samples(labels, params):
     else:
         raise ValueError("Unsurpported negative sampler type.")
     return sampled_values
+
+
+def average_pooling(embeds, nonzeros):
+    with tf.name_scope('average_pooling'):
+        embeds_sum = tf.reduce_sum(embeds, 1)
+        embeds_mean = embeds_sum / tf.cast(nonzeros, tf.float32)
+    return embeds_mean
+
+
+def max_pooling(embeds, nonzeros):
+    embeds_max = tf.layers.max_pooling1d(embeds, embeds.shape[1].value, 1)
+    embeds_max = tf.reshape(embeds_max, [-1, embeds.shape[2].value])
+    return embeds_max

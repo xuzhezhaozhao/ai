@@ -105,6 +105,8 @@ parser.add_argument('--user_features_file', default='', type=str, help='')
 parser.add_argument('--use_age_feature', default=0, type=int, help='')
 parser.add_argument('--use_gender_feature', default=0, type=int, help='')
 parser.add_argument('--age_feature_type', default='', type=str, help='')
+parser.add_argument('--add_average_pooling', default=1, type=int, help='')
+parser.add_argument('--add_max_pooling', default=0, type=int, help='')
 
 opts = Options()
 
@@ -193,6 +195,8 @@ def parse_args(argv):
     opts.use_age_feature = bool(args.use_age_feature)
     opts.use_gender_feature = bool(args.use_gender_feature)
     opts.age_feature_type = args.age_feature_type
+    opts.add_average_pooling = bool(args.add_average_pooling)
+    opts.add_max_pooling = bool(args.add_max_pooling)
 
 
 def validate_opts():

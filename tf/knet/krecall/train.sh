@@ -33,7 +33,7 @@ t=0.025
 batch_size=64
 num_sampled=5
 epoch=5
-hidden_units="200,200,200"
+hidden_units=""
 prefetch_size=10000
 shuffle_size=10000
 max_train_steps=-1
@@ -91,6 +91,8 @@ use_age_feature=1
 use_gender_feature=1
 # 'indicator', 'numeric'
 age_feature_type='numeric'
+add_average_pooling=0
+add_max_pooling=1
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
@@ -186,4 +188,6 @@ python main.py \
     --user_features_file ${user_features_file} \
     --use_age_feature ${use_age_feature} \
     --use_gender_feature ${use_gender_feature} \
-    --age_feature_type ${age_feature_type}
+    --age_feature_type ${age_feature_type} \
+    --add_average_pooling ${add_average_pooling} \
+    --add_max_pooling ${add_max_pooling}
