@@ -107,9 +107,9 @@ optimizer_ftrl_l2_shrinkage_regularization=0.0
 optimizer_exponential_decay_steps=2000
 optimizer_exponential_decay_rate=0.98
 optimizer_exponential_decay_staircase=0  # bool value
-log_per_lines=10000
-cpp_log_level=0
-tf_log_level='INFO'
+log_per_lines=200000
+cpp_log_level=0  # 0: all
+tf_log_level='INFO'  # DEBUG, INFO, ERROR, FATAL
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
