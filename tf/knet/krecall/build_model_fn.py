@@ -87,7 +87,15 @@ def get_nce_weights_and_biases(params):
     user_features_dim = params['user_features_dim']
 
     if len(opts.hidden_units) == 0:
-        nce_dim = opts.embedding_dim
+        nce_dim = 0
+        if opts.add_average_pooling:
+            nce_dim += opts.embedding_dim
+        if opts.add_max_pooling:
+            nce_dim += opts.embedding_dim
+        if opts.add_min_pooling:
+            nce_dim += opts.embedding_dim
+        if opts.add_hierarchical_pooling:
+            nce_dim += opts.embedding_dim
         if opts.use_user_features:
             nce_dim += user_features_dim
     else:
@@ -156,13 +164,19 @@ def create_input_layer(mode, features, params, embeddings):
                 embeddings, embedding_dim, records_column,
                 model_keys.PADDING_ID)
 
-        embeds_mean = average_pooling(embeds, nonzeros)
-        embeds_max = max_pooling(embeds, nonzeros)
         embeds_concat = []
         if opts.add_average_pooling:
-            embeds_concat.append(embeds_mean)
+            embeds_average = average_pooling(embeds, nonzeros)
+            embeds_concat.append(embeds_average)
         if opts.add_max_pooling:
+            embeds_max = max_pooling(embeds, nonzeros)
             embeds_concat.append(embeds_max)
+        if opts.add_min_pooling:
+            embeds_min = min_pooling(embeds, nonzeros)
+            embeds_concat.append(embeds_min)
+        if opts.add_hierarchical_pooling:
+            embeds_hier = hierarchical_pooling(embeds, nonzeros, opts)
+            embeds_concat.append(embeds_hier)
         embeds_pool = tf.concat(embeds_concat, 1)
 
         if use_batch_normalization:
@@ -802,3 +816,19 @@ def max_pooling(embeds, nonzeros):
     embeds_max = tf.layers.max_pooling1d(embeds, embeds.shape[1].value, 1)
     embeds_max = tf.reshape(embeds_max, [-1, embeds.shape[2].value])
     return embeds_max
+
+
+def hierarchical_pooling(embeds, nonzeros, opts):
+    with tf.name_scope('hierarchical_pooling'):
+        embeds_average = tf.layers.average_pooling1d(
+            embeds, opts.hierarchical_average_window, 1, padding='same')
+        embeds_max = tf.layers.max_pooling1d(
+            embeds_average, embeds_average.shape[1].value, 1)
+        embeds_max = tf.reshape(embeds_max, [-1, embeds.shape[2].value])
+    return embeds_max
+
+
+def min_pooling(embeds, nonzeros):
+    embeds_min = -tf.layers.max_pooling1d(-embeds, embeds.shape[1].value, 1)
+    embeds_min = tf.reshape(embeds_min, [-1, embeds.shape[2].value])
+    return embeds_min

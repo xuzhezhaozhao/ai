@@ -31,6 +31,7 @@ parser.add_argument('--verbose', default=1, type=int, help='')
 parser.add_argument('--min_count_label', default=1, type=int, help='')
 parser.add_argument('--label', default="__label__", type=str, help='')
 parser.add_argument('--batch_size', default=64, type=int, help='batch size')
+parser.add_argument('--eval_batch_size', default=64, type=int, help='')
 parser.add_argument('--num_sampled', default=5, type=int, help='')
 parser.add_argument('--max_train_steps', default=None, type=int, help='')
 parser.add_argument('--epoch', default=1, type=int, help='')
@@ -107,9 +108,15 @@ parser.add_argument('--use_gender_feature', default=0, type=int, help='')
 parser.add_argument('--age_feature_type', default='', type=str, help='')
 parser.add_argument('--add_average_pooling', default=1, type=int, help='')
 parser.add_argument('--add_max_pooling', default=0, type=int, help='')
+parser.add_argument('--add_min_pooling', default=0, type=int, help='')
+parser.add_argument('--add_hierarchical_pooling', default=0, type=int, help='')
+parser.add_argument('--hierarchical_average_window',
+                    default=2, type=int, help='')
 parser.add_argument('--log_step_count_secs', default=30, type=int, help='')
 parser.add_argument('--evaluate_every_secs', default=30, type=int, help='')
 parser.add_argument('--max_eval_steps', default=None, type=int, help='')
+parser.add_argument('--max_eval_steps_on_train_dataset',
+                    default=1000, type=int, help='')
 
 opts = Options()
 
@@ -128,6 +135,7 @@ def parse_args(argv):
     opts.min_count_label = args.min_count_label
     opts.label = args.label
     opts.batch_size = args.batch_size
+    opts.eval_batch_size = args.eval_batch_size
     opts.num_sampled = args.num_sampled
     opts.max_train_steps = args.max_train_steps
     if opts.max_train_steps is not None and opts.max_train_steps < 0:
@@ -200,11 +208,19 @@ def parse_args(argv):
     opts.age_feature_type = args.age_feature_type
     opts.add_average_pooling = bool(args.add_average_pooling)
     opts.add_max_pooling = bool(args.add_max_pooling)
+    opts.add_min_pooling = bool(args.add_min_pooling)
+    opts.add_hierarchical_pooling = bool(args.add_hierarchical_pooling)
+    opts.hierarchical_average_window = bool(args.hierarchical_average_window)
     opts.log_step_count_secs = args.log_step_count_secs
     opts.evaluate_every_secs = args.evaluate_every_secs
     opts.max_eval_steps = args.max_eval_steps
     if opts.max_eval_steps is not None and opts.max_eval_steps <= 0:
         opts.max_eval_steps = None
+
+    opts.max_eval_steps_on_train_dataset = args.max_eval_steps_on_train_dataset
+    if (opts.max_eval_steps_on_train_dataset is not None
+            and opts.max_eval_steps_on_train_dataset <= 0):
+        opts.max_eval_steps_on_train_dataset = None
 
 
 def validate_opts():

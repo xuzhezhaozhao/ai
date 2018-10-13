@@ -186,11 +186,18 @@ def train_and_eval_in_local_mode(opts):
     tf.logging.info("Save nce weights and biases OK")
 
     # evaluate model
-    tf.logging.info("Beginning evaluate model ...")
+    tf.logging.info("Evaluating model in train dataset ...")
+    result = opts.estimator.evaluate(
+        input_fn=lambda: input_data.train_input_fn(opts),
+        steps=opts.max_eval_steps_on_train_dataset,
+        hooks=opts.hooks)
+    tf.logging.info("Evaluate model in train dataset OK\n")
+
+    tf.logging.info("Evaluating model in test dataset ...")
     result = opts.estimator.evaluate(
         input_fn=lambda: input_data.eval_input_fn(opts),
         hooks=opts.hooks)
-    tf.logging.info("Evaluate model OK")
+    tf.logging.info("Evaluate model in test dataset OK\n")
     return result
 
 

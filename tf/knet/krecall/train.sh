@@ -31,8 +31,9 @@ train_lower_ws=1
 min_count=30
 t=0.025
 batch_size=64
+eval_batch_size=8192
 num_sampled=5
-epoch=25
+epoch=1
 hidden_units=""
 prefetch_size=10000
 shuffle_size=10000
@@ -91,11 +92,15 @@ use_age_feature=1
 use_gender_feature=1
 # 'indicator', 'numeric'
 age_feature_type='numeric'
-add_average_pooling=0
+add_average_pooling=1
 add_max_pooling=1
+add_min_pooling=0
+add_hierarchical_pooling=0
+hierarchical_average_window=2
 log_step_count_secs=10
-evaluate_every_secs=20
-max_eval_steps=1000
+evaluate_every_secs=100000000 # 暂时不支持，因为 eval 做了优化，必须等 train 完成
+max_eval_steps=-1
+max_eval_steps_on_train_dataset=10000
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
@@ -132,6 +137,7 @@ python main.py \
     --min_count_label 50 \
     --label "__label__" \
     --batch_size ${batch_size} \
+    --eval_batch_size ${eval_batch_size} \
     --num_sampled ${num_sampled} \
     --epoch ${epoch} \
     --hidden_units "${hidden_units}" \
@@ -194,6 +200,10 @@ python main.py \
     --age_feature_type ${age_feature_type} \
     --add_average_pooling ${add_average_pooling} \
     --add_max_pooling ${add_max_pooling} \
+    --add_min_pooling ${add_min_pooling} \
+    --add_hierarchical_pooling ${add_hierarchical_pooling} \
+    --hierarchical_average_window ${hierarchical_average_window} \
     --log_step_count_secs ${log_step_count_secs} \
     --evaluate_every_secs ${evaluate_every_secs} \
-    --max_eval_steps ${max_eval_steps}
+    --max_eval_steps ${max_eval_steps} \
+    --max_eval_steps_on_train_dataset ${max_eval_steps_on_train_dataset}

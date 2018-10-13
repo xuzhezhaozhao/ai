@@ -242,7 +242,7 @@ def tfrecord_train_input_fn(opts):
 
 def eval_input_fn(opts, skip_rows=0):
     eval_data_path = opts.eval_data_path
-    batch_size = opts.batch_size
+    batch_size = opts.eval_batch_size
 
     ds = tf.data.TextLineDataset(eval_data_path).skip(skip_rows)
     ds = ds.map(lambda line: map_generate_example(line, opts, True),
