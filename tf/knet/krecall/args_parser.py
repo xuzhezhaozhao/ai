@@ -72,7 +72,7 @@ parser.add_argument(
     '--map_num_parallel_calls', default=1, type=int, help='')
 parser.add_argument(
     '--train_parallel_mode', default='default', type=str, help='')
-parser.add_argument('--num_parallel', default=1, type=int, help='')
+parser.add_argument('--train_num_parallel', default=1, type=int, help='')
 parser.add_argument('--use_batch_normalization', default=0, type=int, help='')
 parser.add_argument(
     '--sgd_lr_decay_type', default='exponential_decay', type=str, help='')
@@ -107,6 +107,9 @@ parser.add_argument('--use_gender_feature', default=0, type=int, help='')
 parser.add_argument('--age_feature_type', default='', type=str, help='')
 parser.add_argument('--add_average_pooling', default=1, type=int, help='')
 parser.add_argument('--add_max_pooling', default=0, type=int, help='')
+parser.add_argument('--log_step_count_secs', default=30, type=int, help='')
+parser.add_argument('--evaluate_every_secs', default=30, type=int, help='')
+parser.add_argument('--max_eval_steps', default=None, type=int, help='')
 
 opts = Options()
 
@@ -169,7 +172,7 @@ def parse_args(argv):
     opts.train_data_format = args.train_data_format
     opts.map_num_parallel_calls = args.map_num_parallel_calls
     opts.train_parallel_mode = args.train_parallel_mode
-    opts.num_parallel = args.num_parallel
+    opts.train_num_parallel = args.train_num_parallel
     opts.use_batch_normalization = bool(args.use_batch_normalization)
     opts.sgd_lr_decay_type = args.sgd_lr_decay_type
     opts.sgd_lr_decay_steps = args.sgd_lr_decay_steps
@@ -197,6 +200,11 @@ def parse_args(argv):
     opts.age_feature_type = args.age_feature_type
     opts.add_average_pooling = bool(args.add_average_pooling)
     opts.add_max_pooling = bool(args.add_max_pooling)
+    opts.log_step_count_secs = args.log_step_count_secs
+    opts.evaluate_every_secs = args.evaluate_every_secs
+    opts.max_eval_steps = args.max_eval_steps
+    if opts.max_eval_steps is not None and opts.max_eval_steps <= 0:
+        opts.max_eval_steps = None
 
 
 def validate_opts():

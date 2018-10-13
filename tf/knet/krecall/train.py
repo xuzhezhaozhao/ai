@@ -16,6 +16,7 @@ import model_keys
 import input_data
 import hook
 import filter_dict
+import easy_estimator
 
 
 def is_local_or_chief(task_type):
@@ -57,6 +58,7 @@ def build_estimator(opts):
     config_keys['keep_checkpoint_max'] = opts.keep_checkpoint_max
     config_keys['keep_checkpoint_every_n_hours'] = 10000
     config_keys['log_step_count_steps'] = opts.log_step_count_steps
+    config = tf.estimator.RunConfig(**config_keys)
 
     estimator_keys = {}
     estimator_keys['model_fn'] = build_model_fn.krecall_model_fn
@@ -69,33 +71,17 @@ def build_estimator(opts):
         'total_tokens': dict_meta["ntokens"] * opts.epoch,
         'opts': opts
     }
+    estimator_keys['config'] = config
 
     train_parallel_mode = opts.train_parallel_mode
     if train_parallel_mode == model_keys.TrainParallelMode.DEFAULT:
-        config = tf.estimator.RunConfig(**config_keys)
-        estimator_keys['config'] = config
         estimator = tf.estimator.Estimator(**estimator_keys)
-    elif train_parallel_mode == model_keys.TrainParallelMode.TRAIN_OP_PARALLEL:
-        from estimator.estimator import TrainOpParallelEstimator
-        config = tf.estimator.RunConfig(**config_keys)
-        estimator_keys['config'] = config
-        estimator_keys['num_train_op_parallel'] = opts.num_parallel
-        estimator = TrainOpParallelEstimator(**estimator_keys)
     elif train_parallel_mode == model_keys.TrainParallelMode.MULTI_THREAD:
-        from estimator_v2.estimator import Estimator as MultiThreadEstimator
-        config = tf.estimator.RunConfig(**config_keys)
-        estimator_keys['config'] = config
-        estimator_keys['num_thread'] = opts.num_parallel
-        estimator = MultiThreadEstimator(**estimator_keys)
-    elif train_parallel_mode == model_keys.TrainParallelMode.MULTI_THREAD_V2:
-        from estimator_v3.estimator import TrainOpParallelEstimator
-        config = tf.estimator.RunConfig(**config_keys)
-        estimator_keys['config'] = config
-        estimator_keys['num_train_op_parallel'] = opts.num_parallel
-        estimator = TrainOpParallelEstimator(**estimator_keys)
+        estimator_keys['num_parallel'] = opts.train_num_parallel
+        estimator_keys['log_step_count_secs'] = opts.log_step_count_secs
+        estimator = easy_estimator.EasyEstimator(**estimator_keys)
     else:
-        raise ValueError("train_parallel_mode '{}' not surpported.".format(
-            train_parallel_mode))
+        raise ValueError('Unsurpported train_parallel_mode.')
 
     return estimator
 
@@ -178,10 +164,20 @@ def train_and_eval_in_distributed_mode(opts):
 def train_and_eval_in_local_mode(opts):
     """Train and eval model in lcoal mode."""
 
-    tf.logging.info("Beginning train model ...")
-    opts.estimator.train(input_fn=lambda: input_data.train_input_fn(opts),
-                         max_steps=opts.max_train_steps,
-                         hooks=opts.hooks)
+    tf.logging.info("Training model ...")
+    build_model_fn.clear_model_fn_times()
+    if isinstance(opts.estimator, easy_estimator.EasyEstimator):
+        opts.estimator.easy_train(
+            input_fn=lambda: input_data.train_input_fn(opts),
+            max_steps=opts.max_train_steps,
+            evaluate_every_secs=opts.evaluate_every_secs,
+            evaluate_input_fn=lambda: input_data.eval_input_fn(opts),
+            evaluate_steps=opts.max_eval_steps)
+    else:
+        opts.estimator.train(
+            input_fn=lambda: input_data.train_input_fn(opts),
+            max_steps=opts.max_train_steps,
+            hooks=opts.hooks)
     tf.logging.info("Train model OK")
 
     tf.logging.info("Save nce weights and biases ...")

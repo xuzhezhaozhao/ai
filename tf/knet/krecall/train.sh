@@ -32,7 +32,7 @@ min_count=30
 t=0.025
 batch_size=64
 num_sampled=5
-epoch=5
+epoch=25
 hidden_units=""
 prefetch_size=10000
 shuffle_size=10000
@@ -63,9 +63,9 @@ tfrecord_file='../../../data/train_data.tfrecord'
 num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 map_num_parallel_calls=1
-# 'default', 'train_op_parallel', 'multi_thread', 'multi_thread_v2'
-train_parallel_mode='default'
-num_parallel=4
+# 'default', 'multi_thread'
+train_parallel_mode='multi_thread'
+train_num_parallel=4
 use_batch_normalization=1
 # 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'
 sgd_lr_decay_type='fasttext_decay'
@@ -93,6 +93,9 @@ use_gender_feature=1
 age_feature_type='numeric'
 add_average_pooling=0
 add_max_pooling=1
+log_step_count_secs=10
+evaluate_every_secs=20
+max_eval_steps=1000
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
@@ -165,7 +168,7 @@ python main.py \
     --train_data_format ${train_data_format} \
     --map_num_parallel_calls ${map_num_parallel_calls} \
     --train_parallel_mode ${train_parallel_mode} \
-    --num_parallel ${num_parallel} \
+    --train_num_parallel ${train_num_parallel} \
     --use_batch_normalization ${use_batch_normalization} \
     --sgd_lr_decay_type ${sgd_lr_decay_type} \
     --sgd_lr_decay_steps ${sgd_lr_decay_steps} \
@@ -190,4 +193,7 @@ python main.py \
     --use_gender_feature ${use_gender_feature} \
     --age_feature_type ${age_feature_type} \
     --add_average_pooling ${add_average_pooling} \
-    --add_max_pooling ${add_max_pooling}
+    --add_max_pooling ${add_max_pooling} \
+    --log_step_count_secs ${log_step_count_secs} \
+    --evaluate_every_secs ${evaluate_every_secs} \
+    --max_eval_steps ${max_eval_steps}

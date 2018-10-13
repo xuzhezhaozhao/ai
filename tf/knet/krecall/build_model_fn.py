@@ -18,6 +18,11 @@ import utils
 _call_model_fn_times = 0
 
 
+def clear_model_fn_times():
+    global _call_model_fn_times
+    _call_model_fn_times = 0
+
+
 def krecall_model_fn(features, labels, mode, params):
     """Build model graph."""
 
