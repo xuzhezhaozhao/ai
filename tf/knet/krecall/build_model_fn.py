@@ -54,7 +54,7 @@ def krecall_model_fn(features, labels, mode, params):
 
         if mode == tf.estimator.ModeKeys.EVAL:
             return create_eval_estimator_spec(
-                mode, labels, user_vector, params)
+                mode, labels, user_vector, params, top_k_ids, logits)
 
         if mode == tf.estimator.ModeKeys.TRAIN:
             return create_train_estimator_spec(
@@ -674,12 +674,10 @@ def create_predict_estimator_spec(mode, user_vector, features, params):
                                       export_outputs=export_outputs)
 
 
-def create_eval_estimator_spec(mode, labels, user_vector, params):
+def create_eval_estimator_spec(mode, labels, user_vector, params, top_k_ids, logits):
     """Create eval EstimatorSpec."""
 
     opts = params['opts']
-    _, top_k_ids, logits = optimize_level_saved_nce_params(
-        opts.dict_dir, user_vector, opts.recall_k, False)
     loss = tf.losses.sparse_softmax_cross_entropy(
         labels=tf.reshape(labels, [-1]),
         logits=logits)

@@ -38,6 +38,7 @@ hidden_units=""
 prefetch_size=10000
 shuffle_size=10000
 max_train_steps=-1
+max_eval_steps=-1
 save_summary_steps=100
 save_checkpoints_secs=600
 log_step_count_steps=1000
@@ -72,7 +73,7 @@ use_batch_normalization=1
 # 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'
 sgd_lr_decay_type='fasttext_decay'
 use_clip_gradients=1
-clip_norm=1000.0
+clip_norm=500.0
 filter_with_rowkey_info=0
 filter_with_rowkey_info_exposure_thr=10000
 filter_with_rowkey_info_play=100
@@ -91,12 +92,11 @@ use_gender_feature=1
 age_feature_type='numeric'
 add_average_pooling=1
 add_max_pooling=1
-add_min_pooling=1
+add_min_pooling=0
 add_hierarchical_pooling=0
 hierarchical_average_window=2
-log_step_count_secs=10
-evaluate_every_secs=100000000 # 暂时不支持，因为 eval 做了优化，必须等 train 完成
-max_eval_steps=-1
+log_step_count_secs=5
+evaluate_every_secs=5
 max_eval_steps_on_train_dataset=10000
 optimizer_epsilon=0.00001
 optimizer_adadelta_rho=0.95
@@ -112,6 +112,9 @@ optimizer_ftrl_initial_accumulator_value=0.1
 optimizer_ftrl_l1_regularization=0.001
 optimizer_ftrl_l2_regularization=0.0
 optimizer_ftrl_l2_shrinkage_regularization=0.0
+optimizer_exponential_decay_steps=100
+optimizer_exponential_decay_rate=0.99
+optimizer_exponential_decay_staircase=0  # bool value
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
@@ -157,6 +160,7 @@ python main.py \
     --prefetch_size ${prefetch_size} \
     --shuffle_size ${shuffle_size} \
     --max_train_steps ${max_train_steps} \
+    --max_eval_steps ${max_eval_steps} \
     --save_summary_steps ${save_summary_steps} \
     --save_checkpoints_secs ${save_checkpoints_secs} \
     --keep_checkpoint_max 2 \
@@ -212,7 +216,6 @@ python main.py \
     --hierarchical_average_window ${hierarchical_average_window} \
     --log_step_count_secs ${log_step_count_secs} \
     --evaluate_every_secs ${evaluate_every_secs} \
-    --max_eval_steps ${max_eval_steps} \
     --max_eval_steps_on_train_dataset ${max_eval_steps_on_train_dataset} \
     --optimizer_epsilon ${optimizer_epsilon} \
     --optimizer_adadelta_rho ${optimizer_adadelta_rho} \
@@ -227,4 +230,7 @@ python main.py \
     --optimizer_ftrl_initial_accumulator_value ${optimizer_ftrl_initial_accumulator_value} \
     --optimizer_ftrl_l1_regularization ${optimizer_ftrl_l1_regularization} \
     --optimizer_ftrl_l2_regularization ${optimizer_ftrl_l2_regularization} \
-    --optimizer_ftrl_l2_shrinkage_regularization ${optimizer_ftrl_l2_shrinkage_regularization}
+    --optimizer_ftrl_l2_shrinkage_regularization ${optimizer_ftrl_l2_shrinkage_regularization} \
+    --optimizer_exponential_decay_steps ${optimizer_exponential_decay_steps} \
+    --optimizer_exponential_decay_rate ${optimizer_exponential_decay_rate} \
+    --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase}

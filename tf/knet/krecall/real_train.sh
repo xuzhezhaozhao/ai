@@ -32,7 +32,8 @@ hidden_units=""
 prefetch_size=10000
 shuffle_size=10000
 max_train_steps=-1
-save_summary_steps=100000000
+max_eval_steps=-1
+save_summary_steps=10000
 save_checkpoints_secs=7200
 log_step_count_steps=20000
 recall_k=350
@@ -88,7 +89,6 @@ add_hierarchical_pooling=0
 hierarchical_average_window=2
 log_step_count_secs=300
 evaluate_every_secs=100000000
-max_eval_steps=-1
 max_eval_steps_on_train_dataset=10000
 optimizer_epsilon=0.00001
 optimizer_adadelta_rho=0.95
@@ -104,6 +104,9 @@ optimizer_ftrl_initial_accumulator_value=0.1
 optimizer_ftrl_l1_regularization=0.001
 optimizer_ftrl_l2_regularization=0.0
 optimizer_ftrl_l2_shrinkage_regularization=0.0
+optimizer_exponential_decay_steps=2000
+optimizer_exponential_decay_rate=0.98
+optimizer_exponential_decay_staircase=0  # bool value
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
@@ -148,6 +151,7 @@ python main.py \
     --prefetch_size ${prefetch_size} \
     --shuffle_size ${shuffle_size} \
     --max_train_steps ${max_train_steps} \
+    --max_eval_steps ${max_eval_steps} \
     --save_summary_steps ${save_summary_steps} \
     --save_checkpoints_secs ${save_checkpoints_secs} \
     --keep_checkpoint_max 2 \
@@ -203,7 +207,6 @@ python main.py \
     --hierarchical_average_window ${hierarchical_average_window} \
     --log_step_count_secs ${log_step_count_secs} \
     --evaluate_every_secs ${evaluate_every_secs} \
-    --max_eval_steps ${max_eval_steps} \
     --max_eval_steps_on_train_dataset ${max_eval_steps_on_train_dataset} \
     --optimizer_epsilon ${optimizer_epsilon} \
     --optimizer_adadelta_rho ${optimizer_adadelta_rho} \
@@ -218,4 +221,7 @@ python main.py \
     --optimizer_ftrl_initial_accumulator_value ${optimizer_ftrl_initial_accumulator_value} \
     --optimizer_ftrl_l1_regularization ${optimizer_ftrl_l1_regularization} \
     --optimizer_ftrl_l2_regularization ${optimizer_ftrl_l2_regularization} \
-    --optimizer_ftrl_l2_shrinkage_regularization ${optimizer_ftrl_l2_shrinkage_regularization}
+    --optimizer_ftrl_l2_shrinkage_regularization ${optimizer_ftrl_l2_shrinkage_regularization} \
+    --optimizer_exponential_decay_steps ${optimizer_exponential_decay_steps} \
+    --optimizer_exponential_decay_rate ${optimizer_exponential_decay_rate} \
+    --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase}

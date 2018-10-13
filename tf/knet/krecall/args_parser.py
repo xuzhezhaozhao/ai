@@ -34,6 +34,7 @@ parser.add_argument('--batch_size', default=64, type=int, help='batch size')
 parser.add_argument('--eval_batch_size', default=64, type=int, help='')
 parser.add_argument('--num_sampled', default=5, type=int, help='')
 parser.add_argument('--max_train_steps', default=None, type=int, help='')
+parser.add_argument('--max_eval_steps', default=None, type=int, help='')
 parser.add_argument('--epoch', default=1, type=int, help='')
 parser.add_argument('--hidden_units', default="64,64", type=str, help='')
 parser.add_argument('--model_dir', default="model_dir", type=str, help='')
@@ -108,7 +109,6 @@ parser.add_argument('--hierarchical_average_window',
                     default=2, type=int, help='')
 parser.add_argument('--log_step_count_secs', default=30, type=int, help='')
 parser.add_argument('--evaluate_every_secs', default=30, type=int, help='')
-parser.add_argument('--max_eval_steps', default=None, type=int, help='')
 parser.add_argument('--max_eval_steps_on_train_dataset',
                     default=1000, type=int, help='')
 parser.add_argument('--optimizer_epsilon', default=1e-8, type=float, help='')
@@ -167,6 +167,9 @@ def parse_args(argv):
     opts.max_train_steps = args.max_train_steps
     if opts.max_train_steps is not None and opts.max_train_steps < 0:
         opts.max_train_steps = None
+    opts.max_eval_steps = args.max_eval_steps
+    if opts.max_eval_steps is not None and opts.max_eval_steps < 0:
+        opts.max_eval_steps = None
     opts.epoch = args.epoch
     opts.hidden_units = map(int, filter(lambda x: x != '',
                                         args.hidden_units.split(',')))
@@ -236,15 +239,10 @@ def parse_args(argv):
     opts.hierarchical_average_window = bool(args.hierarchical_average_window)
     opts.log_step_count_secs = args.log_step_count_secs
     opts.evaluate_every_secs = args.evaluate_every_secs
-    opts.max_eval_steps = args.max_eval_steps
-    if opts.max_eval_steps is not None and opts.max_eval_steps <= 0:
-        opts.max_eval_steps = None
-
     opts.max_eval_steps_on_train_dataset = args.max_eval_steps_on_train_dataset
     if (opts.max_eval_steps_on_train_dataset is not None
             and opts.max_eval_steps_on_train_dataset <= 0):
         opts.max_eval_steps_on_train_dataset = None
-
     opts.optimizer_epsilon = args.optimizer_epsilon
     opts.optimizer_adam_beta1 = args.optimizer_adam_beta1
     opts.optimizer_adam_beta2 = args.optimizer_adam_beta2

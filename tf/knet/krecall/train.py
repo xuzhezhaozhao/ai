@@ -164,6 +164,13 @@ def train_and_eval_in_distributed_mode(opts):
 def train_and_eval_in_local_mode(opts):
     """Train and eval model in lcoal mode."""
 
+    tf.logging.info("Evaluating model in test dataset [startup] ...")
+    result = opts.estimator.evaluate(
+        input_fn=lambda: input_data.eval_input_fn(opts),
+        steps=opts.max_eval_steps,
+        hooks=opts.hooks)
+    tf.logging.info("Evaluate model in test dataset OK [startup]\n")
+
     tf.logging.info("Training model ...")
     build_model_fn.clear_model_fn_times()
     if isinstance(opts.estimator, easy_estimator.EasyEstimator):
@@ -196,6 +203,7 @@ def train_and_eval_in_local_mode(opts):
     tf.logging.info("Evaluating model in test dataset ...")
     result = opts.estimator.evaluate(
         input_fn=lambda: input_data.eval_input_fn(opts),
+        steps=opts.max_eval_steps,
         hooks=opts.hooks)
     tf.logging.info("Evaluate model in test dataset OK\n")
     return result
