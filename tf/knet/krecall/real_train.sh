@@ -52,7 +52,8 @@ train_nce_biases=0
 shuffle_batch=1
 predict_ws=50
 sample_dropout=0.0
-optimizer_type='ada'
+# 'adagrad', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
+optimizer_type='adagrad'
 tfrecord_file=${raw_data_dir}/train_data.vt.tfrecord
 num_tfrecord_file=42
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
@@ -63,10 +64,6 @@ train_num_parallel=16
 use_batch_normalization=0
 # 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'
 sgd_lr_decay_type='fasttext_decay'
-sgd_lr_decay_steps=100
-sgd_lr_decay_rate=0.99
-sgd_lr_decay_end_learning_rate=0.0001
-sgd_lr_decay_power=1.0
 use_clip_gradients=0
 clip_norm=500.0
 filter_with_rowkey_info=0
@@ -93,6 +90,20 @@ log_step_count_secs=300
 evaluate_every_secs=100000000
 max_eval_steps=-1
 max_eval_steps_on_train_dataset=10000
+optimizer_epsilon=0.00001
+optimizer_adadelta_rho=0.95
+optimizer_adam_beta1=0.9
+optimizer_adam_beta2=0.999
+optimizer_rmsprop_decay=0.9
+optimizer_rmsprop_momentum=0.01
+optimizer_rmsprop_centered=0  # bool value
+optimizer_momentum_momentum=0.99
+optimizer_momentum_use_nesterov=0 # bool value
+optimizer_ftrl_lr_power=-0.5
+optimizer_ftrl_initial_accumulator_value=0.1
+optimizer_ftrl_l1_regularization=0.001
+optimizer_ftrl_l2_regularization=0.0
+optimizer_ftrl_l2_shrinkage_regularization=0.0
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
@@ -168,8 +179,6 @@ python main.py \
     --train_num_parallel ${train_num_parallel} \
     --use_batch_normalization ${use_batch_normalization} \
     --sgd_lr_decay_type ${sgd_lr_decay_type} \
-    --sgd_lr_decay_steps ${sgd_lr_decay_steps} \
-    --sgd_lr_decay_rate ${sgd_lr_decay_rate} \
     --use_clip_gradients ${use_clip_gradients} \
     --clip_norm ${clip_norm} \
     --filter_with_rowkey_info ${filter_with_rowkey_info} \
@@ -182,8 +191,6 @@ python main.py \
     --normalize_embeddings ${normalize_embeddings} \
     --nce_loss_type ${nce_loss_type} \
     --negative_sampler_type ${negative_sampler_type} \
-    --sgd_lr_decay_end_learning_rate ${sgd_lr_decay_end_learning_rate} \
-    --sgd_lr_decay_power ${sgd_lr_decay_power} \
     --use_user_features ${use_user_features} \
     --user_features_file ${user_features_file} \
     --use_age_feature ${use_age_feature} \
@@ -197,4 +204,18 @@ python main.py \
     --log_step_count_secs ${log_step_count_secs} \
     --evaluate_every_secs ${evaluate_every_secs} \
     --max_eval_steps ${max_eval_steps} \
-    --max_eval_steps_on_train_dataset ${max_eval_steps_on_train_dataset}
+    --max_eval_steps_on_train_dataset ${max_eval_steps_on_train_dataset} \
+    --optimizer_epsilon ${optimizer_epsilon} \
+    --optimizer_adadelta_rho ${optimizer_adadelta_rho} \
+    --optimizer_adam_beta1 ${optimizer_adam_beta1} \
+    --optimizer_adam_beta2 ${optimizer_adam_beta2} \
+    --optimizer_rmsprop_decay ${optimizer_rmsprop_decay} \
+    --optimizer_rmsprop_momentum ${optimizer_rmsprop_momentum} \
+    --optimizer_rmsprop_centered ${optimizer_rmsprop_centered} \
+    --optimizer_momentum_momentum ${optimizer_momentum_momentum} \
+    --optimizer_momentum_use_nesterov ${optimizer_momentum_use_nesterov} \
+    --optimizer_ftrl_lr_power ${optimizer_ftrl_lr_power} \
+    --optimizer_ftrl_initial_accumulator_value ${optimizer_ftrl_initial_accumulator_value} \
+    --optimizer_ftrl_l1_regularization ${optimizer_ftrl_l1_regularization} \
+    --optimizer_ftrl_l2_regularization ${optimizer_ftrl_l2_regularization} \
+    --optimizer_ftrl_l2_shrinkage_regularization ${optimizer_ftrl_l2_shrinkage_regularization}

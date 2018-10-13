@@ -66,11 +66,13 @@ class TaskType(object):
 class OptimizerType(object):
     """Optimizer type."""
 
-    ADA = 'ada'
+    ADAGRAD = 'adagrad'
     ADADELTA = 'adadelta'
     ADAM = 'adam'
     SGD = 'sgd'
     RMSPROP = 'rmsprop'
+    MOMENTUM = 'momentum'
+    FTRL = 'ftrl'
 
 
 class TrainDataFormatType(object):

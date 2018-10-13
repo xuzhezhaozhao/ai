@@ -77,8 +77,6 @@ parser.add_argument('--train_num_parallel', default=1, type=int, help='')
 parser.add_argument('--use_batch_normalization', default=0, type=int, help='')
 parser.add_argument(
     '--sgd_lr_decay_type', default='exponential_decay', type=str, help='')
-parser.add_argument('--sgd_lr_decay_steps', default=100, type=int, help='')
-parser.add_argument('--sgd_lr_decay_rate', default=0.99, type=float, help='')
 parser.add_argument('--use_clip_gradients', default=0, type=int, help='')
 parser.add_argument('--clip_norm', default=5.0, type=float, help='')
 parser.add_argument('--filter_with_rowkey_info', default=0, type=int, help='')
@@ -97,10 +95,6 @@ parser.add_argument('--normalize_embeddings', default=0, type=int, help='')
 parser.add_argument('--nce_loss_type', default='default', type=str, help='')
 parser.add_argument(
     '--negative_sampler_type', default='fixed', type=str, help='')
-parser.add_argument('--sgd_lr_decay_end_learning_rate',
-                    default=0.0001, type=float, help='')
-parser.add_argument('--sgd_lr_decay_power', default=1.0, type=float, help='')
-
 parser.add_argument('--use_user_features', default=0, type=int, help='')
 parser.add_argument('--user_features_file', default='', type=str, help='')
 parser.add_argument('--use_age_feature', default=0, type=int, help='')
@@ -117,6 +111,39 @@ parser.add_argument('--evaluate_every_secs', default=30, type=int, help='')
 parser.add_argument('--max_eval_steps', default=None, type=int, help='')
 parser.add_argument('--max_eval_steps_on_train_dataset',
                     default=1000, type=int, help='')
+parser.add_argument('--optimizer_epsilon', default=1e-8, type=float, help='')
+parser.add_argument('--optimizer_adadelta_rho',
+                    default=0.95, type=float, help='')
+parser.add_argument('--optimizer_adam_beta1',
+                    default=0.9, type=float, help='')
+parser.add_argument('--optimizer_adam_beta2',
+                    default=0.999, type=float, help='')
+parser.add_argument('--optimizer_rmsprop_decay',
+                    default=0.9, type=float, help='')
+parser.add_argument('--optimizer_rmsprop_momentum',
+                    default=0.0, type=float, help='')
+parser.add_argument('--optimizer_rmsprop_centered',
+                    default=0, type=int, help='')
+parser.add_argument('--optimizer_momentum_momentum',
+                    default=0.9, type=float, help='')
+parser.add_argument('--optimizer_momentum_use_nesterov',
+                    default=0, type=int, help='')
+parser.add_argument('--optimizer_exponential_decay_steps',
+                    default=10000, type=int, help='')
+parser.add_argument('--optimizer_exponential_decay_rate',
+                    default=0.96, type=float, help='')
+parser.add_argument('--optimizer_exponential_decay_staircase',
+                    default=0, type=int, help='')
+parser.add_argument('--optimizer_ftrl_lr_power',
+                    default=-0.5, type=float, help='')
+parser.add_argument('--optimizer_ftrl_initial_accumulator_value',
+                    default=0.1, type=float, help='')
+parser.add_argument('--optimizer_ftrl_l1_regularization',
+                    default=0.0, type=float, help='')
+parser.add_argument('--optimizer_ftrl_l2_regularization',
+                    default=0.0, type=float, help='')
+parser.add_argument('--optimizer_ftrl_l2_shrinkage_regularization',
+                    default=0.0, type=float, help='')
 
 opts = Options()
 
@@ -183,8 +210,6 @@ def parse_args(argv):
     opts.train_num_parallel = args.train_num_parallel
     opts.use_batch_normalization = bool(args.use_batch_normalization)
     opts.sgd_lr_decay_type = args.sgd_lr_decay_type
-    opts.sgd_lr_decay_steps = args.sgd_lr_decay_steps
-    opts.sgd_lr_decay_rate = args.sgd_lr_decay_rate
     opts.use_clip_gradients = bool(args.use_clip_gradients)
     opts.clip_norm = args.clip_norm
     opts.filter_with_rowkey_info = bool(args.filter_with_rowkey_info)
@@ -199,8 +224,6 @@ def parse_args(argv):
     opts.normalize_embeddings = bool(args.normalize_embeddings)
     opts.nce_loss_type = args.nce_loss_type
     opts.negative_sampler_type = args.negative_sampler_type
-    opts.sgd_lr_decay_end_learning_rate = args.sgd_lr_decay_end_learning_rate
-    opts.sgd_lr_decay_power = args.sgd_lr_decay_power
     opts.use_user_features = bool(args.use_user_features)
     opts.user_features_file = args.user_features_file
     opts.use_age_feature = bool(args.use_age_feature)
@@ -221,6 +244,31 @@ def parse_args(argv):
     if (opts.max_eval_steps_on_train_dataset is not None
             and opts.max_eval_steps_on_train_dataset <= 0):
         opts.max_eval_steps_on_train_dataset = None
+
+    opts.optimizer_epsilon = args.optimizer_epsilon
+    opts.optimizer_adam_beta1 = args.optimizer_adam_beta1
+    opts.optimizer_adam_beta2 = args.optimizer_adam_beta2
+    opts.optimizer_rmsprop_decay = args.optimizer_rmsprop_decay
+    opts.optimizer_rmsprop_momentum = args.optimizer_rmsprop_momentum
+    opts.optimizer_rmsprop_centered = bool(args.optimizer_rmsprop_centered)
+    opts.optimizer_momentum_momentum = args.optimizer_momentum_momentum
+    opts.optimizer_momentum_use_nesterov = \
+        bool(args.optimizer_momentum_use_nesterov)
+    opts.optimizer_exponential_decay_steps = \
+        args.optimizer_exponential_decay_steps
+    opts.optimizer_exponential_decay_rate = \
+        args.optimizer_exponential_decay_rate
+    opts.optimizer_exponential_decay_staircase = \
+        bool(args.optimizer_exponential_decay_staircase)
+    opts.optimizer_ftrl_lr_power = args.optimizer_ftrl_lr_power
+    opts.optimizer_ftrl_initial_accumulator_value = \
+        args.optimizer_ftrl_initial_accumulator_value
+    opts.optimizer_ftrl_l1_regularization = \
+        args.optimizer_ftrl_l1_regularization
+    opts.optimizer_ftrl_l2_regularization = \
+        args.optimizer_ftrl_l2_regularization
+    opts.optimizer_ftrl_l2_shrinkage_regularization = \
+        args.optimizer_ftrl_l2_shrinkage_regularization
 
 
 def validate_opts():

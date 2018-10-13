@@ -566,61 +566,71 @@ def create_optimizer(features, params):
     """Create optimizer."""
 
     opts = params['opts']
-    lr = opts.lr
     optimizer_type = opts.optimizer_type
 
+    # used for GradientDescentOptimizer and MomentumOptimizer
+    decay_lr = tf.train.exponential_decay(
+        learning_rate=opts.lr,
+        global_step=tf.train.get_global_step(),
+        decay_steps=opts.optimizer_exponential_decay_steps,
+        decay_rate=opts.optimizer_exponential_decay_rate,
+        staircase=opts.optimizer_exponential_decay_staircase)
     with tf.name_scope('optimizer_layer'):
-        if optimizer_type == model_keys.OptimizerType.ADA:
+        if optimizer_type == model_keys.OptimizerType.ADAGRAD:
             optimizer = tf.train.AdagradOptimizer(
-                learning_rate=lr,
+                learning_rate=opts.lr,
                 name='adagrad_{}'.format(_call_model_fn_times))
         elif optimizer_type == model_keys.OptimizerType.ADADELTA:
             optimizer = tf.train.AdadeltaOptimizer(
-                learning_rate=lr,
-                rho=0.95,
-                epsilon=0.00001,
+                learning_rate=opts.lr,
+                rho=opts.optimizer_adadelta_rho,
+                epsilon=opts.optimizer_epsilon,
                 name='adadelta_{}'.format(_call_model_fn_times))
         elif optimizer_type == model_keys.OptimizerType.ADAM:
             optimizer = tf.train.AdamOptimizer(
-                learning_rate=lr, name='adam_{}'.format(_call_model_fn_times))
+                learning_rate=opts.lr,
+                beta1=opts.optimizer_adam_beta1,
+                beta2=opts.optimizer_adam_beta2,
+                epsilon=opts.optimizer_epsilon,
+                name='adam_{}'.format(_call_model_fn_times))
         elif optimizer_type == model_keys.OptimizerType.SGD:
             if (opts.sgd_lr_decay_type
                     == model_keys.SGDLrDecayType.FASTTEXT_DECAY):
-                sgd_lr = sgd_lr_fasttext_decay(features, params)
-            elif (opts.sgd_lr_decay_type
-                  == model_keys.SGDLrDecayType.EXPONENTIAL_DECAY):
-                sgd_lr = tf.train.exponential_decay(
-                    lr, tf.train.get_global_step(),
-                    decay_steps=opts.sgd_lr_decay_steps,
-                    decay_rate=opts.sgd_lr_decay_rate)
-            elif opts.sgd_lr_decay_type == model_keys.SGDLrDecayType.NONE:
-                sgd_lr = lr
-            elif (opts.sgd_lr_decay_type
-                  == model_keys.SGDLrDecayType.POLYNOMIAL_DECAY):
-                sgd_lr = tf.train.polynomial_decay(
-                    lr, tf.train.get_global_step(),
-                    decay_steps=opts.sgd_lr_decay_steps,
-                    end_learning_rate=opts.sgd_lr_decay_end_learning_rate,
-                    power=opts.sgd_lr_decay_power,
-                    cycle=False)
-            else:
-                raise ValueError("Unsurpported sgd lr decay type '{}'"
-                                 .format(opts.sgd_lr_decay_type))
+                decay_lr = sgd_lr_fasttext_decay(features, params)
             optimizer = tf.train.GradientDescentOptimizer(
-                learning_rate=sgd_lr,
+                learning_rate=decay_lr,
                 name='sgd_{}'.format(_call_model_fn_times))
-            tf.summary.scalar("sgd_lr", sgd_lr)
         elif optimizer_type == model_keys.OptimizerType.RMSPROP:
             optimizer = tf.train.RMSPropOptimizer(
-                learning_rate=lr,
-                decay=0.95,
-                momentum=0.001,
-                epsilon=1e-10,
+                learning_rate=opts.lr,
+                decay=opts.optimizer_rmsprop_decay,
+                momentum=opts.optimizer_rmsprop_momentum,
+                epsilon=opts.optimizer_epsilon,
+                centered=opts.optimizer_rmsprop_centered,
                 name='rmsprop_{}'.format(_call_model_fn_times))
+        elif optimizer_type == model_keys.OptimizerType.MOMENTUM:
+            optimizer = tf.train.MomentumOptimizer(
+                learning_rate=decay_lr,
+                momentum=opts.optimizer_momentum_momentum,
+                use_nesterov=opts.optimizer_momentum_use_nesterov,
+                name='momentum_{}'.format(_call_model_fn_times))
+        elif optimizer_type == model_keys.OptimizerType.FTRL:
+            l1 = opts.optimizer_ftrl_l1_regularization
+            l2 = opts.optimizer_ftrl_l2_regularization
+            init_value = opts.optimizer_ftrl_initial_accumulator_value
+            l2_shrinkage = opts.optimizer_ftrl_l2_shrinkage_regularization
+            optimizer = tf.train.FtrlOptimizer(
+                learning_rate=opts.lr,
+                learning_rate_power=opts.optimizer_ftrl_lr_power,
+                initial_accumulator_value=init_value,
+                l1_regularization_strength=l1,
+                l2_regularization_strength=l2,
+                name='ftrl_{}'.format(_call_model_fn_times),
+                l2_shrinkage_regularization_strength=l2_shrinkage)
         else:
             raise ValueError('OptimizerType "{}" not surpported.'
                              .format(optimizer_type))
-
+    tf.summary.scalar("decay_lr", decay_lr)
     return optimizer
 
 
