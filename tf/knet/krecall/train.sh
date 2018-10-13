@@ -116,9 +116,8 @@ optimizer_exponential_decay_steps=100
 optimizer_exponential_decay_rate=0.99
 optimizer_exponential_decay_staircase=0  # bool value
 log_per_lines=100000
-# 0: all
-cpp_log_level=1
-tf_log_level='INFO'
+cpp_log_level=1  # 0: all
+tf_log_level='INFO'  # DEBUG, INFO, ERROR, FATAL
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
