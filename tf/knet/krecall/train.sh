@@ -24,8 +24,8 @@ else
     eval_data_path=../../../data/eval_data.in
 fi
 
-lr=0.1
-embedding_dim=128
+lr=1.0
+embedding_dim=100
 train_ws=20
 train_lower_ws=1
 min_count=30
@@ -61,7 +61,7 @@ shuffle_batch=1
 predict_ws=20
 sample_dropout=0.0
 # 'adagrad', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
-optimizer_type='adagrad'
+optimizer_type='ftrl'
 tfrecord_file='../../../data/train_data.tfrecord'
 num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
@@ -97,7 +97,7 @@ add_hierarchical_pooling=0
 hierarchical_average_window=2
 log_step_count_secs=10
 evaluate_every_secs=500000
-max_eval_steps_on_train_dataset=10000
+max_eval_steps_on_train_dataset=1000
 optimizer_epsilon=0.00001
 optimizer_adadelta_rho=0.95
 optimizer_adam_beta1=0.9
@@ -107,10 +107,10 @@ optimizer_rmsprop_momentum=0.01
 optimizer_rmsprop_centered=0  # bool value
 optimizer_momentum_momentum=0.99
 optimizer_momentum_use_nesterov=0 # bool value
-optimizer_ftrl_lr_power=-0.5
-optimizer_ftrl_initial_accumulator_value=0.1
-optimizer_ftrl_l1_regularization=0.001
-optimizer_ftrl_l2_regularization=0.0
+optimizer_ftrl_lr_power=-6.5
+optimizer_ftrl_initial_accumulator_value=1.0
+optimizer_ftrl_l1_regularization=0.000
+optimizer_ftrl_l2_regularization=0.00001
 optimizer_ftrl_l2_shrinkage_regularization=0.0
 optimizer_exponential_decay_steps=100
 optimizer_exponential_decay_rate=0.99
