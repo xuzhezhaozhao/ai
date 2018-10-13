@@ -24,37 +24,37 @@ class FasttextNegativeSamplerOp : public OpKernel {
         seed_(0),
         unique_(true),
         negpos_(0) {
-    LOG(ERROR) << "Init FasttextNegativeSamplerOp ...";
-    LOG(ERROR) << "this = " << this;
+    LOG(INFO) << "Init FasttextNegativeSamplerOp ...";
+    LOG(INFO) << "this = " << this;
     negatives_.clear();
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("num_true", &num_true_));
-    LOG(ERROR) << "num_true = " << num_true_;
+    LOG(INFO) << "num_true = " << num_true_;
     OP_REQUIRES(ctx, num_true_ > 0, errors::InvalidArgument("num_true <= 0"));
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("num_sampled", &num_sampled_));
-    LOG(ERROR) << "num_sampled = " << num_sampled_;
+    LOG(INFO) << "num_sampled = " << num_sampled_;
     OP_REQUIRES(ctx, num_sampled_ > 0,
                 errors::InvalidArgument("num_sampled <= 0"));
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("unique", &unique_));
-    LOG(ERROR) << "unique = " << unique_;
+    LOG(INFO) << "unique = " << unique_;
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("range_max", &range_max_));
-    LOG(ERROR) << "range_max = " << range_max_;
+    LOG(INFO) << "range_max = " << range_max_;
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("num_reserved_ids", &num_reserved_ids_));
-    LOG(ERROR) << "num_reserved_ids = " << num_reserved_ids_;
+    LOG(INFO) << "num_reserved_ids = " << num_reserved_ids_;
 
     OP_REQUIRES_OK(ctx, ctx->GetAttr("seed", &seed_));
-    LOG(ERROR) << "seed = " << seed_;
+    LOG(INFO) << "seed = " << seed_;
     rng_.seed(seed_);
 
     Tensor unigrams;
     OP_REQUIRES_OK(ctx, ctx->GetAttr("unigrams", &unigrams));
     InitTableNegatives(ctx, unigrams);
 
-    LOG(ERROR) << "Init FasttextNegativeSamplerOp OK";
+    LOG(INFO) << "Init FasttextNegativeSamplerOp OK";
   }
 
   void Compute(OpKernelContext* ctx) override {
@@ -91,7 +91,7 @@ class FasttextNegativeSamplerOp : public OpKernel {
 
  private:
   void InitTableNegatives(OpKernelConstruction* ctx, const Tensor& unigrams) {
-    LOG(ERROR) << "InitTableNegatives ...";
+    LOG(INFO) << "InitTableNegatives ...";
     auto& unigrams_shape = unigrams.shape();
     auto flat_unigrams = unigrams.flat<int64>();
     OP_REQUIRES(ctx, TensorShapeUtils::IsVector(unigrams_shape),
@@ -112,8 +112,8 @@ class FasttextNegativeSamplerOp : public OpKernel {
       }
     }
     std::shuffle(negatives_.begin(), negatives_.end(), rng_);
-    LOG(ERROR) << "negatives_.size = " << negatives_.size();
-    LOG(ERROR) << "InitTableNegatives OK.";
+    LOG(INFO) << "negatives_.size = " << negatives_.size();
+    LOG(INFO) << "InitTableNegatives OK.";
   }
 
   int GetNegative(int32_t target) {

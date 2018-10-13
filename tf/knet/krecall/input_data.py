@@ -96,6 +96,7 @@ def pack_fasttext_params(opts, is_eval):
 
     params['use_user_features'] = opts.use_user_features
     params['user_features_file'] = opts.user_features_file
+    params['log_per_lines'] = opts.log_per_lines
 
     if is_eval:
         params['t'] = 1.0

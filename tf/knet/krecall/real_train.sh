@@ -89,7 +89,7 @@ add_hierarchical_pooling=0
 hierarchical_average_window=2
 log_step_count_secs=300
 evaluate_every_secs=100000000
-max_eval_steps_on_train_dataset=10000
+max_eval_steps_on_train_dataset=100
 optimizer_epsilon=0.00001
 optimizer_adadelta_rho=0.95
 optimizer_adam_beta1=0.9
@@ -107,6 +107,8 @@ optimizer_ftrl_l2_shrinkage_regularization=0.0
 optimizer_exponential_decay_steps=2000
 optimizer_exponential_decay_rate=0.98
 optimizer_exponential_decay_staircase=0  # bool value
+log_per_lines=10000
+cpp_log_level=1
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
@@ -224,4 +226,6 @@ python main.py \
     --optimizer_ftrl_l2_shrinkage_regularization ${optimizer_ftrl_l2_shrinkage_regularization} \
     --optimizer_exponential_decay_steps ${optimizer_exponential_decay_steps} \
     --optimizer_exponential_decay_rate ${optimizer_exponential_decay_rate} \
-    --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase}
+    --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase} \
+    --log_per_lines ${log_per_lines} \
+    --cpp_log_level ${cpp_log_level}

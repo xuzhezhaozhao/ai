@@ -693,6 +693,7 @@ def create_train_estimator_spec(
     opts = params['opts']
 
     loss = create_loss(nce_weights, nce_biases, labels, user_vector, params)
+    tf.summary.scalar('train_loss', loss)
     optimizer = create_optimizer(features, params)
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
@@ -704,6 +705,10 @@ def create_train_estimator_spec(
             train_op = optimizer.apply_gradients(
                 zip(gradients, variables),
                 global_step=tf.train.get_global_step())
+
+            for var, grad in zip(variables, gradients):
+                tf.summary.histogram(
+                    var.name.replace(':', '_') + '/gradient', grad)
         else:
             train_op = optimizer.minimize(
                 loss=loss,

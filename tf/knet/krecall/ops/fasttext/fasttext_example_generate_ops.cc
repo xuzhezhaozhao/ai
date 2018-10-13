@@ -25,6 +25,7 @@ REGISTER_OP("FasttextExampleGenerate")
     .Attr("sample_dropout: float = 0.5")
     .Attr("use_user_features: bool = false")
     .Attr("user_features_file: string = ''")
+    .Attr("log_per_lines: int = 10000")
     .Doc(R"doc(
 Fasttext example generate operator.
 Args

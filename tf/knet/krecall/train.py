@@ -241,6 +241,8 @@ def export_model_in_local_mode(opts):
 def train(opts, export=True):
     """Train model."""
 
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = str(opts.cpp_log_level)
+
     init_dictionary(opts)
 
     opts.estimator = build_estimator(opts)

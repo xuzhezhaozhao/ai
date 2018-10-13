@@ -144,6 +144,8 @@ parser.add_argument('--optimizer_ftrl_l2_regularization',
                     default=0.0, type=float, help='')
 parser.add_argument('--optimizer_ftrl_l2_shrinkage_regularization',
                     default=0.0, type=float, help='')
+parser.add_argument('--log_per_lines', default=20000, type=int, help='')
+parser.add_argument('--cpp_log_level', default=1, type=int, help='')
 
 opts = Options()
 
@@ -267,6 +269,8 @@ def parse_args(argv):
         args.optimizer_ftrl_l2_regularization
     opts.optimizer_ftrl_l2_shrinkage_regularization = \
         args.optimizer_ftrl_l2_shrinkage_regularization
+    opts.log_per_lines = args.log_per_lines
+    opts.cpp_log_level = args.cpp_log_level
 
 
 def validate_opts():

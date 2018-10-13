@@ -50,6 +50,7 @@ struct Args {
 
     bool use_user_features = false;
     std::string user_features_file = "";
+    int log_per_lines = 10000;
 };
 
 }

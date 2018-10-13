@@ -49,8 +49,8 @@ class FasttextExampleGenerateOp : public OpKernel {
       }
     }
 
-    LOG(ERROR) << "nwords = " << dict_->nwords();
-    LOG(ERROR) << "nlabels = " << dict_->nlabels();
+    LOG(INFO) << "nwords = " << dict_->nwords();
+    LOG(INFO) << "nlabels = " << dict_->nlabels();
 
     LOG(INFO) << "Init FasttextExampleGenerateOp OK";
   }
@@ -73,8 +73,8 @@ class FasttextExampleGenerateOp : public OpKernel {
     }
     ++global_lines_;
     auto x = global_lines_.load(std::memory_order_relaxed);
-    if (x % 10000 == 0) {
-      LOG(ERROR) << "global lines = " << x;
+    if (x % args_->log_per_lines == 0) {
+      LOG(INFO) << "global lines = " << x;
     }
 
     const Tensor& input_tensor = ctx->input(0);
@@ -264,6 +264,8 @@ class FasttextExampleGenerateOp : public OpKernel {
     OP_REQUIRES_OK(
         ctx, ctx->GetAttr("user_features_file", &args_->user_features_file));
     LOG(INFO) << "user_features_file: " << args_->user_features_file;
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("log_per_lines", &args_->log_per_lines));
+    LOG(INFO) << "log_per_lines: " << args_->log_per_lines;
   }
 
   inline int transform_id(int id) { return id + 1; }
@@ -283,7 +285,7 @@ class FasttextExampleGenerateOp : public OpKernel {
   }
 
   void LoadUserFeatures(OpKernelConstruction* ctx) {
-    LOG(ERROR) << "Load user features from '" << args_->user_features_file
+    LOG(INFO) << "Load user features from '" << args_->user_features_file
                << "' ...";
     std::ifstream ifs(args_->user_features_file);
     OP_REQUIRES(
@@ -294,7 +296,7 @@ class FasttextExampleGenerateOp : public OpKernel {
     while (!ifs.eof()) {
       ++nline;
       if (nline % 1000000 == 0) {
-        LOG(ERROR) << "Load user features " << nline / 10000 << "w lines...";
+        LOG(INFO) << "Load user features " << nline / 10000 << "w lines...";
       }
       std::getline(ifs, line);
       str_util::StripTrailingWhitespace(&line);
@@ -316,18 +318,18 @@ class FasttextExampleGenerateOp : public OpKernel {
         continue;
       }
     }
-    LOG(ERROR) << "Load user size = " << user_features_.size();
+    LOG(INFO) << "Load user size = " << user_features_.size();
 
     int cnt = 0;
     for (auto& p : user_features_) {
-      LOG(ERROR) << p.first << ": " << p.second.age << ", " << p.second.gender;
+      LOG(INFO) << p.first << ": " << p.second.age << ", " << p.second.gender;
       ++cnt;
       if (cnt > 10) {
         break;
       }
     }
 
-    LOG(ERROR) << "Load user features OK";
+    LOG(INFO) << "Load user features OK";
   }
   struct UserFeatures {
     UserFeatures(short age_, short gender_) : age(age_), gender(gender_) {}

@@ -33,7 +33,7 @@ t=0.025
 batch_size=64
 eval_batch_size=8192
 num_sampled=5
-epoch=1
+epoch=5
 hidden_units=""
 prefetch_size=10000
 shuffle_size=10000
@@ -72,7 +72,7 @@ train_num_parallel=4
 use_batch_normalization=1
 # 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'
 sgd_lr_decay_type='fasttext_decay'
-use_clip_gradients=1
+use_clip_gradients=0
 clip_norm=500.0
 filter_with_rowkey_info=0
 filter_with_rowkey_info_exposure_thr=10000
@@ -90,13 +90,13 @@ use_age_feature=1
 use_gender_feature=1
 # 'indicator', 'numeric'
 age_feature_type='numeric'
-add_average_pooling=1
+add_average_pooling=0
 add_max_pooling=1
 add_min_pooling=0
 add_hierarchical_pooling=0
 hierarchical_average_window=2
-log_step_count_secs=5
-evaluate_every_secs=5
+log_step_count_secs=10
+evaluate_every_secs=500000
 max_eval_steps_on_train_dataset=10000
 optimizer_epsilon=0.00001
 optimizer_adadelta_rho=0.95
@@ -115,6 +115,9 @@ optimizer_ftrl_l2_shrinkage_regularization=0.0
 optimizer_exponential_decay_steps=100
 optimizer_exponential_decay_rate=0.99
 optimizer_exponential_decay_staircase=0  # bool value
+log_per_lines=100000
+# 1: all  2: warn and error 3: error
+cpp_log_level=2
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
@@ -233,4 +236,6 @@ python main.py \
     --optimizer_ftrl_l2_shrinkage_regularization ${optimizer_ftrl_l2_shrinkage_regularization} \
     --optimizer_exponential_decay_steps ${optimizer_exponential_decay_steps} \
     --optimizer_exponential_decay_rate ${optimizer_exponential_decay_rate} \
-    --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase}
+    --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase} \
+    --log_per_lines ${log_per_lines} \
+    --cpp_log_level ${cpp_log_level}
