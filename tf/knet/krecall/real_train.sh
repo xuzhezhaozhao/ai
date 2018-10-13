@@ -108,7 +108,8 @@ optimizer_exponential_decay_steps=2000
 optimizer_exponential_decay_rate=0.98
 optimizer_exponential_decay_staircase=0  # bool value
 log_per_lines=10000
-cpp_log_level=1
+cpp_log_level=0
+tf_log_level='INFO'
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
     dump_tfrecord_is_delete=1
@@ -228,4 +229,5 @@ python main.py \
     --optimizer_exponential_decay_rate ${optimizer_exponential_decay_rate} \
     --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase} \
     --log_per_lines ${log_per_lines} \
-    --cpp_log_level ${cpp_log_level}
+    --cpp_log_level ${cpp_log_level} \
+    --tf_log_level ${tf_log_level}

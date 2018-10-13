@@ -242,6 +242,7 @@ def train(opts, export=True):
     """Train model."""
 
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = str(opts.cpp_log_level)
+    tf.logging.set_verbosity(opts.tf_log_level)
 
     init_dictionary(opts)
 

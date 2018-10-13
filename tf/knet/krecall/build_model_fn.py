@@ -356,8 +356,8 @@ def save_model_nce_params(model, opts):
         tf.logging.info("Normalize nce weihts.")
         nce_weights = utils.normalize_matrix(nce_weights)
 
-    tf.logging.info('save nce_weights = \n{}'.format(nce_weights))
-    tf.logging.info('save nce_biases = \n{}'.format(nce_biases))
+    tf.logging.debug('save nce_weights = \n{}'.format(nce_weights))
+    tf.logging.debug('save nce_biases = \n{}'.format(nce_biases))
     save_weights_path = os.path.join(
         dict_dir, model_keys.SAVE_NCE_WEIGHTS_NAME)
     save_biases_path = os.path.join(dict_dir, model_keys.SAVE_NCE_BIASES_NAME)
@@ -374,7 +374,7 @@ def save_model_embeddings(model, opts):
         tf.logging.info("Normalize embeddings.")
         embeddings = utils.normalize_matrix(embeddings)
     embeddings[model_keys.PADDING_ID] = 0.0
-    tf.logging.info('save embeddings = \n{}'.format(embeddings))
+    tf.logging.debug('save embeddings = \n{}'.format(embeddings))
     save_embeddings_path = os.path.join(
         dict_dir, model_keys.SAVE_EMBEDDINGS_NAME)
     np.save(save_embeddings_path, embeddings)

@@ -5,15 +5,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import tensorflow as tf
 from options import Options
 
 import os
 import json
 import model_keys
 import argparse
-
-
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = '0'
 
 
 parser = argparse.ArgumentParser()
@@ -146,6 +144,7 @@ parser.add_argument('--optimizer_ftrl_l2_shrinkage_regularization',
                     default=0.0, type=float, help='')
 parser.add_argument('--log_per_lines', default=20000, type=int, help='')
 parser.add_argument('--cpp_log_level', default=1, type=int, help='')
+parser.add_argument('--tf_log_level', default='INFO', type=str, help='')
 
 opts = Options()
 
@@ -271,6 +270,17 @@ def parse_args(argv):
         args.optimizer_ftrl_l2_shrinkage_regularization
     opts.log_per_lines = args.log_per_lines
     opts.cpp_log_level = args.cpp_log_level
+    tf_log_level = args.tf_log_level
+    if tf_log_level == 'DEBUG':
+        opts.tf_log_level = tf.logging.DEBUG
+    elif tf_log_level == 'INFO':
+        opts.tf_log_level = tf.logging.INFO
+    elif tf_log_level == 'ERROR':
+        opts.tf_log_level = tf.logging.ERROR
+    elif tf_log_level == 'FATAL':
+        opts.tf_log_level = tf.logging.FATAL
+    else:
+        raise ValueError("Invalid tf_log_level.")
 
 
 def validate_opts():
