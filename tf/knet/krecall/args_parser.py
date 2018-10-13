@@ -103,8 +103,10 @@ parser.add_argument('--add_average_pooling', default=1, type=int, help='')
 parser.add_argument('--add_max_pooling', default=0, type=int, help='')
 parser.add_argument('--add_min_pooling', default=0, type=int, help='')
 parser.add_argument('--add_hierarchical_pooling', default=0, type=int, help='')
+parser.add_argument('--add_attention_layer', default=0, type=int, help='')
 parser.add_argument('--hierarchical_average_window',
                     default=2, type=int, help='')
+parser.add_argument('--attention_size', default=200, type=int, help='')
 parser.add_argument('--log_step_count_secs', default=30, type=int, help='')
 parser.add_argument('--evaluate_every_secs', default=30, type=int, help='')
 parser.add_argument('--max_eval_steps_on_train_dataset',
@@ -237,7 +239,9 @@ def parse_args(argv):
     opts.add_max_pooling = bool(args.add_max_pooling)
     opts.add_min_pooling = bool(args.add_min_pooling)
     opts.add_hierarchical_pooling = bool(args.add_hierarchical_pooling)
-    opts.hierarchical_average_window = bool(args.hierarchical_average_window)
+    opts.add_attention_layer = bool(args.add_attention_layer)
+    opts.hierarchical_average_window = args.hierarchical_average_window
+    opts.attention_size = args.attention_size
     opts.log_step_count_secs = args.log_step_count_secs
     opts.evaluate_every_secs = args.evaluate_every_secs
     opts.max_eval_steps_on_train_dataset = args.max_eval_steps_on_train_dataset

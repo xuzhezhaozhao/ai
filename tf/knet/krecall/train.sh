@@ -91,10 +91,12 @@ use_gender_feature=1
 # 'indicator', 'numeric'
 age_feature_type='numeric'
 add_average_pooling=0
-add_max_pooling=1
+add_max_pooling=0
 add_min_pooling=0
 add_hierarchical_pooling=0
-hierarchical_average_window=2
+add_attention_layer=1
+hierarchical_average_window=5
+attention_size=200
 log_step_count_secs=10
 evaluate_every_secs=500000
 max_eval_steps_on_train_dataset=1000
@@ -216,7 +218,9 @@ python main.py \
     --add_max_pooling ${add_max_pooling} \
     --add_min_pooling ${add_min_pooling} \
     --add_hierarchical_pooling ${add_hierarchical_pooling} \
+    --add_attention_layer ${add_attention_layer} \
     --hierarchical_average_window ${hierarchical_average_window} \
+    --attention_size ${attention_size} \
     --log_step_count_secs ${log_step_count_secs} \
     --evaluate_every_secs ${evaluate_every_secs} \
     --max_eval_steps_on_train_dataset ${max_eval_steps_on_train_dataset} \
@@ -239,4 +243,5 @@ python main.py \
     --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase} \
     --log_per_lines ${log_per_lines} \
     --cpp_log_level ${cpp_log_level} \
-    --tf_log_level ${tf_log_level}
+    --tf_log_level ${tf_log_level} \
+    --attention_size ${attention_size}

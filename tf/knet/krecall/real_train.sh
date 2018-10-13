@@ -86,7 +86,9 @@ add_average_pooling=0
 add_max_pooling=1
 add_min_pooling=0
 add_hierarchical_pooling=0
+add_attention_layer=0
 hierarchical_average_window=2
+attention_size=200
 log_step_count_secs=300
 evaluate_every_secs=100000000
 max_eval_steps_on_train_dataset=100
@@ -207,7 +209,9 @@ python main.py \
     --add_max_pooling ${add_max_pooling} \
     --add_min_pooling ${add_min_pooling} \
     --add_hierarchical_pooling ${add_hierarchical_pooling} \
+    --add_attention_layer ${add_attention_layer} \
     --hierarchical_average_window ${hierarchical_average_window} \
+    --attention_size ${attention_size} \
     --log_step_count_secs ${log_step_count_secs} \
     --evaluate_every_secs ${evaluate_every_secs} \
     --max_eval_steps_on_train_dataset ${max_eval_steps_on_train_dataset} \

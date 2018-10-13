@@ -96,6 +96,8 @@ def get_nce_weights_and_biases(params):
             nce_dim += opts.embedding_dim
         if opts.add_hierarchical_pooling:
             nce_dim += opts.embedding_dim
+        if opts.add_attention_layer:
+            nce_dim += opts.embedding_dim
         if opts.use_user_features:
             nce_dim += user_features_dim
     else:
@@ -151,6 +153,7 @@ def create_input_layer(mode, features, params, embeddings):
 
         records_column = tf.feature_column.input_layer(
             features, records_column)
+        nonzero_mask = tf.expand_dims(tf.to_float(records_column > 0), 2)
 
         # [batch, 1]
         nonzeros = tf.count_nonzero(records_column, 1, keepdims=True)
@@ -177,6 +180,9 @@ def create_input_layer(mode, features, params, embeddings):
         if opts.add_hierarchical_pooling:
             embeds_hier = hierarchical_pooling(embeds, nonzeros, opts)
             embeds_concat.append(embeds_hier)
+        if opts.add_attention_layer:
+            embeds_att = attention_layer(embeds, nonzero_mask, opts)
+            embeds_concat.append(embeds_att)
         embeds_pool = tf.concat(embeds_concat, 1)
 
         if use_batch_normalization:
@@ -237,8 +243,8 @@ def get_metrics(labels, logits, ids, params):
     opts = params['opts']
     ntargets = opts.ntargets
     recall_k = opts.recall_k
-    recall_k2 = recall_k//2
-    recall_k4 = recall_k//4
+    recall_k2 = recall_k // 2
+    recall_k4 = recall_k // 4
 
     with tf.name_scope('eval_metrics'):
         predicted = ids[:, :ntargets]
@@ -674,10 +680,10 @@ def create_predict_estimator_spec(mode, user_vector, features, params):
                                       export_outputs=export_outputs)
 
 
-def create_eval_estimator_spec(mode, labels, user_vector, params, top_k_ids, logits):
+def create_eval_estimator_spec(mode, labels, user_vector, params,
+                               top_k_ids, logits):
     """Create eval EstimatorSpec."""
 
-    opts = params['opts']
     loss = tf.losses.sparse_softmax_cross_entropy(
         labels=tf.reshape(labels, [-1]),
         logits=logits)
@@ -845,3 +851,24 @@ def min_pooling(embeds, nonzeros):
     embeds_min = -tf.layers.max_pooling1d(-embeds, embeds.shape[1].value, 1)
     embeds_min = tf.reshape(embeds_min, [-1, embeds.shape[2].value])
     return embeds_min
+
+
+def attention_layer(embeds, nonzero_mask, opts):
+    with tf.variable_scope('attention_layer', reuse=tf.AUTO_REUSE):
+        attention_size = opts.attention_size
+        u_context = tf.get_variable(
+            'u_context', initializer=tf.truncated_normal([attention_size]))
+        # FC layer transform
+        h = tf.contrib.layers.fully_connected(
+            embeds, attention_size, activation_fn=tf.nn.tanh)
+        hu_sum = tf.reduce_sum(
+            tf.multiply(h, u_context), axis=2, keepdims=True)
+        exp = tf.exp(hu_sum)
+        exp_adapt = tf.multiply(exp, nonzero_mask)
+        exp_adapt_sum = tf.reduce_sum(exp_adapt, axis=1, keepdims=True)
+        alpha = tf.div(exp_adapt, exp_adapt_sum)
+
+        # [batch_size, embedding_size]
+        attention_output = tf.reduce_sum(tf.multiply(embeds, alpha), axis=1)
+
+    return attention_output
