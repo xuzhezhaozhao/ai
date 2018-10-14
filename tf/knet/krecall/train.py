@@ -251,8 +251,7 @@ def train(opts, export=True):
 
     opts.estimator = build_estimator(opts)
     opts.hooks = create_hooks(opts)
-
-    tf.logging.info(opts)
+    opts.list_all_member()
 
     if is_distributed(opts):
         train_and_eval_in_distributed_mode(opts)
