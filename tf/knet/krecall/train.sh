@@ -7,8 +7,8 @@ cd ${MYDIR}
 
 echo 'TF_CONFIG = ' ${TF_CONFIG}
 
-MODEL_DIR=`pwd`/model_dir
-EXPORT_MODEL_DIR=`pwd`/export_model_dir
+model_dir=`pwd`/model_dir
+export_model_dir=`pwd`/export_model_dir
 
 if [[ $# != 0 ]] ; then
     if [[ $1 == "user" ]]; then
@@ -24,21 +24,22 @@ else
     eval_data_path=../../../data/eval_data.in
 fi
 
-lr=0.1
+lr=0.001
 embedding_dim=100
 train_ws=20
 train_lower_ws=1
 min_count=30
 t=0.025
 batch_size=64
-eval_batch_size=8192
+eval_batch_size=1024
 num_sampled=5
 epoch=5
-hidden_units=""
+hidden_units="256"
 prefetch_size=10000
 shuffle_size=10000
 max_train_steps=-1
 max_eval_steps=-1
+max_eval_steps_in_train=50
 save_summary_steps=100
 save_checkpoints_secs=600
 log_step_count_steps=1000
@@ -54,14 +55,14 @@ receive_ws=100
 use_subset=1
 dropout=0.0
 ntargets=1
-chief_lock=${MODEL_DIR}/chief.lock
+chief_lock=${model_dir}/chief.lock
 max_distribute_train_steps=-1
 train_nce_biases=0
 shuffle_batch=1
 predict_ws=20
 sample_dropout=0.0
 # 'adagrad', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
-optimizer_type='adagrad'
+optimizer_type='momentum'
 tfrecord_file='../../../data/train_data.tfrecord'
 num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
@@ -107,15 +108,15 @@ optimizer_adam_beta2=0.999
 optimizer_rmsprop_decay=0.9
 optimizer_rmsprop_momentum=0.01
 optimizer_rmsprop_centered=0  # bool value
-optimizer_momentum_momentum=0.99
+optimizer_momentum_momentum=0.9
 optimizer_momentum_use_nesterov=0 # bool value
 optimizer_ftrl_lr_power=-6.5
 optimizer_ftrl_initial_accumulator_value=1.0
 optimizer_ftrl_l1_regularization=0.000
 optimizer_ftrl_l2_regularization=0.00001
 optimizer_ftrl_l2_shrinkage_regularization=0.0
-optimizer_exponential_decay_steps=100
-optimizer_exponential_decay_rate=0.99
+optimizer_exponential_decay_steps=1000
+optimizer_exponential_decay_rate=0.5
 optimizer_exponential_decay_staircase=0  # bool value
 log_per_lines=100000
 cpp_log_level=1  # 0: all
@@ -160,12 +161,13 @@ python main.py \
     --num_sampled ${num_sampled} \
     --epoch ${epoch} \
     --hidden_units "${hidden_units}" \
-    --model_dir ${MODEL_DIR} \
-    --export_model_dir ${EXPORT_MODEL_DIR} \
+    --model_dir ${model_dir} \
+    --export_model_dir ${export_model_dir} \
     --prefetch_size ${prefetch_size} \
     --shuffle_size ${shuffle_size} \
     --max_train_steps ${max_train_steps} \
     --max_eval_steps ${max_eval_steps} \
+    --max_eval_steps_in_train ${max_eval_steps_in_train} \
     --save_summary_steps ${save_summary_steps} \
     --save_checkpoints_secs ${save_checkpoints_secs} \
     --keep_checkpoint_max 2 \

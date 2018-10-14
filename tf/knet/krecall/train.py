@@ -146,11 +146,11 @@ def train_and_eval_in_distributed_mode(opts):
     # train and eval model
     tf.logging.info("Beginning train_and_eval model ...")
     train_spec = tf.estimator.TrainSpec(
-        input_fn=lambda: input_data.train_input_fn(opts),
+        input_fn=lambda: input_data.train_input_fn(opts, opts.train_data_path),
         max_steps=opts.max_distribute_train_steps,
         hooks=opts.hooks)
     eval_spec = tf.estimator.EvalSpec(
-        input_fn=lambda: input_data.eval_input_fn(opts),
+        input_fn=lambda: input_data.eval_input_fn(opts, opts.eval_data_path),
         steps=100,
         hooks=opts.hooks,
         start_delay_secs=10,
@@ -166,7 +166,7 @@ def train_and_eval_in_local_mode(opts):
 
     tf.logging.info("Evaluating model in test dataset [startup] ...")
     result = opts.estimator.evaluate(
-        input_fn=lambda: input_data.eval_input_fn(opts),
+        input_fn=lambda: input_data.eval_input_fn(opts, opts.train_data_path),
         steps=opts.max_eval_steps,
         hooks=opts.hooks)
     tf.logging.info("Evaluate model in test dataset OK [startup]\n")
@@ -175,14 +175,17 @@ def train_and_eval_in_local_mode(opts):
     build_model_fn.clear_model_fn_times()
     if isinstance(opts.estimator, easy_estimator.EasyEstimator):
         opts.estimator.easy_train(
-            input_fn=lambda: input_data.train_input_fn(opts),
+            input_fn=lambda: input_data.train_input_fn(
+                opts, opts.train_data_path),
             max_steps=opts.max_train_steps,
             evaluate_every_secs=opts.evaluate_every_secs,
-            evaluate_input_fn=lambda: input_data.eval_input_fn(opts),
-            evaluate_steps=opts.max_eval_steps)
+            evaluate_input_fn=lambda: input_data.eval_input_fn(
+                opts, opts.eval_data_path),
+            evaluate_steps=opts.max_eval_steps_in_train)
     else:
         opts.estimator.train(
-            input_fn=lambda: input_data.train_input_fn(opts),
+            input_fn=lambda: input_data.train_input_fn(
+                opts, opts.train_data_path),
             max_steps=opts.max_train_steps,
             hooks=opts.hooks)
     tf.logging.info("Train model OK")
@@ -195,14 +198,14 @@ def train_and_eval_in_local_mode(opts):
     # evaluate model
     tf.logging.info("Evaluating model in train dataset ...")
     result = opts.estimator.evaluate(
-        input_fn=lambda: input_data.train_input_fn(opts),
+        input_fn=lambda: input_data.eval_input_fn(opts, opts.train_data_path),
         steps=opts.max_eval_steps_on_train_dataset,
         hooks=opts.hooks)
     tf.logging.info("Evaluate model in train dataset OK\n")
 
     tf.logging.info("Evaluating model in test dataset ...")
     result = opts.estimator.evaluate(
-        input_fn=lambda: input_data.eval_input_fn(opts),
+        input_fn=lambda: input_data.eval_input_fn(opts, opts.eval_data_path),
         steps=opts.max_eval_steps,
         hooks=opts.hooks)
     tf.logging.info("Evaluate model in test dataset OK\n")

@@ -33,6 +33,8 @@ parser.add_argument('--eval_batch_size', default=64, type=int, help='')
 parser.add_argument('--num_sampled', default=5, type=int, help='')
 parser.add_argument('--max_train_steps', default=None, type=int, help='')
 parser.add_argument('--max_eval_steps', default=None, type=int, help='')
+parser.add_argument('--max_eval_steps_in_train',
+                    default=None, type=int, help='')
 parser.add_argument('--epoch', default=1, type=int, help='')
 parser.add_argument('--hidden_units', default="64,64", type=str, help='')
 parser.add_argument('--model_dir', default="model_dir", type=str, help='')
@@ -173,6 +175,10 @@ def parse_args(argv):
     opts.max_eval_steps = args.max_eval_steps
     if opts.max_eval_steps is not None and opts.max_eval_steps < 0:
         opts.max_eval_steps = None
+    opts.max_eval_steps_in_train = args.max_eval_steps_in_train
+    if (opts.max_eval_steps_in_train is not None
+            and opts.max_eval_steps_in_train < 0):
+        opts.max_eval_steps_in_train = None
     opts.epoch = args.epoch
     opts.hidden_units = map(int, filter(lambda x: x != '',
                                         args.hidden_units.split(',')))

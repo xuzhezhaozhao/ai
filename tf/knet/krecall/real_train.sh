@@ -32,7 +32,8 @@ hidden_units=""
 prefetch_size=10000
 shuffle_size=10000
 max_train_steps=-1
-max_eval_steps=50
+max_eval_steps=-1
+max_eval_steps_in_train=50
 save_summary_steps=10000
 save_checkpoints_secs=7200
 log_step_count_steps=20000
@@ -157,6 +158,7 @@ python main.py \
     --shuffle_size ${shuffle_size} \
     --max_train_steps ${max_train_steps} \
     --max_eval_steps ${max_eval_steps} \
+    --max_eval_steps_in_train ${max_eval_steps_in_train} \
     --save_summary_steps ${save_summary_steps} \
     --save_checkpoints_secs ${save_checkpoints_secs} \
     --keep_checkpoint_max 2 \

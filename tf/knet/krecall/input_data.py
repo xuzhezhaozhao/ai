@@ -80,9 +80,9 @@ def gender_indicator_column():
     return gender_indicator_column, gender_dim
 
 
-def pack_fasttext_params(opts, is_eval):
+def pack_fasttext_params(opts, data_path, is_eval):
     params = dict()
-    params['train_data_path'] = opts.train_data_path
+    params['train_data_path'] = data_path
     params['dict_dir'] = opts.dict_dir
     params['ws'] = opts.train_ws
     params['lower_ws'] = opts.train_lower_ws
@@ -111,7 +111,7 @@ def init_dict(opts):
     if opts.use_saved_dict:
         return
 
-    params = pack_fasttext_params(opts, False)
+    params = pack_fasttext_params(opts, opts.train_data_path, False)
     params['input'] = ''
     params['use_saved_dict'] = False
     dummy = custom_ops.fasttext_example_generate(**params)
@@ -139,10 +139,10 @@ def need_ntokens(opts):
     return False
 
 
-def map_generate_example(line, opts, is_eval):
+def map_generate_example(line, opts, data_path, is_eval):
     """Map a single line to features tuple."""
 
-    params = pack_fasttext_params(opts, is_eval)
+    params = pack_fasttext_params(opts, data_path, is_eval)
     params['input'] = line
     params['use_saved_dict'] = True
 
@@ -183,9 +183,9 @@ def flat_map_example(opts, x):
     return dataset
 
 
-def train_input_fn(opts, skip_rows=0):
+def train_input_fn(opts, data_path, skip_rows=0):
     if opts.train_data_format == model_keys.TrainDataFormatType.fasttext:
-        return fasttext_train_input_fn(opts, skip_rows)
+        return fasttext_train_input_fn(opts, data_path, skip_rows)
     elif opts.train_data_format == model_keys.TrainDataFormatType.tfrecord:
         return tfrecord_train_input_fn(opts)
     else:
@@ -193,14 +193,14 @@ def train_input_fn(opts, skip_rows=0):
             opts.train_data_format))
 
 
-def fasttext_train_input_fn(opts, skip_rows=0):
-    train_data_path = opts.train_data_path
+def fasttext_train_input_fn(opts, data_path, skip_rows=0):
     batch_size = opts.batch_size
 
-    ds = tf.data.TextLineDataset(train_data_path).skip(skip_rows)
+    ds = tf.data.TextLineDataset(data_path).skip(skip_rows)
     # ref: https://stackoverflow.com/questions/47411383/parallel-threads-with-tensorflow-dataset-api-and-flat-map/47414078
-    ds = ds.map(lambda line: map_generate_example(line, opts, False),
-                num_parallel_calls=opts.map_num_parallel_calls)
+    ds = ds.map(
+        lambda line: map_generate_example(line, opts, data_path, False),
+        num_parallel_calls=opts.map_num_parallel_calls)
     ds = ds.prefetch(opts.prefetch_size).flat_map(
         lambda *x: flat_map_example(opts, x))
 
@@ -241,12 +241,11 @@ def tfrecord_train_input_fn(opts):
     return ds
 
 
-def eval_input_fn(opts, skip_rows=0):
-    eval_data_path = opts.eval_data_path
+def eval_input_fn(opts, data_path, skip_rows=0):
     batch_size = opts.eval_batch_size
 
-    ds = tf.data.TextLineDataset(eval_data_path).skip(skip_rows)
-    ds = ds.map(lambda line: map_generate_example(line, opts, True),
+    ds = tf.data.TextLineDataset(data_path).skip(skip_rows)
+    ds = ds.map(lambda line: map_generate_example(line, opts, data_path, True),
                 num_parallel_calls=opts.map_num_parallel_calls)
     ds = ds.prefetch(opts.prefetch_size).flat_map(
         lambda *x: flat_map_example(opts, x))
