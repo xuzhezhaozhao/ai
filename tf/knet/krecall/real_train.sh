@@ -18,7 +18,7 @@ train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
 user_features_file=${raw_data_dir}/user_features.tsv
 
-lr=0.01
+lr=0.1
 embedding_dim=128
 train_ws=20
 train_lower_ws=1
@@ -55,7 +55,7 @@ shuffle_batch=1
 predict_ws=50
 sample_dropout=0.0
 # 'adagrad', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
-optimizer_type='adam'
+optimizer_type='adagrad'
 tfrecord_file=${raw_data_dir}/train_data.vt.tfrecord
 num_tfrecord_file=42
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
