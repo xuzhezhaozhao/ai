@@ -24,7 +24,7 @@ else
     eval_data_path=../../../data/eval_data.in
 fi
 
-lr=1.0
+lr=0.001
 embedding_dim=100
 train_ws=20
 train_lower_ws=1
@@ -62,7 +62,7 @@ shuffle_batch=1
 predict_ws=20
 sample_dropout=0.0
 # 'adagrad', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
-optimizer_type='ftrl'
+optimizer_type='adam'
 tfrecord_file='../../../data/train_data.tfrecord'
 num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'

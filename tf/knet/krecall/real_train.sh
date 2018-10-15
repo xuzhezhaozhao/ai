@@ -18,7 +18,7 @@ train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
 user_features_file=${raw_data_dir}/user_features.tsv
 
-lr=0.5
+lr=0.01
 embedding_dim=128
 train_ws=20
 train_lower_ws=1
@@ -28,7 +28,7 @@ batch_size=128
 eval_batch_size=2048
 num_sampled=10
 epoch=1
-hidden_units=""
+hidden_units="256"
 prefetch_size=10000
 shuffle_size=10000
 max_train_steps=-1
@@ -55,7 +55,7 @@ shuffle_batch=1
 predict_ws=50
 sample_dropout=0.0
 # 'adagrad', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
-optimizer_type='adagrad'
+optimizer_type='adam'
 tfrecord_file=${raw_data_dir}/train_data.vt.tfrecord
 num_tfrecord_file=42
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
@@ -83,7 +83,7 @@ use_age_feature=1
 use_gender_feature=1
 # 'indicator', 'numeric'
 age_feature_type='indicator'
-add_average_pooling=0
+add_average_pooling=1
 add_max_pooling=1
 add_min_pooling=0
 add_hierarchical_pooling=0
