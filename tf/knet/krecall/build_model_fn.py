@@ -704,22 +704,17 @@ def create_train_estimator_spec(
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
     with tf.control_dependencies(update_ops):
+        gradients, variables = zip(*optimizer.compute_gradients(
+            loss, gate_gradients=tf.train.Optimizer.GATE_GRAPH))
         if opts.use_clip_gradients:
-            gradients, variables = zip(*optimizer.compute_gradients(
-                loss, gate_gradients=tf.train.Optimizer.GATE_GRAPH))
             gradients, _ = tf.clip_by_global_norm(gradients, opts.clip_norm)
-            train_op = optimizer.apply_gradients(
-                zip(gradients, variables),
-                global_step=tf.train.get_global_step())
+        train_op = optimizer.apply_gradients(
+            zip(gradients, variables),
+            global_step=tf.train.get_global_step())
+        for var, grad in zip(variables, gradients):
+            tf.summary.histogram(
+                var.name.replace(':', '_') + '/gradient', grad)
 
-            for var, grad in zip(variables, gradients):
-                tf.summary.histogram(
-                    var.name.replace(':', '_') + '/gradient', grad)
-        else:
-            train_op = optimizer.minimize(
-                loss=loss,
-                global_step=tf.train.get_global_step(),
-                gate_gradients=tf.train.Optimizer.GATE_OP)
     return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
 
