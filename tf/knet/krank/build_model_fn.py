@@ -60,12 +60,13 @@ def krank_model_fn(features, labels, mode, params):
     tf.summary.histogram('targets_embeds', targets_embeds)
     tf.summary.histogram('first_videos_embeds', first_videos_embeds)
 
-    concat_features = [
-        positive_embeds_mean,
-        negative_embeds_mean,
-        # first_videos_embeds,
-        targets_embeds
-    ]
+    concat_features = [targets_embeds]
+    if opts.add_positive:
+        concat_features.append(positive_embeds_mean)
+    if opts.add_negative:
+        concat_features.append(negative_embeds_mean)
+    if opts.add_first_video:
+        concat_features.append(first_videos_embeds)
 
     hidden = tf.concat(concat_features, 1)
     num_in = hidden.shape[-1].value
@@ -152,17 +153,6 @@ def krank_model_fn(features, labels, mode, params):
         optimizer = create_optimizer(params)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
-        if opts.use_variable_averages:
-            variable_averages = tf.train.ExponentialMovingAverage(
-                opts.moving_avg_decay, tf.train.get_global_step())
-            # aver_vars = [v for v in tf.trainable_variables()
-                         # if v.name.find('embedding') < 0]
-            aver_vars = tf.trainable_variables()
-            tf.logging.info("aver_vars: ")
-            tf.logging.info(aver_vars)
-            variable_averages_op = variable_averages.apply(aver_vars)
-            update_ops.append(variable_averages_op)
-
         with tf.control_dependencies(update_ops):
             gradients, variables = zip(*optimizer.compute_gradients(loss))
             if opts.clip_gradients:

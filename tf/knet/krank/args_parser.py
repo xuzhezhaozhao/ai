@@ -102,9 +102,10 @@ parser.add_argument('--use_binary_label', default=1, type=int, help='')
 parser.add_argument('--binary_label_threhold',
                     default=0.5, type=float, help='')
 parser.add_argument('--loss_type', default='ce', type=str, help='')
-parser.add_argument('--use_variable_averages', default=0, type=int, help='')
-parser.add_argument('--moving_avg_decay', default=0.99, type=float, help='')
 parser.add_argument('--use_bn', default=1, type=int, help='')
+parser.add_argument('--add_positive', default=1, type=int, help='')
+parser.add_argument('--add_negative', default=1, type=int, help='')
+parser.add_argument('--add_first_video', default=1, type=int, help='')
 
 
 opts = Options()
@@ -196,9 +197,10 @@ def parse_args(argv):
     opts.use_binary_label = bool(args.use_binary_label)
     opts.binary_label_threhold = args.binary_label_threhold
     opts.loss_type = args.loss_type
-    opts.use_variable_averages = bool(args.use_variable_averages)
-    opts.moving_avg_decay = args.moving_avg_decay
     opts.use_bn = bool(args.use_bn)
+    opts.add_positive = bool(args.add_positive)
+    opts.add_negative = bool(args.add_negative)
+    opts.add_first_video = bool(args.add_first_video)
 
     opts.num_rowkey = 1 + len([line for line in open(opts.rowkey_dict_path)
                                if line != ''])  # plus one for padding

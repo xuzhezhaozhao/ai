@@ -81,6 +81,10 @@ class KrankInputOp : public OpKernel {
         continue;
       }
 
+      if (feature.actions[w].id == feature.actions[w].first_video_id) {
+        continue;
+      }
+
       int boundary = std::min(w, uniform(rng_));
       std::vector<int> pos;
       std::vector<int> neg;

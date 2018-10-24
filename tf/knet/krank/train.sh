@@ -20,16 +20,16 @@ rowkey_embedding_dim=100
 target_rowkey_embedding_dim=${rowkey_embedding_dim}
 target_use_share_embeddings=0  # bool value
 target_skip_connection=0  # bool value
-train_ws=10
+train_ws=20
 batch_size=128
 eval_batch_size=8192
 max_train_steps=-1
 max_eval_steps=-1
 max_eval_steps_on_train_dataset=100
 epoch=5
-hidden_units="300,300"
+hidden_units="300"
 prefetch_size=20000
-shuffle_batch=0
+shuffle_batch=1
 shuffle_size=50000
 save_summary_steps=100
 save_checkpoints_secs=300
@@ -71,19 +71,20 @@ optimizer_exponential_decay_staircase=0  # bool value
 evaluate_every_secs=180
 leaky_relu_alpha=0.1
 num_evaluate_target_per_line=10
-log_per_lines=10000
+log_per_lines=50000
 use_binary_label=1
 binary_label_threhold=0.50
 loss_type='ce'  # ce, mse
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
-min_count=5
+min_count=20
 positive_threhold=0.90
 negative_threhold=0.20
 video_duration_biases=1.0
-use_smooth_label=0
-use_variable_averages=0
-moving_avg_decay=0.99
+use_smooth_label=1
 use_bn=1
+add_positive=0
+add_negative=0
+add_first_video=1
 
 if [[ ${remove_model_dir} == '1' ]]; then
     rm -rf ${model_dir}.bak
@@ -169,6 +170,7 @@ python main.py \
     --use_binary_label ${use_binary_label} \
     --binary_label_threhold ${binary_label_threhold} \
     --loss_type ${loss_type} \
-    --use_variable_averages ${use_variable_averages} \
-    --moving_avg_decay ${moving_avg_decay} \
-    --use_bn ${use_bn}
+    --use_bn ${use_bn} \
+    --add_positive ${add_positive} \
+    --add_negative ${add_negative} \
+    --add_first_video ${add_first_video}

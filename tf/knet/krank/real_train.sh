@@ -29,7 +29,7 @@ target_skip_connection=0  # bool value
 train_ws=50
 batch_size=128
 eval_batch_size=8192
-max_train_steps=5000000
+max_train_steps=15000000
 max_eval_steps=-1
 max_eval_steps_on_train_dataset=200
 epoch=1
@@ -78,7 +78,7 @@ evaluate_every_secs=1800
 leaky_relu_alpha=0.1
 num_evaluate_target_per_line=10
 log_per_lines=200000
-use_binary_label=1
+use_binary_label=0
 binary_label_threhold=0.65
 loss_type='ce'
 rowkey_dict_path=${fe_dir}/rowkey_dict.txt
@@ -87,9 +87,10 @@ positive_threhold=0.60
 negative_threhold=0.20
 video_duration_biases=0.1
 use_smooth_label=0
-use_variable_averages=1
-moving_avg_decay=0.99
-use_bn=1
+use_bn=0
+add_positive=0
+add_negative=0
+add_first_video=1
 
 if [[ ${remove_model_dir} == '1' ]]; then
     rm -rf ${model_dir}.bak
@@ -173,6 +174,7 @@ python main.py \
     --use_binary_label ${use_binary_label} \
     --binary_label_threhold ${binary_label_threhold} \
     --loss_type ${loss_type} \
-    --use_variable_averages ${use_variable_averages} \
-    --moving_avg_decay ${moving_avg_decay} \
-    --use_bn ${use_bn}
+    --use_bn ${use_bn} \
+    --add_positive ${add_positive} \
+    --add_negative ${add_negative} \
+    --add_first_video ${add_first_video}
