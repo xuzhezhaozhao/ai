@@ -153,15 +153,18 @@ def create_input_layer(mode, features, params, embeddings):
 
         records_column = tf.feature_column.input_layer(
             features, records_column)
+
         nonzero_mask = tf.to_float(
-            tf.equal(records_column, model_keys.PADDING_ID))
-        tf.summary.histogram('nonzero_mask_cnt', nonzero_mask)
-        nonzero_mask = nonzero_mask * (-1e-6)
+            tf.not_equal(records_column, model_keys.PADDING_ID))
+        tf.summary.histogram('nonzero_cnt', nonzero_mask)
+        nonzero_mask = nonzero_mask + tf.to_float(
+            tf.equal(records_column, model_keys.PADDING_ID)) * (-1000000.0)
         tf.summary.histogram('nonzero_mask', nonzero_mask)
 
         # [batch, 1]
         nonzeros = tf.count_nonzero(records_column, 1, keepdims=True)
         nonzeros = tf.maximum(nonzeros, 1)  # avoid divide zero
+        tf.summary.scalar('nonzeros_sum', tf.reduce_sum(nonzeros))
 
         if not training and opts.normalize_embeddings:
             embeds = tf.nn.embedding_lookup(
@@ -878,8 +881,14 @@ def attention_layer(embeds, nonzero_mask, opts):
         tf.summary.histogram('hu', hu)
         hu_mask = tf.multiply(hu, nonzero_mask)  # [batch, ws]
         tf.summary.histogram('hu_mask', hu_mask)
-        alphas = tf.nn.softmax(hu_mask)
+        alphas = tf.nn.softmax(hu_mask)  # [batch, ws]
         tf.summary.histogram('alphas', alphas)
+
+        tf.summary.histogram('nonzero_alphas',
+                             tf.gather_nd(alphas, tf.where(alphas > 0.000001)))
+
+        alpha_nonzeros_sum = tf.reduce_sum(tf.to_float(alphas > 0.0001))
+        tf.summary.scalar('alpha_nonzeros_sum', alpha_nonzeros_sum)
 
         # output shape: [batch_size, embedding_size]
         alphas = tf.expand_dims(alphas, -1)  # [batch, ws, 1]
