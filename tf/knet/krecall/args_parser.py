@@ -255,6 +255,7 @@ def parse_args(argv):
             and opts.max_eval_steps_on_train_dataset <= 0):
         opts.max_eval_steps_on_train_dataset = None
     opts.optimizer_epsilon = args.optimizer_epsilon
+    opts.optimizer_adadelta_rho = args.optimizer_adadelta_rho
     opts.optimizer_adam_beta1 = args.optimizer_adam_beta1
     opts.optimizer_adam_beta2 = args.optimizer_adam_beta2
     opts.optimizer_rmsprop_decay = args.optimizer_rmsprop_decay

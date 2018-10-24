@@ -588,6 +588,7 @@ def create_optimizer(features, params):
         decay_steps=opts.optimizer_exponential_decay_steps,
         decay_rate=opts.optimizer_exponential_decay_rate,
         staircase=opts.optimizer_exponential_decay_staircase)
+    decay_lr = tf.maximum(decay_lr, 0.0000001)
     with tf.name_scope('optimizer_layer'):
         if optimizer_type == model_keys.OptimizerType.ADAGRAD:
             optimizer = tf.train.AdagradOptimizer(
