@@ -24,7 +24,7 @@ else
     eval_data_path=../../../data/eval_data.in
 fi
 
-lr=0.001
+lr=0.1
 embedding_dim=100
 train_ws=20
 train_lower_ws=1
@@ -62,7 +62,7 @@ shuffle_batch=1
 predict_ws=20
 sample_dropout=0.0
 # 'adagrad', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
-optimizer_type='adam'
+optimizer_type='adagrad'
 tfrecord_file='../../../data/train_data.tfrecord'
 num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
@@ -73,7 +73,7 @@ train_num_parallel=4
 use_batch_normalization=1
 # 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'
 sgd_lr_decay_type='fasttext_decay'
-use_clip_gradients=0
+use_clip_gradients=1
 clip_norm=500.0
 filter_with_rowkey_info=0
 filter_with_rowkey_info_exposure_thr=10000
@@ -92,10 +92,10 @@ use_gender_feature=1
 # 'indicator', 'numeric'
 age_feature_type='numeric'
 add_average_pooling=0
-add_max_pooling=1
+add_max_pooling=0
 add_min_pooling=0
 add_hierarchical_pooling=0
-add_attention_layer=0
+add_attention_layer=1
 hierarchical_average_window=5
 attention_size=500
 log_step_count_secs=10

@@ -66,7 +66,7 @@ train_num_parallel=16
 use_batch_normalization=0
 # 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'
 sgd_lr_decay_type='fasttext_decay'
-use_clip_gradients=0
+use_clip_gradients=1
 clip_norm=500.0
 filter_with_rowkey_info=0
 filter_with_rowkey_info_exposure_thr=10000
@@ -83,11 +83,11 @@ use_age_feature=1
 use_gender_feature=1
 # 'indicator', 'numeric'
 age_feature_type='indicator'
-add_average_pooling=1
-add_max_pooling=1
+add_average_pooling=0
+add_max_pooling=0
 add_min_pooling=0
 add_hierarchical_pooling=0
-add_attention_layer=0
+add_attention_layer=1
 hierarchical_average_window=2
 attention_size=200
 log_step_count_secs=300

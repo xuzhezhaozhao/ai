@@ -153,7 +153,11 @@ def create_input_layer(mode, features, params, embeddings):
 
         records_column = tf.feature_column.input_layer(
             features, records_column)
-        nonzero_mask = tf.expand_dims(tf.to_float(records_column > 0), 2)
+        nonzero_mask = tf.to_float(
+            tf.equal(records_column, model_keys.PADDING_ID))
+        tf.summary.histogram('nonzero_mask_cnt', nonzero_mask)
+        nonzero_mask = nonzero_mask * (-1e-6)
+        tf.summary.histogram('nonzero_mask', nonzero_mask)
 
         # [batch, 1]
         nonzeros = tf.count_nonzero(records_column, 1, keepdims=True)
@@ -848,24 +852,37 @@ def min_pooling(embeds, nonzeros):
     return embeds_min
 
 
+# embeds: [batch, ws, dim]
 def attention_layer(embeds, nonzero_mask, opts):
-    with tf.variable_scope('attention_context_variable', reuse=tf.AUTO_REUSE):
+    with tf.variable_scope('attention_layer', reuse=tf.AUTO_REUSE):
         attention_size = opts.attention_size
-        u_context = tf.get_variable(
-            'u_context', initializer=tf.truncated_normal([attention_size]))
-
         # FC layer transform
-        h = tf.contrib.layers.fully_connected(
-            embeds, attention_size, activation_fn=tf.nn.tanh)
+        num_in = embeds.shape[2].value
+        num_out = attention_size
+        w = tf.sqrt(12.0 / (num_in + num_out))
+        weights = tf.get_variable(
+            'weights',
+            initializer=tf.random_uniform([num_in, num_out], -w, w))
+        biases = tf.get_variable(
+            'biases',
+            initializer=tf.zeros([num_out]))
+        h = tf.tensordot(embeds, weights, 1) + biases
+        # h = tf.nn.relu(h)
 
-        hu_sum = tf.reduce_sum(
-            tf.multiply(h, u_context), axis=2, keepdims=True)
-        exp = tf.exp(hu_sum)
-        exp_adapt = tf.multiply(exp, nonzero_mask)
-        exp_adapt_sum = tf.reduce_sum(exp_adapt, axis=1, keepdims=True)
-        alpha = tf.div(exp_adapt, exp_adapt_sum)
+        # context vector
+        u_context = tf.get_variable(
+            'u_context',
+            initializer=tf.random_uniform([attention_size], -w, w))
 
-        # [batch_size, embedding_size]
-        attention_output = tf.reduce_sum(tf.multiply(embeds, alpha), axis=1)
+        hu = tf.reduce_sum(tf.multiply(h, u_context), axis=2)  # [batch, ws]
+        tf.summary.histogram('hu', hu)
+        hu_mask = tf.multiply(hu, nonzero_mask)  # [batch, ws]
+        tf.summary.histogram('hu_mask', hu_mask)
+        alphas = tf.nn.softmax(hu_mask)
+        tf.summary.histogram('alphas', alphas)
+
+        # output shape: [batch_size, embedding_size]
+        alphas = tf.expand_dims(alphas, -1)  # [batch, ws, 1]
+        attention_output = tf.reduce_sum(tf.multiply(embeds, alphas), axis=1)
 
     return attention_output
