@@ -73,9 +73,8 @@ def load_initial_weights(opts):
     """Load weights from file.
     """
 
-    # weights_dict = np.load(opts.pretrained_weights_path,
-                           # encoding='latin1').item()
-    weights_dict = np.load(opts.pretrained_weights_path).item()
+    weights_dict = np.load(opts.pretrained_weights_path,
+                           encoding='latin1').item()
     tf.logging.info('npy file loaded')
     return weights_dict
 
