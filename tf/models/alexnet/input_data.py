@@ -11,6 +11,8 @@ import numpy as np
 import model_keys
 
 INPUT_SHAPE = [227, 227]
+IMAGENET_MEAN = [123.68, 116.779, 103.939]
+
 
 def parse_line(img_path, label, opts):
 
@@ -20,7 +22,6 @@ def parse_line(img_path, label, opts):
     img_string = tf.read_file(img_path)
     img_decoded = tf.image.decode_png(img_string, channels=3)
 
-    IMAGENET_MEAN = tf.constant([123.68, 116.779, 103.939], dtype=tf.float32)
     img_centered = tf.subtract(tf.cast(img_decoded, tf.float32), IMAGENET_MEAN)
 
     # RGB -> BGR
@@ -37,12 +38,11 @@ def eval_parse_line(img_path, label, opts):
     img_string = tf.read_file(img_path)
     img_decoded = tf.image.decode_png(img_string, channels=3)
 
-    img_resized = tf.image.resize_images(img_decoded, INPUT_SHAPE)
-    IMAGENET_MEAN = tf.constant([123.68, 116.779, 103.939], dtype=tf.float32)
-    img_centered = tf.subtract(img_resized, IMAGENET_MEAN)
+    img_centered = tf.subtract(tf.cast(img_decoded, tf.float32), IMAGENET_MEAN)
+    img_resized = tf.image.resize_images(img_centered, INPUT_SHAPE)
 
     # RGB -> BGR
-    img_bgr = img_centered[:, :, ::-1]
+    img_bgr = img_resized[:, :, ::-1]
 
     return {model_keys.DATA_COL: img_bgr}, one_hot
 
@@ -95,12 +95,9 @@ def flat_map_data_augmentation(opts, x):
 
     final_imgs = []
     final_labels = []
-
     img_resized = tf.image.resize_images(origin_img, INPUT_SHAPE)
-    IMAGENET_MEAN = tf.constant([123.68, 116.779, 103.939], dtype=tf.float32)
-    img_centered = tf.subtract(img_resized, IMAGENET_MEAN)
 
-    final_imgs.append(img_centered)
+    final_imgs.append(img_resized)
     final_labels.append(label)
 
     if opts.use_data_augmentation:
