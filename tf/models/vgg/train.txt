@@ -1,0 +1,3 @@
+../../../datasets/cat-dog-dataset/train/cat.526.jpg 0
+../../../datasets/cat-dog-dataset/train/cat.4533.jpg 0
+../../../datasets/cat-dog-dataset/train/cat.1756.jpg 0
