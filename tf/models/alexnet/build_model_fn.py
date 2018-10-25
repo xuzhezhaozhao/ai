@@ -75,7 +75,7 @@ def alexnet_model_fn(features, labels, mode, params):
              trainable=trainable,
              pre_weights=pre_weights, pre_biases=pre_biases)
 
-    dropout6 = dropout(fc6, 1-opts.dropout)
+    dropout6 = dropout(fc6, 1-opts.dropout) if trainable else fc6
 
     # 7th Layer: FC (w ReLu) -> Dropout
     pre_weights = weights_dict['fc7'][0]
@@ -84,7 +84,7 @@ def alexnet_model_fn(features, labels, mode, params):
     fc7 = fc(dropout6, 4096, 4096, name='fc7',
              trainable=trainable,
              pre_weights=pre_weights, pre_biases=pre_biases)
-    dropout7 = dropout(fc7, 1-opts.dropout)
+    dropout7 = dropout(fc7, 1-opts.dropout) if trainable else fc7
 
     # 8th Layer: FC and return unscaled activations
     pre_weights = weights_dict['fc8'][0]
@@ -128,31 +128,19 @@ def conv(x, filter_height, filter_width, num_filters,
     """
 
     # Get number of input channels
-    input_channels = int(x.get_shape()[-1])
+    # input_channels = int(x.get_shape()[-1])
 
     # Create lambda function for the convolution
     def convolve(i, k): return tf.nn.conv2d(
             i, k, strides=[1, stride_y, stride_x, 1], padding=padding)
 
-    if trainable:
-        weights_shape = [filter_height, filter_width,
-                         input_channels/groups, num_filters]
-        biases_shape = [num_filters]
-        pre_weights = None
-        pre_biases = None
-    else:
-        weights_shape = None
-        biases_shape = None
-
     with tf.variable_scope(name) as scope:
         # Create tf variables for the weights and biases of the conv layer
         weights = tf.get_variable('weights',
                                   initializer=pre_weights,
-                                  shape=weights_shape,
                                   trainable=trainable)
         biases = tf.get_variable('biases',
                                  initializer=pre_biases,
-                                 shape=biases_shape,
                                  trainable=trainable)
 
     if groups == 1:
@@ -183,25 +171,14 @@ def fc(x, num_in, num_out, name, relu=True,
        trainable=True, pre_weights=None, pre_biases=None):
     """Create a fully connected layer."""
 
-    if trainable:
-        weights_shape = [num_in, num_out]
-        biases_shape = [num_out]
-        pre_weights = None
-        pre_biases = None
-    else:
-        weights_shape = None
-        biases_shape = None
-
     with tf.variable_scope(name) as scope:
 
         # Create tf variables for the weights and biases
         weights = tf.get_variable('weights',
                                   initializer=pre_weights,
-                                  shape=weights_shape,
                                   trainable=trainable)
         biases = tf.get_variable('biases',
                                  initializer=pre_biases,
-                                 shape=biases_shape,
                                  trainable=trainable)
 
         # Matrix multiply weights and inputs and add bias
@@ -247,6 +224,7 @@ def cross_entropy(score, labels):
 def create_predict_estimator_spec(mode, score, labels, params):
     """Create predict EstimatorSpec."""
 
+    score = tf.nn.softmax(score)
     predictions = {
         'score': score,
     }
