@@ -153,7 +153,7 @@ def eval_input_fn(opts):
 def build_serving_input_fn(opts):
     def serving_input_receiver_fn():
         feature_spec = {
-            model_keys.DATA_COL: tf.FixedLenFeature(shape=[227, 227, 3],
+            model_keys.DATA_COL: tf.FixedLenFeature(shape=[224, 224, 3],
                                                     dtype=tf.float32)
         }
 
