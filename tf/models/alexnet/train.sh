@@ -15,10 +15,10 @@ eval_data_path=`pwd`/validation.txt
 lr=0.001
 batch_size=128
 epoch=3
-prefetch_size=1000
-shuffle_size=1000
+prefetch_size=500
+shuffle_size=500
 max_train_steps=-1
-save_summary_steps=50
+save_summary_steps=10
 save_checkpoints_secs=600
 keep_checkpoint_max=2
 log_step_count_steps=10
@@ -34,8 +34,8 @@ train_layers='fc6,fc7,fc8'
 use_data_augmentation=0
 optimizer_momentum_momentum=0.95
 optimizer_momentum_use_nesterov=0 # bool value
-optimizer_exponential_decay_steps=20
-optimizer_exponential_decay_rate=0.7
+optimizer_exponential_decay_steps=50
+optimizer_exponential_decay_rate=0.6
 optimizer_exponential_decay_staircase=0  # bool value
 
 if [[ ${remove_model_dir} == '1' ]]; then
