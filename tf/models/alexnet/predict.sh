@@ -12,6 +12,8 @@ export_model_dir=`pwd`/export_model_dir
 
 train_data_path=`pwd`/train.txt
 eval_data_path=`pwd`/validation.txt
+predict_data_path=`pwd`/test.txt
+predict_output=`pwd`/predict_output.txt
 lr=0.001
 batch_size=128
 epoch=5
@@ -30,25 +32,15 @@ shuffle_batch=1
 map_num_parallel_calls=1
 num_classes=2
 pretrained_weights_path=`pwd`/pretrained_weights/bvlc_alexnet.npy
-train_layers='fc8'
+train_layers='fc6,fc7,fc8'
 use_data_augmentation=0
-optimizer_momentum_momentum=0.99
-optimizer_momentum_use_nesterov=0 # bool value
-optimizer_exponential_decay_steps=2000
-optimizer_exponential_decay_rate=0.98
-optimizer_exponential_decay_staircase=0  # bool value
 
-if [[ ${remove_model_dir} == '1' ]]; then
-    echo "remove model_dir ..."
-    rm -rf ${model_dir}.bak
-    if [[ -d ${model_dir} ]]; then
-        mv ${model_dir} ${model_dir}.bak
-    fi
-fi
 
-python main.py \
+python predict_main.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
+    --predict_data_path ${predict_data_path} \
+    --predict_output ${predict_output} \
     --lr ${lr} \
     --batch_size ${batch_size} \
     --epoch ${epoch} \
@@ -70,9 +62,4 @@ python main.py \
     --num_classes ${num_classes} \
     --pretrained_weights_path ${pretrained_weights_path} \
     --train_layers ${train_layers} \
-    --use_data_augmentation ${use_data_augmentation} \
-    --optimizer_momentum_momentum ${optimizer_momentum_momentum} \
-    --optimizer_momentum_use_nesterov ${optimizer_momentum_use_nesterov} \
-    --optimizer_exponential_decay_steps ${optimizer_exponential_decay_steps} \
-    --optimizer_exponential_decay_rate ${optimizer_exponential_decay_rate} \
-    --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase}
+    --use_data_augmentation ${use_data_augmentation}

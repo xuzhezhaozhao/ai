@@ -19,6 +19,8 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = '0'
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_data_path', default='', type=str, help='')
 parser.add_argument('--eval_data_path', default='', type=str, help='')
+parser.add_argument('--predict_data_path', default='', type=str, help='')
+parser.add_argument('--predict_output', default='', type=str, help='')
 parser.add_argument('--lr', default=0.25, type=float, help='learning rate')
 parser.add_argument('--batch_size', default=64, type=int, help='batch size')
 parser.add_argument('--epoch', default=1, type=int, help='')
@@ -36,12 +38,21 @@ parser.add_argument('--profile_steps', default=100, type=int, help='')
 parser.add_argument('--remove_model_dir', default=1, type=int, help='')
 parser.add_argument('--dropout', default=0.1, type=float, help='')
 parser.add_argument('--shuffle_batch', default=0, type=int, help='')
-parser.add_argument('--optimizer_type', default='ada', type=str, help='')
 parser.add_argument('--map_num_parallel_calls', default=1, type=int, help='')
 parser.add_argument('--num_classes', default=1, type=int, help='')
 parser.add_argument('--pretrained_weights_path', default='', type=str, help='')
 parser.add_argument('--train_layers', default='', type=str, help='')
 parser.add_argument('--use_data_augmentation', default=0, type=int, help='')
+parser.add_argument('--optimizer_momentum_momentum',
+                    default=0.9, type=float, help='')
+parser.add_argument('--optimizer_momentum_use_nesterov',
+                    default=0, type=int, help='')
+parser.add_argument('--optimizer_exponential_decay_steps',
+                    default=10000, type=int, help='')
+parser.add_argument('--optimizer_exponential_decay_rate',
+                    default=0.96, type=float, help='')
+parser.add_argument('--optimizer_exponential_decay_staircase',
+                    default=0, type=int, help='')
 
 opts = Options()
 
@@ -50,6 +61,8 @@ def parse_args(argv):
     args = parser.parse_args(argv[1:])
     opts.train_data_path = args.train_data_path
     opts.eval_data_path = args.eval_data_path
+    opts.predict_data_path = args.predict_data_path
+    opts.predict_output = args.predict_output
     opts.lr = args.lr
     opts.batch_size = args.batch_size
     opts.max_train_steps = args.max_train_steps
@@ -71,12 +84,20 @@ def parse_args(argv):
     opts.remove_model_dir = bool(args.remove_model_dir)
     opts.dropout = args.dropout
     opts.shuffle_batch = bool(args.shuffle_batch)
-    opts.optimizer_type = args.optimizer_type
     opts.map_num_parallel_calls = args.map_num_parallel_calls
     opts.num_classes = args.num_classes
     opts.pretrained_weights_path = args.pretrained_weights_path
     opts.train_layers = args.train_layers.split(',')
     opts.use_data_augmentation = bool(args.use_data_augmentation)
+    opts.optimizer_momentum_momentum = args.optimizer_momentum_momentum
+    opts.optimizer_momentum_use_nesterov = \
+        bool(args.optimizer_momentum_use_nesterov)
+    opts.optimizer_exponential_decay_steps = \
+        args.optimizer_exponential_decay_steps
+    opts.optimizer_exponential_decay_rate = \
+        args.optimizer_exponential_decay_rate
+    opts.optimizer_exponential_decay_staircase = \
+        bool(args.optimizer_exponential_decay_staircase)
 
 
 def validate_opts():

@@ -4,15 +4,14 @@ import os
 legs = []
 ugcs = []
 
-train_dir = '../../../datasets/leg-dataset/train/'
+train_dir = os.path.abspath('../../../datasets/leg-dataset/train/')
+
 for filename in os.listdir(train_dir):
     tokens = filename.split('_')
     if tokens[0] == 'leg':
-        legs.append(train_dir + filename)
-
+        legs.append(os.path.join(train_dir, filename))
     elif tokens[0] == 'ugc':
-        ugcs.append(train_dir + filename)
-
+        ugcs.append(os.path.join(train_dir, filename))
     else:
         raise TypeError("Wrong format data.")
 
@@ -41,8 +40,7 @@ with open('validation.txt', 'w') as f:
 
 
 with open('test.txt', 'w') as f:
-    test_dir = '../../../datasets/leg-dataset/test/'
+    test_dir = os.path.abspath('../../../datasets/leg-dataset/test/')
     for filename in os.listdir(test_dir):
-        tokens = filename.split('_')
-        f.write(test_dir + filename)
+        f.write(os.path.join(test_dir, filename))
         f.write('\n')

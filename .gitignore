@@ -49,4 +49,5 @@ tf/models/alexnet/train.txt
 tf/models/alexnet/test.txt
 tf/models/alexnet/eval.txt
 tf/models/alexnet/validation.txt
+tf/models/alexnet/predict_output.txt
 fe_dir/
