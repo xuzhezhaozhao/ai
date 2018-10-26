@@ -25,14 +25,14 @@ log_step_count_steps=100
 use_profile_hook=0
 profile_steps=100
 remove_model_dir=1
-dropout=0.0
+dropout=0.5
 shuffle_batch=1
 optimizer_type='sgd'
 map_num_parallel_calls=1
 num_classes=2
 pretrained_weights_path=`pwd`/pretrained_weights/bvlc_alexnet.npy
 train_layers='fc6,fc7,fc8'
-use_data_augmentation=1
+use_data_augmentation=0
 
 if [[ ${remove_model_dir} == '1' ]]; then
     echo "remove model_dir ..."

@@ -75,7 +75,8 @@ def alexnet_model_fn(features, labels, mode, params):
              trainable=trainable,
              pre_weights=pre_weights, pre_biases=pre_biases)
 
-    dropout6 = dropout(fc6, 1-opts.dropout) if trainable else fc6
+    training = (mode == tf.estimator.ModeKeys.TRAIN)
+    dropout6 = dropout(fc6, opts.dropout, training) if trainable else fc6
 
     # 7th Layer: FC (w ReLu) -> Dropout
     pre_weights = weights_dict['fc7'][0]
@@ -84,7 +85,7 @@ def alexnet_model_fn(features, labels, mode, params):
     fc7 = fc(dropout6, 4096, 4096, name='fc7',
              trainable=trainable,
              pre_weights=pre_weights, pre_biases=pre_biases)
-    dropout7 = dropout(fc7, 1-opts.dropout) if trainable else fc7
+    dropout7 = dropout(fc7, opts.dropout, training) if trainable else fc7
 
     # 8th Layer: FC and return unscaled activations
     pre_weights = weights_dict['fc8'][0]
@@ -208,10 +209,10 @@ def lrn(x, radius, alpha, beta, name, bias=1.0):
         x, depth_radius=radius, alpha=alpha, beta=beta, bias=bias, name=name)
 
 
-def dropout(x, keep_prob):
+def dropout(x, rate, training):
     """Create a dropout layer."""
 
-    return tf.nn.dropout(x, keep_prob)
+    return tf.layers.dropout(x, rate, training=training)
 
 
 def cross_entropy(score, labels):

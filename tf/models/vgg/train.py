@@ -20,7 +20,8 @@ def build_estimator(opts):
     config_keys['model_dir'] = opts.model_dir
     config_keys['tf_random_seed'] = None
     config_keys['save_summary_steps'] = opts.save_summary_steps
-    config_keys['save_checkpoints_secs'] = opts.save_checkpoints_secs
+    # config_keys['save_checkpoints_secs'] = opts.save_checkpoints_secs
+    config_keys['save_checkpoints_steps'] = opts.save_checkpoints_steps
     config_keys['session_config'] = None
     config_keys['keep_checkpoint_max'] = opts.keep_checkpoint_max
     config_keys['keep_checkpoint_every_n_hours'] = 10000
@@ -54,18 +55,19 @@ def create_hooks(opts):
 def train_and_eval_in_local_mode(opts):
     """Train and eval model in lcoal mode."""
 
-    tf.logging.info("Beginning train model ...")
-    opts.estimator.train(input_fn=lambda: input_data.train_input_fn(opts),
-                         max_steps=opts.max_train_steps,
-                         hooks=opts.hooks)
-    tf.logging.info("Train model OK")
-
-    # evaluate model
-    tf.logging.info("Beginning evaluate model ...")
-    result = opts.estimator.evaluate(
-        input_fn=lambda: input_data.eval_input_fn(opts),
+    train_spec = tf.estimator.TrainSpec(
+        input_fn=lambda: input_data.train_input_fn(opts),
+        max_steps=opts.max_train_steps,
         hooks=opts.hooks)
-    tf.logging.info("Evaluate model OK")
+    eval_spec = tf.estimator.EvalSpec(
+        input_fn=lambda: input_data.eval_input_fn(opts),
+        steps=None,
+        name='test',
+        start_delay_secs=3,
+        throttle_secs=600
+    )
+    result = tf.estimator.train_and_evaluate(
+        opts.estimator, train_spec, eval_spec)
     return result
 
 

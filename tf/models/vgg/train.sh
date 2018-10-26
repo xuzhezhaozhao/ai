@@ -20,6 +20,7 @@ shuffle_size=500
 max_train_steps=-1
 save_summary_steps=50
 save_checkpoints_secs=600
+save_checkpoints_steps=170
 keep_checkpoint_max=2
 log_step_count_steps=100
 use_profile_hook=0
@@ -55,6 +56,7 @@ python main.py \
     --max_train_steps ${max_train_steps} \
     --save_summary_steps ${save_summary_steps} \
     --save_checkpoints_secs ${save_checkpoints_secs} \
+    --save_checkpoints_steps ${save_checkpoints_steps} \
     --keep_checkpoint_max ${keep_checkpoint_max} \
     --log_step_count_steps ${log_step_count_steps} \
     --use_profile_hook ${use_profile_hook} \

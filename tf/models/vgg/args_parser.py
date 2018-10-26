@@ -29,6 +29,7 @@ parser.add_argument('--shuffle_size', default=10000, type=int, help='')
 parser.add_argument('--max_train_steps', default=None, type=int, help='')
 parser.add_argument('--save_summary_steps', default=100, type=int, help='')
 parser.add_argument('--save_checkpoints_secs', default=600, type=int, help='')
+parser.add_argument('--save_checkpoints_steps', default=600, type=int, help='')
 parser.add_argument('--keep_checkpoint_max', default=3, type=int, help='')
 parser.add_argument('--log_step_count_steps', default=100, type=int, help='')
 parser.add_argument('--use_profile_hook', default=0, type=int, help='')
@@ -64,6 +65,7 @@ def parse_args(argv):
     if opts.save_summary_steps < 0:
         opts.save_summary_steps = None
     opts.save_checkpoints_secs = args.save_checkpoints_secs
+    opts.save_checkpoints_steps = args.save_checkpoints_steps
     opts.keep_checkpoint_max = args.keep_checkpoint_max
     opts.log_step_count_steps = args.log_step_count_steps
     opts.use_profile_hook = bool(args.use_profile_hook)
