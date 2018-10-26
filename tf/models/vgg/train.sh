@@ -28,12 +28,16 @@ profile_steps=100
 remove_model_dir=1
 dropout=0.0
 shuffle_batch=1
-optimizer_type='sgd'
 map_num_parallel_calls=1
 num_classes=2
 pretrained_weights_path=`pwd`/pretrained_weights/vgg19.npy
 train_layers='fc8'
 use_data_augmentation=0
+optimizer_momentum_momentum=0.9
+optimizer_momentum_use_nesterov=0 # bool value
+optimizer_exponential_decay_steps=40
+optimizer_exponential_decay_rate=0.5
+optimizer_exponential_decay_staircase=0  # bool value
 
 if [[ ${remove_model_dir} == '1' ]]; then
     echo "remove model_dir ..."
@@ -64,9 +68,13 @@ python main.py \
     --remove_model_dir ${remove_model_dir} \
     --dropout ${dropout} \
     --shuffle_batch ${shuffle_batch} \
-    --optimizer_type ${optimizer_type} \
     --map_num_parallel_calls ${map_num_parallel_calls} \
     --num_classes ${num_classes} \
     --pretrained_weights_path ${pretrained_weights_path} \
     --train_layers ${train_layers} \
-    --use_data_augmentation ${use_data_augmentation}
+    --use_data_augmentation ${use_data_augmentation} \
+    --optimizer_momentum_momentum ${optimizer_momentum_momentum} \
+    --optimizer_momentum_use_nesterov ${optimizer_momentum_use_nesterov} \
+    --optimizer_exponential_decay_steps ${optimizer_exponential_decay_steps} \
+    --optimizer_exponential_decay_rate ${optimizer_exponential_decay_rate} \
+    --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase}

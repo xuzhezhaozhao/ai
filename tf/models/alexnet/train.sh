@@ -32,10 +32,10 @@ num_classes=2
 pretrained_weights_path=`pwd`/pretrained_weights/bvlc_alexnet.npy
 train_layers='fc8'
 use_data_augmentation=0
-optimizer_momentum_momentum=0.9
+optimizer_momentum_momentum=0.95
 optimizer_momentum_use_nesterov=0 # bool value
-optimizer_exponential_decay_steps=40
-optimizer_exponential_decay_rate=0.5
+optimizer_exponential_decay_steps=50
+optimizer_exponential_decay_rate=0.8
 optimizer_exponential_decay_staircase=0  # bool value
 
 if [[ ${remove_model_dir} == '1' ]]; then

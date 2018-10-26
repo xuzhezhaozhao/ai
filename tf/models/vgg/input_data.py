@@ -22,7 +22,6 @@ def parse_line(img_path, label, opts):
     img_string = tf.read_file(img_path)
     img_decoded = tf.image.decode_image(img_string, channels=3)
     img_decoded.set_shape([None, None, 3])
-
     img_centered = tf.subtract(tf.cast(img_decoded, tf.float32), VGG_MEAN)
 
     # RGB -> BGR
@@ -49,7 +48,23 @@ def eval_parse_line(img_path, label, opts):
     return {model_keys.DATA_COL: img_bgr}, one_hot
 
 
-def read_txt_file(txt_file):
+def predict_parse_line(img_path, opts):
+
+    # load and preprocess the image
+    img_string = tf.read_file(img_path)
+    img_decoded = tf.image.decode_image(img_string, channels=3)
+    img_decoded.set_shape([None, None, 3])
+
+    img_centered = tf.subtract(tf.cast(img_decoded, tf.float32), VGG_MEAN)
+    img_resized = tf.image.resize_images(img_centered, INPUT_SHAPE)
+
+    # RGB -> BGR
+    img_bgr = img_resized[:, :, ::-1]
+
+    return {model_keys.DATA_COL: img_bgr}
+
+
+def read_txt_file(txt_file, has_label=True):
     """Read the content of the text file and store it into lists."""
 
     img_paths = []
@@ -57,11 +72,16 @@ def read_txt_file(txt_file):
     with open(txt_file, 'r') as f:
         lines = f.readlines()
         for line in lines:
+            line = line.strip()
             items = line.split(' ')
             img_paths.append(items[0])
-            labels.append(int(items[1]))
+            if has_label:
+                labels.append(int(items[1]))
 
-    return img_paths, labels
+    if has_label:
+        return img_paths, labels
+    else:
+        return img_paths
 
 
 def shuffle_lists(img_paths, labels):
@@ -116,7 +136,7 @@ def flat_map_data_augmentation(opts, x):
 
 
 def train_input_fn(opts):
-    img_paths, img_labels = read_txt_file(opts.train_data_path)
+    img_paths, img_labels = read_txt_file(opts.train_data_path, has_label=True)
     if opts.shuffle_batch:
         img_paths, img_labels = shuffle_lists(img_paths, img_labels)
 
@@ -139,13 +159,27 @@ def train_input_fn(opts):
 
 
 def eval_input_fn(opts):
-    img_paths, img_labels = read_txt_file(opts.eval_data_path)
+    img_paths, img_labels = read_txt_file(opts.eval_data_path, has_label=True)
     img_paths = tf.convert_to_tensor(img_paths, dtype=tf.string)
     labels = tf.convert_to_tensor(img_labels, dtype=tf.int32)
 
     # create dataset
     ds = tf.data.Dataset.from_tensor_slices((img_paths, labels))
     ds = ds.map(lambda filename, label: eval_parse_line(filename, label, opts),
+                num_parallel_calls=opts.map_num_parallel_calls)
+
+    ds = ds.prefetch(opts.prefetch_size)
+    ds = ds.batch(opts.batch_size)
+    return ds
+
+
+def predict_input_fn(opts):
+    img_paths = read_txt_file(opts.predict_data_path, has_label=False)
+    img_paths = tf.convert_to_tensor(img_paths, dtype=tf.string)
+
+    # create dataset
+    ds = tf.data.Dataset.from_tensor_slices((img_paths))
+    ds = ds.map(lambda filename: predict_parse_line(filename, opts),
                 num_parallel_calls=opts.map_num_parallel_calls)
 
     ds = ds.prefetch(opts.prefetch_size)
