@@ -123,14 +123,28 @@ def get_conv_filter(name, weights_dict, opts):
 
 def get_bias(name, weights_dict, opts):
     trainable = True if name in opts.train_layers else False
-    return tf.get_variable(
-        'biases', initializer=weights_dict[name][1], trainable=trainable)
+    if not trainable or name != 'fc8':
+        biases = tf.get_variable(
+            'biases', initializer=weights_dict[name][1], trainable=trainable)
+    else:
+        biases = tf.get_variable(
+            'biases', shape=[opts.num_classes], trainable=trainable)
+
+    return biases
 
 
 def get_fc_weight(name, weights_dict, opts):
     trainable = True if name in opts.train_layers else False
-    return tf.get_variable(
-        'weights', initializer=weights_dict[name][0], trainable=trainable)
+    if not trainable or name != 'fc8':
+        weights = tf.get_variable(
+            'weights', initializer=weights_dict[name][0], trainable=trainable)
+    else:  # trainable and name == 'fc8'
+        weights = tf.get_variable(
+            'weights',
+            shape=[weights_dict[name][0].shape[0], opts.num_classes],
+            trainable=trainable)
+
+    return weights
 
 
 def dropout(x, keep_prob):

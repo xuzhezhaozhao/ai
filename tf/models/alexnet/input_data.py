@@ -116,7 +116,8 @@ def flat_map_data_augmentation(opts, x):
 
 def train_input_fn(opts):
     img_paths, img_labels = read_txt_file(opts.train_data_path)
-    img_paths, img_labels = shuffle_lists(img_paths, img_labels)
+    if opts.shuffle_batch:
+        img_paths, img_labels = shuffle_lists(img_paths, img_labels)
 
     img_paths = tf.convert_to_tensor(img_paths, dtype=tf.string)
     labels = tf.convert_to_tensor(img_labels, dtype=tf.int32)

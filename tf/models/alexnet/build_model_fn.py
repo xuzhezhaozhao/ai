@@ -93,7 +93,8 @@ def alexnet_model_fn(features, labels, mode, params):
     trainable = True if 'fc8' in opts.train_layers else False
     fc8 = fc(dropout7, 4096, opts.num_classes, relu=False, name='fc8',
              trainable=trainable,
-             pre_weights=pre_weights, pre_biases=pre_biases)
+             pre_weights=pre_weights, pre_biases=pre_biases,
+             last_layer=True)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         return create_predict_estimator_spec(mode, fc8, labels, params)
@@ -169,18 +170,21 @@ def conv(x, filter_height, filter_width, num_filters,
 
 
 def fc(x, num_in, num_out, name, relu=True,
-       trainable=True, pre_weights=None, pre_biases=None):
+       trainable=True, pre_weights=None, pre_biases=None, last_layer=False):
     """Create a fully connected layer."""
 
     with tf.variable_scope(name) as scope:
-
-        # Create tf variables for the weights and biases
-        weights = tf.get_variable('weights',
-                                  initializer=pre_weights,
-                                  trainable=trainable)
-        biases = tf.get_variable('biases',
-                                 initializer=pre_biases,
-                                 trainable=trainable)
+        if last_layer and trainable:
+            weights = tf.get_variable(
+                'weights', shape=[num_in, num_out], trainable=trainable)
+            biases = tf.get_variable(
+                'biases', shape=[num_out], trainable=trainable)
+        else:
+            # Create tf variables for the weights and biases
+            weights = tf.get_variable(
+                'weights', initializer=pre_weights, trainable=trainable)
+            biases = tf.get_variable(
+                'biases', initializer=pre_biases, trainable=trainable)
 
         # Matrix multiply weights and inputs and add bias
         act = tf.nn.xw_plus_b(x, weights, biases, name=scope.name)
