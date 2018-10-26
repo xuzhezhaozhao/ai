@@ -13,7 +13,7 @@ export_model_dir=`pwd`/export_model_dir
 train_data_path=`pwd`/train.txt
 eval_data_path=`pwd`/validation.txt
 lr=0.001
-batch_size=128
+batch_size=256
 epoch=5
 prefetch_size=1000
 shuffle_size=1000
@@ -32,10 +32,10 @@ num_classes=2
 pretrained_weights_path=`pwd`/pretrained_weights/bvlc_alexnet.npy
 train_layers='fc8'
 use_data_augmentation=0
-optimizer_momentum_momentum=0.99
+optimizer_momentum_momentum=0.9
 optimizer_momentum_use_nesterov=0 # bool value
-optimizer_exponential_decay_steps=2000
-optimizer_exponential_decay_rate=0.98
+optimizer_exponential_decay_steps=50
+optimizer_exponential_decay_rate=0.8
 optimizer_exponential_decay_staircase=0  # bool value
 
 if [[ ${remove_model_dir} == '1' ]]; then
