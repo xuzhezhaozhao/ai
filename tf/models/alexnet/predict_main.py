@@ -23,7 +23,7 @@ def predict(opts):
         for result in results:
             src = fin.readline().strip()
             fout.write(src + ' ')
-            fout.write(str(result['score'][1]) + '\n')
+            fout.write(str(result['score'][0]) + '\n')
     tf.logging.info("Predict done")
 
 
