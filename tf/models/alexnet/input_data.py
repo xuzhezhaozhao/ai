@@ -22,7 +22,6 @@ def parse_line(img_path, label, opts):
     img_string = tf.read_file(img_path)
     img_decoded = tf.image.decode_image(img_string, channels=3)
     img_decoded.set_shape([None, None, 3])
-
     img_centered = tf.subtract(tf.cast(img_decoded, tf.float32), IMAGENET_MEAN)
 
     # RGB -> BGR
@@ -38,6 +37,7 @@ def eval_parse_line(img_path, label, opts):
     # load and preprocess the image
     img_string = tf.read_file(img_path)
     img_decoded = tf.image.decode_image(img_string, channels=3)
+    img_decoded.set_shape([None, None, 3])
 
     img_centered = tf.subtract(tf.cast(img_decoded, tf.float32), IMAGENET_MEAN)
     img_resized = tf.image.resize_images(img_centered, INPUT_SHAPE)
