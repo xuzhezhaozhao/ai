@@ -270,9 +270,15 @@ def create_train_estimator_spec(mode, score, labels, params):
     opts = params['opts']
     global_step = tf.train.get_global_step()
     loss = cross_entropy(score, labels)
-    lr = tf.train.exponential_decay(opts.lr, global_step, 20, 0.95)
+    lr = tf.train.exponential_decay(
+        opts.lr,
+        global_step,
+        decay_steps=opts.optimizer_exponential_decay_steps,
+        decay_rate=opts.optimizer_exponential_decay_rate,
+        staircase=opts.optimizer_exponential_decay_staircase)
     tf.summary.scalar('lr', lr)
-    optimizer = tf.train.MomentumOptimizer(lr, 0.95)
+    optimizer = tf.train.MomentumOptimizer(
+        lr, opts.optimizer_momentum_momentum)
     gradients, variables = zip(*optimizer.compute_gradients(
         loss, gate_gradients=tf.train.Optimizer.GATE_GRAPH))
     train_op = optimizer.apply_gradients(
