@@ -11,7 +11,10 @@ import numpy as np
 import model_keys
 
 INPUT_SHAPE = [224, 224]
-VGG_MEAN = [103.939, 116.779, 123.68]
+# BGR
+# VGG_MEAN = [103.939, 116.779, 123.68]
+# RGB
+VGG_MEAN = [123.68, 116.779, 103.939]
 
 
 def parse_line(img_path, label, opts):
