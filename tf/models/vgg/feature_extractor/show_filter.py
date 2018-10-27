@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--channel_num', default=0, type=int, help='')
 parser.add_argument('--filter_num', default=0, type=int, help='')
+parser.add_argument('--layer', default='', type=str, help='')
+parser.add_argument('--show_type', default='', type=str, help='')
 
 
 CONV_LAYERS = (
@@ -18,7 +20,7 @@ CONV_LAYERS = (
 )
 
 
-def run(args):
+def show_all_layers(args):
     data_dict = np.load('./vgg19.npy').item()
 
     hspace = 0.6
@@ -31,13 +33,36 @@ def run(args):
             im = plt.imshow(flt[:, :, args.channel_num, args.filter_num],
                             cmap=plt.cm.gray)
             plt.colorbar(im)
-            plt.title(sublayer, y=1.0)
+            plt.title(sublayer + ':' + str(args.channel_num), y=1.0)
+    plt.show()
+
+
+def show_single_layer(args):
+    data_dict = np.load('./vgg19.npy').item()
+    hspace = 0.6
+    plt.subplots_adjust(hspace=hspace)
+    flt = data_dict[args.layer][0]
+    num_filters = flt.shape[3]
+    hspace = 0.6
+    plt.subplots_adjust(hspace=hspace)
+    for index in range(num_filters):
+        if index >= 64:
+            break
+        plt.subplot(8, 8, index+1)
+        im = plt.imshow(flt[:, :, args.channel_num, index], cmap=plt.cm.gray)
+        plt.colorbar(im)
+        plt.title(args.layer + ':' + str(index), y=1.0)
     plt.show()
 
 
 def main(argv):
     args = parser.parse_args(argv[1:])
-    run(args)
+    if args.show_type == 'all':
+        show_all_layers(args)
+    elif args.show_type == 'single':
+        show_single_layer(args)
+    else:
+        raise ValueError("Not surpported show type.")
 
 
 if __name__ == '__main__':
