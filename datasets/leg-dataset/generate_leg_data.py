@@ -1,9 +1,8 @@
-import sys
 import os
 
 legs = []
 ugcs = []
-basedir = sys.path[0]
+basedir = os.path.split(os.path.realpath(__file__))[0]
 
 train_dir = os.path.join(basedir, 'train/')
 

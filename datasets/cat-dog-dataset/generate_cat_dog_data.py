@@ -1,9 +1,8 @@
 import os
-import sys
 
 cats = []
 dogs = []
-basedir = sys.path[0]
+basedir = os.path.split(os.path.realpath(__file__))[0]
 
 train_dir = os.path.join(basedir, 'train/')
 for filename in os.listdir(train_dir):
