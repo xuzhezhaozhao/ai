@@ -23,7 +23,7 @@ parser.add_argument('--feature_map', default=0, type=int, help='')
 
 
 INPUT_SHAPE = [224, 224]
-VGG_MEAN = [103.939, 116.779, 123.68]
+VGG_MEAN = [123.68, 116.779, 103.939]
 LAYERS = (
     ['conv1_1', 'relu1_1', 'conv1_2', 'relu1_2', 'pool1'],
     ['conv2_1', 'relu2_1', 'conv2_2', 'relu2_2', 'pool2'],
