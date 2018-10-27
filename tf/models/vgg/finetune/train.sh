@@ -11,7 +11,7 @@ model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
 
 train_data_path=`pwd`/train.txt
-eval_data_path=`pwd`/eval.txt
+eval_data_path=`pwd`/validation.txt
 lr=0.001
 batch_size=128
 epoch=3

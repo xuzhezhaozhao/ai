@@ -33,7 +33,7 @@ with open('train.txt', 'w') as f:
     for item in train_dogs:
         f.write(item + ' ' + '1\n')
 
-with open('eval.txt', 'w') as f:
+with open('validation.txt', 'w') as f:
     for item in eval_cats:
         f.write(item + ' ' + '0\n')
 
