@@ -4,7 +4,6 @@
 
 import tensorflow as tf
 import argparse
-import matplotlib.pyplot as plt
 
 import vgg19
 
@@ -75,12 +74,8 @@ def run(args):
         while True:
             try:
                 features = sess.run(vgg.__dict__[args.feature_layer])
-                print(features.shape)
-                plt.figure(1, figsize=(10, 5))
-                plt.matshow(features[0, :, :, 0], cmap=plt.cm.gray, fignum=1)
-                plt.title(args.feature_layer)
-                plt.colorbar
-                plt.show()
+                print("layer '{}', shape '{}'"
+                      .format(args.feature_layer, features.shape))
             except tf.errors.OutOfRangeError:
                 break
 
