@@ -67,11 +67,11 @@ def alexnet_model_fn(features, labels, mode, params):
     pool5 = max_pool(conv5, 3, 3, 2, 2, padding='VALID', name='pool5')
 
     # 6th Layer: Flatten -> FC (w ReLu) -> Dropout
-    flattened = tf.reshape(pool5, [-1, 6 * 6 * 256])
+    flattened = tf.reshape(pool5, [-1, 6*6*256])
     pre_weights = weights_dict['fc6'][0]
     pre_biases = weights_dict['fc6'][1]
     trainable = True if 'fc6' in opts.train_layers else False
-    fc6 = fc(flattened, 6 * 6 * 256, 4096, name='fc6',
+    fc6 = fc(flattened, 6*6*256, 4096, name='fc6',
              trainable=trainable,
              pre_weights=pre_weights, pre_biases=pre_biases)
 
