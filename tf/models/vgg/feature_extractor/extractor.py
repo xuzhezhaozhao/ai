@@ -4,6 +4,8 @@
 
 import tensorflow as tf
 import argparse
+import matplotlib.pyplot as plt
+
 import vgg19
 
 
@@ -52,8 +54,6 @@ def parse_line(img_path):
     img_decoded.set_shape([None, None, 3])
 
     img_centered = tf.subtract(tf.cast(img_decoded, tf.float32), VGG_MEAN)
-    img_centered /= 255.0
-
     img_resized = tf.image.resize_images(img_centered, INPUT_SHAPE)
 
     # RGB -> BGR
@@ -74,8 +74,13 @@ def run(args):
         sess.run(it.initializer)
         while True:
             try:
-                ft = sess.run(vgg.__dict__[args.feature_layer])
-                print(ft)
+                features = sess.run(vgg.__dict__[args.feature_layer])
+                print(features.shape)
+                plt.figure(1, figsize=(10, 5))
+                plt.matshow(features[0, :, :, 0], cmap=plt.cm.gray, fignum=1)
+                plt.title(args.feature_layer)
+                plt.colorbar
+                plt.show()
             except tf.errors.OutOfRangeError:
                 break
 
