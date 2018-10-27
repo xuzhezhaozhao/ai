@@ -15,7 +15,8 @@ parser.add_argument('--feature_layer', default='', type=str, help='')
 
 
 INPUT_SHAPE = [224, 224]
-VGG_MEAN = [103.939, 116.779, 123.68]
+# RGB
+VGG_MEAN = [123.68, 116.779, 103.939]
 
 
 def read_txt_file(txt_file):
