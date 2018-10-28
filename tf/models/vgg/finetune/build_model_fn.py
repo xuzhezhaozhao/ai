@@ -21,8 +21,6 @@ def vgg19_model_fn(features, labels, mode, params):
     weights_dict = load_pretrained_weights(opts)
     data = features[model_keys.DATA_COL]
 
-    assert data.get_shape().as_list()[1:] == [224, 224, 3]
-
     # Create the network graph.
     conv1_1 = conv_layer(data, "conv1_1", weights_dict, opts)
     conv1_2 = conv_layer(conv1_1, "conv1_2", weights_dict, opts)

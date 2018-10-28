@@ -55,6 +55,12 @@ def create_hooks(opts):
 def train_and_eval_in_local_mode(opts):
     """Train and eval model in lcoal mode."""
 
+    with open(opts.train_data_path) as f:
+        cnt = len(f.readlines())
+        max_steps = (cnt*opts.epoch+opts.batch_size-1) / opts.batch_size
+        if opts.max_train_steps is None:
+            opts.max_train_steps = max_steps
+
     train_spec = tf.estimator.TrainSpec(
         input_fn=lambda: input_data.train_input_fn(opts),
         max_steps=opts.max_train_steps,
@@ -64,7 +70,7 @@ def train_and_eval_in_local_mode(opts):
         steps=None,
         name='test',
         start_delay_secs=3,
-        throttle_secs=900
+        throttle_secs=opts.eval_throttle_secs
     )
     result = tf.estimator.train_and_evaluate(
         opts.estimator, train_spec, eval_spec)

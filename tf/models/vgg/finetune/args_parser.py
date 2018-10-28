@@ -56,6 +56,7 @@ parser.add_argument('--optimizer_exponential_decay_staircase',
                     default=0, type=int, help='')
 parser.add_argument('--multi_scale_predict', default=0, type=int, help='')
 parser.add_argument('--inference_shape', default='', type=str, help='')
+parser.add_argument('--eval_throttle_secs', default=600, type=int, help='')
 
 opts = Options()
 
@@ -109,6 +110,8 @@ def parse_args(argv):
         opts.inference_shape = None
     else:
         opts.inference_shape = map(int, opts.inference_shape)
+
+    opts.eval_throttle_secs = args.eval_throttle_secs
 
 
 def validate_opts():
