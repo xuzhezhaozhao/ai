@@ -10,75 +10,85 @@ import numpy as np
 
 import model_keys
 
-INPUT_SHAPE = [224, 224]
-# BGR
-# VGG_MEAN = [103.939, 116.779, 123.68]
-# RGB
-VGG_MEAN = [123.68, 116.779, 103.939]
+VGG_MEAN = [123.68, 116.779, 103.939]  # RGB
 
 
-def parse_line(img_path, label, opts):
+# code modified from:
+# https://gist.github.com/omoindrot/dedc857cdc0e680dfb1be99762990c9c
 
-    one_hot = tf.one_hot(label, opts.num_classes)
-
-    # load and preprocess the image
-    img_string = tf.read_file(img_path)
-    img_decoded = tf.image.decode_image(img_string, channels=3)
-    img_decoded.set_shape([None, None, 3])
-    img_centered = tf.subtract(tf.cast(img_decoded, tf.float32), VGG_MEAN)
-
-    # RGB -> BGR
-    img_bgr = img_centered[:, :, ::-1]
-
-    return {model_keys.DATA_COL: img_bgr}, one_hot
+# Standard preprocessing for VGG on ImageNet taken from here:
+# https://github.com/tensorflow/models/blob/master/research/slim/preprocessing/vgg_preprocessing.py
+# Also see the VGG paper for more details: https://arxiv.org/pdf/1409.1556.pdf
 
 
-def eval_parse_line(img_path, label, opts):
+# Preprocessing (for both training and validation):
+# (1) Decode the image from jpg/png/bmp format
+# (2) Resize the image so its smaller side is 256 pixels long
+def parse_function(img_path, label, opts):
+    image_string = tf.read_file(img_path)
+    # image_decoded = tf.image.decode_jpeg(image_string, channels=3)
+    image_decoded = tf.image.decode_image(image_string, channels=3)
+    image_decoded.set_shape([None, None, 3])
+    image = tf.cast(image_decoded, tf.float32)
 
-    one_hot = tf.one_hot(label, opts.num_classes)
+    smallest_side = 256.0
+    height, width = tf.shape(image)[0], tf.shape(image)[1]
+    height = tf.to_float(height)
+    width = tf.to_float(width)
 
-    # load and preprocess the image
-    img_string = tf.read_file(img_path)
-    img_decoded = tf.image.decode_image(img_string, channels=3)
-    img_decoded.set_shape([None, None, 3])
+    scale = tf.cond(tf.greater(height, width),
+                    lambda: smallest_side / width,
+                    lambda: smallest_side / height)
+    new_height = tf.to_int32(height * scale)
+    new_width = tf.to_int32(width * scale)
 
-    img_centered = tf.subtract(tf.cast(img_decoded, tf.float32), VGG_MEAN)
+    resized_image = tf.image.resize_images(image, [new_height, new_width])
+    return resized_image, label
+
+
+# Preprocessing (for training)
+# (3) Take a random 224x224 crop to the scaled image
+# (4) Horizontally flip the image with probability 1/2
+# (5) Substract the per color mean `VGG_MEAN`
+# Note: we don't normalize the data here, as VGG was trained without
+# normalization
+# Note(zhezhaoxu): we add rgb to bgr transform
+def train_preprocess(image, label, opts):
+    crop_image = tf.random_crop(image, [224, 224, 3])           # (3)
+    flip_image = tf.image.random_flip_left_right(crop_image)    # (4)
+    means = tf.reshape(tf.constant(VGG_MEAN), [1, 1, 3])
+    centered_image = flip_image - means                         # (5)
+    bgr_image = centered_image[:, :, ::-1]  # RGB -> BGR
+
+    label = tf.one_hot(label, opts.num_classes)
+    return {model_keys.DATA_COL: bgr_image}, label
+
+
+# Preprocessing (for validation)
+# (3) Take a central 224x224 crop to the scaled image
+# (4) Substract the per color mean `VGG_MEAN`
+# Note: we don't normalize the data here, as VGG was trained without
+# normalization
+# Note(zhezhaoxu): we add multi scale image predict and rgb to bgr transform
+def val_preprocess(image, label, opts):
     if opts.multi_scale_predict:
         if opts.inference_shape is not None:
-            img_resized = tf.image.resize_images(
-                img_centered, opts.inference_shape)
+            crop_image = tf.image.resize_image_with_crop_or_pad(
+                image, opts.inference_shape[0], opts.inference_shape[1])
         else:
-            img_resized = img_centered
+            crop_image = image  # do not crop image
     else:
-        img_resized = tf.image.resize_images(img_centered, INPUT_SHAPE)
+        crop_image = tf.image.resize_image_with_crop_or_pad(image, 224, 224)
 
-    # RGB -> BGR
-    img_bgr = img_resized[:, :, ::-1]
+    means = tf.reshape(tf.constant(VGG_MEAN), [1, 1, 3])
+    centered_image = crop_image - means
+    bgr_image = centered_image[:, :, ::-1]  # RGB -> BGR
 
-    return {model_keys.DATA_COL: img_bgr}, one_hot
-
-
-def predict_parse_line(img_path, opts):
-
-    # load and preprocess the image
-    img_string = tf.read_file(img_path)
-    img_decoded = tf.image.decode_image(img_string, channels=3)
-    img_decoded.set_shape([None, None, 3])
-
-    img_centered = tf.subtract(tf.cast(img_decoded, tf.float32), VGG_MEAN)
-    if opts.multi_scale_predict:
-        if opts.inference_shape is not None:
-            img_resized = tf.image.resize_images(
-                img_centered, opts.inference_shape)
-        else:
-            img_resized = img_centered
+    if label is not None:
+        label = tf.one_hot(label, opts.num_classes)
+        return {model_keys.DATA_COL: bgr_image}, label
     else:
-        img_resized = tf.image.resize_images(img_centered, INPUT_SHAPE)
-
-    # RGB -> BGR
-    img_bgr = img_resized[:, :, ::-1]
-
-    return {model_keys.DATA_COL: img_bgr}
+        return {model_keys.DATA_COL: bgr_image}  # for predict
 
 
 def read_txt_file(txt_file, has_label=True):
@@ -116,58 +126,19 @@ def shuffle_lists(img_paths, labels):
     return shuffle_img_paths, shuffle_labels
 
 
-def data_augmentation(opts, img, label):
-    aug_imgs = []
-    aug_labels = []
-
-    img_resized = tf.image.resize_images(img, INPUT_SHAPE)
-    img = tf.image.flip_left_right(img_resized)
-    aug_imgs.append(img)
-    aug_labels.append(label)
-
-    return aug_imgs, aug_labels
-
-
-def flat_map_data_augmentation(opts, x):
-    origin_img = x[0][model_keys.DATA_COL]
-    label = x[1]
-
-    final_imgs = []
-    final_labels = []
-    img_resized = tf.image.resize_images(origin_img, INPUT_SHAPE)
-
-    final_imgs.append(img_resized)
-    final_labels.append(label)
-
-    if opts.use_data_augmentation:
-        aug_imgs, aug_labels = data_augmentation(opts, origin_img, label)
-        final_imgs.extend(aug_imgs)
-        final_labels.extend(aug_labels)
-
-    final_imgs_tensor = tf.stack(final_imgs)
-    final_labels_tensor = tf.stack(final_labels)
-    ds = tf.data.Dataset.from_tensor_slices((
-        {model_keys.DATA_COL: final_imgs_tensor},
-        final_labels_tensor))
-    return ds
-
-
 def train_input_fn(opts):
     img_paths, img_labels = read_txt_file(opts.train_data_path, has_label=True)
-    if opts.shuffle_batch:
-        img_paths, img_labels = shuffle_lists(img_paths, img_labels)
-
+    img_paths, img_labels = shuffle_lists(img_paths, img_labels)
     img_paths = tf.convert_to_tensor(img_paths, dtype=tf.string)
     labels = tf.convert_to_tensor(img_labels, dtype=tf.int32)
 
-    # create dataset
     ds = tf.data.Dataset.from_tensor_slices((img_paths, labels))
-
-    ds = ds.map(lambda filename, label: parse_line(filename, label, opts),
-                num_parallel_calls=opts.map_num_parallel_calls)
+    num_parallel = opts.map_num_parallel_calls
+    ds = ds.map(lambda filename, label: parse_function(filename, label, opts),
+                num_parallel_calls=num_parallel)
+    ds = ds.map(lambda image, label: train_preprocess(image, label, opts),
+                num_parallel_calls=num_parallel)
     ds = ds.prefetch(opts.prefetch_size)
-    ds = ds.flat_map(lambda *x: flat_map_data_augmentation(opts, x))
-
     if opts.shuffle_batch:
         ds = ds.shuffle(buffer_size=opts.shuffle_size)
     ds = ds.batch(opts.batch_size).repeat(opts.epoch)
@@ -180,10 +151,12 @@ def eval_input_fn(opts):
     img_paths = tf.convert_to_tensor(img_paths, dtype=tf.string)
     labels = tf.convert_to_tensor(img_labels, dtype=tf.int32)
 
-    # create dataset
     ds = tf.data.Dataset.from_tensor_slices((img_paths, labels))
-    ds = ds.map(lambda filename, label: eval_parse_line(filename, label, opts),
-                num_parallel_calls=opts.map_num_parallel_calls)
+    num_parallel = opts.map_num_parallel_calls
+    ds = ds.map(lambda filename, label: parse_function(filename, label, opts),
+                num_parallel_calls=num_parallel)
+    ds = ds.map(lambda image, label: val_preprocess(image, label, opts),
+                num_parallel_calls=num_parallel)
 
     ds = ds.prefetch(opts.prefetch_size)
     if opts.multi_scale_predict and opts.inference_shape is None:
@@ -197,11 +170,12 @@ def predict_input_fn(opts):
     img_paths = read_txt_file(opts.predict_data_path, has_label=False)
     img_paths = tf.convert_to_tensor(img_paths, dtype=tf.string)
 
-    # create dataset
     ds = tf.data.Dataset.from_tensor_slices((img_paths))
-    ds = ds.map(lambda filename: predict_parse_line(filename, opts),
-                num_parallel_calls=opts.map_num_parallel_calls)
-
+    num_parallel = opts.map_num_parallel_calls
+    ds = ds.map(lambda filename: parse_function(filename, None, opts),
+                num_parallel_calls=num_parallel)
+    ds = ds.map(lambda filename, label: val_preprocess(filename, label, opts),
+                num_parallel_calls=num_parallel)
     ds = ds.prefetch(opts.prefetch_size)
     if opts.multi_scale_predict:
         ds = ds.batch(1)
