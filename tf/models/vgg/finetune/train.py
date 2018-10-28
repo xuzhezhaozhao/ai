@@ -57,10 +57,11 @@ def train_and_eval_in_local_mode(opts):
 
     with open(opts.train_data_path) as f:
         cnt = len(f.readlines())
-        max_steps = (cnt*opts.epoch+opts.batch_size-1) / opts.batch_size
+        max_steps = int((cnt*opts.epoch+opts.batch_size-1) / opts.batch_size)
         if opts.max_train_steps is None:
             opts.max_train_steps = max_steps
 
+    tf.logging.info("max_train_steps = {}".format(opts.max_train_steps))
     train_spec = tf.estimator.TrainSpec(
         input_fn=lambda: input_data.train_input_fn(opts),
         max_steps=opts.max_train_steps,
