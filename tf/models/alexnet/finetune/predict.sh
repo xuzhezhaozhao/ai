@@ -31,10 +31,11 @@ dropout=0.5
 shuffle_batch=1
 map_num_parallel_calls=1
 num_classes=2
-pretrained_weights_path=`pwd`/pretrained_weights/bvlc_alexnet.npy
+pretrained_weights_path=`pwd`/../pretrained_weights/bvlc_alexnet.npy
 train_layers='fc6,fc7,fc8'
 use_data_augmentation=0
-multi_scale_predict=1
+multi_scale_predict=0
+inference_shape='256,256'
 
 python predict_main.py \
     --train_data_path ${train_data_path} \
@@ -63,4 +64,5 @@ python predict_main.py \
     --pretrained_weights_path ${pretrained_weights_path} \
     --train_layers ${train_layers} \
     --use_data_augmentation ${use_data_augmentation} \
-    --multi_scale_predict ${multi_scale_predict}
+    --multi_scale_predict ${multi_scale_predict} \
+    --inference_shape "${inference_shape}"

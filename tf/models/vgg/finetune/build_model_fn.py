@@ -51,16 +51,33 @@ def vgg19_model_fn(features, labels, mode, params):
     pool5 = max_pool(conv5_4, 'pool5')
 
     training = (mode == tf.estimator.ModeKeys.TRAIN)
-    fc6 = fc_layer(pool5, "fc6", weights_dict, opts, training)
-    relu6 = tf.nn.relu(fc6)
 
-    fc7 = fc_layer(relu6, "fc7", weights_dict, opts, training)
-    relu7 = tf.nn.relu(fc7)
+    if (not training) and opts.multi_scale_predict:
+        fc6 = fc_to_conv_layer(
+            weights_dict, opts, pool5, 7, 7, 512, 4096, name='fc6')
+        relu6 = tf.nn.relu(fc6)
+        fc7 = fc_to_conv_layer(
+            weights_dict, opts, relu6, 1, 1, 4096, 4096, name='fc7')
+        relu7 = tf.nn.relu(fc7)
+        fc8 = fc_to_conv_layer(
+            weights_dict, opts, relu7, 1, 1, 4096,
+            opts.num_classes, name='fc8')
+        # fc8 shape [batch, m, n, opts.num_classes]
+        fc8 = tf.reduce_mean(fc8, axis=-2)
+        fc8 = tf.reduce_mean(fc8, axis=-2)
+        score = tf.nn.softmax(fc8)
+    else:
+        fc6 = fc_layer(pool5, "fc6", weights_dict, opts, training)
+        relu6 = tf.nn.relu(fc6)
 
-    fc8 = fc_layer(relu7, "fc8", weights_dict, opts, training)
+        fc7 = fc_layer(relu6, "fc7", weights_dict, opts, training)
+        relu7 = tf.nn.relu(fc7)
+
+        fc8 = fc_layer(relu7, "fc8", weights_dict, opts, training)
+        score = tf.nn.softmax(fc8)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
-        return create_predict_estimator_spec(mode, fc8, labels, params)
+        return create_predict_estimator_spec(mode, score, labels, params)
 
     if mode == tf.estimator.ModeKeys.EVAL:
         return create_eval_estimator_spec(mode, fc8, labels, params)
@@ -115,6 +132,23 @@ def fc_layer(bottom, name, weights_dict, opts, training):
         return fc
 
 
+def fc_to_conv_layer(weights_dict, opts, x, filter_height, filter_width,
+                     in_channels, out_channels, name):
+    """Create a fully connected layer."""
+
+    with tf.variable_scope(name):
+        weights = get_fc_weight(name, weights_dict, opts)
+        biases = get_bias(name, weights_dict, opts)
+
+        weights = tf.reshape(
+            weights, [filter_height, filter_width, in_channels, out_channels])
+
+        conv = tf.nn.conv2d(x, weights, strides=[1, 1, 1, 1], padding='VALID')
+        bias = tf.nn.bias_add(conv, biases)
+
+        return bias
+
+
 def get_conv_filter(name, weights_dict, opts):
     trainable = True if name in opts.train_layers else False
     return tf.get_variable(
@@ -153,17 +187,16 @@ def dropout(x, keep_prob):
     return tf.nn.dropout(x, keep_prob)
 
 
-def cross_entropy(score, labels):
+def cross_entropy(logits, labels):
     loss = tf.reduce_mean(
         tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits=score, labels=tf.argmax(labels, 1)))
+            logits=logits, labels=tf.argmax(labels, 1)))
     return loss
 
 
 def create_predict_estimator_spec(mode, score, labels, params):
     """Create predict EstimatorSpec."""
 
-    score = tf.nn.softmax(score)
     predictions = {
         'score': score,
     }
@@ -180,30 +213,30 @@ def create_predict_estimator_spec(mode, score, labels, params):
                                       export_outputs=export_outputs)
 
 
-def create_eval_estimator_spec(mode, score, labels, params):
+def create_eval_estimator_spec(mode, logits, labels, params):
     """Create eval EstimatorSpec."""
 
     accuracy = tf.metrics.accuracy(labels=tf.argmax(labels, 1),
-                                   predictions=tf.argmax(score, 1))
+                                   predictions=tf.argmax(logits, 1))
     metrics = {
         'accuracy': accuracy
     }
 
-    loss = cross_entropy(score, labels)
+    loss = cross_entropy(logits, labels)
 
     return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
 
 
-def create_train_estimator_spec(mode, score, labels, params):
+def create_train_estimator_spec(mode, logits, labels, params):
     """Create train EstimatorSpec."""
 
     tf.summary.scalar('train_accuracy', tf.reduce_mean(
-        tf.cast(tf.equal(tf.argmax(labels, 1), tf.argmax(score, 1)),
+        tf.cast(tf.equal(tf.argmax(labels, 1), tf.argmax(logits, 1)),
                 tf.float32)))
 
     opts = params['opts']
     global_step = tf.train.get_global_step()
-    loss = cross_entropy(score, labels)
+    loss = cross_entropy(logits, labels)
     lr = tf.train.exponential_decay(
         opts.lr,
         global_step,

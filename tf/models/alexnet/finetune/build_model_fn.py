@@ -82,7 +82,7 @@ def alexnet_model_fn(features, labels, mode, params):
         return create_predict_estimator_spec(mode, score, labels, params)
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        return create_eval_estimator_spec(mode, fc8, score, labels, params)
+        return create_eval_estimator_spec(mode, fc8, labels, params)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         return create_train_estimator_spec(mode, fc8, labels, params)
@@ -231,11 +231,11 @@ def create_predict_estimator_spec(mode, score, labels, params):
                                       export_outputs=export_outputs)
 
 
-def create_eval_estimator_spec(mode, logits, score, labels, params):
+def create_eval_estimator_spec(mode, logits, labels, params):
     """Create eval EstimatorSpec."""
 
     accuracy = tf.metrics.accuracy(labels=tf.argmax(labels, 1),
-                                   predictions=tf.argmax(score, 1))
+                                   predictions=tf.argmax(logits, 1))
     metrics = {
         'accuracy': accuracy
     }

@@ -56,3 +56,4 @@ train.txt
 eval.txt
 validation.txt
 test.txt
+predict_output.txt

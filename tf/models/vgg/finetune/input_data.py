@@ -43,7 +43,14 @@ def eval_parse_line(img_path, label, opts):
     img_decoded.set_shape([None, None, 3])
 
     img_centered = tf.subtract(tf.cast(img_decoded, tf.float32), VGG_MEAN)
-    img_resized = tf.image.resize_images(img_centered, INPUT_SHAPE)
+    if opts.multi_scale_predict:
+        if opts.inference_shape is not None:
+            img_resized = tf.image.resize_images(
+                img_centered, opts.inference_shape)
+        else:
+            img_resized = img_centered
+    else:
+        img_resized = tf.image.resize_images(img_centered, INPUT_SHAPE)
 
     # RGB -> BGR
     img_bgr = img_resized[:, :, ::-1]
@@ -59,7 +66,14 @@ def predict_parse_line(img_path, opts):
     img_decoded.set_shape([None, None, 3])
 
     img_centered = tf.subtract(tf.cast(img_decoded, tf.float32), VGG_MEAN)
-    img_resized = tf.image.resize_images(img_centered, INPUT_SHAPE)
+    if opts.multi_scale_predict:
+        if opts.inference_shape is not None:
+            img_resized = tf.image.resize_images(
+                img_centered, opts.inference_shape)
+        else:
+            img_resized = img_centered
+    else:
+        img_resized = tf.image.resize_images(img_centered, INPUT_SHAPE)
 
     # RGB -> BGR
     img_bgr = img_resized[:, :, ::-1]
@@ -172,7 +186,10 @@ def eval_input_fn(opts):
                 num_parallel_calls=opts.map_num_parallel_calls)
 
     ds = ds.prefetch(opts.prefetch_size)
-    ds = ds.batch(opts.batch_size)
+    if opts.multi_scale_predict and opts.inference_shape is None:
+        ds = ds.batch(1)
+    else:
+        ds = ds.batch(opts.batch_size)
     return ds
 
 
@@ -186,7 +203,10 @@ def predict_input_fn(opts):
                 num_parallel_calls=opts.map_num_parallel_calls)
 
     ds = ds.prefetch(opts.prefetch_size)
-    ds = ds.batch(opts.batch_size)
+    if opts.multi_scale_predict:
+        ds = ds.batch(1)
+    else:
+        ds = ds.batch(opts.batch_size)
     return ds
 
 

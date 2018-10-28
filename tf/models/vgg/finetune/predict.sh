@@ -22,6 +22,8 @@ map_num_parallel_calls=1
 num_classes=2
 pretrained_weights_path=`pwd`/pretrained_weights/vgg19.npy
 use_data_augmentation=0
+multi_scale_predict=0
+inference_shape='256,256'
 
 
 python predict_main.py \
@@ -38,4 +40,6 @@ python predict_main.py \
     --map_num_parallel_calls ${map_num_parallel_calls} \
     --num_classes ${num_classes} \
     --pretrained_weights_path ${pretrained_weights_path} \
-    --use_data_augmentation ${use_data_augmentation}
+    --use_data_augmentation ${use_data_augmentation} \
+    --multi_scale_predict ${multi_scale_predict} \
+    --inference_shape "${inference_shape}"

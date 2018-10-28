@@ -38,6 +38,8 @@ optimizer_momentum_use_nesterov=0 # bool value
 optimizer_exponential_decay_steps=40
 optimizer_exponential_decay_rate=0.5
 optimizer_exponential_decay_staircase=0  # bool value
+multi_scale_predict=0
+inference_shape='256,256'
 
 if [[ ${remove_model_dir} == '1' ]]; then
     echo "remove model_dir ..."
@@ -77,4 +79,6 @@ python main.py \
     --optimizer_momentum_use_nesterov ${optimizer_momentum_use_nesterov} \
     --optimizer_exponential_decay_steps ${optimizer_exponential_decay_steps} \
     --optimizer_exponential_decay_rate ${optimizer_exponential_decay_rate} \
-    --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase}
+    --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase} \
+    --multi_scale_predict ${multi_scale_predict} \
+    --inference_shape "${inference_shape}"
