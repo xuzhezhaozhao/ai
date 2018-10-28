@@ -50,14 +50,14 @@ def vgg19_model_fn(features, labels, mode, params):
     conv5_4 = conv_layer(conv5_3, "conv5_4", weights_dict, opts)
     pool5 = max_pool(conv5_4, 'pool5')
 
-    fc6 = fc_layer(pool5, "fc6", weights_dict, opts)
-    assert fc6.get_shape().as_list()[1:] == [4096]
+    training = (mode == tf.estimator.ModeKeys.TRAIN)
+    fc6 = fc_layer(pool5, "fc6", weights_dict, opts, training)
     relu6 = tf.nn.relu(fc6)
 
-    fc7 = fc_layer(relu6, "fc7", weights_dict, opts)
+    fc7 = fc_layer(relu6, "fc7", weights_dict, opts, training)
     relu7 = tf.nn.relu(fc7)
 
-    fc8 = fc_layer(relu7, "fc8", weights_dict, opts)
+    fc8 = fc_layer(relu7, "fc8", weights_dict, opts, training)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         return create_predict_estimator_spec(mode, fc8, labels, params)
@@ -97,7 +97,7 @@ def conv_layer(bottom, name, weights_dict, opts):
         return relu
 
 
-def fc_layer(bottom, name, weights_dict, opts):
+def fc_layer(bottom, name, weights_dict, opts, training):
     with tf.variable_scope(name):
         shape = bottom.get_shape().as_list()
         dim = 1

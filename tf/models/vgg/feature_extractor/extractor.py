@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 import argparse
+import time
 
 import vgg19
 
@@ -74,7 +75,10 @@ def run(args):
         sess.run(it.initializer)
         while True:
             try:
+                start_time = time.time()
                 features = sess.run(vgg.__dict__[args.feature_layer])
+                print(("Batch time: {} ms"
+                       .format(1000.0*(time.time() - start_time))))
                 print("layer '{}', shape '{}'"
                       .format(args.feature_layer, features.shape))
             except tf.errors.OutOfRangeError:

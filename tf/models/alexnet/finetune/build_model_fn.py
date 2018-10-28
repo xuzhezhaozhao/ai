@@ -17,84 +17,50 @@ def alexnet_model_fn(features, labels, mode, params):
     tf.summary.image('images', features[model_keys.DATA_COL])
 
     opts = params['opts']
-    weights_dict = load_initial_weights(opts)
+    weights_dict = load_pretrained_weights(opts)
     data = features[model_keys.DATA_COL]
 
     # Create the network graph.
     # 1st Layer: Conv (w ReLu) -> Lrn -> Pool
-    pre_weights = weights_dict['conv1'][0]
-    pre_biases = weights_dict['conv1'][1]
-    trainable = True if 'conv1' in opts.train_layers else False
-    conv1 = conv(data, 11, 11, 96, 4, 4, padding='VALID', name='conv1',
-                 trainable=trainable,
-                 pre_weights=pre_weights, pre_biases=pre_biases)
+    conv1 = conv_layer(weights_dict, opts, data, 11, 11, 96, 4, 4,
+                       padding='VALID', name='conv1', groups=1)
     norm1 = lrn(conv1, 2, 2e-05, 0.75, name='norm1')
     pool1 = max_pool(norm1, 3, 3, 2, 2, padding='VALID', name='pool1')
 
     # 2nd Layer: Conv (w ReLu)  -> Lrn -> Pool with 2 groups
-    pre_weights = weights_dict['conv2'][0]
-    pre_biases = weights_dict['conv2'][1]
-    trainable = True if 'conv2' in opts.train_layers else False
-    conv2 = conv(pool1, 5, 5, 256, 1, 1, groups=2, name='conv2',
-                 trainable=trainable,
-                 pre_weights=pre_weights, pre_biases=pre_biases)
+    conv2 = conv_layer(weights_dict, opts, pool1, 5, 5, 256, 1, 1,
+                       padding='SAME', name='conv2', groups=2)
     norm2 = lrn(conv2, 2, 2e-05, 0.75, name='norm2')
     pool2 = max_pool(norm2, 3, 3, 2, 2, padding='VALID', name='pool2')
 
     # 3rd Layer: Conv (w ReLu)
-    pre_weights = weights_dict['conv3'][0]
-    pre_biases = weights_dict['conv3'][1]
-    trainable = True if 'conv3' in opts.train_layers else False
-    conv3 = conv(pool2, 3, 3, 384, 1, 1, name='conv3',
-                 trainable=trainable,
-                 pre_weights=pre_weights, pre_biases=pre_biases)
+    conv3 = conv_layer(weights_dict, opts, pool2, 3, 3, 384, 1, 1,
+                       padding='SAME', name='conv3', groups=1)
 
     # 4th Layer: Conv (w ReLu) splitted into two groups
-    pre_weights = weights_dict['conv4'][0]
-    pre_biases = weights_dict['conv4'][1]
-    trainable = True if 'conv4' in opts.train_layers else False
-    conv4 = conv(conv3, 3, 3, 384, 1, 1, groups=2, name='conv4',
-                 trainable=trainable,
-                 pre_weights=pre_weights, pre_biases=pre_biases)
+    conv4 = conv_layer(weights_dict, opts, conv3, 3, 3, 384, 1, 1,
+                       padding='SAME', name='conv4', groups=2)
 
     # 5th Layer: Conv (w ReLu) -> Pool splitted into two groups
-    pre_weights = weights_dict['conv5'][0]
-    pre_biases = weights_dict['conv5'][1]
-    trainable = True if 'conv5' in opts.train_layers else False
-    conv5 = conv(conv4, 3, 3, 256, 1, 1, groups=2, name='conv5',
-                 trainable=trainable,
-                 pre_weights=pre_weights, pre_biases=pre_biases)
+    conv5 = conv_layer(weights_dict, opts, conv4, 3, 3, 256, 1, 1,
+                       padding='SAME', name='conv5', groups=2)
     pool5 = max_pool(conv5, 3, 3, 2, 2, padding='VALID', name='pool5')
 
-    # 6th Layer: Flatten -> FC (w ReLu) -> Dropout
-    flattened = tf.reshape(pool5, [-1, 6*6*256])
-    pre_weights = weights_dict['fc6'][0]
-    pre_biases = weights_dict['fc6'][1]
-    trainable = True if 'fc6' in opts.train_layers else False
-    fc6 = fc(flattened, 6*6*256, 4096, name='fc6',
-             trainable=trainable,
-             pre_weights=pre_weights, pre_biases=pre_biases)
-
     training = (mode == tf.estimator.ModeKeys.TRAIN)
+
+    # 6th Layer: Flatten -> FC (w ReLu) -> Dropout
+    trainable = True if 'fc6' in opts.train_layers else False
+    fc6 = fc_layer(weights_dict, opts, pool5, name='fc6', True, training)
     dropout6 = dropout(fc6, opts.dropout, training) if trainable else fc6
 
     # 7th Layer: FC (w ReLu) -> Dropout
-    pre_weights = weights_dict['fc7'][0]
-    pre_biases = weights_dict['fc7'][1]
     trainable = True if 'fc7' in opts.train_layers else False
-    fc7 = fc(dropout6, 4096, 4096, name='fc7',
-             trainable=trainable,
-             pre_weights=pre_weights, pre_biases=pre_biases)
+    fc7 = fc_layer(weights_dict, opts, dropout6, name='fc7', True, training)
     dropout7 = dropout(fc7, opts.dropout, training) if trainable else fc7
 
     # 8th Layer: FC and return unscaled activations
-    pre_weights = weights_dict['fc8'][0]
-    pre_biases = weights_dict['fc8'][1]
     trainable = True if 'fc8' in opts.train_layers else False
-    fc8 = fc(dropout7, 4096, opts.num_classes, relu=False, name='fc8',
-             trainable=trainable,
-             pre_weights=pre_weights, pre_biases=pre_biases,
-             last_layer=True)
+    fc8 = fc_layer(weights_dict, opts, dropout7, name='fc8', False, training)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         return create_predict_estimator_spec(mode, fc8, labels, params)
@@ -106,7 +72,7 @@ def alexnet_model_fn(features, labels, mode, params):
         return create_train_estimator_spec(mode, fc8, labels, params)
 
 
-def load_initial_weights(opts):
+def load_pretrained_weights(opts):
     """Load weights from file.
 
     As the weights from http://www.cs.toronto.edu/~guerzhoy/tf_alexnet/
@@ -120,35 +86,23 @@ def load_initial_weights(opts):
     return weights_dict
 
 
-def conv(x, filter_height, filter_width, num_filters,
-         stride_y, stride_x, name,
-         padding='SAME', groups=1,
-         trainable=True, pre_weights=None, pre_biases=None):
+def conv_layer(weights_dict, opts, x, filter_height, filter_width, num_filters,
+               stride_y, stride_x, name, padding, groups):
     """Create a convolution layer.
 
     Adapted from: https://github.com/ethereon/caffe-tensorflow
     """
 
-    # Get number of input channels
-    # input_channels = int(x.get_shape()[-1])
-
     # Create lambda function for the convolution
     def convolve(i, k): return tf.nn.conv2d(
             i, k, strides=[1, stride_y, stride_x, 1], padding=padding)
 
-    with tf.variable_scope(name) as scope:
-        # Create tf variables for the weights and biases of the conv layer
-        weights = tf.get_variable('weights',
-                                  initializer=pre_weights,
-                                  trainable=trainable)
-        biases = tf.get_variable('biases',
-                                 initializer=pre_biases,
-                                 trainable=trainable)
+    with tf.variable_scope(name):
+        weights = get_conv_filter(name, weights_dict, opts)
+        biases = get_bias(name, weights_dict, opts)
 
     if groups == 1:
         conv = convolve(x, weights)
-
-    # In the cases of multiple groups, split inputs & weights and
     else:
         # Split input and weights and convolve them separately
         input_groups = tf.split(axis=3, num_or_size_splits=groups, value=x)
@@ -164,30 +118,26 @@ def conv(x, filter_height, filter_width, num_filters,
     bias = tf.reshape(tf.nn.bias_add(conv, biases), tf.shape(conv))
 
     # Apply relu function
-    relu = tf.nn.relu(bias, name=scope.name)
+    relu = tf.nn.relu(bias)
 
     return relu
 
 
-def fc(x, num_in, num_out, name, relu=True,
-       trainable=True, pre_weights=None, pre_biases=None, last_layer=False):
+def fc_layer(weights_dict, opts, x, name, relu, training):
     """Create a fully connected layer."""
 
-    with tf.variable_scope(name) as scope:
-        if last_layer and trainable:
-            weights = tf.get_variable(
-                'weights', shape=[num_in, num_out], trainable=trainable)
-            biases = tf.get_variable(
-                'biases', shape=[num_out], trainable=trainable)
-        else:
-            # Create tf variables for the weights and biases
-            weights = tf.get_variable(
-                'weights', initializer=pre_weights, trainable=trainable)
-            biases = tf.get_variable(
-                'biases', initializer=pre_biases, trainable=trainable)
+    with tf.variable_scope(name):
+        shape = x.get_shape().as_list()
+        dim = 1
+        for d in shape[1:]:
+            dim *= d
+        x = tf.reshape(x, [-1, dim])
+
+        weights = get_fc_weight(name, weights_dict, opts)
+        biases = get_bias(name, weights_dict, opts)
 
         # Matrix multiply weights and inputs and add bias
-        act = tf.nn.xw_plus_b(x, weights, biases, name=scope.name)
+        act = tf.nn.xw_plus_b(x, weights, biases)
 
     if relu:
         # Apply ReLu non linearity
@@ -198,7 +148,7 @@ def fc(x, num_in, num_out, name, relu=True,
 
 
 def max_pool(x, filter_height, filter_width, stride_y, stride_x, name,
-             padding='SAME'):
+             padding):
     """Create a max pooling layer."""
 
     return tf.nn.max_pool(x, ksize=[1, filter_height, filter_width, 1],
@@ -288,3 +238,35 @@ def create_train_estimator_spec(mode, score, labels, params):
         tf.summary.histogram(var.name.replace(':', '_') + '/gradient', grad)
 
     return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
+
+
+def get_conv_filter(name, weights_dict, opts):
+    trainable = True if name in opts.train_layers else False
+    return tf.get_variable(
+        'filter', initializer=weights_dict[name][0], trainable=trainable)
+
+
+def get_bias(name, weights_dict, opts):
+    trainable = True if name in opts.train_layers else False
+    if not trainable or name != 'fc8':
+        biases = tf.get_variable(
+            'biases', initializer=weights_dict[name][1], trainable=trainable)
+    else:
+        biases = tf.get_variable(
+            'biases', shape=[opts.num_classes], trainable=trainable)
+
+    return biases
+
+
+def get_fc_weight(name, weights_dict, opts):
+    trainable = True if name in opts.train_layers else False
+    if not trainable or name != 'fc8':
+        weights = tf.get_variable(
+            'weights', initializer=weights_dict[name][0], trainable=trainable)
+    else:  # trainable and name == 'fc8'
+        weights = tf.get_variable(
+            'weights',
+            shape=[weights_dict[name][0].shape[0], opts.num_classes],
+            trainable=trainable)
+
+    return weights
