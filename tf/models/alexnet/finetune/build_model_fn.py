@@ -48,25 +48,41 @@ def alexnet_model_fn(features, labels, mode, params):
 
     training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-    # 6th Layer: Flatten -> FC (w ReLu) -> Dropout
-    trainable = True if 'fc6' in opts.train_layers else False
-    fc6 = fc_layer(weights_dict, opts, pool5, name='fc6', True, training)
-    dropout6 = dropout(fc6, opts.dropout, training) if trainable else fc6
+    if (not training) and opts.multi_scale_predict:
+        fc6 = fc_to_conv_layer(
+            weights_dict, opts, pool5, 6, 6, 256, 4096,
+            name='fc6', relu=True)
+        fc7 = fc_to_conv_layer(
+            weights_dict, opts, fc6, 1, 1, 4096, 4096,
+            name='fc7', relu=True)
+        fc8 = fc_to_conv_layer(
+            weights_dict, opts, fc7, 1, 1, 4096, opts.num_classes,
+            name='fc8', relu=False)
+        # fc8 shape [batch, m, n, opts.num_classes]
+        fc8 = tf.reduce_mean(fc8, axis=-2)
+        fc8 = tf.reduce_mean(fc8, axis=-2)
+        score = tf.nn.softmax(fc8)
+    else:
+        # 6th Layer: Flatten -> FC (w ReLu) -> Dropout
+        trainable = True if 'fc6' in opts.train_layers else False
+        fc6 = fc_layer(weights_dict, opts, pool5, name='fc6', relu=True)
+        dropout6 = dropout(fc6, opts.dropout, training) if trainable else fc6
 
-    # 7th Layer: FC (w ReLu) -> Dropout
-    trainable = True if 'fc7' in opts.train_layers else False
-    fc7 = fc_layer(weights_dict, opts, dropout6, name='fc7', True, training)
-    dropout7 = dropout(fc7, opts.dropout, training) if trainable else fc7
+        # 7th Layer: FC (w ReLu) -> Dropout
+        trainable = True if 'fc7' in opts.train_layers else False
+        fc7 = fc_layer(weights_dict, opts, dropout6, name='fc7', relu=True)
+        dropout7 = dropout(fc7, opts.dropout, training) if trainable else fc7
 
-    # 8th Layer: FC and return unscaled activations
-    trainable = True if 'fc8' in opts.train_layers else False
-    fc8 = fc_layer(weights_dict, opts, dropout7, name='fc8', False, training)
+        # 8th Layer: FC and return unscaled activations
+        trainable = True if 'fc8' in opts.train_layers else False
+        fc8 = fc_layer(weights_dict, opts, dropout7, name='fc8', relu=False)
+        score = tf.nn.softmax(fc8)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
-        return create_predict_estimator_spec(mode, fc8, labels, params)
+        return create_predict_estimator_spec(mode, score, labels, params)
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        return create_eval_estimator_spec(mode, fc8, labels, params)
+        return create_eval_estimator_spec(mode, fc8, score, labels, params)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         return create_train_estimator_spec(mode, fc8, labels, params)
@@ -123,7 +139,7 @@ def conv_layer(weights_dict, opts, x, filter_height, filter_width, num_filters,
     return relu
 
 
-def fc_layer(weights_dict, opts, x, name, relu, training):
+def fc_layer(weights_dict, opts, x, name, relu):
     """Create a fully connected layer."""
 
     with tf.variable_scope(name):
@@ -135,8 +151,6 @@ def fc_layer(weights_dict, opts, x, name, relu, training):
 
         weights = get_fc_weight(name, weights_dict, opts)
         biases = get_bias(name, weights_dict, opts)
-
-        # Matrix multiply weights and inputs and add bias
         act = tf.nn.xw_plus_b(x, weights, biases)
 
     if relu:
@@ -145,6 +159,28 @@ def fc_layer(weights_dict, opts, x, name, relu, training):
         return relu
     else:
         return act
+
+
+def fc_to_conv_layer(weights_dict, opts, x, filter_height, filter_width,
+                     in_channels, out_channels, name, relu):
+    """Create a fully connected layer."""
+
+    with tf.variable_scope(name):
+        weights = get_fc_weight(name, weights_dict, opts)
+        biases = get_bias(name, weights_dict, opts)
+
+        weights = tf.reshape(
+            weights, [filter_height, filter_width, in_channels, out_channels])
+
+        conv = tf.nn.conv2d(x, weights, strides=[1, 1, 1, 1], padding='VALID')
+        bias = tf.nn.bias_add(conv, biases)
+
+    if relu:
+        # Apply ReLu non linearity
+        relu = tf.nn.relu(bias)
+        return relu
+    else:
+        return bias
 
 
 def max_pool(x, filter_height, filter_width, stride_y, stride_x, name,
@@ -169,17 +205,16 @@ def dropout(x, rate, training):
     return tf.layers.dropout(x, rate, training=training)
 
 
-def cross_entropy(score, labels):
+def cross_entropy(logits, labels):
     loss = tf.reduce_mean(
         tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits=score, labels=tf.argmax(labels, 1)))
+            logits=logits, labels=tf.argmax(labels, 1)))
     return loss
 
 
 def create_predict_estimator_spec(mode, score, labels, params):
     """Create predict EstimatorSpec."""
 
-    score = tf.nn.softmax(score)
     predictions = {
         'score': score,
     }
@@ -196,7 +231,7 @@ def create_predict_estimator_spec(mode, score, labels, params):
                                       export_outputs=export_outputs)
 
 
-def create_eval_estimator_spec(mode, score, labels, params):
+def create_eval_estimator_spec(mode, logits, score, labels, params):
     """Create eval EstimatorSpec."""
 
     accuracy = tf.metrics.accuracy(labels=tf.argmax(labels, 1),
@@ -205,21 +240,20 @@ def create_eval_estimator_spec(mode, score, labels, params):
         'accuracy': accuracy
     }
 
-    loss = cross_entropy(score, labels)
-
+    loss = cross_entropy(logits, labels)
     return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
 
 
-def create_train_estimator_spec(mode, score, labels, params):
+def create_train_estimator_spec(mode, logits, labels, params):
     """Create train EstimatorSpec."""
 
     tf.summary.scalar('train_accuracy', tf.reduce_mean(
-        tf.cast(tf.equal(tf.argmax(labels, 1), tf.argmax(score, 1)),
-                tf.float32)))
+        tf.cast(
+            tf.equal(tf.argmax(labels, 1), tf.argmax(logits, 1)), tf.float32)))
 
     opts = params['opts']
     global_step = tf.train.get_global_step()
-    loss = cross_entropy(score, labels)
+    loss = cross_entropy(logits, labels)
     lr = tf.train.exponential_decay(
         opts.lr,
         global_step,

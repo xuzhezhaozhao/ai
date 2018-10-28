@@ -40,7 +40,14 @@ def eval_parse_line(img_path, label, opts):
     img_decoded.set_shape([None, None, 3])
 
     img_centered = tf.subtract(tf.cast(img_decoded, tf.float32), IMAGENET_MEAN)
-    img_resized = tf.image.resize_images(img_centered, INPUT_SHAPE)
+    if opts.multi_scale_predict:
+        if opts.inference_shape is not None:
+            img_resized = tf.image.resize_images(
+                img_centered, opts.inference_shape)
+        else:
+            img_resized = img_centered
+    else:
+        img_resized = tf.image.resize_images(img_centered, INPUT_SHAPE)
 
     # RGB -> BGR
     img_bgr = img_resized[:, :, ::-1]
@@ -56,7 +63,14 @@ def predict_parse_line(img_path, opts):
     img_decoded.set_shape([None, None, 3])
 
     img_centered = tf.subtract(tf.cast(img_decoded, tf.float32), IMAGENET_MEAN)
-    img_resized = tf.image.resize_images(img_centered, INPUT_SHAPE)
+    if opts.multi_scale_predict:
+        if opts.inference_shape is not None:
+            img_resized = tf.image.resize_images(
+                img_centered, opts.inference_shape)
+        else:
+            img_resized = img_centered
+    else:
+        img_resized = tf.image.resize_images(img_centered, INPUT_SHAPE)
 
     # RGB -> BGR
     img_bgr = img_resized[:, :, ::-1]
@@ -169,7 +183,11 @@ def eval_input_fn(opts):
                 num_parallel_calls=opts.map_num_parallel_calls)
 
     ds = ds.prefetch(opts.prefetch_size)
-    ds = ds.batch(opts.batch_size)
+    if opts.multi_scale_predict and opts.inference_shape is None:
+        ds = ds.batch(1)
+    else:
+        ds = ds.batch(opts.batch_size)
+
     return ds
 
 
@@ -183,25 +201,27 @@ def predict_input_fn(opts):
                 num_parallel_calls=opts.map_num_parallel_calls)
 
     ds = ds.prefetch(opts.prefetch_size)
-    ds = ds.batch(opts.batch_size)
+    if opts.multi_scale_predict:
+        ds = ds.batch(1)
+    else:
+        ds = ds.batch(opts.batch_size)
     return ds
 
 
 def build_serving_input_fn(opts):
     def serving_input_receiver_fn():
         feature_spec = {
-            model_keys.DATA_COL: tf.FixedLenFeature(shape=[227, 227, 3],
-                                                    dtype=tf.float32)
+            model_keys.DATA_COL: tf.FixedLenFeature(
+                shape=[227, 227, 3], dtype=tf.float32)
         }
 
-        serialized_tf_example = tf.placeholder(dtype=tf.string,
-                                               shape=[None],
-                                               name='input_example_tensor')
+        serialized_tf_example = tf.placeholder(
+            dtype=tf.string, shape=[None], name='input_example_tensor')
 
         receiver_tensors = {'examples': serialized_tf_example}
         features = tf.parse_example(serialized_tf_example, feature_spec)
 
-        return tf.estimator.export.ServingInputReceiver(features,
-                                                        receiver_tensors)
+        return tf.estimator.export.ServingInputReceiver(
+            features, receiver_tensors)
 
     return serving_input_receiver_fn

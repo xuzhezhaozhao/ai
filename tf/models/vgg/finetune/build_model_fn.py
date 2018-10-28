@@ -18,7 +18,7 @@ def vgg19_model_fn(features, labels, mode, params):
     tf.summary.image('images', features[model_keys.DATA_COL])
 
     opts = params['opts']
-    weights_dict = load_initial_weights(opts)
+    weights_dict = load_pretrained_weights(opts)
     data = features[model_keys.DATA_COL]
 
     assert data.get_shape().as_list()[1:] == [224, 224, 3]
@@ -69,7 +69,7 @@ def vgg19_model_fn(features, labels, mode, params):
         return create_train_estimator_spec(mode, fc8, labels, params)
 
 
-def load_initial_weights(opts):
+def load_pretrained_weights(opts):
     """Load weights from file.
     """
 

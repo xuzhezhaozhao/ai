@@ -53,6 +53,8 @@ parser.add_argument('--optimizer_exponential_decay_rate',
                     default=0.96, type=float, help='')
 parser.add_argument('--optimizer_exponential_decay_staircase',
                     default=0, type=int, help='')
+parser.add_argument('--multi_scale_predict', default=0, type=int, help='')
+parser.add_argument('--inference_shape', default='', type=str, help='')
 
 opts = Options()
 
@@ -98,6 +100,13 @@ def parse_args(argv):
         args.optimizer_exponential_decay_rate
     opts.optimizer_exponential_decay_staircase = \
         bool(args.optimizer_exponential_decay_staircase)
+    opts.multi_scale_predict = bool(args.multi_scale_predict)
+    opts.inference_shape = [x for x in args.inference_shape.split(',')
+                            if x != '']
+    if len(opts.inference_shape) == 0:
+        opts.inference_shape = None
+    else:
+        opts.inference_shape = map(int, opts.inference_shape)
 
 
 def validate_opts():
