@@ -57,6 +57,7 @@ parser.add_argument('--optimizer_exponential_decay_staircase',
 parser.add_argument('--multi_scale_predict', default=0, type=int, help='')
 parser.add_argument('--inference_shape', default='', type=str, help='')
 parser.add_argument('--eval_throttle_secs', default=600, type=int, help='')
+parser.add_argument('--use_easy_preprocess', default=1, type=int, help='')
 
 opts = Options()
 
@@ -112,6 +113,7 @@ def parse_args(argv):
         opts.inference_shape = map(int, opts.inference_shape)
 
     opts.eval_throttle_secs = args.eval_throttle_secs
+    opts.use_easy_preprocess = bool(args.use_easy_preprocess)
 
 
 def validate_opts():

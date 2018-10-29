@@ -16,8 +16,12 @@ import input_data
 def predict(opts):
     estimator = train.build_estimator(opts)
     tf.logging.info("Begin predict ...")
-    results = estimator.predict(
-        input_fn=lambda: input_data.predict_input_fn(opts))
+    if opts.use_easy_preprocess:
+        predict_input_fn = input_data.build_easy_predict_input_fn(opts)
+    else:
+        predict_input_fn = input_data.build_predict_input_fn(opts)
+
+    results = estimator.predict(input_fn=predict_input_fn)
     with open(opts.predict_output, 'w') as fout, \
             open(opts.predict_data_path, 'r') as fin:
         for result in results:

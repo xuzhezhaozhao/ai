@@ -24,7 +24,7 @@ pretrained_weights_path=`pwd`/pretrained_weights/vgg19.npy
 use_data_augmentation=0
 multi_scale_predict=0
 inference_shape='256,256'
-
+use_easy_preprocess=1
 
 python predict_main.py \
     --predict_data_path ${predict_data_path} \
@@ -42,4 +42,5 @@ python predict_main.py \
     --pretrained_weights_path ${pretrained_weights_path} \
     --use_data_augmentation ${use_data_augmentation} \
     --multi_scale_predict ${multi_scale_predict} \
-    --inference_shape "${inference_shape}"
+    --inference_shape "${inference_shape}" \
+    --use_easy_preprocess ${use_easy_preprocess}

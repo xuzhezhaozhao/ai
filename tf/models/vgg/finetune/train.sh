@@ -41,6 +41,7 @@ optimizer_exponential_decay_staircase=1  # bool value
 multi_scale_predict=0
 inference_shape='256,256'
 eval_throttle_secs=900
+use_easy_preprocess=1
 
 if [[ ${remove_model_dir} == '1' ]]; then
     echo "remove model_dir ..."
@@ -83,4 +84,5 @@ python main.py \
     --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase} \
     --multi_scale_predict ${multi_scale_predict} \
     --inference_shape "${inference_shape}" \
-    --eval_throttle_secs ${eval_throttle_secs}
+    --eval_throttle_secs ${eval_throttle_secs} \
+    --use_easy_preprocess ${use_easy_preprocess}

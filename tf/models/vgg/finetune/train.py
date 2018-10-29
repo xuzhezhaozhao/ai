@@ -62,12 +62,19 @@ def train_and_eval_in_local_mode(opts):
             opts.max_train_steps = max_steps
 
     tf.logging.info("max_train_steps = {}".format(opts.max_train_steps))
+    if opts.use_easy_preprocess:
+        build_train_input_fn = input_data.build_easy_train_input_fn(opts)
+        build_eval_input_fn = input_data.build_easy_eval_input_fn(opts)
+    else:
+        build_train_input_fn = input_data.build_train_input_fn(opts)
+        build_eval_input_fn = input_data.build_eval_input_fn(opts)
+
     train_spec = tf.estimator.TrainSpec(
-        input_fn=lambda: input_data.train_input_fn(opts),
+        input_fn=build_train_input_fn,
         max_steps=opts.max_train_steps,
         hooks=opts.hooks)
     eval_spec = tf.estimator.EvalSpec(
-        input_fn=lambda: input_data.eval_input_fn(opts),
+        input_fn=build_eval_input_fn,
         steps=None,
         name='test',
         start_delay_secs=3,
