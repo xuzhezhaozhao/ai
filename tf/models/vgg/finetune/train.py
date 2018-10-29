@@ -64,7 +64,8 @@ def train_and_eval_in_local_mode(opts):
 
     best_accuracy = 0.0
     accuracy_no_increase = 0
-    build_model_fn.set_training_lr_decay_rate(1.0)
+    global_lr = opts.lr
+    build_model_fn.set_global_learning_rate(global_lr)
     for epoch in range(opts.epoch):
         epoch += 1
         tf.logging.info("Beginning train model, epoch {} ...".format(epoch))
@@ -82,13 +83,14 @@ def train_and_eval_in_local_mode(opts):
         if result['accuracy'] > best_accuracy + opts.min_accuracy_increase:
             accuracy_no_increase = 0
             best_accuracy = result['accuracy']
-            build_model_fn.set_training_lr_decay_rate(1.0)
         else:
             accuracy_no_increase += 1
             if accuracy_no_increase < 2:
+                global_lr *= 0.1
+                build_model_fn.set_global_learning_rate(global_lr)
                 tf.logging.info("Learning rate decay by 10.")
-                build_model_fn.set_training_lr_decay_rate(0.1)
             else:
+                tf.logging.info("Early stopping.")
                 break
 
     return result

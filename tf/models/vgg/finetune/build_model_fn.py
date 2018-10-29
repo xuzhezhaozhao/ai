@@ -10,17 +10,17 @@ import numpy as np
 
 import model_keys
 
-_training_lr_decay_rate = 1.0
+_global_learning_rate = 0.01
 
 
-def set_training_lr_decay_rate(rate):
-    global _training_lr_decay_rate
-    _training_lr_decay_rate = rate
+def set_global_learning_rate(rate):
+    global _global_learning_rate
+    _global_learning_rate = rate
 
 
-def get_training_lr_decay_rate():
-    global _training_lr_decay_rate
-    return _training_lr_decay_rate
+def get_global_learning_rate():
+    global _global_learning_rate
+    return _global_learning_rate
 
 
 # build vgg19
@@ -251,8 +251,8 @@ def create_train_estimator_spec(mode, logits, labels, params):
     global_step = tf.train.get_global_step()
     loss = cross_entropy(logits, labels)
     tf.summary.scalar("train_loss", loss)
-    lr = create_global_learning_rate(opts)
-    lr = tf.assign(lr, lr*get_training_lr_decay_rate())
+    lr = get_global_learning_rate()
+    tf.logging.info("global learning rate = {}".format(lr))
     tf.summary.scalar('lr', lr)
     optimizer = tf.train.MomentumOptimizer(
         lr, opts.optimizer_momentum_momentum)
@@ -264,12 +264,6 @@ def create_train_estimator_spec(mode, logits, labels, params):
         tf.summary.histogram(var.name.replace(':', '_') + '/gradient', grad)
 
     return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
-
-
-def create_global_learning_rate(opts):
-    with tf.variable_scope('learning_rate'):
-        lr = tf.get_variable('lr', initializer=opts.lr, trainable=False)
-    return lr
 
 
 def add_metrics_summary(metrics):
