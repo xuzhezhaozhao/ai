@@ -26,7 +26,7 @@ log_step_count_steps=10
 use_profile_hook=0
 profile_steps=100
 remove_model_dir=1
-dropout=0.0
+dropout=0.5
 shuffle_batch=1
 map_num_parallel_calls=1
 num_classes=2
@@ -42,6 +42,7 @@ multi_scale_predict=0
 inference_shape='256,256'
 eval_throttle_secs=900
 use_easy_preprocess=1
+min_accuracy_increase=0.0001
 
 if [[ ${remove_model_dir} == '1' ]]; then
     echo "remove model_dir ..."
@@ -85,4 +86,5 @@ python main.py \
     --multi_scale_predict ${multi_scale_predict} \
     --inference_shape "${inference_shape}" \
     --eval_throttle_secs ${eval_throttle_secs} \
-    --use_easy_preprocess ${use_easy_preprocess}
+    --use_easy_preprocess ${use_easy_preprocess} \
+    --min_accuracy_increase ${min_accuracy_increase}

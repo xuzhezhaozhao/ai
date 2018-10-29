@@ -79,7 +79,7 @@ def train_and_eval_in_local_mode(opts):
             hooks=opts.hooks)
         tf.logging.info("Evaluate model OK, epoch {}".format(epoch))
 
-        if result['accuracy'] >= best_accuracy:
+        if result['accuracy'] > best_accuracy + opts.min_accuracy_increase:
             accuracy_no_increase = 0
             best_accuracy = result['accuracy']
             build_model_fn.set_training_lr_decay_rate(1.0)
