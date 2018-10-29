@@ -256,8 +256,7 @@ def create_train_estimator_spec(mode, logits, labels, params):
     tf.summary.scalar('lr', lr)
     optimizer = tf.train.MomentumOptimizer(
         lr, opts.optimizer_momentum_momentum)
-    gradients, variables = zip(*optimizer.compute_gradients(
-        loss, gate_gradients=tf.train.Optimizer.GATE_GRAPH))
+    gradients, variables = zip(*optimizer.compute_gradients(loss))
     train_op = optimizer.apply_gradients(
         zip(gradients, variables), global_step=global_step)
 

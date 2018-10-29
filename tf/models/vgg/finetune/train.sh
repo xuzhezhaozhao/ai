@@ -18,10 +18,10 @@ epoch=30
 prefetch_size=500
 shuffle_size=500
 max_train_steps=-1
-save_summary_steps=50
+save_summary_steps=10
 save_checkpoints_secs=600
-save_checkpoints_steps=100
-keep_checkpoint_max=2
+save_checkpoints_steps=150
+keep_checkpoint_max=5
 log_step_count_steps=10
 use_profile_hook=0
 profile_steps=100
@@ -41,8 +41,10 @@ optimizer_exponential_decay_staircase=1  # bool value
 multi_scale_predict=0
 inference_shape='256,256'
 eval_throttle_secs=900
-use_easy_preprocess=1
+use_easy_preprocess=0
 min_accuracy_increase=0.0001
+resize_side_min=256
+resize_side_max=512
 
 if [[ ${remove_model_dir} == '1' ]]; then
     echo "remove model_dir ..."
@@ -87,4 +89,6 @@ python main.py \
     --inference_shape "${inference_shape}" \
     --eval_throttle_secs ${eval_throttle_secs} \
     --use_easy_preprocess ${use_easy_preprocess} \
-    --min_accuracy_increase ${min_accuracy_increase}
+    --min_accuracy_increase ${min_accuracy_increase} \
+    --resize_side_min ${resize_side_min} \
+    --resize_side_max ${resize_side_max}

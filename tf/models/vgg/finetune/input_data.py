@@ -82,7 +82,12 @@ def parse_function(img_path, label, opts):
     image_decoded.set_shape([None, None, 3])
     image = tf.cast(image_decoded, tf.float32)
 
-    smallest_side = 256.0
+    smallest_side = tf.random_uniform(
+        [],
+        minval=opts.resize_side_min,
+        maxval=opts.resize_side_max+1,
+        dtype=tf.int32)
+    smallest_side = tf.to_float(smallest_side)
     height, width = tf.shape(image)[0], tf.shape(image)[1]
     height = tf.to_float(height)
     width = tf.to_float(width)

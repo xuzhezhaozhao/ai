@@ -60,6 +60,8 @@ parser.add_argument('--eval_throttle_secs', default=600, type=int, help='')
 parser.add_argument('--use_easy_preprocess', default=1, type=int, help='')
 parser.add_argument('--min_accuracy_increase', default=0.001,
                     type=float, help='')
+parser.add_argument('--resize_side_min', default=256, type=int, help='')
+parser.add_argument('--resize_side_max', default=512, type=int, help='')
 
 opts = Options()
 
@@ -117,6 +119,8 @@ def parse_args(argv):
     opts.eval_throttle_secs = args.eval_throttle_secs
     opts.use_easy_preprocess = bool(args.use_easy_preprocess)
     opts.min_accuracy_increase = args.min_accuracy_increase
+    opts.resize_side_min = args.resize_side_min
+    opts.resize_side_max = args.resize_side_max
 
 
 def validate_opts():
