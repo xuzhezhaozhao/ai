@@ -79,9 +79,11 @@ def vgg19_model_fn(features, labels, mode, params):
     else:
         fc6 = fc_layer(pool5, "fc6", weights_dict, opts, training)
         relu6 = tf.nn.relu(fc6)
+        relu6 = maybe_dropout(relu6, opts.dropout, "fc6", training, opts)
 
         fc7 = fc_layer(relu6, "fc7", weights_dict, opts, training)
         relu7 = tf.nn.relu(fc7)
+        relu7 = maybe_dropout(relu7, opts.dropout, "fc7", training, opts)
 
         fc8 = fc_layer(relu7, "fc8", weights_dict, opts, training)
         score = tf.nn.softmax(fc8)
@@ -276,3 +278,10 @@ def add_metrics_summary(metrics):
 
     for key in metrics.keys():
         tf.summary.scalar(key, metrics[key][1])
+
+
+def maybe_dropout(x, rate, name, training, opts):
+    trainable = True if name in opts.train_layers else False
+    if trainable and rate > 0.0:
+        x = tf.layers.dropout(x, rate, training=training)
+    return x
