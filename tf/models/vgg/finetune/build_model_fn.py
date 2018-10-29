@@ -10,6 +10,18 @@ import numpy as np
 
 import model_keys
 
+_training_lr_decay_rate = 1.0
+
+
+def set_training_lr_decay_rate(rate):
+    global _training_lr_decay_rate
+    _training_lr_decay_rate = rate
+
+
+def get_training_lr_decay_rate():
+    global _training_lr_decay_rate
+    return _training_lr_decay_rate
+
 
 # build vgg19
 def vgg19_model_fn(features, labels, mode, params):
@@ -219,9 +231,10 @@ def create_eval_estimator_spec(mode, logits, labels, params):
     metrics = {
         'accuracy': accuracy
     }
+    add_metrics_summary(metrics)
 
     loss = cross_entropy(logits, labels)
-
+    tf.summary.scalar("eval_loss", loss)
     return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
 
 
@@ -235,12 +248,9 @@ def create_train_estimator_spec(mode, logits, labels, params):
     opts = params['opts']
     global_step = tf.train.get_global_step()
     loss = cross_entropy(logits, labels)
-    lr = tf.train.exponential_decay(
-        opts.lr,
-        global_step,
-        decay_steps=opts.optimizer_exponential_decay_steps,
-        decay_rate=opts.optimizer_exponential_decay_rate,
-        staircase=opts.optimizer_exponential_decay_staircase)
+    tf.summary.scalar("train_loss", loss)
+    lr = create_global_learning_rate(opts)
+    lr = tf.assign(lr, lr*get_training_lr_decay_rate())
     tf.summary.scalar('lr', lr)
     optimizer = tf.train.MomentumOptimizer(
         lr, opts.optimizer_momentum_momentum)
@@ -253,3 +263,16 @@ def create_train_estimator_spec(mode, logits, labels, params):
         tf.summary.histogram(var.name.replace(':', '_') + '/gradient', grad)
 
     return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
+
+
+def create_global_learning_rate(opts):
+    with tf.variable_scope('learning_rate'):
+        lr = tf.get_variable('lr', initializer=opts.lr, trainable=False)
+    return lr
+
+
+def add_metrics_summary(metrics):
+    """Add metrics to tensorboard."""
+
+    for key in metrics.keys():
+        tf.summary.scalar(key, metrics[key][1])

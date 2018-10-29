@@ -147,14 +147,16 @@ def build_train_input_fn(opts):
     def train_input_fn():
         ds = create_image_dataset(opts.train_data_path, has_label=True)
         num_parallel = opts.map_num_parallel_calls
-        ds = ds.map(lambda filename, label: parse_function(filename, label, opts),
-                    num_parallel_calls=num_parallel)
-        ds = ds.map(lambda image, label: train_preprocess(image, label, opts),
-                    num_parallel_calls=num_parallel)
+        ds = ds.map(
+            lambda filename, label: parse_function(filename, label, opts),
+            num_parallel_calls=num_parallel)
+        ds = ds.map(
+            lambda image, label: train_preprocess(image, label, opts),
+            num_parallel_calls=num_parallel)
         ds = ds.prefetch(opts.prefetch_size)
         if opts.shuffle_batch:
             ds = ds.shuffle(buffer_size=opts.shuffle_size)
-        ds = ds.batch(opts.batch_size).repeat(opts.epoch)
+        ds = ds.batch(opts.batch_size)
 
         return ds
     return train_input_fn
@@ -164,10 +166,12 @@ def build_eval_input_fn(opts):
     def eval_input_fn():
         ds = create_image_dataset(opts.eval_data_path, has_label=True)
         num_parallel = opts.map_num_parallel_calls
-        ds = ds.map(lambda filename, label: parse_function(filename, label, opts),
-                    num_parallel_calls=num_parallel)
-        ds = ds.map(lambda image, label: val_preprocess(image, label, opts),
-                    num_parallel_calls=num_parallel)
+        ds = ds.map(
+            lambda filename, label: parse_function(filename, label, opts),
+            num_parallel_calls=num_parallel)
+        ds = ds.map(
+            lambda image, label: val_preprocess(image, label, opts),
+            num_parallel_calls=num_parallel)
 
         ds = ds.prefetch(opts.prefetch_size)
         if opts.multi_scale_predict and opts.inference_shape is None:
@@ -178,15 +182,16 @@ def build_eval_input_fn(opts):
     return eval_input_fn
 
 
-
 def build_predict_input_fn(opts):
     def predict_input_fn():
         ds = create_image_dataset(opts.predict_data_path, has_label=False)
         num_parallel = opts.map_num_parallel_calls
-        ds = ds.map(lambda filename: parse_function(filename, None, opts),
-                    num_parallel_calls=num_parallel)
-        ds = ds.map(lambda filename, label: val_preprocess(filename, label, opts),
-                    num_parallel_calls=num_parallel)
+        ds = ds.map(
+            lambda filename: parse_function(filename, None, opts),
+            num_parallel_calls=num_parallel)
+        ds = ds.map(
+            lambda filename, label: val_preprocess(filename, label, opts),
+            num_parallel_calls=num_parallel)
         ds = ds.prefetch(opts.prefetch_size)
         if opts.multi_scale_predict:
             ds = ds.batch(1)
@@ -279,7 +284,7 @@ def build_easy_train_input_fn(opts):
         ds = ds.prefetch(opts.prefetch_size)
         if opts.shuffle_batch:
             ds = ds.shuffle(buffer_size=opts.shuffle_size)
-        ds = ds.batch(opts.batch_size).repeat(opts.epoch)
+        ds = ds.batch(opts.batch_size)
 
         return ds
     return easy_train_input_fn
@@ -308,10 +313,12 @@ def build_easy_predict_input_fn(opts):
     def easy_predict_input_fn():
         ds = create_image_dataset(opts.predict_data_path, has_label=False)
         num_parallel = opts.map_num_parallel_calls
-        ds = ds.map(lambda filename: parse_function(filename, None, opts),
-                    num_parallel_calls=num_parallel)
-        ds = ds.map(lambda filename, label: val_preprocess(filename, label, opts),
-                    num_parallel_calls=num_parallel)
+        ds = ds.map(
+            lambda filename: parse_function(filename, None, opts),
+            num_parallel_calls=num_parallel)
+        ds = ds.map(
+            lambda filename, label: val_preprocess(filename, label, opts),
+            num_parallel_calls=num_parallel)
         ds = ds.prefetch(opts.prefetch_size)
         if opts.multi_scale_predict:
             ds = ds.batch(1)

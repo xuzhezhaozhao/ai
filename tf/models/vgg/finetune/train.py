@@ -55,13 +55,6 @@ def create_hooks(opts):
 def train_and_eval_in_local_mode(opts):
     """Train and eval model in lcoal mode."""
 
-    with open(opts.train_data_path) as f:
-        cnt = len(f.readlines())
-        max_steps = int((cnt*opts.epoch+opts.batch_size-1) / opts.batch_size)
-        if opts.max_train_steps is None:
-            opts.max_train_steps = max_steps
-
-    tf.logging.info("max_train_steps = {}".format(opts.max_train_steps))
     if opts.use_easy_preprocess:
         build_train_input_fn = input_data.build_easy_train_input_fn(opts)
         build_eval_input_fn = input_data.build_easy_eval_input_fn(opts)
@@ -69,19 +62,35 @@ def train_and_eval_in_local_mode(opts):
         build_train_input_fn = input_data.build_train_input_fn(opts)
         build_eval_input_fn = input_data.build_eval_input_fn(opts)
 
-    train_spec = tf.estimator.TrainSpec(
-        input_fn=build_train_input_fn,
-        max_steps=opts.max_train_steps,
-        hooks=opts.hooks)
-    eval_spec = tf.estimator.EvalSpec(
-        input_fn=build_eval_input_fn,
-        steps=None,
-        name='test',
-        start_delay_secs=3,
-        throttle_secs=opts.eval_throttle_secs
-    )
-    result = tf.estimator.train_and_evaluate(
-        opts.estimator, train_spec, eval_spec)
+    best_accuracy = 0.0
+    accuracy_no_increase = 0
+    build_model_fn.set_training_lr_decay_rate(1.0)
+    for epoch in range(opts.epoch):
+        epoch += 1
+        tf.logging.info("Beginning train model, epoch {} ...".format(epoch))
+        opts.estimator.train(input_fn=build_train_input_fn,
+                             max_steps=opts.max_train_steps,
+                             hooks=opts.hooks)
+        tf.logging.info("Train model OK, epoch {}".format(epoch))
+
+        tf.logging.info("Beginning evaluate model, epoch {} ...".format(epoch))
+        result = opts.estimator.evaluate(
+            input_fn=build_eval_input_fn,
+            hooks=opts.hooks)
+        tf.logging.info("Evaluate model OK, epoch {}".format(epoch))
+
+        if result['accuracy'] >= best_accuracy:
+            accuracy_no_increase = 0
+            best_accuracy = result['accuracy']
+            build_model_fn.set_training_lr_decay_rate(1.0)
+        else:
+            accuracy_no_increase += 1
+            if accuracy_no_increase < 2:
+                tf.logging.info("Learning rate decay by 10.")
+                build_model_fn.set_training_lr_decay_rate(0.1)
+            else:
+                break
+
     return result
 
 
