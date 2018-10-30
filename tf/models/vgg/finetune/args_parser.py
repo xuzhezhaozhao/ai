@@ -21,6 +21,7 @@ parser.add_argument('--train_data_path', default='', type=str, help='')
 parser.add_argument('--eval_data_path', default='', type=str, help='')
 parser.add_argument('--predict_data_path', default='', type=str, help='')
 parser.add_argument('--predict_output', default='', type=str, help='')
+parser.add_argument('--predict_checkpoint_path', default='', type=str, help='')
 parser.add_argument('--lr', default=0.25, type=float, help='learning rate')
 parser.add_argument('--batch_size', default=64, type=int, help='batch size')
 parser.add_argument('--epoch', default=1, type=int, help='')
@@ -69,6 +70,9 @@ def parse_args(argv):
     opts.eval_data_path = args.eval_data_path
     opts.predict_data_path = args.predict_data_path
     opts.predict_output = args.predict_output
+    opts.predict_checkpoint_path = \
+        (args.predict_checkpoint_path
+         if args.predict_checkpoint_path != '' else None)
     opts.lr = args.lr
     opts.batch_size = args.batch_size
     opts.max_train_steps = args.max_train_steps

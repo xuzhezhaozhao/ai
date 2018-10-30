@@ -24,7 +24,8 @@ def predict(opts):
     else:
         raise ValueError("Unsurpported preprocess type.")
 
-    results = estimator.predict(input_fn=build_predict_input_fn)
+    results = estimator.predict(input_fn=build_predict_input_fn,
+                                checkpoint_path=opts.predict_checkpoint_path)
     with open(opts.predict_output, 'w') as fout, \
             open(opts.predict_data_path, 'r') as fin:
         for result in results:

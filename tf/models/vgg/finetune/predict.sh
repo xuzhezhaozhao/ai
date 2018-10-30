@@ -12,6 +12,7 @@ export_model_dir=`pwd`/export_model_dir
 
 predict_data_path=`pwd`/test.txt
 predict_output=`pwd`/predict_output.txt
+predict_checkpoint_path=''
 lr=0.001
 batch_size=64
 epoch=30
@@ -48,6 +49,7 @@ l2_regularizer=0.00001
 python predict_main.py \
     --predict_data_path ${predict_data_path} \
     --predict_output ${predict_output} \
+    --predict_checkpoint_path "${predict_checkpoint_path}" \
     --lr ${lr} \
     --batch_size ${batch_size} \
     --epoch ${epoch} \
