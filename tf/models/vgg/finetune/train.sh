@@ -20,7 +20,7 @@ shuffle_size=500
 max_train_steps=-1
 save_summary_steps=10
 save_checkpoints_secs=600
-save_checkpoints_steps=150
+save_checkpoints_steps=1500
 keep_checkpoint_max=5
 log_step_count_steps=10
 use_profile_hook=0
@@ -35,16 +35,14 @@ train_layers='fc6,fc7,fc8'
 use_data_augmentation=0
 optimizer_momentum_momentum=0.9
 optimizer_momentum_use_nesterov=0 # bool value
-optimizer_exponential_decay_steps=20
-optimizer_exponential_decay_rate=0.8
-optimizer_exponential_decay_staircase=1  # bool value
 multi_scale_predict=0
 inference_shape='256,256'
-eval_throttle_secs=900
 use_easy_preprocess=1
 min_accuracy_increase=0.0001
 resize_side_min=256
 resize_side_max=256
+lr_decay_rate=0.1
+lr_decay_epoch_when_no_increase=1
 
 if [[ ${remove_model_dir} == '1' ]]; then
     echo "remove model_dir ..."
@@ -82,13 +80,11 @@ python main.py \
     --use_data_augmentation ${use_data_augmentation} \
     --optimizer_momentum_momentum ${optimizer_momentum_momentum} \
     --optimizer_momentum_use_nesterov ${optimizer_momentum_use_nesterov} \
-    --optimizer_exponential_decay_steps ${optimizer_exponential_decay_steps} \
-    --optimizer_exponential_decay_rate ${optimizer_exponential_decay_rate} \
-    --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase} \
     --multi_scale_predict ${multi_scale_predict} \
     --inference_shape "${inference_shape}" \
-    --eval_throttle_secs ${eval_throttle_secs} \
     --use_easy_preprocess ${use_easy_preprocess} \
     --min_accuracy_increase ${min_accuracy_increase} \
     --resize_side_min ${resize_side_min} \
-    --resize_side_max ${resize_side_max}
+    --resize_side_max ${resize_side_max} \
+    --lr_decay_rate ${lr_decay_rate} \
+    --lr_decay_epoch_when_no_increase ${lr_decay_epoch_when_no_increase}

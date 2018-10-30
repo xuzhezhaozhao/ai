@@ -48,20 +48,16 @@ parser.add_argument('--optimizer_momentum_momentum',
                     default=0.9, type=float, help='')
 parser.add_argument('--optimizer_momentum_use_nesterov',
                     default=0, type=int, help='')
-parser.add_argument('--optimizer_exponential_decay_steps',
-                    default=10000, type=int, help='')
-parser.add_argument('--optimizer_exponential_decay_rate',
-                    default=0.96, type=float, help='')
-parser.add_argument('--optimizer_exponential_decay_staircase',
-                    default=0, type=int, help='')
 parser.add_argument('--multi_scale_predict', default=0, type=int, help='')
 parser.add_argument('--inference_shape', default='', type=str, help='')
-parser.add_argument('--eval_throttle_secs', default=600, type=int, help='')
 parser.add_argument('--use_easy_preprocess', default=1, type=int, help='')
 parser.add_argument('--min_accuracy_increase', default=0.001,
                     type=float, help='')
 parser.add_argument('--resize_side_min', default=256, type=int, help='')
 parser.add_argument('--resize_side_max', default=512, type=int, help='')
+parser.add_argument('--lr_decay_rate', default=0.1, type=float, help='')
+parser.add_argument('--lr_decay_epoch_when_no_increase',
+                    default=1, type=int, help='')
 
 opts = Options()
 
@@ -102,12 +98,6 @@ def parse_args(argv):
     opts.optimizer_momentum_momentum = args.optimizer_momentum_momentum
     opts.optimizer_momentum_use_nesterov = \
         bool(args.optimizer_momentum_use_nesterov)
-    opts.optimizer_exponential_decay_steps = \
-        args.optimizer_exponential_decay_steps
-    opts.optimizer_exponential_decay_rate = \
-        args.optimizer_exponential_decay_rate
-    opts.optimizer_exponential_decay_staircase = \
-        bool(args.optimizer_exponential_decay_staircase)
     opts.multi_scale_predict = bool(args.multi_scale_predict)
     opts.inference_shape = [x for x in args.inference_shape.split(',')
                             if x != '']
@@ -116,11 +106,12 @@ def parse_args(argv):
     else:
         opts.inference_shape = map(int, opts.inference_shape)
 
-    opts.eval_throttle_secs = args.eval_throttle_secs
     opts.use_easy_preprocess = bool(args.use_easy_preprocess)
     opts.min_accuracy_increase = args.min_accuracy_increase
     opts.resize_side_min = args.resize_side_min
     opts.resize_side_max = args.resize_side_max
+    opts.lr_decay_rate = args.lr_decay_rate
+    opts.lr_decay_epoch_when_no_increase = args.lr_decay_epoch_when_no_increase
 
 
 def validate_opts():

@@ -85,13 +85,17 @@ def train_and_eval_in_local_mode(opts):
             best_accuracy = result['accuracy']
         else:
             accuracy_no_increase += 1
-            if accuracy_no_increase < 2:
-                global_lr *= 0.1
+            if accuracy_no_increase == opts.lr_decay_epoch_when_no_increase:
+                global_lr *= opts.lr_decay_rate
                 build_model_fn.set_global_learning_rate(global_lr)
-                tf.logging.info("Learning rate decay by 10.")
-            else:
-                tf.logging.info("Early stopping.")
+                tf.logging.info(
+                    "Accuracy no increase, learning rate decay by {}."
+                    .format(opts.lr_decay_rate))
+            elif accuracy_no_increase > opts.lr_decay_epoch_when_no_increase:
+                tf.logging.info("Accuracy no increase, early stopping.")
                 break
+            else:
+                tf.logging.info("Accuracy no increase, try once more.")
 
     return result
 
