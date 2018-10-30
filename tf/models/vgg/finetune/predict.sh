@@ -43,6 +43,7 @@ resize_side_min=256
 resize_side_max=256
 lr_decay_rate=0.1
 lr_decay_epoch_when_no_increase=1
+l2_regularizer=0.00001
 
 python predict_main.py \
     --predict_data_path ${predict_data_path} \
@@ -80,3 +81,7 @@ python predict_main.py \
     --resize_side_max ${resize_side_max} \
     --lr_decay_rate ${lr_decay_rate} \
     --lr_decay_epoch_when_no_increase ${lr_decay_epoch_when_no_increase}
+
+python generate_cat_vs_dog_submission.py \
+    ${predict_output} \
+    "cat_vs_dog_submission.csv"

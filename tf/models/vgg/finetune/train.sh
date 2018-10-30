@@ -42,7 +42,7 @@ min_accuracy_increase=0.0001
 resize_side_min=256
 resize_side_max=256
 lr_decay_rate=0.1
-lr_decay_epoch_when_no_increase=2
+lr_decay_epoch_when_no_increase=1
 l2_regularizer=0.00001
 
 if [[ ${remove_model_dir} == '1' ]]; then
