@@ -181,13 +181,18 @@ def get_bias(name, weights_dict, opts):
 
 def get_fc_weight(name, weights_dict, opts):
     trainable = True if name in opts.train_layers else False
+    l2_reg = l2_regularizer(opts) if trainable else None
     if not trainable or name != 'fc8':
         weights = tf.get_variable(
-            'weights', initializer=weights_dict[name][0], trainable=trainable)
+            'weights',
+            initializer=weights_dict[name][0],
+            regularizer=l2_reg,
+            trainable=trainable)
     else:  # trainable and name == 'fc8'
         weights = tf.get_variable(
             'weights',
             shape=[weights_dict[name][0].shape[0], opts.num_classes],
+            regularizer=l2_reg,
             trainable=trainable)
 
     return weights
@@ -199,10 +204,16 @@ def dropout(x, keep_prob):
     return tf.nn.dropout(x, keep_prob)
 
 
-def cross_entropy(logits, labels):
-    loss = tf.reduce_mean(
-        tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits=logits, labels=tf.argmax(labels, 1)))
+def get_loss(logits, labels, name):
+    with tf.name_scope(name):
+        l2_loss = tf.losses.get_regularization_loss()
+        ce_loss = tf.reduce_mean(
+            tf.nn.sparse_softmax_cross_entropy_with_logits(
+                logits=logits, labels=tf.argmax(labels, 1)))
+        loss = l2_loss + ce_loss
+        tf.summary.scalar("l2_loss", l2_loss)
+        tf.summary.scalar("ce_loss", ce_loss)
+        tf.summary.scalar("total_loss", loss)
     return loss
 
 
@@ -235,8 +246,7 @@ def create_eval_estimator_spec(mode, logits, labels, params):
     }
     add_metrics_summary(metrics)
 
-    loss = cross_entropy(logits, labels)
-    tf.summary.scalar("eval_loss", loss)
+    loss = get_loss(logits, labels, 'eval')
     return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
 
 
@@ -249,8 +259,7 @@ def create_train_estimator_spec(mode, logits, labels, params):
 
     opts = params['opts']
     global_step = tf.train.get_global_step()
-    loss = cross_entropy(logits, labels)
-    tf.summary.scalar("train_loss", loss)
+    loss = get_loss(logits, labels, 'train')
     lr = get_global_learning_rate()
     tf.logging.info("global learning rate = {}".format(lr))
     tf.summary.scalar('lr', lr)
@@ -278,3 +287,12 @@ def maybe_dropout(x, rate, name, training, opts):
     if trainable and rate > 0.0:
         x = tf.layers.dropout(x, rate, training=training)
     return x
+
+
+def l2_regularizer(opts):
+    """Return L2 regularizer."""
+
+    if opts.l2_regularizer > 0.0:
+        return tf.contrib.layers.l2_regularizer(scale=opts.l2_regularizer)
+    else:
+        return None

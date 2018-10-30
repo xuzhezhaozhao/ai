@@ -35,14 +35,15 @@ train_layers='fc6,fc7,fc8'
 use_data_augmentation=0
 optimizer_momentum_momentum=0.9
 optimizer_momentum_use_nesterov=0 # bool value
-multi_scale_predict=0
+multi_scale_predict=1
 inference_shape='256,256'
-preprocess_type='easy'  # 'easy', 'vgg'
+preprocess_type='vgg'  # 'easy', 'vgg'
 min_accuracy_increase=0.0001
 resize_side_min=256
 resize_side_max=256
 lr_decay_rate=0.1
-lr_decay_epoch_when_no_increase=1
+lr_decay_epoch_when_no_increase=2
+l2_regularizer=0.00001
 
 if [[ ${remove_model_dir} == '1' ]]; then
     echo "remove model_dir ..."
@@ -87,4 +88,5 @@ python main.py \
     --resize_side_min ${resize_side_min} \
     --resize_side_max ${resize_side_max} \
     --lr_decay_rate ${lr_decay_rate} \
-    --lr_decay_epoch_when_no_increase ${lr_decay_epoch_when_no_increase}
+    --lr_decay_epoch_when_no_increase ${lr_decay_epoch_when_no_increase} \
+    --l2_regularizer ${l2_regularizer}

@@ -58,6 +58,7 @@ parser.add_argument('--resize_side_max', default=512, type=int, help='')
 parser.add_argument('--lr_decay_rate', default=0.1, type=float, help='')
 parser.add_argument('--lr_decay_epoch_when_no_increase',
                     default=1, type=int, help='')
+parser.add_argument('--l2_regularizer', default=0.0001, type=float, help='')
 
 opts = Options()
 
@@ -112,6 +113,7 @@ def parse_args(argv):
     opts.resize_side_max = args.resize_side_max
     opts.lr_decay_rate = args.lr_decay_rate
     opts.lr_decay_epoch_when_no_increase = args.lr_decay_epoch_when_no_increase
+    opts.l2_regularizer = args.l2_regularizer
 
 
 def validate_opts():
