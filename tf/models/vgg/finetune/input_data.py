@@ -44,6 +44,8 @@ def read_txt_file(txt_file, has_label=True):
 def shuffle_lists(img_paths, labels):
     """Conjoined shuffling of the list of paths and labels."""
 
+    tf.logging.info("Shuffle images ...")
+
     path = img_paths
     labels = labels
     permutation = np.random.permutation(len(labels))
@@ -52,6 +54,9 @@ def shuffle_lists(img_paths, labels):
     for i in permutation:
         shuffle_img_paths.append(path[i])
         shuffle_labels.append(labels[i])
+
+    tf.logging.info("Shuffle images done, first one is '{}'."
+                    .format(shuffle_img_paths[0]))
 
     return shuffle_img_paths, shuffle_labels
 
