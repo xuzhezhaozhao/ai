@@ -37,7 +37,7 @@ optimizer_momentum_momentum=0.9
 optimizer_momentum_use_nesterov=0 # bool value
 multi_scale_predict=0
 inference_shape='256,256'
-use_easy_preprocess=1
+preprocess_type='easy'  # 'easy', 'vgg'
 min_accuracy_increase=0.0001
 resize_side_min=256
 resize_side_max=256
@@ -82,7 +82,7 @@ python main.py \
     --optimizer_momentum_use_nesterov ${optimizer_momentum_use_nesterov} \
     --multi_scale_predict ${multi_scale_predict} \
     --inference_shape "${inference_shape}" \
-    --use_easy_preprocess ${use_easy_preprocess} \
+    --preprocess_type ${preprocess_type} \
     --min_accuracy_increase ${min_accuracy_increase} \
     --resize_side_min ${resize_side_min} \
     --resize_side_max ${resize_side_max} \

@@ -50,7 +50,7 @@ parser.add_argument('--optimizer_momentum_use_nesterov',
                     default=0, type=int, help='')
 parser.add_argument('--multi_scale_predict', default=0, type=int, help='')
 parser.add_argument('--inference_shape', default='', type=str, help='')
-parser.add_argument('--use_easy_preprocess', default=1, type=int, help='')
+parser.add_argument('--preprocess_type', default='easy', type=str, help='')
 parser.add_argument('--min_accuracy_increase', default=0.001,
                     type=float, help='')
 parser.add_argument('--resize_side_min', default=256, type=int, help='')
@@ -106,7 +106,7 @@ def parse_args(argv):
     else:
         opts.inference_shape = map(int, opts.inference_shape)
 
-    opts.use_easy_preprocess = bool(args.use_easy_preprocess)
+    opts.preprocess_type = args.preprocess_type
     opts.min_accuracy_increase = args.min_accuracy_increase
     opts.resize_side_min = args.resize_side_min
     opts.resize_side_max = args.resize_side_max

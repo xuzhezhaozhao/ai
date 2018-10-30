@@ -11,6 +11,7 @@ import tensorflow as tf
 import build_model_fn
 import hook
 import input_data
+import model_keys
 
 
 def build_estimator(opts):
@@ -55,12 +56,14 @@ def create_hooks(opts):
 def train_and_eval_in_local_mode(opts):
     """Train and eval model in lcoal mode."""
 
-    if opts.use_easy_preprocess:
+    if opts.preprocess_type == model_keys.PreprocessType.EASY:
         build_train_input_fn = input_data.build_easy_train_input_fn(opts)
         build_eval_input_fn = input_data.build_easy_eval_input_fn(opts)
-    else:
+    elif opts.preprocess_type == model_keys.PreprocessType.VGG:
         build_train_input_fn = input_data.build_train_input_fn(opts)
         build_eval_input_fn = input_data.build_eval_input_fn(opts)
+    else:
+        raise ValueError("Unsurpported preprocess type.")
 
     best_accuracy = 0.0
     accuracy_no_increase = 0
