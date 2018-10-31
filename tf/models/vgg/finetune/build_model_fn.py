@@ -163,6 +163,7 @@ def fc_to_conv_layer(weights_dict, opts, x, filter_height, filter_width,
 
 def get_conv_filter(name, weights_dict, opts):
     trainable = True if name in opts.train_layers else False
+    tf.logging.info("layer '{}': trainable = {}".format(name, trainable))
     return tf.get_variable(
         'filter', initializer=weights_dict[name][0], trainable=trainable)
 
@@ -181,6 +182,7 @@ def get_bias(name, weights_dict, opts):
 
 def get_fc_weight(name, weights_dict, opts):
     trainable = True if name in opts.train_layers else False
+    tf.logging.info("layer '{}': trainable = {}".format(name, trainable))
     l2_reg = l2_regularizer(opts) if trainable else None
     if not trainable or name != 'fc8':
         weights = tf.get_variable(
