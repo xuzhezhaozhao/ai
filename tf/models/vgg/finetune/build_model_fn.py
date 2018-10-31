@@ -255,7 +255,7 @@ def create_eval_estimator_spec(mode, logits, labels, params):
 def create_train_estimator_spec(mode, logits, labels, params):
     """Create train EstimatorSpec."""
 
-    tf.summary.scalar('train_accuracy', tf.reduce_mean(
+    tf.summary.scalar('train_batch_accuracy', tf.reduce_mean(
         tf.cast(tf.equal(tf.argmax(labels, 1), tf.argmax(logits, 1)),
                 tf.float32)))
 
@@ -264,7 +264,7 @@ def create_train_estimator_spec(mode, logits, labels, params):
     loss = get_loss(logits, labels, 'train')
     lr = get_global_learning_rate()
     tf.logging.info("global learning rate = {}".format(lr))
-    tf.summary.scalar('lr', lr)
+    tf.summary.scalar('learning_rate', lr)
     optimizer = tf.train.MomentumOptimizer(
         lr, opts.optimizer_momentum_momentum)
     gradients, variables = zip(*optimizer.compute_gradients(loss))
