@@ -11,6 +11,19 @@ import numpy as np
 import model_keys
 
 
+_global_learning_rate = 0.01
+
+
+def set_global_learning_rate(rate):
+    global _global_learning_rate
+    _global_learning_rate = rate
+
+
+def get_global_learning_rate():
+    global _global_learning_rate
+    return _global_learning_rate
+
+
 def alexnet_model_fn(features, labels, mode, params):
     """Build model graph."""
 
@@ -63,19 +76,13 @@ def alexnet_model_fn(features, labels, mode, params):
         fc8 = tf.reduce_mean(fc8, axis=-2)
         score = tf.nn.softmax(fc8)
     else:
-        # 6th Layer: Flatten -> FC (w ReLu) -> Dropout
-        trainable = True if 'fc6' in opts.train_layers else False
         fc6 = fc_layer(weights_dict, opts, pool5, name='fc6', relu=True)
-        dropout6 = dropout(fc6, opts.dropout, training) if trainable else fc6
+        fc6 = maybe_dropout(fc6, opts.dropout, 'fc6', training, opts)
 
-        # 7th Layer: FC (w ReLu) -> Dropout
-        trainable = True if 'fc7' in opts.train_layers else False
-        fc7 = fc_layer(weights_dict, opts, dropout6, name='fc7', relu=True)
-        dropout7 = dropout(fc7, opts.dropout, training) if trainable else fc7
+        fc7 = fc_layer(weights_dict, opts, fc6, name='fc7', relu=True)
+        fc7 = maybe_dropout(fc7, opts.dropout, 'fc7', training, opts)
 
-        # 8th Layer: FC and return unscaled activations
-        trainable = True if 'fc8' in opts.train_layers else False
-        fc8 = fc_layer(weights_dict, opts, dropout7, name='fc8', relu=False)
+        fc8 = fc_layer(weights_dict, opts, fc7, name='fc8', relu=False)
         score = tf.nn.softmax(fc8)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
@@ -205,10 +212,16 @@ def dropout(x, rate, training):
     return tf.layers.dropout(x, rate, training=training)
 
 
-def cross_entropy(logits, labels):
-    loss = tf.reduce_mean(
-        tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits=logits, labels=tf.argmax(labels, 1)))
+def get_loss(logits, labels, name):
+    with tf.name_scope(name):
+        l2_loss = tf.losses.get_regularization_loss()
+        ce_loss = tf.reduce_mean(
+            tf.nn.sparse_softmax_cross_entropy_with_logits(
+                logits=logits, labels=tf.argmax(labels, 1)))
+        loss = l2_loss + ce_loss
+        tf.summary.scalar("l2_loss", l2_loss)
+        tf.summary.scalar("ce_loss", ce_loss)
+        tf.summary.scalar("total_loss", loss)
     return loss
 
 
@@ -239,8 +252,9 @@ def create_eval_estimator_spec(mode, logits, labels, params):
     metrics = {
         'accuracy': accuracy
     }
+    add_metrics_summary(metrics)
 
-    loss = cross_entropy(logits, labels)
+    loss = get_loss(logits, labels, 'eval')
     return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
 
 
@@ -253,14 +267,10 @@ def create_train_estimator_spec(mode, logits, labels, params):
 
     opts = params['opts']
     global_step = tf.train.get_global_step()
-    loss = cross_entropy(logits, labels)
-    lr = tf.train.exponential_decay(
-        opts.lr,
-        global_step,
-        decay_steps=opts.optimizer_exponential_decay_steps,
-        decay_rate=opts.optimizer_exponential_decay_rate,
-        staircase=opts.optimizer_exponential_decay_staircase)
-    tf.summary.scalar('lr', lr)
+    loss = get_loss(logits, labels, 'train')
+    lr = get_global_learning_rate()
+    tf.logging.info("global learning rate = {}".format(lr))
+    tf.summary.scalar('learning_rate', lr)
     optimizer = tf.train.MomentumOptimizer(
         lr, opts.optimizer_momentum_momentum)
     gradients, variables = zip(*optimizer.compute_gradients(
@@ -276,6 +286,7 @@ def create_train_estimator_spec(mode, logits, labels, params):
 
 def get_conv_filter(name, weights_dict, opts):
     trainable = True if name in opts.train_layers else False
+    tf.logging.info("layer '{}': trainable = {}".format(name, trainable))
     return tf.get_variable(
         'filter', initializer=weights_dict[name][0], trainable=trainable)
 
@@ -294,13 +305,42 @@ def get_bias(name, weights_dict, opts):
 
 def get_fc_weight(name, weights_dict, opts):
     trainable = True if name in opts.train_layers else False
+    tf.logging.info("layer '{}': trainable = {}".format(name, trainable))
+    l2_reg = l2_regularizer(opts) if trainable else None
     if not trainable or name != 'fc8':
         weights = tf.get_variable(
-            'weights', initializer=weights_dict[name][0], trainable=trainable)
+            'weights',
+            initializer=weights_dict[name][0],
+            regularizer=l2_reg,
+            trainable=trainable)
     else:  # trainable and name == 'fc8'
         weights = tf.get_variable(
             'weights',
             shape=[weights_dict[name][0].shape[0], opts.num_classes],
+            regularizer=l2_reg,
             trainable=trainable)
 
     return weights
+
+
+def add_metrics_summary(metrics):
+    """Add metrics to tensorboard."""
+
+    for key in metrics.keys():
+        tf.summary.scalar(key, metrics[key][1])
+
+
+def l2_regularizer(opts):
+    """Return L2 regularizer."""
+
+    if opts.l2_regularizer > 0.0:
+        return tf.contrib.layers.l2_regularizer(scale=opts.l2_regularizer)
+    else:
+        return None
+
+
+def maybe_dropout(x, rate, name, training, opts):
+    trainable = True if name in opts.train_layers else False
+    if trainable and rate > 0.0:
+        x = tf.layers.dropout(x, rate, training=training)
+    return x

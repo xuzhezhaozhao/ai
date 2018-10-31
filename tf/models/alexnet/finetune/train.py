@@ -11,6 +11,7 @@ import tensorflow as tf
 import build_model_fn
 import hook
 import input_data
+import model_keys
 
 
 def build_estimator(opts):
@@ -20,7 +21,8 @@ def build_estimator(opts):
     config_keys['model_dir'] = opts.model_dir
     config_keys['tf_random_seed'] = None
     config_keys['save_summary_steps'] = opts.save_summary_steps
-    config_keys['save_checkpoints_secs'] = opts.save_checkpoints_secs
+    # config_keys['save_checkpoints_secs'] = opts.save_checkpoints_secs
+    config_keys['save_checkpoints_steps'] = opts.save_checkpoints_steps
     config_keys['session_config'] = None
     config_keys['keep_checkpoint_max'] = opts.keep_checkpoint_max
     config_keys['keep_checkpoint_every_n_hours'] = 10000
@@ -54,18 +56,50 @@ def create_hooks(opts):
 def train_and_eval_in_local_mode(opts):
     """Train and eval model in lcoal mode."""
 
-    tf.logging.info("Beginning train model ...")
-    opts.estimator.train(input_fn=lambda: input_data.train_input_fn(opts),
-                         max_steps=opts.max_train_steps,
-                         hooks=opts.hooks)
-    tf.logging.info("Train model OK")
+    if opts.preprocess_type == model_keys.PreprocessType.EASY:
+        build_train_input_fn = input_data.build_easy_train_input_fn(opts)
+        build_eval_input_fn = input_data.build_easy_eval_input_fn(opts)
+    elif opts.preprocess_type == model_keys.PreprocessType.VGG:
+        build_train_input_fn = input_data.build_train_input_fn(opts)
+        build_eval_input_fn = input_data.build_eval_input_fn(opts)
+    else:
+        raise ValueError("Unsurpported preprocess type.")
 
-    # evaluate model
-    tf.logging.info("Beginning evaluate model ...")
-    result = opts.estimator.evaluate(
-        input_fn=lambda: input_data.eval_input_fn(opts),
-        hooks=opts.hooks)
-    tf.logging.info("Evaluate model OK")
+    best_accuracy = 0.0
+    accuracy_no_increase = 0
+    global_lr = opts.lr
+    build_model_fn.set_global_learning_rate(global_lr)
+    for epoch in range(opts.epoch):
+        epoch += 1
+        tf.logging.info("Beginning train model, epoch {} ...".format(epoch))
+        opts.estimator.train(input_fn=build_train_input_fn,
+                             max_steps=opts.max_train_steps,
+                             hooks=opts.hooks)
+        tf.logging.info("Train model OK, epoch {}".format(epoch))
+
+        tf.logging.info("Beginning evaluate model, epoch {} ...".format(epoch))
+        result = opts.estimator.evaluate(
+            input_fn=build_eval_input_fn,
+            hooks=opts.hooks)
+        tf.logging.info("Evaluate model OK, epoch {}".format(epoch))
+
+        if result['accuracy'] > best_accuracy + opts.min_accuracy_increase:
+            accuracy_no_increase = 0
+            best_accuracy = result['accuracy']
+        else:
+            accuracy_no_increase += 1
+            if accuracy_no_increase == opts.lr_decay_epoch_when_no_increase:
+                global_lr *= opts.lr_decay_rate
+                build_model_fn.set_global_learning_rate(global_lr)
+                tf.logging.info(
+                    "Accuracy no increase, learning rate decay by {}."
+                    .format(opts.lr_decay_rate))
+            elif accuracy_no_increase > opts.lr_decay_epoch_when_no_increase:
+                tf.logging.info("Accuracy no increase, early stopping.")
+                break
+            else:
+                tf.logging.info("Accuracy no increase, try once more.")
+
     return result
 
 
