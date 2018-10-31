@@ -1,2 +1,12 @@
 
+cifar10: https://www.cs.toronto.edu/~kriz/cifar.html
+backup:
+origin: 链接: https://pan.baidu.com/s/11KFbXSKxQfiJ4s1g8pT_QA 提取码: m824
+png: 链接: https://pan.baidu.com/s/1Ddrn6BYWaJraERCPNQpiew 提取码: jp96
+
+
 convert.py: convert origin python version cifar10 to png files.
+unpack cifar10.tar.gz
+~$ mkdir train
+~$ mkdir test
+~$ python convert.py
