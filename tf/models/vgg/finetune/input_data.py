@@ -14,13 +14,6 @@ VGG_MEAN = [123.68, 116.779, 103.939]  # RGB
 INPUT_SHAPE = [224, 224, 3]
 
 
-class _dummy_label:
-    pass
-
-
-_DUMMY_LABEL = _dummy_label()
-
-
 def read_txt_file(txt_file, has_label=True):
     """Read the content of the text file and store it into lists."""
 
@@ -112,7 +105,7 @@ def parse_function(img_path, label, opts):
 
     resized_image = tf.image.resize_images(image, [new_height, new_width])
 
-    if label is _DUMMY_LABEL:
+    if label is None:
         return resized_image
     else:
         return resized_image, label
@@ -157,7 +150,7 @@ def val_preprocess(image, label, opts):
     centered_image = crop_image - means
     bgr_image = centered_image[:, :, ::-1]  # RGB -> BGR
 
-    if label is not _DUMMY_LABEL:
+    if label is not None:
         label = tf.one_hot(label, opts.num_classes)
         return {model_keys.DATA_COL: bgr_image}, label
     else:
@@ -208,10 +201,10 @@ def build_predict_input_fn(opts):
         ds = create_image_dataset(opts.predict_data_path, has_label=False)
         num_parallel = opts.map_num_parallel_calls
         ds = ds.map(
-            lambda filename: parse_function(filename, _DUMMY_LABEL, opts),
+            lambda filename: parse_function(filename, None, opts),
             num_parallel_calls=num_parallel)
         ds = ds.map(
-            lambda filename: val_preprocess(filename, _DUMMY_LABEL, opts),
+            lambda filename: val_preprocess(filename, None, opts),
             num_parallel_calls=num_parallel)
         ds = ds.prefetch(opts.prefetch_size)
         if opts.multi_scale_predict:
@@ -253,7 +246,7 @@ def easy_parse_function(img_path, label, opts):
     image_decoded.set_shape([None, None, 3])
     image = tf.cast(image_decoded, tf.float32)
 
-    if label is _DUMMY_LABEL:
+    if label is None:
         return image
     else:
         return image, label
@@ -288,7 +281,7 @@ def easy_val_preprocess(image, label, opts):
     centered_image = resized_image - means
     bgr_image = centered_image[:, :, ::-1]  # RGB -> BGR
 
-    if label is not _DUMMY_LABEL:
+    if label is not None:
         label = tf.one_hot(label, opts.num_classes)
         return {model_keys.DATA_COL: bgr_image}, label
     else:
@@ -338,10 +331,10 @@ def build_easy_predict_input_fn(opts):
         ds = create_image_dataset(opts.predict_data_path, has_label=False)
         num_parallel = opts.map_num_parallel_calls
         ds = ds.map(
-            lambda filename: easy_parse_function(filename, _DUMMY_LABEL, opts),
+            lambda filename: easy_parse_function(filename, None, opts),
             num_parallel_calls=num_parallel)
         ds = ds.map(
-            lambda filename: val_preprocess(filename, _DUMMY_LABEL, opts),
+            lambda filename: val_preprocess(filename, None, opts),
             num_parallel_calls=num_parallel)
         ds = ds.prefetch(opts.prefetch_size)
         if opts.multi_scale_predict:
