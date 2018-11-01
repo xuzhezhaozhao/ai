@@ -7,7 +7,8 @@ from __future__ import print_function
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
-import tensorflow.contrib.slim.nets as nets
+
+import vgg
 import model_keys
 
 
@@ -46,12 +47,15 @@ def vgg16_model_fn(features, labels, mode, params):
 
     training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-    fc8, endpoints = nets.vgg.vgg_16(
-        inputs,
-        num_classes=opts.num_classes,
-        dropout_keep_prob=1.0-opts.dropout,
-        is_training=training,
-        spatial_squeeze=True)
+    with slim.arg_scope(vgg.vgg_arg_scope(weight_decay=opts.l2_regularizer)):
+        fc8, end_points = vgg.vgg_16(
+            inputs,
+            num_classes=opts.num_classes,
+            dropout_keep_prob=1.0-opts.dropout,
+            is_training=training,
+            fc_conv_padding='VALID',
+            global_pool=False)
+
     training_hooks = []
     training_hooks.append(create_restore_hook(opts))
 
