@@ -1,8 +1,7 @@
 import tensorflow as tf
-import tensorflow.contrib.slim.nets as nets
+from nets import vgg
 
 slim = tf.contrib.slim
-vgg = nets.vgg
 
 inputs = tf.placeholder(tf.float32, shape=(None, 224, 224, 3))
 
