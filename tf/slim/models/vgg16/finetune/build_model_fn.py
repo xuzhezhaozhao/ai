@@ -6,15 +6,23 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+import tensorflow.contrib.slim as slim
 import tensorflow.contrib.slim.nets as nets
-
 import model_keys
 
 
-slim = tf.contrib.slim
-vgg = nets.vgg
+_global_learning_rate = 0.001
 
-_global_learning_rate = 0.01
+
+class _RestoreHook(tf.train.SessionRunHook):
+    """_Restore from pretrained checkpoint."""
+
+    def __init__(self, init_fn):
+        self.init_fn = init_fn
+
+    def after_create_session(self, session, coord=None):
+        if session.run(tf.train.get_or_create_global_step()) == 0:
+            self.init_fn(session)
 
 
 def set_global_learning_rate(rate):
@@ -38,11 +46,16 @@ def vgg16_model_fn(features, labels, mode, params):
 
     training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-    fc8, endpoints = vgg.vgg_16(
-        inputs, is_training=training, num_classes=opts.num_classes)
+    fc8, endpoints = nets.vgg.vgg_16(
+        inputs,
+        num_classes=opts.num_classes,
+        dropout_keep_prob=1.0-opts.dropout,
+        is_training=training,
+        spatial_squeeze=True)
+    training_hooks = []
+    training_hooks.append(create_restore_hook(opts))
 
     score = tf.nn.softmax(fc8)
-
     if mode == tf.estimator.ModeKeys.PREDICT:
         return create_predict_estimator_spec(mode, score, labels, params)
 
@@ -50,7 +63,8 @@ def vgg16_model_fn(features, labels, mode, params):
         return create_eval_estimator_spec(mode, fc8, labels, params)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
-        return create_train_estimator_spec(mode, fc8, labels, params)
+        return create_train_estimator_spec(
+            mode, fc8, labels, params, training_hooks)
 
 
 def get_loss(logits, labels, name):
@@ -99,7 +113,7 @@ def create_eval_estimator_spec(mode, logits, labels, params):
     return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
 
 
-def create_train_estimator_spec(mode, logits, labels, params):
+def create_train_estimator_spec(mode, logits, labels, params, training_hooks):
     """Create train EstimatorSpec."""
 
     tf.summary.scalar('train_batch_accuracy', tf.reduce_mean(
@@ -114,14 +128,16 @@ def create_train_estimator_spec(mode, logits, labels, params):
     tf.summary.scalar('learning_rate', lr)
     optimizer = tf.train.MomentumOptimizer(
         lr, opts.optimizer_momentum_momentum)
-    gradients, variables = zip(*optimizer.compute_gradients(loss))
+    gradients, variables = zip(*optimizer.compute_gradients(
+        loss, var_list=get_finetune_trainable_variables(opts)))
     train_op = optimizer.apply_gradients(
         zip(gradients, variables), global_step=global_step)
 
     for var, grad in zip(variables, gradients):
         tf.summary.histogram(var.name.replace(':', '_') + '/gradient', grad)
 
-    return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
+    return tf.estimator.EstimatorSpec(
+        mode, loss=loss, train_op=train_op, training_hooks=training_hooks)
 
 
 def add_metrics_summary(metrics):
@@ -129,3 +145,33 @@ def add_metrics_summary(metrics):
 
     for key in metrics.keys():
         tf.summary.scalar(key, metrics[key][1])
+
+
+def create_restore_hook(opts):
+    variables_to_restore = slim.get_variables_to_restore(
+        exclude=opts.train_layers)
+    tf.logging.info('Restore variables: ')
+    for var in variables_to_restore:
+        tf.logging.info(var)
+    init_fn = slim.assign_from_checkpoint_fn(
+        opts.pretrained_weights_path,
+        variables_to_restore,
+        ignore_missing_vars=False)
+
+    tf.logging.info('Global trainable variables: ')
+    for var in slim.get_trainable_variables():
+        tf.logging.info(var)
+
+    return _RestoreHook(init_fn)
+
+
+def get_finetune_trainable_variables(opts):
+    trainable_variables = []
+    for scope in opts.train_layers:
+        trainable_variables.extend(slim.get_variables(scope))
+
+    tf.logging.info("Finetune variables:")
+    for var in trainable_variables:
+        tf.logging.info(var)
+
+    return trainable_variables
