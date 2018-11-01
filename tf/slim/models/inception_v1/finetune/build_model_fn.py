@@ -41,6 +41,7 @@ def inception_v1_model_fn(features, labels, mode, params):
     """Build model graph."""
 
     tf.summary.image('images', features[model_keys.DATA_COL])
+    tf.summary.histogram('labels', labels)
 
     opts = params['opts']
     inputs = features[model_keys.DATA_COL]
@@ -49,15 +50,19 @@ def inception_v1_model_fn(features, labels, mode, params):
 
     with slim.arg_scope(inception.inception_v1_arg_scope(
             weight_decay=opts.l2_regularizer,
-            use_batch_norm=True,
-            batch_norm_decay=0.9997,
-            batch_norm_epsilon=0.001,
+            use_batch_norm=opts.use_batch_norm,
+            batch_norm_decay=opts.batch_norm_decay,
+            batch_norm_epsilon=opts.batch_norm_epsilon,
             activation_fn=tf.nn.relu)):
         fc8, end_points = inception.inception_v1(
             inputs,
             num_classes=opts.num_classes,
-            dropout_keep_prob=1.0 - opts.dropout,
-            is_training=training)
+            is_training=training,
+            dropout_keep_prob=opts.dropout_keep_prob,
+            prediction_fn=slim.softmax,
+            spatial_squeeze=True,
+            reuse=None,
+            global_pool=opts.global_pool)
 
     training_hooks = []
     training_hooks.append(create_restore_hook(opts))

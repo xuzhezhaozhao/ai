@@ -38,7 +38,7 @@ parser.add_argument('--log_step_count_steps', default=100, type=int, help='')
 parser.add_argument('--use_profile_hook', default=0, type=int, help='')
 parser.add_argument('--profile_steps', default=100, type=int, help='')
 parser.add_argument('--remove_model_dir', default=1, type=int, help='')
-parser.add_argument('--dropout', default=0.1, type=float, help='')
+parser.add_argument('--dropout_keep_prob', default=0.1, type=float, help='')
 parser.add_argument('--shuffle_batch', default=0, type=int, help='')
 parser.add_argument('--map_num_parallel_calls', default=1, type=int, help='')
 parser.add_argument('--num_classes', default=1, type=int, help='')
@@ -61,6 +61,10 @@ parser.add_argument('--lr_decay_rate', default=0.1, type=float, help='')
 parser.add_argument('--lr_decay_epoch_when_no_increase',
                     default=1, type=int, help='')
 parser.add_argument('--l2_regularizer', default=0.0001, type=float, help='')
+parser.add_argument('--use_batch_norm', default=1, type=int, help='')
+parser.add_argument('--batch_norm_decay', default=0.9997, type=float, help='')
+parser.add_argument('--batch_norm_epsilon', default=0.001, type=float, help='')
+parser.add_argument('--global_pool', default=0, type=int, help='')
 
 opts = Options()
 
@@ -94,7 +98,7 @@ def parse_args(argv):
     opts.use_profile_hook = bool(args.use_profile_hook)
     opts.profile_steps = args.profile_steps
     opts.remove_model_dir = bool(args.remove_model_dir)
-    opts.dropout = args.dropout
+    opts.dropout_keep_prob = args.dropout_keep_prob
     opts.shuffle_batch = bool(args.shuffle_batch)
     opts.map_num_parallel_calls = args.map_num_parallel_calls
     opts.num_classes = args.num_classes
@@ -120,11 +124,15 @@ def parse_args(argv):
     opts.lr_decay_rate = args.lr_decay_rate
     opts.lr_decay_epoch_when_no_increase = args.lr_decay_epoch_when_no_increase
     opts.l2_regularizer = args.l2_regularizer
+    opts.use_batch_norm = bool(args.use_batch_norm)
+    opts.batch_norm_decay = args.batch_norm_decay
+    opts.batch_norm_epsilon = args.batch_norm_epsilon
+    opts.global_pool = bool(args.global_pool)
 
 
 def validate_opts():
-    if opts.dropout < 0.0:
-        raise ValueError("dropout should not less than 0")
+    if opts.dropout_keep_prob < 0.0:
+        raise ValueError("dropout_keep_prob should not less than 0")
 
     if (opts.tf_config is not None and
             opts.train_parallel_mode != model_keys.TrainParallelMode.DEFAULT):

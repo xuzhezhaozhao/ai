@@ -26,7 +26,7 @@ log_step_count_steps=10
 use_profile_hook=0
 profile_steps=100
 remove_model_dir=1
-dropout=0.5
+dropout_keep_prob=0.5
 shuffle_batch=1
 map_num_parallel_calls=4
 num_classes=2
@@ -44,7 +44,12 @@ resize_side_min=256
 resize_side_max=256
 lr_decay_rate=0.1
 lr_decay_epoch_when_no_increase=1
-l2_regularizer=0.0005
+l2_regularizer=0.0000
+use_batch_norm=1
+batch_norm_decay=0.9997
+batch_norm_epsilon=0.001
+global_pool=0
+
 
 if [[ ${remove_model_dir} == '1' ]]; then
     echo "remove model_dir ..."
@@ -73,7 +78,7 @@ python main.py \
     --use_profile_hook ${use_profile_hook} \
     --profile_steps ${profile_steps} \
     --remove_model_dir ${remove_model_dir} \
-    --dropout ${dropout} \
+    --dropout_keep_prob ${dropout_keep_prob} \
     --shuffle_batch ${shuffle_batch} \
     --map_num_parallel_calls ${map_num_parallel_calls} \
     --num_classes ${num_classes} \
@@ -91,4 +96,8 @@ python main.py \
     --resize_side_max ${resize_side_max} \
     --lr_decay_rate ${lr_decay_rate} \
     --lr_decay_epoch_when_no_increase ${lr_decay_epoch_when_no_increase} \
-    --l2_regularizer ${l2_regularizer}
+    --l2_regularizer ${l2_regularizer} \
+    --use_batch_norm ${use_batch_norm} \
+    --batch_norm_decay ${batch_norm_decay} \
+    --batch_norm_epsilon ${batch_norm_epsilon} \
+    --global_pool ${global_pool}
