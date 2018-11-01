@@ -44,6 +44,7 @@ parser.add_argument('--map_num_parallel_calls', default=1, type=int, help='')
 parser.add_argument('--num_classes', default=1, type=int, help='')
 parser.add_argument('--pretrained_weights_path', default='', type=str, help='')
 parser.add_argument('--train_layers', default='', type=str, help='')
+parser.add_argument('--exclude_restore_layers', default='', type=str, help='')
 parser.add_argument('--use_data_augmentation', default=0, type=int, help='')
 parser.add_argument('--optimizer_momentum_momentum',
                     default=0.9, type=float, help='')
@@ -99,6 +100,7 @@ def parse_args(argv):
     opts.num_classes = args.num_classes
     opts.pretrained_weights_path = args.pretrained_weights_path
     opts.train_layers = args.train_layers.split(',')
+    opts.exclude_restore_layers = args.exclude_restore_layers.split(',')
     opts.use_data_augmentation = bool(args.use_data_augmentation)
     opts.optimizer_momentum_momentum = args.optimizer_momentum_momentum
     opts.optimizer_momentum_use_nesterov = \

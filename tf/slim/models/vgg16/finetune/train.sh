@@ -15,8 +15,8 @@ eval_data_path=`pwd`/validation.txt
 lr=0.001
 batch_size=64
 epoch=30
-prefetch_size=500
-shuffle_size=500
+prefetch_size=5
+shuffle_size=5
 max_train_steps=-1
 save_summary_steps=10
 save_checkpoints_secs=600
@@ -28,10 +28,11 @@ profile_steps=100
 remove_model_dir=1
 dropout=0.5
 shuffle_batch=1
-map_num_parallel_calls=1
+map_num_parallel_calls=4
 num_classes=2
 pretrained_weights_path=`pwd`/../pretrained_checkpoint/vgg_16.ckpt
 train_layers='vgg_16/fc6,vgg_16/fc7,vgg_16/fc8'
+exclude_restore_layers='vgg_16/fc8'
 use_data_augmentation=0
 optimizer_momentum_momentum=0.9
 optimizer_momentum_use_nesterov=0 # bool value
@@ -43,7 +44,7 @@ resize_side_min=256
 resize_side_max=256
 lr_decay_rate=0.1
 lr_decay_epoch_when_no_increase=1
-l2_regularizer=0.00001
+l2_regularizer=0.0005
 
 if [[ ${remove_model_dir} == '1' ]]; then
     echo "remove model_dir ..."
@@ -78,6 +79,7 @@ python main.py \
     --num_classes ${num_classes} \
     --pretrained_weights_path ${pretrained_weights_path} \
     --train_layers ${train_layers} \
+    --exclude_restore_layers ${exclude_restore_layers} \
     --use_data_augmentation ${use_data_augmentation} \
     --optimizer_momentum_momentum ${optimizer_momentum_momentum} \
     --optimizer_momentum_use_nesterov ${optimizer_momentum_use_nesterov} \

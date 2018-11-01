@@ -51,7 +51,7 @@ def vgg16_model_fn(features, labels, mode, params):
         fc8, end_points = vgg.vgg_16(
             inputs,
             num_classes=opts.num_classes,
-            dropout_keep_prob=1.0-opts.dropout,
+            dropout_keep_prob=1.0 - opts.dropout,
             is_training=training,
             fc_conv_padding='VALID',
             global_pool=False)
@@ -132,13 +132,18 @@ def create_train_estimator_spec(mode, logits, labels, params, training_hooks):
     tf.summary.scalar('learning_rate', lr)
     optimizer = tf.train.MomentumOptimizer(
         lr, opts.optimizer_momentum_momentum)
-    gradients, variables = zip(*optimizer.compute_gradients(
-        loss, var_list=get_finetune_trainable_variables(opts)))
-    train_op = optimizer.apply_gradients(
-        zip(gradients, variables), global_step=global_step)
 
-    for var, grad in zip(variables, gradients):
-        tf.summary.histogram(var.name.replace(':', '_') + '/gradient', grad)
+    train_op = tf.contrib.training.create_train_op(
+        total_loss=loss,
+        optimizer=optimizer,
+        global_step=global_step,
+        update_ops=None,
+        variables_to_train=get_finetune_trainable_variables(opts),
+        transform_grads_fn=None,
+        summarize_gradients=True,
+        aggregation_method=None,
+        colocate_gradients_with_ops=False,
+        check_numerics=True)
 
     return tf.estimator.EstimatorSpec(
         mode, loss=loss, train_op=train_op, training_hooks=training_hooks)
@@ -153,7 +158,7 @@ def add_metrics_summary(metrics):
 
 def create_restore_hook(opts):
     variables_to_restore = slim.get_variables_to_restore(
-        exclude=opts.train_layers)
+        exclude=opts.exclude_restore_layers)
     tf.logging.info('Restore variables: ')
     for var in variables_to_restore:
         tf.logging.info(var)
