@@ -7,10 +7,8 @@ from __future__ import division
 from __future__ import print_function
 
 import matplotlib.pyplot as plt
-import math
 import numpy as np
 import tensorflow as tf
-import time
 
 # Main slim library
 from tensorflow.contrib import slim
@@ -122,7 +120,7 @@ with tf.Graph().as_default():
     final_loss = slim.learning.train(
         train_op,
         logdir=ckpt_dir,
-        number_of_steps=50000,
+        number_of_steps=10000,
         save_summaries_secs=5,
         log_every_n_steps=500)
 
@@ -210,3 +208,47 @@ with tf.Graph().as_default():
     names_to_values = dict(zip(names_to_value_nodes.keys(), metric_values))
     for key, value in names_to_values.items():
         print('%s: %f' % (key, value))
+
+
+def my_cnn(images, num_classes, is_training):  # is_training is not used...
+    with slim.arg_scope([slim.max_pool2d], kernel_size=[3, 3], stride=2):
+        net = slim.conv2d(images, 64, [5, 5])
+        net = slim.max_pool2d(net)
+        net = slim.conv2d(net, 64, [5, 5])
+        net = slim.max_pool2d(net)
+        net = slim.flatten(net)
+        net = slim.fully_connected(net, 192)
+        net = slim.fully_connected(net, num_classes, activation_fn=None)
+        return net
+
+
+with tf.Graph().as_default():
+    # The model can handle any input size because the first layer is convolutional.
+    # The size of the model is determined when image_node is first passed into the my_cnn function.
+    # Once the variables are initialized, the size of all the weight matrices is fixed.
+    # Because of the fully connected layers, this means that all subsequent images must have the same
+    # input size as the first image.
+    batch_size, height, width, channels = 3, 28, 28, 3
+    images = tf.random_uniform([batch_size, height, width, channels], maxval=1)
+
+    # Create the model.
+    num_classes = 10
+    logits = my_cnn(images, num_classes, is_training=True)
+    probabilities = tf.nn.softmax(logits)
+
+    # Initialize all the variables (including parameters) randomly.
+    init_op = tf.global_variables_initializer()
+
+    with tf.Session() as sess:
+        # Run the init_op, evaluate the model outputs and print the results:
+        sess.run(init_op)
+        probabilities = sess.run(probabilities)
+
+print('Probabilities Shape:')
+print(probabilities.shape)  # batch_size x num_classes
+
+print('\nProbabilities:')
+print(probabilities)
+
+print('\nSumming across all classes (Should equal 1):')
+print(np.sum(probabilities, 1))  # Each row sums to 1
