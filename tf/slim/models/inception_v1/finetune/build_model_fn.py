@@ -141,11 +141,12 @@ def create_train_estimator_spec(mode, logits, labels, params, training_hooks):
     optimizer = tf.train.MomentumOptimizer(
         lr, opts.optimizer_momentum_momentum)
 
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
     train_op = tf.contrib.training.create_train_op(
         total_loss=loss,
         optimizer=optimizer,
         global_step=global_step,
-        update_ops=None,
+        update_ops=update_ops,
         variables_to_train=get_finetune_trainable_variables(opts),
         transform_grads_fn=None,
         summarize_gradients=True,

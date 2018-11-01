@@ -46,7 +46,7 @@ lr_decay_rate=0.1
 lr_decay_epoch_when_no_increase=1
 l2_regularizer=0.0000
 use_batch_norm=1
-batch_norm_decay=0.9997
+batch_norm_decay=0.95
 batch_norm_epsilon=0.001
 global_pool=0
 
