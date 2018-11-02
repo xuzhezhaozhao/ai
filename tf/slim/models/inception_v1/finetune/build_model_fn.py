@@ -41,7 +41,8 @@ def inception_v1_model_fn(features, labels, mode, params):
     """Build model graph."""
 
     tf.summary.image('images', features[model_keys.DATA_COL])
-    tf.summary.histogram('labels', labels)
+    if labels:
+        tf.summary.histogram('labels', labels)
 
     opts = params['opts']
     inputs = features[model_keys.DATA_COL]
