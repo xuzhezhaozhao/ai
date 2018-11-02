@@ -36,8 +36,8 @@ def get_global_learning_rate():
     return _global_learning_rate
 
 
-# build inception_v1
-def inception_v1_model_fn(features, labels, mode, params):
+# build inception_v2
+def inception_v2_model_fn(features, labels, mode, params):
     """Build model graph."""
 
     tf.summary.image('images', features[model_keys.DATA_COL])
@@ -47,17 +47,19 @@ def inception_v1_model_fn(features, labels, mode, params):
 
     training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-    with slim.arg_scope(inception.inception_v1_arg_scope(
+    with slim.arg_scope(inception.inception_v2_arg_scope(
             weight_decay=opts.l2_regularizer,
             use_batch_norm=opts.use_batch_norm,
             batch_norm_decay=opts.batch_norm_decay,
             batch_norm_epsilon=opts.batch_norm_epsilon,
             activation_fn=tf.nn.relu)):
-        logits, end_points = inception.inception_v1(
+        logits, end_points = inception.inception_v2(
             inputs,
             num_classes=opts.num_classes,
             is_training=training,
             dropout_keep_prob=opts.dropout_keep_prob,
+            min_depth=opts.min_depth,
+            depth_multiplier=opts.depth_multiplier,
             prediction_fn=slim.softmax,
             spatial_squeeze=True,
             reuse=None,
