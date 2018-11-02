@@ -30,27 +30,24 @@ dropout_keep_prob=0.5
 shuffle_batch=1
 map_num_parallel_calls=4
 num_classes=2
-pretrained_weights_path=`pwd`/../pretrained_checkpoint/inception_v3.ckpt
-train_layers='InceptionV3/Logits/'
-exclude_restore_layers='InceptionV3/Logits/'
+pretrained_weights_path=`pwd`/../pretrained_checkpoint/inception_resnet_v2_2016_08_30.ckpt
+train_layers='InceptionResnetV2/Logits/'
+exclude_restore_layers='InceptionResnetV2/Logits/'
 use_data_augmentation=0
 optimizer_momentum_momentum=0.9
 optimizer_momentum_use_nesterov=0 # bool value
 multi_scale_predict=0
-inference_shape='256,256'
+inference_shape='299,299'
 preprocess_type='easy'  # 'easy', 'vgg'
 min_accuracy_increase=0.0001
-resize_side_min=256
-resize_side_max=256
+resize_side_min=352
+resize_side_max=352
 lr_decay_rate=0.1
 lr_decay_epoch_when_no_increase=1
 l2_regularizer=0.0000
-use_batch_norm=1
 batch_norm_decay=0.95
 batch_norm_epsilon=0.001
 global_pool=0
-min_depth=16
-depth_multiplier=1.0
 create_aux_logits=0
 
 
@@ -100,10 +97,7 @@ python main.py \
     --lr_decay_rate ${lr_decay_rate} \
     --lr_decay_epoch_when_no_increase ${lr_decay_epoch_when_no_increase} \
     --l2_regularizer ${l2_regularizer} \
-    --use_batch_norm ${use_batch_norm} \
     --batch_norm_decay ${batch_norm_decay} \
     --batch_norm_epsilon ${batch_norm_epsilon} \
     --global_pool ${global_pool} \
-    --min_depth ${min_depth} \
-    --depth_multiplier ${depth_multiplier} \
     --create_aux_logits ${create_aux_logits}
