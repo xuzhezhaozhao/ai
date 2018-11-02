@@ -6,16 +6,19 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+import os
 
-import args_parser
-import train
+from common import train
+from common import args_parser
 
 
-def main(argv):
-    opts = args_parser.parse(argv)
-    train.train(opts, export=True)
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = '0'
+
+
+def main(_):
+    train.train(args_parser.opts, export=False)
 
 
 if __name__ == '__main__':
     tf.logging.set_verbosity(tf.logging.INFO)
-    tf.app.run(main)
+    tf.app.run()

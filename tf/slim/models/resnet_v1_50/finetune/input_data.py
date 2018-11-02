@@ -117,16 +117,14 @@ def parse_function(img_path, label, opts):
 # (5) Substract the per color mean `VGG_MEAN`
 # Note: we don't normalize the data here, as VGG was trained without
 # normalization
-# Note(zhezhaoxu): we add rgb to bgr transform
 def train_preprocess(image, label, opts):
     crop_image = tf.random_crop(image, INPUT_SHAPE)             # (3)
     flip_image = tf.image.random_flip_left_right(crop_image)    # (4)
     means = tf.reshape(tf.constant(VGG_MEAN), [1, 1, 3])
     centered_image = flip_image - means                         # (5)
-    bgr_image = centered_image[:, :, ::-1]  # RGB -> BGR
 
     label = tf.one_hot(label, opts.num_classes)
-    return {model_keys.DATA_COL: bgr_image}, label
+    return {model_keys.DATA_COL: centered_image}, label
 
 
 # Preprocessing (for validation)
@@ -134,7 +132,6 @@ def train_preprocess(image, label, opts):
 # (4) Substract the per color mean `VGG_MEAN`
 # Note: we don't normalize the data here, as VGG was trained without
 # normalization
-# Note(zhezhaoxu): we add multi scale image predict and rgb to bgr transform
 def val_preprocess(image, label, opts):
     if opts.multi_scale_predict:
         if opts.inference_shape is not None:
@@ -148,13 +145,12 @@ def val_preprocess(image, label, opts):
 
     means = tf.reshape(tf.constant(VGG_MEAN), [1, 1, 3])
     centered_image = crop_image - means
-    bgr_image = centered_image[:, :, ::-1]  # RGB -> BGR
 
     if label is not None:
         label = tf.one_hot(label, opts.num_classes)
-        return {model_keys.DATA_COL: bgr_image}, label
+        return {model_keys.DATA_COL: centered_image}, label
     else:
-        return {model_keys.DATA_COL: bgr_image}  # for predict
+        return {model_keys.DATA_COL: centered_image}  # for predict
 
 
 def build_train_input_fn(opts):
@@ -254,20 +250,17 @@ def easy_parse_function(img_path, label, opts):
 
 # (2) resize image to [224, 224, 3]
 # (3) Substract the per color mean `VGG_MEAN`
-# (4) RGB -> BGR
 def easy_train_preprocess(image, label, opts):
     resized_image = tf.image.resize_images(image, INPUT_SHAPE[:-1])
     means = tf.reshape(tf.constant(VGG_MEAN), [1, 1, 3])
     centered_image = resized_image - means
-    bgr_image = centered_image[:, :, ::-1]  # RGB -> BGR
 
     label = tf.one_hot(label, opts.num_classes)
-    return {model_keys.DATA_COL: bgr_image}, label
+    return {model_keys.DATA_COL: centered_image}, label
 
 
 # (2) resize image to [224, 224, 3]
 # (3) Substract the per color mean `VGG_MEAN`
-# (4) RGB -> BGR
 def easy_val_preprocess(image, label, opts):
     if opts.multi_scale_predict:
         if opts.inference_shape is not None:
@@ -279,13 +272,12 @@ def easy_val_preprocess(image, label, opts):
 
     means = tf.reshape(tf.constant(VGG_MEAN), [1, 1, 3])
     centered_image = resized_image - means
-    bgr_image = centered_image[:, :, ::-1]  # RGB -> BGR
 
     if label is not None:
         label = tf.one_hot(label, opts.num_classes)
-        return {model_keys.DATA_COL: bgr_image}, label
+        return {model_keys.DATA_COL: centered_image}, label
     else:
-        return {model_keys.DATA_COL: bgr_image}  # for predict
+        return {model_keys.DATA_COL: centered_image}  # for predict
 
 
 def build_easy_train_input_fn(opts):

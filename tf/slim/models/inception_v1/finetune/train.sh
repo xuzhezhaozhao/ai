@@ -19,7 +19,7 @@ prefetch_size=500
 shuffle_size=500
 max_train_steps=-1
 save_summary_steps=10
-save_checkpoints_secs=600
+save_checkpoints_secs=-1
 save_checkpoints_steps=1500
 keep_checkpoint_max=5
 log_step_count_steps=10
@@ -49,6 +49,8 @@ use_batch_norm=1
 batch_norm_decay=0.95
 batch_norm_epsilon=0.001
 global_pool=0
+model_name='inception_v1'
+train_image_size=224
 
 
 if [[ ${remove_model_dir} == '1' ]]; then
@@ -59,7 +61,7 @@ if [[ ${remove_model_dir} == '1' ]]; then
     fi
 fi
 
-python main.py \
+python common/main.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
     --lr ${lr} \
@@ -100,4 +102,6 @@ python main.py \
     --use_batch_norm ${use_batch_norm} \
     --batch_norm_decay ${batch_norm_decay} \
     --batch_norm_epsilon ${batch_norm_epsilon} \
-    --global_pool ${global_pool}
+    --global_pool ${global_pool} \
+    --model_name ${model_name} \
+    --train_image_size ${train_image_size}

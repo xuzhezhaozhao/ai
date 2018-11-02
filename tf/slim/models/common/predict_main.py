@@ -8,10 +8,10 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-import args_parser
-import train
-import input_data
-import model_keys
+from common import args_parser
+from common import train
+from common import input_data
+from common import model_keys
 
 
 def predict(opts):
@@ -20,7 +20,8 @@ def predict(opts):
     if opts.preprocess_type == model_keys.PreprocessType.EASY:
         build_predict_input_fn = input_data.build_easy_predict_input_fn(opts)
     elif opts.preprocess_type == model_keys.PreprocessType.VGG:
-        build_predict_input_fn = input_data.build_predict_input_fn(opts)
+        build_predict_input_fn = input_data.build_predict_input_fn(
+            opts, opts.predict_data_path)
     else:
         raise ValueError("Unsurpported preprocess type.")
 
@@ -37,11 +38,10 @@ def predict(opts):
     tf.logging.info("Predict done")
 
 
-def main(argv):
-    opts = args_parser.parse(argv)
-    predict(opts)
+def main(_):
+    predict(args_parser.opts)
 
 
 if __name__ == '__main__':
     tf.logging.set_verbosity(tf.logging.INFO)
-    tf.app.run(main)
+    tf.app.run()
