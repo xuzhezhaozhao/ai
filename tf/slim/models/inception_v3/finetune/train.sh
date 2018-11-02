@@ -51,7 +51,7 @@ batch_norm_epsilon=0.001
 global_pool=0
 min_depth=16
 depth_multiplier=1.0
-create_aux_logits=1
+create_aux_logits=0
 
 
 if [[ ${remove_model_dir} == '1' ]]; then
