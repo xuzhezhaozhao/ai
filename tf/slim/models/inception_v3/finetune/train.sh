@@ -19,39 +19,41 @@ prefetch_size=500
 shuffle_size=500
 max_train_steps=-1
 save_summary_steps=10
-save_checkpoints_secs=600
+save_checkpoints_secs=-1
 save_checkpoints_steps=1500
 keep_checkpoint_max=5
 log_step_count_steps=10
-use_profile_hook=0
+use_profile_hook=False
 profile_steps=100
 remove_model_dir=1
 dropout_keep_prob=0.5
-shuffle_batch=1
+shuffle_batch=True
 map_num_parallel_calls=4
 num_classes=2
 pretrained_weights_path=`pwd`/../pretrained_checkpoint/inception_v3.ckpt
 train_layers='InceptionV3/Logits/'
-exclude_restore_layers='InceptionV3/Logits/'
-use_data_augmentation=0
+exclude_restore_layers='InceptionV3/Logits/,InceptionV3/AuxLogits/'
 optimizer_momentum_momentum=0.9
-optimizer_momentum_use_nesterov=0 # bool value
-multi_scale_predict=0
-inference_shape='256,256'
-preprocess_type='easy'  # 'easy', 'vgg'
+optimizer_momentum_use_nesterov=False
+multi_scale_predict=False
+preprocess_type='vgg'  # 'easy', 'vgg'
 min_accuracy_increase=0.0001
 resize_side_min=256
 resize_side_max=256
 lr_decay_rate=0.1
 lr_decay_epoch_when_no_increase=1
 l2_regularizer=0.0000
-use_batch_norm=1
+use_batch_norm=True
 batch_norm_decay=0.95
 batch_norm_epsilon=0.001
-global_pool=0
+global_pool=False
+model_name='inception_v3'
+inference_image_size=352
+train_image_size=299
 min_depth=16
 depth_multiplier=1.0
-create_aux_logits=0
+create_aux_logits=False
+spatial_squeeze=True
 
 
 if [[ ${remove_model_dir} == '1' ]]; then
@@ -62,7 +64,7 @@ if [[ ${remove_model_dir} == '1' ]]; then
     fi
 fi
 
-python main.py \
+python common/main.py \
     --train_data_path ${train_data_path} \
     --eval_data_path ${eval_data_path} \
     --lr ${lr} \
@@ -80,7 +82,6 @@ python main.py \
     --log_step_count_steps ${log_step_count_steps} \
     --use_profile_hook ${use_profile_hook} \
     --profile_steps ${profile_steps} \
-    --remove_model_dir ${remove_model_dir} \
     --dropout_keep_prob ${dropout_keep_prob} \
     --shuffle_batch ${shuffle_batch} \
     --map_num_parallel_calls ${map_num_parallel_calls} \
@@ -88,11 +89,9 @@ python main.py \
     --pretrained_weights_path ${pretrained_weights_path} \
     --train_layers ${train_layers} \
     --exclude_restore_layers "${exclude_restore_layers}" \
-    --use_data_augmentation ${use_data_augmentation} \
     --optimizer_momentum_momentum ${optimizer_momentum_momentum} \
     --optimizer_momentum_use_nesterov ${optimizer_momentum_use_nesterov} \
     --multi_scale_predict ${multi_scale_predict} \
-    --inference_shape "${inference_shape}" \
     --preprocess_type ${preprocess_type} \
     --min_accuracy_increase ${min_accuracy_increase} \
     --resize_side_min ${resize_side_min} \
@@ -104,6 +103,10 @@ python main.py \
     --batch_norm_decay ${batch_norm_decay} \
     --batch_norm_epsilon ${batch_norm_epsilon} \
     --global_pool ${global_pool} \
+    --model_name ${model_name} \
+    --inference_image_size ${inference_image_size} \
+    --train_image_size ${train_image_size} \
     --min_depth ${min_depth} \
     --depth_multiplier ${depth_multiplier} \
+    --spatial_squeeze ${spatial_squeeze} \
     --create_aux_logits ${create_aux_logits}

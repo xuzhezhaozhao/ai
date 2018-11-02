@@ -22,7 +22,6 @@ def model_fn(features, labels, mode, params):
     opts = params['opts']
     inputs = features[model_keys.DATA_COL]
     is_training = (mode == tf.estimator.ModeKeys.TRAIN)
-
     with slim.arg_scope(inception.inception_v1_arg_scope(
             weight_decay=opts.l2_regularizer,
             use_batch_norm=opts.use_batch_norm,
@@ -35,7 +34,7 @@ def model_fn(features, labels, mode, params):
             is_training=is_training,
             dropout_keep_prob=opts.dropout_keep_prob,
             prediction_fn=slim.softmax,
-            spatial_squeeze=True,
+            spatial_squeeze=opts.spatial_squeeze,
             reuse=None,
             global_pool=opts.global_pool)
 

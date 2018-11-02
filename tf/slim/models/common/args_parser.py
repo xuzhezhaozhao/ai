@@ -52,6 +52,10 @@ tf.app.flags.DEFINE_bool('global_pool', False, '')
 tf.app.flags.DEFINE_string('model_name', '', '')
 tf.app.flags.DEFINE_integer('inference_image_size', 256, '')
 tf.app.flags.DEFINE_integer('train_image_size', 224, '')
+tf.app.flags.DEFINE_integer('min_depth', 16, '')
+tf.app.flags.DEFINE_float('depth_multiplier', 1.0, '')
+tf.app.flags.DEFINE_bool('spatial_squeeze', True, '')
+tf.app.flags.DEFINE_bool('create_aux_logits', False, '')
 
 
 opts = tf.app.flags.FLAGS
