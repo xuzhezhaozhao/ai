@@ -93,7 +93,7 @@ def train_and_eval_in_local_mode(opts, estimator, hooks):
         tf.logging.info("Train model OK, epoch {}".format(epoch))
 
         tf.logging.info("Beginning evaluate model, epoch {} ...".format(epoch))
-        result = opts.estimator.evaluate(
+        result = estimator.evaluate(
             input_fn=build_eval_input_fn,
             hooks=hooks)
         tf.logging.info("Evaluate model OK, epoch {}".format(epoch))

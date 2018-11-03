@@ -112,7 +112,7 @@ def build_eval_input_fn(opts, data_path):
         ds = ds.map(
             lambda filename, label: parse_function(
                 filename, label, False, opts),
-            num_parallel_calls=opts.num_parallel)
+            num_parallel_calls=opts.map_num_parallel_calls)
         ds = ds.prefetch(opts.prefetch_size)
         ds = ds.batch(opts.batch_size)
         return ds
