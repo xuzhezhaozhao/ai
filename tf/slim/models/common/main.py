@@ -16,6 +16,10 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = '0'
 
 
 def main(_):
+    D = args_parser.opts.flag_values_dict()
+    tf.logging.info("FLAGS: ")
+    for key in D:
+        tf.logging.info('{} = {}'.format(key, D[key]))
     train.train(args_parser.opts, export=False)
 
 

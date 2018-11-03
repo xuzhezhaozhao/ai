@@ -66,48 +66,48 @@ fi
 
 
 python common/main.py \
-    --train_data_path ${train_data_path} \
-    --eval_data_path ${eval_data_path} \
-    --lr ${lr} \
-    --batch_size ${batch_size} \
-    --epoch ${epoch} \
-    --model_dir ${model_dir} \
-    --export_model_dir ${export_model_dir} \
-    --prefetch_size ${prefetch_size} \
-    --shuffle_size ${shuffle_size} \
-    --max_train_steps ${max_train_steps} \
-    --save_summary_steps ${save_summary_steps} \
-    --save_checkpoints_secs ${save_checkpoints_secs} \
-    --save_checkpoints_steps ${save_checkpoints_steps} \
-    --keep_checkpoint_max ${keep_checkpoint_max} \
-    --log_step_count_steps ${log_step_count_steps} \
-    --use_profile_hook ${use_profile_hook} \
-    --profile_steps ${profile_steps} \
-    --dropout_keep_prob ${dropout_keep_prob} \
-    --shuffle_batch ${shuffle_batch} \
-    --map_num_parallel_calls ${map_num_parallel_calls} \
-    --num_classes ${num_classes} \
-    --pretrained_weights_path ${pretrained_weights_path} \
-    --train_layers ${train_layers} \
-    --exclude_restore_layers "${exclude_restore_layers}" \
-    --optimizer_momentum_momentum ${optimizer_momentum_momentum} \
-    --optimizer_momentum_use_nesterov ${optimizer_momentum_use_nesterov} \
-    --multi_scale_predict ${multi_scale_predict} \
-    --preprocess_type ${preprocess_type} \
-    --min_accuracy_increase ${min_accuracy_increase} \
-    --resize_side_min ${resize_side_min} \
-    --resize_side_max ${resize_side_max} \
-    --lr_decay_rate ${lr_decay_rate} \
-    --lr_decay_epoch_when_no_increase ${lr_decay_epoch_when_no_increase} \
-    --l2_regularizer ${l2_regularizer} \
-    --use_batch_norm ${use_batch_norm} \
-    --batch_norm_decay ${batch_norm_decay} \
-    --batch_norm_epsilon ${batch_norm_epsilon} \
-    --global_pool ${global_pool} \
-    --model_name ${model_name} \
-    --inference_image_size ${inference_image_size} \
-    --train_image_size ${train_image_size} \
-    --min_depth ${min_depth} \
-    --depth_multiplier ${depth_multiplier} \
-    --spatial_squeeze ${spatial_squeeze} \
-    --create_aux_logits ${create_aux_logits}
+    --train_data_path=${train_data_path} \
+    --eval_data_path=${eval_data_path} \
+    --lr=${lr} \
+    --batch_size=${batch_size} \
+    --epoch=${epoch} \
+    --model_dir=${model_dir} \
+    --export_model_dir=${export_model_dir} \
+    --prefetch_size=${prefetch_size} \
+    --shuffle_size=${shuffle_size} \
+    --max_train_steps=${max_train_steps} \
+    --save_summary_steps=${save_summary_steps} \
+    --save_checkpoints_secs=${save_checkpoints_secs} \
+    --save_checkpoints_steps=${save_checkpoints_steps} \
+    --keep_checkpoint_max=${keep_checkpoint_max} \
+    --log_step_count_steps=${log_step_count_steps} \
+    --use_profile_hook=${use_profile_hook} \
+    --profile_steps=${profile_steps} \
+    --dropout_keep_prob=${dropout_keep_prob} \
+    --shuffle_batch=${shuffle_batch} \
+    --map_num_parallel_calls=${map_num_parallel_calls} \
+    --num_classes=${num_classes} \
+    --pretrained_weights_path=${pretrained_weights_path} \
+    --train_layers=${train_layers} \
+    --exclude_restore_layers="${exclude_restore_layers}" \
+    --optimizer_momentum_momentum=${optimizer_momentum_momentum} \
+    --optimizer_momentum_use_nesterov=${optimizer_momentum_use_nesterov} \
+    --multi_scale_predict=${multi_scale_predict} \
+    --preprocess_type=${preprocess_type} \
+    --min_accuracy_increase=${min_accuracy_increase} \
+    --resize_side_min=${resize_side_min} \
+    --resize_side_max=${resize_side_max} \
+    --lr_decay_rate=${lr_decay_rate} \
+    --lr_decay_epoch_when_no_increase=${lr_decay_epoch_when_no_increase} \
+    --l2_regularizer=${l2_regularizer} \
+    --use_batch_norm=${use_batch_norm} \
+    --batch_norm_decay=${batch_norm_decay} \
+    --batch_norm_epsilon=${batch_norm_epsilon} \
+    --global_pool=${global_pool} \
+    --model_name=${model_name} \
+    --inference_image_size=${inference_image_size} \
+    --train_image_size=${train_image_size} \
+    --min_depth=${min_depth} \
+    --depth_multiplier=${depth_multiplier} \
+    --spatial_squeeze=${spatial_squeeze} \
+    --create_aux_logits=${create_aux_logits}
