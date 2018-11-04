@@ -20,12 +20,11 @@ class _RestoreHook(tf.train.SessionRunHook):
             self.init_fn(session)
 
 
-def get_loss(logits, labels, name):
+def get_loss(logits, labels, name, opts):
     with tf.name_scope(name):
         l2_loss = tf.losses.get_regularization_loss()
-        ce_loss = tf.reduce_mean(
-            tf.nn.sparse_softmax_cross_entropy_with_logits(
-                logits=logits, labels=tf.argmax(labels, 1)))
+        ce_loss = tf.losses.softmax_cross_entropy(
+            labels, logits, weights=1.0, label_smoothing=opts.label_smoothing)
         loss = l2_loss + ce_loss
         tf.summary.scalar("l2_loss", l2_loss)
         tf.summary.scalar("ce_loss", ce_loss)
@@ -56,6 +55,8 @@ def create_predict_estimator_spec(mode, logits, labels, params):
 def create_eval_estimator_spec(mode, logits, labels, params):
     """Create eval EstimatorSpec."""
 
+    opts = params['opts']
+
     accuracy = tf.metrics.accuracy(labels=tf.argmax(labels, 1),
                                    predictions=tf.argmax(logits, 1))
     metrics = {
@@ -63,7 +64,7 @@ def create_eval_estimator_spec(mode, logits, labels, params):
     }
     add_metrics_summary(metrics)
 
-    loss = get_loss(logits, labels, 'eval')
+    loss = get_loss(logits, labels, 'eval', opts)
     return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
 
 
@@ -80,10 +81,12 @@ def create_train_estimator_spec(mode, logits, labels, params):
                 tf.float32)))
 
     opts = params['opts']
+    num_samples_per_epoch = params['num_samples_per_epoch']
+
     global_step = tf.train.get_global_step()
-    loss = get_loss(logits, labels, 'train')
-    learning_rate = opts.learning_rate
-    tf.logging.info("global learning rate = {}".format(learning_rate))
+    loss = get_loss(logits, labels, 'train', opts)
+    learning_rate = configure_learning_rate(
+        num_samples_per_epoch, global_step, opts)
     tf.summary.scalar('learning_rate', learning_rate)
     optimizer = configure_optimizer(learning_rate, opts)
 
@@ -193,3 +196,44 @@ def configure_optimizer(learning_rate, opts):
     else:
         raise ValueError('Optimizer [%s] was not recognized' % opts.optimizer)
     return optimizer
+
+
+def configure_learning_rate(num_samples_per_epoch, global_step, opts):
+    """Configures the learning rate.
+
+    Args:
+      num_samples_per_epoch: The number of samples in each epoch of training.
+      global_step: The global_step tensor.
+
+    Returns:
+      A `Tensor` representing the learning rate.
+
+    Raises:
+      ValueError: if
+    """
+    decay_steps = int(num_samples_per_epoch * opts.num_epochs_per_decay /
+                      opts.batch_size)
+    tf.logging.info('decay_steps = {}'.format(decay_steps))
+
+    if opts.learning_rate_decay_type == 'exponential':
+        return tf.train.exponential_decay(
+            opts.learning_rate,
+            global_step,
+            decay_steps,
+            opts.learning_rate_decay_factor,
+            staircase=True,
+            name='exponential_decay_learning_rate')
+    elif opts.learning_rate_decay_type == 'fixed':
+        return tf.constant(opts.learning_rate, name='fixed_learning_rate')
+    elif opts.learning_rate_decay_type == 'polynomial':
+        return tf.train.polynomial_decay(
+            opts.learning_rate,
+            global_step,
+            decay_steps,
+            opts.end_learning_rate,
+            power=1.0,
+            cycle=False,
+            name='polynomial_decay_learning_rate')
+    else:
+        raise ValueError('learning_rate_decay_type [%s] was not recognized' %
+                         opts.learning_rate_decay_type)

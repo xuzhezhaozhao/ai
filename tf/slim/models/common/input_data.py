@@ -23,6 +23,8 @@ def read_txt_file(txt_file, has_label=True):
         lines = f.readlines()
         for line in lines:
             line = line.strip()
+            if line == '':
+                continue
             items = line.split(' ')
             img_paths.append(items[0])
             if has_label:

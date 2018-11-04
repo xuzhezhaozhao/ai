@@ -41,8 +41,6 @@ tf.app.flags.DEFINE_bool('use_profile_hook', False, '')
 tf.app.flags.DEFINE_integer('profile_steps', 100, '')
 
 # optimizer flags
-tf.app.flags.DEFINE_float('learning_rate', 0.025, 'learning rate')
-
 tf.app.flags.DEFINE_string(
     'optimizer', 'rmsprop',
     'The name of the optimizer, one of "adadelta", "adagrad", "adam",'
@@ -87,6 +85,32 @@ tf.app.flags.DEFINE_float(
 
 tf.app.flags.DEFINE_float('rmsprop_momentum', 0.9, 'Momentum.')
 tf.app.flags.DEFINE_float('rmsprop_decay', 0.9, 'Decay term for RMSProp.')
+
+# learning rate flags
+tf.app.flags.DEFINE_float('learning_rate', 0.025, 'learning rate')
+
+tf.app.flags.DEFINE_string(
+    'learning_rate_decay_type',
+    'exponential',
+    'Specifies how the learning rate is decayed. One of "fixed", '
+    '"exponential", or "polynomial"')
+
+tf.app.flags.DEFINE_float(
+    'end_learning_rate', 0.0001,
+    'The minimal end learning rate used by a polynomial decay learning rate.')
+
+tf.app.flags.DEFINE_float(
+    'label_smoothing', 0.0, 'The amount of label smoothing.')
+
+tf.app.flags.DEFINE_float(
+    'learning_rate_decay_factor', 0.94, 'Learning rate decay factor.')
+
+tf.app.flags.DEFINE_float(
+    'num_epochs_per_decay', 2.0,
+    'Number of epochs after which learning rate decays. Note: this flag counts'
+    ' epochs per clone but aggregates per sync replicas. So 1.0 means that '
+    'each clone will go over full epoch individually, but replicas will go '
+    'once across all replicas.')
 
 # preprocess flags
 tf.app.flags.DEFINE_integer('inference_image_size', 256, '')

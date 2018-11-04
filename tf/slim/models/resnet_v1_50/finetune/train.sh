@@ -47,7 +47,6 @@ params=(\
 [profile_steps]=100 \
  \
 # optimizer flags \
-[learning_rate]=0.001 \
 [optimizer]='momentum' \
 [adadelta_rho]=0.95 \
 [adagrad_initial_accumulator_value]=0.1 \
@@ -61,6 +60,15 @@ params=(\
 [momentum]=0.9 \
 [rmsprop_momentum]=0.9 \
 [rmsprop_decay]=0.9 \
+ \
+# learning rate flags \
+[learning_rate]=0.001 \
+## fixed, exponential or polynomial
+[learning_rate_decay_type]='exponential' \
+[end_learning_rate]=0.0001 \
+[label_smoothing]=0.0 \
+[learning_rate_decay_factor]=0.94 \
+[num_epochs_per_decay]=2.0 \
  \
 # preprocess flags \
 [inference_image_size]=256 \

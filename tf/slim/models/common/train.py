@@ -35,9 +35,15 @@ def build_estimator(opts):
     config_keys['keep_checkpoint_every_n_hours'] = 10000
     config_keys['log_step_count_steps'] = opts.log_step_count_steps
 
+    num_samples_per_epoch = len(input_data.read_txt_file(
+        opts.train_data_path, False))
+
     estimator_keys = {}
     estimator_keys['model_fn'] = build_model_fn.model_fn
-    estimator_keys['params'] = {'opts': opts}
+    estimator_keys['params'] = {
+        'opts': opts,
+        'num_samples_per_epoch': num_samples_per_epoch
+    }
     config = tf.estimator.RunConfig(**config_keys)
     estimator_keys['config'] = config
 
