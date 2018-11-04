@@ -153,7 +153,7 @@ def add_metrics_summary(metrics):
 
 def create_restore_hook(opts):
     variables_to_restore = slim.get_variables_to_restore(
-        exclude=opts.exclude_restore_layers)
+        exclude=opts.exclude_restore_scopes)
     tf.logging.info('Restore variables: ')
     for var in variables_to_restore:
         tf.logging.info(var)
@@ -171,7 +171,7 @@ def create_restore_hook(opts):
 
 def get_finetune_trainable_variables(opts):
     trainable_variables = []
-    for scope in opts.train_layers:
+    for scope in opts.trainable_scopes:
         trainable_variables.extend(slim.get_trainable_variables(scope))
 
     tf.logging.info("Finetune variables:")
