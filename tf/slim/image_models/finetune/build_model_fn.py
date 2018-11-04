@@ -9,6 +9,7 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
 from nets import resnet_v1
+from nets import resnet_v2
 from nets import inception
 from nets import vgg
 import model_keys
@@ -48,6 +49,11 @@ def get_model_def(model_name, inputs, is_training, opts):
         'inception_v4': inception_v4,
         'inception_resnet_v2': inception_resnet_v2,
         'resnet_v1_50': resnet_v1_50,
+        'resnet_v1_101': resnet_v1_101,
+        'resnet_v1_152': resnet_v1_152,
+        'resnet_v2_50': resnet_v2_50,
+        'resnet_v2_101': resnet_v2_101,
+        'resnet_v2_152': resnet_v2_152,
     }
 
     if model_name not in model_def_map:
@@ -182,4 +188,86 @@ def resnet_v1_50(inputs, is_training, opts):
             num_classes=opts.num_classes,
             is_training=is_training,
             global_pool=opts.global_pool,
+            output_stride=None,
+            spatial_squeeze=opts.spatial_squeeze,
+            reuse=None)
+
+
+def resnet_v1_101(inputs, is_training, opts):
+    with slim.arg_scope(resnet_v1.resnet_arg_scope(
+            weight_decay=opts.weight_decay,
+            batch_norm_decay=opts.batch_norm_decay,
+            batch_norm_epsilon=opts.batch_norm_epsilon,
+            activation_fn=tf.nn.relu)):
+        return resnet_v1.resnet_v1_101(
+            inputs,
+            num_classes=opts.num_classes,
+            is_training=is_training,
+            global_pool=opts.global_pool,
+            output_stride=None,
+            spatial_squeeze=opts.spatial_squeeze,
+            reuse=None)
+
+
+def resnet_v1_152(inputs, is_training, opts):
+    with slim.arg_scope(resnet_v1.resnet_arg_scope(
+            weight_decay=opts.weight_decay,
+            batch_norm_decay=opts.batch_norm_decay,
+            batch_norm_epsilon=opts.batch_norm_epsilon,
+            activation_fn=tf.nn.relu)):
+        return resnet_v1.resnet_v1_152(
+            inputs,
+            num_classes=opts.num_classes,
+            is_training=is_training,
+            global_pool=opts.global_pool,
+            output_stride=None,
+            spatial_squeeze=opts.spatial_squeeze,
+            reuse=None)
+
+
+def resnet_v2_50(inputs, is_training, opts):
+    with slim.arg_scope(resnet_v2.resnet_arg_scope(
+            weight_decay=opts.weight_decay,
+            batch_norm_decay=opts.batch_norm_decay,
+            batch_norm_epsilon=opts.batch_norm_epsilon,
+            activation_fn=tf.nn.relu)):
+        return resnet_v2.resnet_v2_50(
+            inputs,
+            num_classes=opts.num_classes,
+            is_training=is_training,
+            global_pool=opts.global_pool,
+            output_stride=None,
+            spatial_squeeze=opts.spatial_squeeze,
+            reuse=None)
+
+
+def resnet_v2_101(inputs, is_training, opts):
+    with slim.arg_scope(resnet_v2.resnet_arg_scope(
+            weight_decay=opts.weight_decay,
+            batch_norm_decay=opts.batch_norm_decay,
+            batch_norm_epsilon=opts.batch_norm_epsilon,
+            activation_fn=tf.nn.relu)):
+        return resnet_v2.resnet_v2_101(
+            inputs,
+            num_classes=opts.num_classes,
+            is_training=is_training,
+            global_pool=opts.global_pool,
+            output_stride=None,
+            spatial_squeeze=opts.spatial_squeeze,
+            reuse=None)
+
+
+def resnet_v2_152(inputs, is_training, opts):
+    with slim.arg_scope(resnet_v2.resnet_arg_scope(
+            weight_decay=opts.weight_decay,
+            batch_norm_decay=opts.batch_norm_decay,
+            batch_norm_epsilon=opts.batch_norm_epsilon,
+            activation_fn=tf.nn.relu)):
+        return resnet_v2.resnet_v2_152(
+            inputs,
+            num_classes=opts.num_classes,
+            is_training=is_training,
+            global_pool=opts.global_pool,
+            output_stride=None,
+            spatial_squeeze=opts.spatial_squeeze,
             reuse=None)
