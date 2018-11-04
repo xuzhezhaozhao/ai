@@ -18,7 +18,6 @@ tf.app.flags.DEFINE_string('predict_output', '', '')
 tf.app.flags.DEFINE_string('predict_checkpoint_path', '', '')
 
 # train flags
-tf.app.flags.DEFINE_float('lr', 0.025, 'learning rate')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'batch size')
 tf.app.flags.DEFINE_integer('max_train_steps', -1, '')
 tf.app.flags.DEFINE_integer('epoch', 1, '')
@@ -42,8 +41,52 @@ tf.app.flags.DEFINE_bool('use_profile_hook', False, '')
 tf.app.flags.DEFINE_integer('profile_steps', 100, '')
 
 # optimizer flags
-tf.app.flags.DEFINE_float('optimizer_momentum_momentum', 0.9, '')
-tf.app.flags.DEFINE_bool('optimizer_momentum_use_nesterov', False, '')
+tf.app.flags.DEFINE_float('learning_rate', 0.025, 'learning rate')
+
+tf.app.flags.DEFINE_string(
+    'optimizer', 'rmsprop',
+    'The name of the optimizer, one of "adadelta", "adagrad", "adam",'
+    '"ftrl", "momentum", "sgd" or "rmsprop".')
+
+tf.app.flags.DEFINE_float(
+    'adadelta_rho', 0.95,
+    'The decay rate for adadelta.')
+
+tf.app.flags.DEFINE_float(
+    'adagrad_initial_accumulator_value', 0.1,
+    'Starting value for the AdaGrad accumulators.')
+
+tf.app.flags.DEFINE_float(
+    'adam_beta1', 0.9,
+    'The exponential decay rate for the 1st moment estimates.')
+
+tf.app.flags.DEFINE_float(
+    'adam_beta2', 0.999,
+    'The exponential decay rate for the 2nd moment estimates.')
+
+tf.app.flags.DEFINE_float(
+    'opt_epsilon', 1.0,
+    'Epsilon term for the optimizer.')
+
+tf.app.flags.DEFINE_float('ftrl_learning_rate_power', -0.5,
+                          'The learning rate power.')
+
+tf.app.flags.DEFINE_float(
+    'ftrl_initial_accumulator_value', 0.1,
+    'Starting value for the FTRL accumulators.')
+
+tf.app.flags.DEFINE_float(
+    'ftrl_l1', 0.0, 'The FTRL l1 regularization strength.')
+
+tf.app.flags.DEFINE_float(
+    'ftrl_l2', 0.0, 'The FTRL l2 regularization strength.')
+
+tf.app.flags.DEFINE_float(
+    'momentum', 0.9,
+    'The momentum for the MomentumOptimizer and RMSPropOptimizer.')
+
+tf.app.flags.DEFINE_float('rmsprop_momentum', 0.9, 'Momentum.')
+tf.app.flags.DEFINE_float('rmsprop_decay', 0.9, 'Decay term for RMSProp.')
 
 # preprocess flags
 tf.app.flags.DEFINE_integer('inference_image_size', 256, '')

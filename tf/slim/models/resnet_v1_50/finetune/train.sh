@@ -24,10 +24,9 @@ params=(\
 [predict_checkpoint_path]=${model_dir} \
  \
 # train flags \
-[lr]=0.001 \
 [batch_size]=64 \
-[max_train_steps]=-1 \
-[epoch]=1 \
+[max_train_steps]=1000 \
+[epoch]=10 \
 [throttle_secs]=300 \
  \
 # dataset flags \
@@ -48,8 +47,20 @@ params=(\
 [profile_steps]=100 \
  \
 # optimizer flags \
-[optimizer_momentum_momentum]=0.9 \
-[optimizer_momentum_use_nesterov]=False \
+[learning_rate]=0.001 \
+[optimizer]='momentum' \
+[adadelta_rho]=0.95 \
+[adagrad_initial_accumulator_value]=0.1 \
+[adam_beta1]=0.9 \
+[adam_beta2]=0.999 \
+[opt_epsilon]=1.0 \
+[ftrl_learning_rate_power]=-0.5 \
+[ftrl_initial_accumulator_value]=0.1 \
+[ftrl_l1]=0.0 \
+[ftrl_l2]=0.0 \
+[momentum]=0.9 \
+[rmsprop_momentum]=0.9 \
+[rmsprop_decay]=0.9 \
  \
 # preprocess flags \
 [inference_image_size]=256 \

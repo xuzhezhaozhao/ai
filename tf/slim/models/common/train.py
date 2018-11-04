@@ -80,8 +80,7 @@ def train_and_eval_in_local_mode(opts, estimator, hooks):
         steps=None,
         name='eval',
         start_delay_secs=3,
-        throttle_secs=opts.throttle_secs
-    )
+        throttle_secs=opts.throttle_secs)
     result = tf.estimator.train_and_evaluate(
         estimator, train_spec, eval_spec)
     return result

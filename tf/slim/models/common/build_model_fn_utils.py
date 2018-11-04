@@ -9,9 +9,6 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
 
-_global_learning_rate = 0.001
-
-
 class _RestoreHook(tf.train.SessionRunHook):
     """_Restore from pretrained checkpoint."""
 
@@ -21,16 +18,6 @@ class _RestoreHook(tf.train.SessionRunHook):
     def after_create_session(self, session, coord=None):
         if session.run(tf.train.get_or_create_global_step()) == 0:
             self.init_fn(session)
-
-
-def set_global_learning_rate(rate):
-    global _global_learning_rate
-    _global_learning_rate = rate
-
-
-def get_global_learning_rate():
-    global _global_learning_rate
-    return _global_learning_rate
 
 
 def get_loss(logits, labels, name):
@@ -95,11 +82,10 @@ def create_train_estimator_spec(mode, logits, labels, params):
     opts = params['opts']
     global_step = tf.train.get_global_step()
     loss = get_loss(logits, labels, 'train')
-    lr = get_global_learning_rate()
-    tf.logging.info("global learning rate = {}".format(lr))
-    tf.summary.scalar('learning_rate', lr)
-    optimizer = tf.train.MomentumOptimizer(
-        lr, opts.optimizer_momentum_momentum)
+    learning_rate = opts.learning_rate
+    tf.logging.info("global learning rate = {}".format(learning_rate))
+    tf.summary.scalar('learning_rate', learning_rate)
+    optimizer = configure_optimizer(learning_rate, opts)
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
     train_op = tf.contrib.training.create_train_op(
@@ -164,3 +150,46 @@ def get_finetune_trainable_variables(opts):
         tf.logging.info(var)
 
     return trainable_variables
+
+
+def configure_optimizer(learning_rate, opts):
+    """Configures the optimizer used for training."""
+
+    if opts.optimizer == 'adadelta':
+        optimizer = tf.train.AdadeltaOptimizer(
+            learning_rate,
+            rho=opts.adadelta_rho,
+            epsilon=opts.opt_epsilon)
+    elif opts.optimizer == 'adagrad':
+        optimizer = tf.train.AdagradOptimizer(
+            learning_rate,
+            initial_accumulator_value=opts.adagrad_initial_accumulator_value)
+    elif opts.optimizer == 'adam':
+        optimizer = tf.train.AdamOptimizer(
+            learning_rate,
+            beta1=opts.adam_beta1,
+            beta2=opts.adam_beta2,
+            epsilon=opts.opt_epsilon)
+    elif opts.optimizer == 'ftrl':
+        optimizer = tf.train.FtrlOptimizer(
+            learning_rate,
+            learning_rate_power=opts.ftrl_learning_rate_power,
+            initial_accumulator_value=opts.ftrl_initial_accumulator_value,
+            l1_regularization_strength=opts.ftrl_l1,
+            l2_regularization_strength=opts.ftrl_l2)
+    elif opts.optimizer == 'momentum':
+        optimizer = tf.train.MomentumOptimizer(
+            learning_rate,
+            momentum=opts.momentum,
+            name='Momentum')
+    elif opts.optimizer == 'rmsprop':
+        optimizer = tf.train.RMSPropOptimizer(
+            learning_rate,
+            decay=opts.rmsprop_decay,
+            momentum=opts.rmsprop_momentum,
+            epsilon=opts.opt_epsilon)
+    elif opts.optimizer == 'sgd':
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+    else:
+        raise ValueError('Optimizer [%s] was not recognized' % opts.optimizer)
+    return optimizer
