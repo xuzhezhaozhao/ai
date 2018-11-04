@@ -157,7 +157,7 @@ def create_restore_hook(opts):
 def get_finetune_trainable_variables(opts):
     trainable_variables = []
     for scope in opts.train_layers:
-        trainable_variables.extend(slim.get_variables(scope))
+        trainable_variables.extend(slim.get_trainable_variables(scope))
 
     tf.logging.info("Finetune variables:")
     for var in trainable_variables:

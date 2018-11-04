@@ -69,7 +69,7 @@ def create_image_dataset(data_path, has_label=True):
     return ds
 
 
-def parse_function(img_path, label, is_training, opts):
+def parse_function(img_path, label, is_training, opts, image_size):
     image_string = tf.read_file(img_path)
     image_decoded = tf.image.decode_image(image_string, channels=3)
     image_decoded.set_shape([None, None, 3])
@@ -80,8 +80,7 @@ def parse_function(img_path, label, is_training, opts):
         preprocessing_name,
         is_training=is_training)
 
-    train_image_size = opts.train_image_size
-    image = image_preprocessing_fn(image, train_image_size, train_image_size)
+    image = image_preprocessing_fn(image, image_size, image_size)
 
     if label is None:
         return {DATA_COL: image}
@@ -95,7 +94,7 @@ def build_train_input_fn(opts, data_path):
         ds = create_image_dataset(data_path, has_label=True)
         ds = ds.map(
             lambda filename, label: parse_function(
-                filename, label, True, opts),
+                filename, label, True, opts, opts.train_image_size),
             num_parallel_calls=opts.map_num_parallel_calls)
         ds = ds.prefetch(opts.prefetch_size)
         if opts.shuffle_batch:
@@ -111,7 +110,7 @@ def build_eval_input_fn(opts, data_path):
         ds = create_image_dataset(data_path, has_label=True)
         ds = ds.map(
             lambda filename, label: parse_function(
-                filename, label, False, opts),
+                filename, label, False, opts, opts.inference_image_size),
             num_parallel_calls=opts.map_num_parallel_calls)
         ds = ds.prefetch(opts.prefetch_size)
         ds = ds.batch(opts.batch_size)
@@ -122,10 +121,10 @@ def build_eval_input_fn(opts, data_path):
 def build_predict_input_fn(opts):
     def predict_input_fn():
         ds = create_image_dataset(opts.predict_data_path, has_label=False)
-        num_parallel = opts.map_num_parallel_calls
         ds = ds.map(
-            lambda filename: parse_function(filename, None, False, opts),
-            num_parallel_calls=num_parallel)
+            lambda filename: parse_function(
+                filename, None, False, opts, opts.inference_image_size),
+            num_parallel_calls=opts.map_num_parallel_calls)
         ds = ds.prefetch(opts.prefetch_size)
         ds = ds.batch(opts.batch_size)
         return ds
