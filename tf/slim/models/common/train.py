@@ -10,9 +10,6 @@ import tensorflow as tf
 
 from common import input_data
 from common import hook
-from common import model_keys
-from common import build_model_fn_utils
-
 import build_model_fn
 
 
@@ -66,55 +63,27 @@ def create_hooks(opts):
 def train_and_eval_in_local_mode(opts, estimator, hooks):
     """Train and eval model in lcoal mode."""
 
-    if opts.preprocess_type == model_keys.PreprocessType.EASY:
-        build_train_input_fn = input_data.build_easy_train_input_fn(opts)
-        build_eval_input_fn = input_data.build_easy_eval_input_fn(opts)
-    elif opts.preprocess_type == model_keys.PreprocessType.VGG:
-        build_train_input_fn = input_data.build_train_input_fn(
-            opts, opts.train_data_path)
-        build_eval_input_fn = input_data.build_eval_input_fn(
-            opts, opts.eval_data_path)
-    else:
-        raise ValueError("Unsurpported preprocess type.")
+    build_train_input_fn = input_data.build_train_input_fn(
+        opts, opts.train_data_path)
+    build_eval_input_fn = input_data.build_eval_input_fn(
+        opts, opts.eval_data_path)
 
-    best_accuracy = 0.0
-    accuracy_no_increase = 0
-    global_lr = opts.lr
-    build_model_fn_utils.set_global_learning_rate(global_lr)
-    for epoch in range(opts.epoch):
-        epoch += 1
-        tf.logging.info("Beginning train model, epoch {} ...".format(epoch))
-        max_steps = None
-        if opts.max_train_steps > 0:
-            max_steps = opts.max_train_steps
-        estimator.train(input_fn=build_train_input_fn,
-                        max_steps=max_steps,
-                        hooks=hooks)
-        tf.logging.info("Train model OK, epoch {}".format(epoch))
-
-        tf.logging.info("Beginning evaluate model, epoch {} ...".format(epoch))
-        result = estimator.evaluate(
-            input_fn=build_eval_input_fn,
-            hooks=hooks)
-        tf.logging.info("Evaluate model OK, epoch {}".format(epoch))
-
-        if result['accuracy'] > best_accuracy + opts.min_accuracy_increase:
-            accuracy_no_increase = 0
-            best_accuracy = result['accuracy']
-        else:
-            accuracy_no_increase += 1
-            if accuracy_no_increase == opts.lr_decay_epoch_when_no_increase:
-                global_lr *= opts.lr_decay_rate
-                build_model_fn_utils.set_global_learning_rate(global_lr)
-                tf.logging.info(
-                    "Accuracy no increase, learning rate decay by {}."
-                    .format(opts.lr_decay_rate))
-            elif accuracy_no_increase > opts.lr_decay_epoch_when_no_increase:
-                tf.logging.info("Accuracy no increase, early stopping.")
-                break
-            else:
-                tf.logging.info("Accuracy no increase, try once more.")
-
+    max_steps = None
+    if opts.max_train_steps > 0:
+        max_steps = opts.max_train_steps
+    train_spec = tf.estimator.TrainSpec(
+        input_fn=build_train_input_fn,
+        max_steps=max_steps,
+        hooks=hooks)
+    eval_spec = tf.estimator.EvalSpec(
+        input_fn=build_eval_input_fn,
+        steps=None,
+        name='eval',
+        start_delay_secs=3,
+        throttle_secs=opts.throttle_secs
+    )
+    result = tf.estimator.train_and_evaluate(
+        estimator, train_spec, eval_spec)
     return result
 
 
@@ -138,3 +107,22 @@ def train(opts, export=False):
     if export:
         export_model_in_local_mode(opts, estimator)
     return result
+
+
+def predict(opts):
+    tf.logging.info("Begin predict ...")
+    estimator = build_estimator(opts)
+    build_predict_input_fn = input_data.build_predict_input_fn(
+        opts, opts.predict_data_path)
+    results = estimator.predict(
+        input_fn=build_predict_input_fn,
+        checkpoint_path=opts.predict_checkpoint_path,
+        yield_single_examples=True)
+
+    with open(opts.predict_output, 'w') as fout, \
+            open(opts.predict_data_path, 'r') as fin:
+        for result in results:
+            src = fin.readline().strip()
+            fout.write(src + ' ')
+            fout.write(str(result['score'][1]) + '\n')
+    tf.logging.info("Predict done")

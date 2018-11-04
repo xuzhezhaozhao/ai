@@ -24,7 +24,7 @@ def model_fn(features, labels, mode, params):
     is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
     with slim.arg_scope(resnet_v1.resnet_arg_scope(
-            weight_decay=opts.l2_regularizer,
+            weight_decay=opts.weights_decay,
             batch_norm_decay=opts.batch_norm_decay,
             batch_norm_epsilon=opts.batch_norm_epsilon,
             activation_fn=tf.nn.relu)):

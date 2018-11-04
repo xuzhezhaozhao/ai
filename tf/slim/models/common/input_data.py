@@ -9,8 +9,9 @@ import tensorflow as tf
 import numpy as np
 
 from preprocessing import preprocessing_factory
+from common import model_keys
 
-DATA_COL = 'data'
+DATA_COL = model_keys.DATA_COL
 
 
 def read_txt_file(txt_file, has_label=True):
@@ -75,7 +76,7 @@ def parse_function(img_path, label, is_training, opts, image_size):
     image_decoded.set_shape([None, None, 3])
     image = tf.cast(image_decoded, tf.float32)
 
-    preprocessing_name = opts.model_name
+    preprocessing_name = opts.preprocess_name
     image_preprocessing_fn = preprocessing_factory.get_preprocessing(
         preprocessing_name,
         is_training=is_training)
@@ -99,6 +100,7 @@ def build_train_input_fn(opts, data_path):
         ds = ds.prefetch(opts.prefetch_size)
         if opts.shuffle_batch:
             ds = ds.shuffle(buffer_size=opts.shuffle_size)
+        ds = ds.repeat(opts.epoch)
         ds = ds.batch(opts.batch_size)
 
         return ds
