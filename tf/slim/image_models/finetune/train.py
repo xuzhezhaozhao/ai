@@ -74,15 +74,15 @@ def train_and_eval_in_local_mode(opts, estimator, hooks):
     build_eval_input_fn = input_data.build_eval_input_fn(
         opts, opts.eval_data_path)
 
-    num_samples_per_epoch = len(input_data.read_txt_file(
-        opts.train_data_path, False))
+    num_samples_per_epoch = len(
+        input_data.read_txt_file(opts.train_data_path, False))
 
-    max_steps = None
     if opts.max_train_steps > 0:
         max_steps = opts.max_train_steps
     else:
-        max_steps = opts.num_samples_per_epoch*num_samples_per_epoch
+        max_steps = opts.epoch * num_samples_per_epoch / opts.batch_size
 
+    tf.logging.info('max_steps = {}'.format(max_steps))
     train_spec = tf.estimator.TrainSpec(
         input_fn=build_train_input_fn,
         max_steps=max_steps,
@@ -93,8 +93,7 @@ def train_and_eval_in_local_mode(opts, estimator, hooks):
         name='eval',
         start_delay_secs=3,
         throttle_secs=opts.throttle_secs)
-    result = tf.estimator.train_and_evaluate(
-        estimator, train_spec, eval_spec)
+    result = tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
     return result
 
 
