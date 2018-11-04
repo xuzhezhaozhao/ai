@@ -9,7 +9,7 @@ import tensorflow as tf
 import numpy as np
 
 from preprocessing import preprocessing_factory
-from common import model_keys
+import model_keys
 
 DATA_COL = model_keys.DATA_COL
 

@@ -11,8 +11,8 @@ import tensorflow.contrib.slim as slim
 from nets import resnet_v1
 from nets import inception
 from nets import vgg
-from common import model_keys
-from common import build_model_fn_utils
+import model_keys
+import build_model_fn_utils
 
 
 def get_model(model_name, inputs, is_training, opts):

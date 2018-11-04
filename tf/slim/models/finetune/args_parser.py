@@ -120,13 +120,18 @@ tf.app.flags.DEFINE_integer('resize_side_max', 512, '')
 
 # finetune flags
 tf.app.flags.DEFINE_integer('num_classes', 1000, '')
-tf.app.flags.DEFINE_string('model_name', '', '')
+tf.app.flags.DEFINE_string(
+    'model_name', '',
+    'Specifies the model to finetune. One of "vgg16", "vgg19", "inception_v1"'
+    ', "inception_v2", "inception_v3", "inception_v4", "inception_resnet_v2"'
+    ', "resnet_v1_50"'
+)
 tf.app.flags.DEFINE_string('preprocess_name', 'easy', '')
 tf.app.flags.DEFINE_string('pretrained_weights_path', '', '')
 tf.app.flags.DEFINE_list('train_layers', '', '')
 tf.app.flags.DEFINE_list('exclude_restore_layers', '', '')
 tf.app.flags.DEFINE_float('dropout_keep_prob', 0.5, '')
-tf.app.flags.DEFINE_float('weights_decay', 0.0001, '')
+tf.app.flags.DEFINE_float('weight_decay', 0.0001, '')
 tf.app.flags.DEFINE_bool('use_batch_norm', True, '')
 tf.app.flags.DEFINE_float('batch_norm_decay', 0.9997, '')
 tf.app.flags.DEFINE_float('batch_norm_epsilon', 0.001, '')

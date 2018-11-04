@@ -9,6 +9,7 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
+model_name='resnet_v1_50'
 
 declare -A params
 params=(\
@@ -78,13 +79,13 @@ params=(\
  \
 # finetune flags \
 [num_classes]=2 \
-[model_name]='resnet_v1_50' \
-[preprocess_name]='resnet_v1_50' \
-[pretrained_weights_path]=`pwd`/../pretrained_checkpoint/resnet_v1_50.ckpt \
+[model_name]=${model_name} \
+[preprocess_name]=${model_name} \
+[pretrained_weights_path]=`pwd`/../pretrained_checkpoint/${model_name}.ckpt \
 [train_layers]='resnet_v1_50/logits/' \
 [exclude_restore_layers]='resnet_v1_50/logits/' \
-[dropout_keep_prob]=0.5 \
-[weights_decay]=0.0001 \
+[dropout_keep_prob]=0.8 \
+[weight_decay]=0.0001 \
 [use_batch_norm]=True \
 [batch_norm_decay]=0.9 \
 [batch_norm_epsilon]=0.0001 \
@@ -111,4 +112,4 @@ do
 done
 echo 'params: ' ${params_str}
 
-python common/main.py ${params_str}
+python main.py ${params_str}

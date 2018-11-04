@@ -8,8 +8,8 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from common import input_data
-from common import hook
+import input_data
+import hook
 import build_model_fn
 
 

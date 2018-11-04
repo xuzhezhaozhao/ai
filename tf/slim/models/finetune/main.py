@@ -8,8 +8,8 @@ from __future__ import print_function
 import tensorflow as tf
 import os
 
-from common import train
-from common import args_parser
+import train
+import args_parser
 
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '0'
