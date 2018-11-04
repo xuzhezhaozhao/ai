@@ -37,7 +37,7 @@ def create_predict_estimator_spec(
     """Create predict EstimatorSpec."""
 
     if ema:
-        assign_dep = restore_moving_average_vars(ema)
+        assign_dep = restore_moving_average_variables(ema)
     else:
         assign_dep = tf.no_op()
 
@@ -67,7 +67,7 @@ def create_eval_estimator_spec(
     opts = params['opts']
 
     if ema:
-        assign_dep = restore_moving_average_vars(ema)
+        assign_dep = restore_moving_average_variables(ema)
     else:
         assign_dep = tf.no_op()
 
@@ -265,7 +265,7 @@ def configure_learning_rate(num_samples_per_epoch, global_step, opts):
                          opts.learning_rate_decay_type)
 
 
-def restore_moving_average_vars(ema):
+def restore_moving_average_variables(ema):
     ema_variables = tf.get_collection(tf.GraphKeys.MOVING_AVERAGE_VARIABLES)
     tf.logging.info("ExponentialMovingAverage variables:")
     for var in ema_variables:

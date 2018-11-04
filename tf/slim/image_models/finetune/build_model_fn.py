@@ -177,8 +177,9 @@ def resnet_v1_50(inputs, is_training, opts):
             batch_norm_decay=opts.batch_norm_decay,
             batch_norm_epsilon=opts.batch_norm_epsilon,
             activation_fn=tf.nn.relu)):
-        return resnet_v1.resnet_v1_50(inputs,
-                                      num_classes=opts.num_classes,
-                                      is_training=is_training,
-                                      global_pool=opts.global_pool,
-                                      reuse=None)
+        return resnet_v1.resnet_v1_50(
+            inputs,
+            num_classes=opts.num_classes,
+            is_training=is_training,
+            global_pool=opts.global_pool,
+            reuse=None)
