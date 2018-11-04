@@ -265,6 +265,7 @@ def configure_learning_rate(num_samples_per_epoch, global_step, opts):
                          opts.learning_rate_decay_type)
 
 
+# https://github.com/tensorflow/tensorflow/issues/3460
 def restore_moving_average_variables(ema):
     ema_variables = tf.get_collection(tf.GraphKeys.MOVING_AVERAGE_VARIABLES)
     tf.logging.info("ExponentialMovingAverage variables:")
