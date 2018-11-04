@@ -74,9 +74,15 @@ def train_and_eval_in_local_mode(opts, estimator, hooks):
     build_eval_input_fn = input_data.build_eval_input_fn(
         opts, opts.eval_data_path)
 
+    num_samples_per_epoch = len(input_data.read_txt_file(
+        opts.train_data_path, False))
+
     max_steps = None
     if opts.max_train_steps > 0:
         max_steps = opts.max_train_steps
+    else:
+        max_steps = opts.num_samples_per_epoch*num_samples_per_epoch
+
     train_spec = tf.estimator.TrainSpec(
         input_fn=build_train_input_fn,
         max_steps=max_steps,

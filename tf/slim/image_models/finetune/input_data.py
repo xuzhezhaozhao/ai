@@ -122,9 +122,9 @@ def build_eval_input_fn(opts, data_path):
     return eval_input_fn
 
 
-def build_predict_input_fn(opts):
+def build_predict_input_fn(opts, data_path):
     def predict_input_fn():
-        ds = create_image_dataset(opts.predict_data_path, has_label=False)
+        ds = create_image_dataset(data_path, has_label=False)
         ds = ds.map(
             lambda filename: parse_function(
                 filename, None, False, opts, opts.inference_image_size),

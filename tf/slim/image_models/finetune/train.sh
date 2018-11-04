@@ -26,7 +26,7 @@ params=(\
  \
 # train flags \
 [batch_size]=64 \
-[max_train_steps]=1000 \
+[max_train_steps]=-1 \
 [epoch]=10 \
 [throttle_secs]=300 \
  \
