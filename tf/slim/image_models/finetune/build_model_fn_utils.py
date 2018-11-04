@@ -32,10 +32,18 @@ def get_loss(logits, labels, name, opts):
     return loss
 
 
-def create_predict_estimator_spec(mode, logits, labels, params):
+def create_predict_estimator_spec(
+        mode, logits, labels, params, ema, maintain_averages_op):
     """Create predict EstimatorSpec."""
 
-    score = tf.nn.softmax(logits)
+    if ema:
+        assign_dep = restore_moving_average_vars(ema)
+    else:
+        assign_dep = tf.no_op()
+
+    with tf.control_dependencies([assign_dep]):
+        score = tf.nn.softmax(logits)
+
     predictions = {
         'score': score,
     }
@@ -52,23 +60,34 @@ def create_predict_estimator_spec(mode, logits, labels, params):
                                       export_outputs=export_outputs)
 
 
-def create_eval_estimator_spec(mode, logits, labels, params):
+def create_eval_estimator_spec(
+        mode, logits, labels, params, ema, maintain_averages_op):
     """Create eval EstimatorSpec."""
 
     opts = params['opts']
 
-    accuracy = tf.metrics.accuracy(labels=tf.argmax(labels, 1),
-                                   predictions=tf.argmax(logits, 1))
+    if ema:
+        assign_dep = restore_moving_average_vars(ema)
+    else:
+        assign_dep = tf.no_op()
+
+    with tf.control_dependencies([assign_dep]):
+        accuracy = tf.metrics.accuracy(
+            labels=tf.argmax(labels, 1),
+            predictions=tf.argmax(logits, 1))
+
     metrics = {
         'accuracy': accuracy
     }
+
     add_metrics_summary(metrics)
 
     loss = get_loss(logits, labels, 'eval', opts)
     return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
 
 
-def create_train_estimator_spec(mode, logits, labels, params):
+def create_train_estimator_spec(
+        mode, logits, labels, params, ema, maintain_averages_op):
     """Create train EstimatorSpec."""
 
     opts = params['opts']
@@ -80,23 +99,26 @@ def create_train_estimator_spec(mode, logits, labels, params):
         tf.cast(tf.equal(tf.argmax(labels, 1), tf.argmax(logits, 1)),
                 tf.float32)))
 
-    opts = params['opts']
-    num_samples_per_epoch = params['num_samples_per_epoch']
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    if maintain_averages_op:
+        update_ops.append(maintain_averages_op)
 
-    global_step = tf.train.get_global_step()
+    opts = params['opts']
     loss = get_loss(logits, labels, 'train', opts)
+    num_samples_per_epoch = params['num_samples_per_epoch']
+    global_step = tf.train.get_global_step()
     learning_rate = configure_learning_rate(
         num_samples_per_epoch, global_step, opts)
     tf.summary.scalar('learning_rate', learning_rate)
     optimizer = configure_optimizer(learning_rate, opts)
 
-    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # for bn
+    variables_to_train = get_finetune_trainable_variables(opts)
     train_op = tf.contrib.training.create_train_op(
         total_loss=loss,
         optimizer=optimizer,
         global_step=global_step,
         update_ops=update_ops,
-        variables_to_train=get_finetune_trainable_variables(opts),
+        variables_to_train=variables_to_train,
         transform_grads_fn=None,
         summarize_gradients=True,
         aggregation_method=None,
@@ -107,15 +129,19 @@ def create_train_estimator_spec(mode, logits, labels, params):
         mode, loss=loss, train_op=train_op, training_hooks=training_hooks)
 
 
-def create_estimator_spec(mode, logits, labels, params):
+def create_estimator_spec(
+        mode, logits, labels, params, ema, maintain_averages_op):
     if mode == tf.estimator.ModeKeys.PREDICT:
-        return create_predict_estimator_spec(mode, logits, labels, params)
+        return create_predict_estimator_spec(
+            mode, logits, labels, params, ema, maintain_averages_op)
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        return create_eval_estimator_spec(mode, logits, labels, params)
+        return create_eval_estimator_spec(
+            mode, logits, labels, params, ema, maintain_averages_op)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
-        return create_train_estimator_spec(mode, logits, labels, params)
+        return create_train_estimator_spec(
+            mode, logits, labels, params, ema, maintain_averages_op)
 
 
 def add_metrics_summary(metrics):
@@ -237,3 +263,11 @@ def configure_learning_rate(num_samples_per_epoch, global_step, opts):
     else:
         raise ValueError('learning_rate_decay_type [%s] was not recognized' %
                          opts.learning_rate_decay_type)
+
+
+def restore_moving_average_vars(ema):
+    ema_variables = tf.get_collection(tf.GraphKeys.MOVING_AVERAGE_VARIABLES)
+    tf.logging.info("ExponentialMovingAverage variables:")
+    for var in ema_variables:
+        tf.logging.info(var)
+    return tf.group(*[tf.assign(x, ema.average(x)) for x in ema_variables])

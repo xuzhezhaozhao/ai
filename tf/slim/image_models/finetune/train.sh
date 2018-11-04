@@ -11,6 +11,16 @@ model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
 model_name='resnet_v1_50'
 
+remove_model_dir=1
+if [[ ${remove_model_dir} == '1' ]]; then
+    echo "remove ${model_dir}.bak"
+    rm -rf ${model_dir}.bak
+    if [[ -d ${model_dir} ]]; then
+        echo "rename ${model_dir} to ${model_dir}.bak"
+        mv ${model_dir} ${model_dir}.bak
+    fi
+fi
+
 declare -A params
 params=(\
 [model_dir]=${model_dir} \
@@ -20,8 +30,8 @@ params=(\
 [run_mode]='all' \
 [train_data_path]=`pwd`/train.txt \
 [eval_data_path]=`pwd`/validation.txt \
-[predict_data_path]='pwd'/test.txt \
-[predict_output]='pwd'/predict_output.txt \
+[predict_data_path]=`pwd`/test.txt \
+[predict_output]=`pwd`/predict_output.txt \
 [predict_checkpoint_path]=${model_dir} \
  \
 # train flags \
@@ -67,9 +77,13 @@ params=(\
 ## fixed, exponential or polynomial
 [learning_rate_decay_type]='exponential' \
 [end_learning_rate]=0.0001 \
-[label_smoothing]=0.0 \
 [learning_rate_decay_factor]=0.94 \
 [num_epochs_per_decay]=2.0 \
+[label_smoothing]=0.0 \
+ \
+# moving average flags
+[use_moving_average]=True \
+[moving_average_decay]=0.9 \
  \
 # preprocess flags \
 [inference_image_size]=256 \
@@ -95,15 +109,6 @@ params=(\
 [spatial_squeeze]=True \
 [create_aux_logits]=False \
 )
-
-remove_model_dir=1
-if [[ ${remove_model_dir} == '1' ]]; then
-    echo "remove model_dir ..."
-    rm -rf ${model_dir}.bak
-    if [[ -d ${model_dir} ]]; then
-        mv ${model_dir} ${model_dir}.bak
-    fi
-fi
 
 params_str=''
 for key in $(echo ${!params[*]})

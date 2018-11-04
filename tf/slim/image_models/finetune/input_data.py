@@ -14,7 +14,7 @@ import model_keys
 DATA_COL = model_keys.DATA_COL
 
 
-def read_txt_file(txt_file, has_label=True):
+def read_txt_file(txt_file, has_label):
     """Read the content of the text file and store it into lists."""
 
     img_paths = []
@@ -56,10 +56,11 @@ def shuffle_lists(img_paths, labels):
     return shuffle_img_paths, shuffle_labels
 
 
-def create_image_dataset(data_path, has_label=True):
+def create_image_dataset(data_path, has_label, shuffle):
     if has_label:
         img_paths, img_labels = read_txt_file(data_path, has_label=True)
-        img_paths, img_labels = shuffle_lists(img_paths, img_labels)
+        if shuffle:
+            img_paths, img_labels = shuffle_lists(img_paths, img_labels)
         img_paths = tf.convert_to_tensor(img_paths, dtype=tf.string)
         labels = tf.convert_to_tensor(img_labels, dtype=tf.int32)
         ds = tf.data.Dataset.from_tensor_slices((img_paths, labels))
@@ -94,7 +95,7 @@ def parse_function(img_path, label, is_training, opts, image_size):
 
 def build_train_input_fn(opts, data_path):
     def train_input_fn():
-        ds = create_image_dataset(data_path, has_label=True)
+        ds = create_image_dataset(data_path, has_label=True, shuffle=True)
         ds = ds.map(
             lambda filename, label: parse_function(
                 filename, label, True, opts, opts.train_image_size),
@@ -111,7 +112,7 @@ def build_train_input_fn(opts, data_path):
 
 def build_eval_input_fn(opts, data_path):
     def eval_input_fn():
-        ds = create_image_dataset(data_path, has_label=True)
+        ds = create_image_dataset(data_path, has_label=True, shuffle=False)
         ds = ds.map(
             lambda filename, label: parse_function(
                 filename, label, False, opts, opts.inference_image_size),
@@ -124,7 +125,7 @@ def build_eval_input_fn(opts, data_path):
 
 def build_predict_input_fn(opts, data_path):
     def predict_input_fn():
-        ds = create_image_dataset(data_path, has_label=False)
+        ds = create_image_dataset(data_path, has_label=False, shuffle=False)
         ds = ds.map(
             lambda filename: parse_function(
                 filename, None, False, opts, opts.inference_image_size),

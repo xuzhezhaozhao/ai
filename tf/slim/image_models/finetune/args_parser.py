@@ -100,9 +100,6 @@ tf.app.flags.DEFINE_float(
     'The minimal end learning rate used by a polynomial decay learning rate.')
 
 tf.app.flags.DEFINE_float(
-    'label_smoothing', 0.0, 'The amount of label smoothing.')
-
-tf.app.flags.DEFINE_float(
     'learning_rate_decay_factor', 0.94, 'Learning rate decay factor.')
 
 tf.app.flags.DEFINE_float(
@@ -111,6 +108,18 @@ tf.app.flags.DEFINE_float(
     ' epochs per clone but aggregates per sync replicas. So 1.0 means that '
     'each clone will go over full epoch individually, but replicas will go '
     'once across all replicas.')
+
+tf.app.flags.DEFINE_float(
+    'label_smoothing', 0.0, 'The amount of label smoothing.')
+
+# moving average flags
+tf.app.flags.DEFINE_bool(
+    'use_moving_average', False,
+    'Weather to use moving average.')
+
+tf.app.flags.DEFINE_float(
+    'moving_average_decay', 0.9,
+    'The decay to use for the moving average.')
 
 # preprocess flags
 tf.app.flags.DEFINE_integer('inference_image_size', 256, '')
