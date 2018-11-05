@@ -84,7 +84,9 @@ def parse_function(img_path, label, is_training, opts, image_size):
         preprocessing_name,
         is_training=is_training)
 
-    image = image_preprocessing_fn(image, image_size, image_size)
+    image = image_preprocessing_fn(image, image_size, image_size,
+                                   resize_side_min=opts.resize_side_min,
+                                   resize_side_max=opts.resize_side_max)
 
     if label is None:
         return {DATA_COL: image}
@@ -115,7 +117,7 @@ def build_eval_input_fn(opts, data_path):
         ds = create_image_dataset(data_path, has_label=True, shuffle=False)
         ds = ds.map(
             lambda filename, label: parse_function(
-                filename, label, False, opts, opts.inference_image_size),
+                filename, label, False, opts, opts.eval_image_size),
             num_parallel_calls=opts.map_num_parallel_calls)
         ds = ds.prefetch(opts.prefetch_size)
         ds = ds.batch(opts.batch_size)
@@ -128,7 +130,7 @@ def build_predict_input_fn(opts, data_path):
         ds = create_image_dataset(data_path, has_label=False, shuffle=False)
         ds = ds.map(
             lambda filename: parse_function(
-                filename, None, False, opts, opts.inference_image_size),
+                filename, None, False, opts, opts.eval_image_size),
             num_parallel_calls=opts.map_num_parallel_calls)
         ds = ds.prefetch(opts.prefetch_size)
         ds = ds.batch(opts.batch_size)

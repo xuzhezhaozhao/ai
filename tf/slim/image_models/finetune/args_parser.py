@@ -122,7 +122,7 @@ tf.app.flags.DEFINE_float(
     'The decay to use for the moving average.')
 
 # preprocess flags
-tf.app.flags.DEFINE_integer('inference_image_size', 256, '')
+tf.app.flags.DEFINE_integer('eval_image_size', 256, '')
 tf.app.flags.DEFINE_integer('train_image_size', 224, '')
 tf.app.flags.DEFINE_integer('resize_side_min', 256, '')
 tf.app.flags.DEFINE_integer('resize_side_max', 512, '')

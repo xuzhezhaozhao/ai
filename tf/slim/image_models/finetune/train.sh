@@ -11,6 +11,7 @@ model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
 
 model_name='resnet_v1_50'
+preprocess_name='resnet_v1_50' \
 trainable_scopes='resnet_v1_50/logits/'
 exclude_restore_scopes='resnet_v1_50/logits/,global_step:0'
 
@@ -89,7 +90,7 @@ params=(\
 [moving_average_decay]=0.9 \
  \
 # preprocess flags \
-[inference_image_size]=256 \
+[eval_image_size]=256 \
 [train_image_size]=224 \
 [resize_side_min]=256 \
 [resize_side_max]=512 \
@@ -97,7 +98,7 @@ params=(\
 # finetune flags \
 [num_classes]=2 \
 [model_name]=${model_name} \
-[preprocess_name]=${model_name} \
+[preprocess_name]=${preprocess_name} \
 [pretrained_weights_path]=`pwd`/../pretrained_checkpoint/${model_name}.ckpt \
 [trainable_scopes]=${trainable_scopes} \
 [exclude_restore_scopes]=${exclude_restore_scopes} \
