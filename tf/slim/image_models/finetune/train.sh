@@ -190,7 +190,7 @@ params=(\
 [run_mode]='all' \
 [train_data_path]=`pwd`/train.txt \
 [eval_data_path]=`pwd`/validation.txt \
-[predict_data_path]=`pwd`/test.txt \
+[predict_data_path]=`pwd`/validation.txt \
 [predict_output]=`pwd`/predict_output.txt \
 [predict_checkpoint_path]=${model_dir} \
  \
