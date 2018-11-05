@@ -84,10 +84,15 @@ def parse_function(img_path, label, is_training, opts, image_size):
         preprocessing_name,
         is_training=is_training)
 
-    image = image_preprocessing_fn(image, image_size, image_size,
-                                   resize_side_min=opts.resize_side_min,
-                                   resize_side_max=opts.resize_side_max)
+    import inspect
+    args = inspect.getargspec(image_preprocessing_fn).args
+    kwargs = {}
+    if 'resize_side_min' in args:
+        kwargs['resize_side_min'] = opts.resize_side_min
+    if 'resize_side_max' in args:
+        kwargs['resize_side_max'] = opts.resize_side_max
 
+    image = image_preprocessing_fn(image, image_size, image_size, **kwargs)
     if label is None:
         return {DATA_COL: image}
     else:
