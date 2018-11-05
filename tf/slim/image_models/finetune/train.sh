@@ -78,7 +78,7 @@ preprocess_image() {
         trainable_scopes='InceptionV1/Logits/'
         exclude_restore_scopes='InceptionV1/Logits/,global_step:0'
         preprocess_name='inception'
-        eval_image_size=224
+        eval_image_size=256
         train_image_size=224
         global_pool=False
     elif [[ $1 == 'inception_v2' ]]; then
@@ -166,6 +166,34 @@ preprocess_image() {
         preprocess_name='inception'
         eval_image_size=224
         train_image_size=224
+    elif [[ $1 == 'nasnet_mobile' ]]; then
+        pretrained_weights_path=${pretrained_weights_path}/model.ckpt
+        trainable_scopes='final_layer/FC'
+        exclude_restore_scopes='final_layer/FC,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=224
+        train_image_size=224
+    elif [[ $1 == 'nasnet_large' ]]; then
+        pretrained_weights_path=${pretrained_weights_path}/model.ckpt
+        trainable_scopes='final_layer/FC'
+        exclude_restore_scopes='final_layer/FC,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=224
+        train_image_size=224
+    elif [[ $1 == 'pnasnet_mobile' ]]; then
+        pretrained_weights_path=${pretrained_weights_path}/model.ckpt
+        trainable_scopes='final_layer/FC'
+        exclude_restore_scopes='final_layer/FC,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=224
+        train_image_size=224
+    elif [[ $1 == 'pnasnet_large' ]]; then
+        pretrained_weights_path=${pretrained_weights_path}/model.ckpt
+        trainable_scopes='final_layer/FC'
+        exclude_restore_scopes='final_layer/FC,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=224
+        train_image_size=224
     fi
 }
 
@@ -191,7 +219,7 @@ params=(\
 [train_data_path]=`pwd`/train.txt \
 [eval_data_path]=`pwd`/validation.txt \
 [predict_data_path]=`pwd`/validation.txt \
-[predict_output]=`pwd`/predict_output.txt \
+[predict_output]=`pwd`/predict_output.${model_name}.txt \
 [predict_checkpoint_path]=${model_dir} \
  \
 # train flags \
