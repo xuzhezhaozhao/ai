@@ -9,7 +9,10 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
+
 model_name='resnet_v1_50'
+trainable_scopes='resnet_v1_50/logits/'
+exclude_restore_scopes='resnet_v1_50/logits/,global_step:0'
 
 remove_model_dir=1
 if [[ ${remove_model_dir} == '1' ]]; then
@@ -82,7 +85,7 @@ params=(\
 [label_smoothing]=0.0 \
  \
 # moving average flags
-[use_moving_average]=True \
+[use_moving_average]=False \
 [moving_average_decay]=0.9 \
  \
 # preprocess flags \
@@ -96,10 +99,10 @@ params=(\
 [model_name]=${model_name} \
 [preprocess_name]=${model_name} \
 [pretrained_weights_path]=`pwd`/../pretrained_checkpoint/${model_name}.ckpt \
-[trainable_scopes]='resnet_v1_50/logits/' \
-[exclude_restore_scopes]='resnet_v1_50/logits/' \
+[trainable_scopes]=${trainable_scopes} \
+[exclude_restore_scopes]=${exclude_restore_scopes} \
 [dropout_keep_prob]=0.8 \
-[weight_decay]=0.00005 \
+[weight_decay]=0.0001 \
 [use_batch_norm]=True \
 [batch_norm_decay]=0.9 \
 [batch_norm_epsilon]=0.0001 \
