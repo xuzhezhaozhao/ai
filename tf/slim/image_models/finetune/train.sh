@@ -10,10 +10,68 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
 
-model_name='resnet_v1_50'
-preprocess_name='resnet_v1_50' \
-trainable_scopes='resnet_v1_50/logits/'
-exclude_restore_scopes='resnet_v1_50/logits/,global_step:0'
+
+# default preprocess image flags
+preprocess_name='vgg'
+eval_image_size=224
+train_image_size=224
+resize_side_min=256
+resize_side_max=512
+global_pool=True
+create_aux_logits=False
+
+# modified by specified model
+preprocess_image() {
+    if [[ $1 == 'resnet_v1_50' ]]; then
+        trainable_scopes='resnet_v1_50/logits/'
+        exclude_restore_scopes='resnet_v1_50/logits/,global_step:0'
+        preprocess_name='vgg'
+        eval_image_size=224
+        train_image_size=224
+        resize_side_min=256
+        resize_side_max=352
+    elif [[ $1 == 'resnet_v2_50' ]]; then
+        trainable_scopes='resnet_v2_50/logits/'
+        exclude_restore_scopes='resnet_v2_50/logits/,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=299
+        train_image_size=299
+        resize_side_min=299
+        resize_side_max=352
+    elif [[ $1 == 'inception_v1' ]]; then
+        trainable_scopes='InceptionV1/Logits/'
+        exclude_restore_scopes='InceptionV1/Logits/,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=224
+        train_image_size=224
+        global_pool=False
+    elif [[ $1 == 'inception_v2' ]]; then
+        trainable_scopes='InceptionV2/Logits/'
+        exclude_restore_scopes='InceptionV2/Logits/,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=224
+        train_image_size=224
+        global_pool=False
+    elif [[ $1 == 'inception_v3' ]]; then
+        trainable_scopes='InceptionV3/Logits/'
+        exclude_restore_scopes='InceptionV3/Logits/'
+        preprocess_name='inception'
+        eval_image_size=299
+        train_image_size=299
+        global_pool=True
+        create_aux_logits=False
+    elif [[ $1 == 'inception_v4' ]]; then
+        trainable_scopes='InceptionV4/Logits/'
+        exclude_restore_scopes='InceptionV4/Logits/,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=299
+        train_image_size=299
+        global_pool=True
+    fi
+}
+
+model_name='inception_v3'
+preprocess_image ${model_name}
 
 remove_model_dir=1
 if [[ ${remove_model_dir} == '1' ]]; then
@@ -39,10 +97,10 @@ params=(\
 [predict_checkpoint_path]=${model_dir} \
  \
 # train flags \
-[batch_size]=64 \
+[batch_size]=32 \
 [max_train_steps]=-1 \
 [epoch]=10 \
-[throttle_secs]=300 \
+[throttle_secs]=600 \
  \
 # dataset flags \
 [prefetch_size]=500 \
@@ -81,8 +139,8 @@ params=(\
 ## fixed, exponential or polynomial
 [learning_rate_decay_type]='exponential' \
 [end_learning_rate]=0.0001 \
-[learning_rate_decay_factor]=0.94 \
-[num_epochs_per_decay]=2.0 \
+[learning_rate_decay_factor]=0.9 \
+[num_epochs_per_decay]=1.0 \
 [label_smoothing]=0.0 \
  \
 # moving average flags
@@ -90,10 +148,10 @@ params=(\
 [moving_average_decay]=0.9 \
  \
 # preprocess flags \
-[eval_image_size]=256 \
-[train_image_size]=224 \
-[resize_side_min]=256 \
-[resize_side_max]=512 \
+[eval_image_size]=${eval_image_size} \
+[train_image_size]=${train_image_size} \
+[resize_side_min]=${resize_side_min} \
+[resize_side_max]=${resize_side_max} \
  \
 # finetune flags \
 [num_classes]=2 \
@@ -102,16 +160,16 @@ params=(\
 [pretrained_weights_path]=`pwd`/../pretrained_checkpoint/${model_name}.ckpt \
 [trainable_scopes]=${trainable_scopes} \
 [exclude_restore_scopes]=${exclude_restore_scopes} \
-[dropout_keep_prob]=0.8 \
-[weight_decay]=0.0001 \
+[dropout_keep_prob]=1.0 \
+[weight_decay]=0.0000 \
 [use_batch_norm]=True \
 [batch_norm_decay]=0.9 \
 [batch_norm_epsilon]=0.0001 \
-[global_pool]=True \
+[global_pool]=${global_pool} \
 [min_depth]=16 \
 [depth_multiplier]=1.0 \
 [spatial_squeeze]=True \
-[create_aux_logits]=False \
+[create_aux_logits]=${create_aux_logits} \
 )
 
 params_str=''
