@@ -197,7 +197,7 @@ params=(\
 # train flags \
 [batch_size]=32 \
 [max_train_steps]=-1 \
-[epoch]=10 \
+[epoch]=5 \
 [throttle_secs]=600 \
  \
 # dataset flags \
