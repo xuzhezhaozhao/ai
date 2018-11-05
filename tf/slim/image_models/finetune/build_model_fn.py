@@ -8,6 +8,8 @@ from __future__ import print_function
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
+from nets.nasnet import nasnet
+from nets.nasnet import pnasnet
 from nets import mobilenet_v1
 from nets.mobilenet import mobilenet_v2
 from nets import resnet_v1
@@ -61,6 +63,10 @@ def get_model_def(model_name, inputs, is_training, opts):
         'mobilenet_v1_1.0_224': mobilenet_v1_100,
         'mobilenet_v2_1.0_224': mobilenet_v2_100,
         'mobilenet_v2_1.4_224': mobilenet_v2_140,
+        'nasnet_mobile': nasnet_mobile,
+        'nasnet_large': nasnet_large,
+        'pnasnet_mobile': pnasnet_mobile,
+        'pnasnet_large': pnasnet_large,
     }
 
     if model_name not in model_def_map:
@@ -373,3 +379,71 @@ def mobilenet_v2_140(inputs, is_training, opts):
             inputs,
             num_classes=opts.num_classes,
             reuse=None)
+
+
+def nasnet_mobile(inputs, is_training, opts):
+    with slim.arg_scope(nasnet.nasnet_mobile_arg_scope(
+            weight_decay=opts.weight_decay,
+            batch_norm_decay=opts.batch_norm_decay,
+            batch_norm_epsilon=opts.batch_norm_epsilon)):
+
+        config = nasnet.mobile_imagenet_config()
+        config.set_hparam('dense_dropout_keep_prob', opts.dropout_keep_prob)
+        config.set_hparam('use_aux_head', int(opts.create_aux_logits))
+
+        return nasnet.build_nasnet_mobile(
+            inputs,
+            num_classes=opts.num_classes,
+            is_training=is_training,
+            config=config)
+
+
+def nasnet_large(inputs, is_training, opts):
+    with slim.arg_scope(nasnet.nasnet_large_arg_scope(
+            weight_decay=opts.weight_decay,
+            batch_norm_decay=opts.batch_norm_decay,
+            batch_norm_epsilon=opts.batch_norm_epsilon)):
+
+        config = nasnet.large_imagenet_config()
+        config.set_hparam('dense_dropout_keep_prob', opts.dropout_keep_prob)
+        config.set_hparam('use_aux_head', int(opts.create_aux_logits))
+
+        return nasnet.build_nasnet_large(
+            inputs,
+            num_classes=opts.num_classes,
+            is_training=is_training,
+            config=config)
+
+
+def pnasnet_mobile(inputs, is_training, opts):
+    with slim.arg_scope(pnasnet.pnasnet_mobile_arg_scope(
+            weight_decay=opts.weight_decay,
+            batch_norm_decay=opts.batch_norm_decay,
+            batch_norm_epsilon=opts.batch_norm_epsilon)):
+
+        config = pnasnet.large_imagenet_config()
+        config.set_hparam('dense_dropout_keep_prob', opts.dropout_keep_prob)
+        config.set_hparam('use_aux_head', int(opts.create_aux_logits))
+
+        return pnasnet.build_pnasnet_mobile(
+            inputs,
+            num_classes=opts.num_classes,
+            is_training=is_training,
+            config=config)
+
+
+def pnasnet_large(inputs, is_training, opts):
+    with slim.arg_scope(pnasnet.pnasnet_large_arg_scope(
+            weight_decay=opts.weight_decay,
+            batch_norm_decay=opts.batch_norm_decay,
+            batch_norm_epsilon=opts.batch_norm_epsilon)):
+
+        config = pnasnet.large_imagenet_config()
+        config.set_hparam('dense_dropout_keep_prob', opts.dropout_keep_prob)
+        config.set_hparam('use_aux_head', int(opts.create_aux_logits))
+
+        return pnasnet.build_pnasnet_large(
+            inputs,
+            num_classes=opts.num_classes,
+            is_training=is_training,
+            config=config)
