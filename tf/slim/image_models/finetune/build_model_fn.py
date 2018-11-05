@@ -8,6 +8,8 @@ from __future__ import print_function
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
+from nets import mobilenet_v1
+from nets.mobilenet import mobilenet_v2
 from nets import resnet_v1
 from nets import resnet_v2
 from nets import inception
@@ -54,6 +56,11 @@ def get_model_def(model_name, inputs, is_training, opts):
         'resnet_v2_50': resnet_v2_50,
         'resnet_v2_101': resnet_v2_101,
         'resnet_v2_152': resnet_v2_152,
+        'mobilenet_v1_0.25_128': mobilenet_v1_025,
+        'mobilenet_v1_0.5_160': mobilenet_v1_050,
+        'mobilenet_v1_1.0_224': mobilenet_v1_100,
+        'mobilenet_v2_1.0_224': mobilenet_v2_100,
+        'mobilenet_v2_1.4_224': mobilenet_v2_140,
     }
 
     if model_name not in model_def_map:
@@ -270,4 +277,99 @@ def resnet_v2_152(inputs, is_training, opts):
             global_pool=opts.global_pool,
             output_stride=None,
             spatial_squeeze=opts.spatial_squeeze,
+            reuse=None)
+
+
+# see https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet_v1.md
+def mobilenet_v1_025(inputs, is_training, opts):
+    with slim.arg_scope(mobilenet_v1.mobilenet_v1_arg_scope(
+            is_training=is_training,
+            weight_decay=opts.weight_decay,
+            stddev=0.09,
+            regularize_depthwise=False,
+            batch_norm_decay=opts.batch_norm_decay,
+            batch_norm_epsilon=opts.batch_norm_epsilon)):
+        return mobilenet_v1.mobilenet_v1_025(
+            inputs,
+            num_classes=opts.num_classes,
+            dropout_keep_prob=opts.dropout_keep_prob,
+            is_training=is_training,
+            min_depth=8,
+            global_pool=opts.global_pool,
+            spatial_squeeze=opts.spatial_squeeze,
+            reuse=None)
+
+
+def mobilenet_v1_050(inputs, is_training, opts):
+    with slim.arg_scope(mobilenet_v1.mobilenet_v1_arg_scope(
+            is_training=is_training,
+            weight_decay=opts.weight_decay,
+            stddev=0.09,
+            regularize_depthwise=False,
+            batch_norm_decay=opts.batch_norm_decay,
+            batch_norm_epsilon=opts.batch_norm_epsilon)):
+        return mobilenet_v1.mobilenet_v1_050(
+            inputs,
+            num_classes=opts.num_classes,
+            dropout_keep_prob=opts.dropout_keep_prob,
+            is_training=is_training,
+            min_depth=8,
+            global_pool=opts.global_pool,
+            spatial_squeeze=opts.spatial_squeeze,
+            reuse=None)
+
+
+def mobilenet_v1_100(inputs, is_training, opts):
+    with slim.arg_scope(mobilenet_v1.mobilenet_v1_arg_scope(
+            is_training=is_training,
+            weight_decay=opts.weight_decay,
+            stddev=0.09,
+            regularize_depthwise=False,
+            batch_norm_decay=opts.batch_norm_decay,
+            batch_norm_epsilon=opts.batch_norm_epsilon)):
+        return mobilenet_v1.mobilenet_v1(
+            inputs,
+            num_classes=opts.num_classes,
+            dropout_keep_prob=opts.dropout_keep_prob,
+            is_training=is_training,
+            min_depth=8,
+            depth_multiplier=1.0,
+            global_pool=opts.global_pool,
+            spatial_squeeze=opts.spatial_squeeze,
+            reuse=None)
+
+
+def mobilenet_v2_100(inputs, is_training, opts):
+    if is_training:
+        with slim.arg_scope(mobilenet_v2.training_scope(
+                weight_decay=opts.weight_decay,
+                stddev=0.09,
+                bn_decay=opts.batch_norm_decay)):
+            return mobilenet_v2.mobilenet(
+                inputs,
+                num_classes=opts.num_classes,
+                depth_multiplier=1.0,
+                reuse=None)
+    else:
+        return mobilenet_v2.mobilenet(
+            inputs,
+            num_classes=opts.num_classes,
+            depth_multiplier=1.0,
+            reuse=None)
+
+
+def mobilenet_v2_140(inputs, is_training, opts):
+    if is_training:
+        with slim.arg_scope(mobilenet_v2.training_scope(
+                weight_decay=opts.weight_decay,
+                stddev=0.09,
+                bn_decay=opts.batch_norm_decay)):
+            return mobilenet_v2.mobilenet_v2_140(
+                inputs,
+                num_classes=opts.num_classes,
+                reuse=None)
+    else:
+        return mobilenet_v2.mobilenet_v2_140(
+            inputs,
+            num_classes=opts.num_classes,
             reuse=None)

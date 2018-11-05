@@ -7,4 +7,6 @@ or
 https://pan.baidu.com/s/16oPCLVOEag7ml-90aV9Xdw
 password: s875
 
-rename checkpoint file to model name.
+Note:
+1. rename checkpoint file to model name.
+2. unzip mobilenet checkpoint to directory such as 'mobilenet_v1_0.25_128.ckpt'

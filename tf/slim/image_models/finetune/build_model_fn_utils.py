@@ -157,8 +157,15 @@ def create_restore_hook(opts):
     tf.logging.info('Restore variables: ')
     for var in variables_to_restore:
         tf.logging.info(var)
+
+    checkpoint_path = opts.pretrained_weights_path
+    if tf.gfile.IsDirectory(checkpoint_path):
+        checkpoint_path = tf.train.latest_checkpoint(checkpoint_path)
+
+    tf.logging.info('checkpoint_path = {}'.format(checkpoint_path))
+
     init_fn = slim.assign_from_checkpoint_fn(
-        opts.pretrained_weights_path,
+        checkpoint_path,
         variables_to_restore,
         ignore_missing_vars=False)
 

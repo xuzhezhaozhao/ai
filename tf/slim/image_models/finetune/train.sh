@@ -10,10 +10,10 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
 model_name='inception_v3'
-
 if [[ $# -eq 1 ]]; then
     model_name=$1
 fi
+pretrained_weights_path=`pwd`/../pretrained_checkpoint/${model_name}.ckpt
 
 # default preprocess image flags
 preprocess_name='vgg'
@@ -128,6 +128,44 @@ preprocess_image() {
         resize_side_min=256
         resize_side_max=512
         global_pool=True
+    elif [[ $1 == 'mobilenet_v1_0.25_128' ]]; then
+        pretrained_weights_path=${pretrained_weights_path}/${model_name}.ckpt
+        trainable_scopes='MobilenetV1/Logits/'
+        exclude_restore_scopes='MobilenetV1/Logits/,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=128
+        train_image_size=128
+        global_pool=True
+    elif [[ $1 == 'mobilenet_v1_0.5_160' ]]; then
+        pretrained_weights_path=${pretrained_weights_path}/${model_name}.ckpt
+        trainable_scopes='MobilenetV1/Logits/'
+        exclude_restore_scopes='MobilenetV1/Logits/,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=160
+        train_image_size=160
+        global_pool=True
+    elif [[ $1 == 'mobilenet_v1_1.0_224' ]]; then
+        pretrained_weights_path=${pretrained_weights_path}/${model_name}.ckpt
+        trainable_scopes='MobilenetV1/Logits/'
+        exclude_restore_scopes='MobilenetV1/Logits/,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=224
+        train_image_size=224
+        global_pool=True
+    elif [[ $1 == 'mobilenet_v2_1.0_224' ]]; then
+        pretrained_weights_path=${pretrained_weights_path}/${model_name}.ckpt
+        trainable_scopes='MobilenetV2/Logits/'
+        exclude_restore_scopes='MobilenetV2/Logits/,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=224
+        train_image_size=224
+    elif [[ $1 == 'mobilenet_v2_1.4_224' ]]; then
+        pretrained_weights_path=${pretrained_weights_path}/${model_name}.ckpt
+        trainable_scopes='MobilenetV2/Logits/'
+        exclude_restore_scopes='MobilenetV2/Logits/,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=224
+        train_image_size=224
     fi
 }
 
@@ -217,7 +255,7 @@ params=(\
 [num_classes]=2 \
 [model_name]=${model_name} \
 [preprocess_name]=${preprocess_name} \
-[pretrained_weights_path]=`pwd`/../pretrained_checkpoint/${model_name}.ckpt \
+[pretrained_weights_path]=${pretrained_weights_path} \
 [trainable_scopes]=${trainable_scopes} \
 [exclude_restore_scopes]=${exclude_restore_scopes} \
 [dropout_keep_prob]=1.0 \
