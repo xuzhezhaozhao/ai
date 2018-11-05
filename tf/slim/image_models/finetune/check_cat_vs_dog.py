@@ -7,7 +7,7 @@ for line in open(predict_output, 'r'):
     if line == '':
         continue
     tokens = line.split(' ')
-    score = float(tokens[1])
+    score = float(tokens[2])
     t = tokens[0].split('/')[-1].split('.')[0]
 
     if t == 'dog':
