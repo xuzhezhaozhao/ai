@@ -41,8 +41,8 @@ def model_fn(features, labels, mode, params):
 
 def get_model_def(model_name, inputs, is_training, opts):
     model_def_map = {
-        'vgg16': vgg16,
-        'vgg19': vgg19,
+        'vgg_16': vgg_16,
+        'vgg_19': vgg_19,
         'inception_v1': inception_v1,
         'inception_v2': inception_v2,
         'inception_v3': inception_v3,
@@ -63,7 +63,7 @@ def get_model_def(model_name, inputs, is_training, opts):
     return model_def(inputs, is_training, opts)
 
 
-def vgg16(inputs, is_training, opts):
+def vgg_16(inputs, is_training, opts):
     with slim.arg_scope(vgg.vgg_arg_scope(weight_decay=opts.weight_decay)):
         return vgg.vgg_16(
             inputs,
@@ -75,7 +75,7 @@ def vgg16(inputs, is_training, opts):
             global_pool=opts.global_pool)
 
 
-def vgg19(inputs, is_training, opts):
+def vgg_19(inputs, is_training, opts):
     with slim.arg_scope(vgg.vgg_arg_scope(weight_decay=opts.weight_decay)):
         return vgg.vgg_19(
             inputs,

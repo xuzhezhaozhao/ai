@@ -9,7 +9,11 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
+model_name='inception_v3'
 
+if [[ $# -eq 1 ]]; then
+    model_name=$1
+fi
 
 # default preprocess image flags
 preprocess_name='vgg'
@@ -30,9 +34,41 @@ preprocess_image() {
         train_image_size=224
         resize_side_min=256
         resize_side_max=352
+    elif [[ $1 == 'resnet_v1_101' ]]; then
+        trainable_scopes='resnet_v1_101/logits/'
+        exclude_restore_scopes='resnet_v1_101/logits/,global_step:0'
+        preprocess_name='vgg'
+        eval_image_size=224
+        train_image_size=224
+        resize_side_min=256
+        resize_side_max=352
+    elif [[ $1 == 'resnet_v1_152' ]]; then
+        trainable_scopes='resnet_v1_152/logits/'
+        exclude_restore_scopes='resnet_v1_152/logits/,global_step:0'
+        preprocess_name='vgg'
+        eval_image_size=224
+        train_image_size=224
+        resize_side_min=256
+        resize_side_max=352
     elif [[ $1 == 'resnet_v2_50' ]]; then
         trainable_scopes='resnet_v2_50/logits/'
         exclude_restore_scopes='resnet_v2_50/logits/,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=299
+        train_image_size=299
+        resize_side_min=299
+        resize_side_max=352
+    elif [[ $1 == 'resnet_v2_101' ]]; then
+        trainable_scopes='resnet_v2_101/logits/'
+        exclude_restore_scopes='resnet_v2_101/logits/,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=299
+        train_image_size=299
+        resize_side_min=299
+        resize_side_max=352
+    elif [[ $1 == 'resnet_v2_152' ]]; then
+        trainable_scopes='resnet_v2_152/logits/'
+        exclude_restore_scopes='resnet_v2_152/logits/,global_step:0'
         preprocess_name='inception'
         eval_image_size=299
         train_image_size=299
@@ -54,7 +90,7 @@ preprocess_image() {
         global_pool=False
     elif [[ $1 == 'inception_v3' ]]; then
         trainable_scopes='InceptionV3/Logits/'
-        exclude_restore_scopes='InceptionV3/Logits/'
+        exclude_restore_scopes='InceptionV3/Logits/,global_step:0'
         preprocess_name='inception'
         eval_image_size=299
         train_image_size=299
@@ -67,10 +103,34 @@ preprocess_image() {
         eval_image_size=299
         train_image_size=299
         global_pool=True
+    elif [[ $1 == 'inception_resnet_v2' ]]; then
+        trainable_scopes='InceptionResnetV2/Logits/'
+        exclude_restore_scopes='InceptionResnetV2/Logits/,global_step:0'
+        preprocess_name='inception'
+        eval_image_size=299
+        train_image_size=299
+        global_pool=True
+    elif [[ $1 == 'vgg_16' ]]; then
+        trainable_scopes='vgg_16/fc6/,vgg_16/fc7/,vgg_16/fc8/'
+        exclude_restore_scopes='vgg_16/fc8/,global_step:0'
+        preprocess_name='vgg'
+        eval_image_size=224
+        train_image_size=224
+        resize_side_min=256
+        resize_side_max=512
+        global_pool=True
+    elif [[ $1 == 'vgg_19' ]]; then
+        trainable_scopes='vgg_19/fc6/,vgg_19/fc7/,vgg_19/fc8/'
+        exclude_restore_scopes='vgg_19/fc8/,global_step:0'
+        preprocess_name='vgg'
+        eval_image_size=224
+        train_image_size=224
+        resize_side_min=256
+        resize_side_max=512
+        global_pool=True
     fi
 }
 
-model_name='inception_v3'
 preprocess_image ${model_name}
 
 remove_model_dir=1
