@@ -77,7 +77,6 @@ def parse_function(img_path, label, is_training, opts, image_size):
     image_string = tf.read_file(img_path)
     image_decoded = tf.image.decode_image(image_string, channels=3)
     image_decoded.set_shape([None, None, 3])
-    image = tf.cast(image_decoded, tf.float32)
 
     preprocessing_name = opts.preprocess_name
     image_preprocessing_fn = preprocessing_factory.get_preprocessing(
@@ -92,7 +91,8 @@ def parse_function(img_path, label, is_training, opts, image_size):
     if 'resize_side_max' in args:
         kwargs['resize_side_max'] = opts.resize_side_max
 
-    image = image_preprocessing_fn(image, image_size, image_size, **kwargs)
+    image = image_preprocessing_fn(
+        image_decoded, image_size, image_size, **kwargs)
     if label is None:
         return {DATA_COL: image}
     else:
