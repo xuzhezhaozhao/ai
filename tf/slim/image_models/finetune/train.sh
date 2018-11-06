@@ -21,6 +21,7 @@ eval_image_size=224
 train_image_size=224
 resize_side_min=256
 resize_side_max=512
+train_using_one_crop=False
 global_pool=True
 create_aux_logits=False
 
@@ -80,20 +81,21 @@ preprocess_image() {
         preprocess_name='inception'
         eval_image_size=256
         train_image_size=224
-        global_pool=False
+        global_pool=True
     elif [[ $1 == 'inception_v2' ]]; then
         trainable_scopes='InceptionV2/Logits/'
         exclude_restore_scopes='InceptionV2/Logits/,global_step:0'
         preprocess_name='inception'
         eval_image_size=224
         train_image_size=224
-        global_pool=False
+        global_pool=True
     elif [[ $1 == 'inception_v3' ]]; then
         trainable_scopes='InceptionV3/Logits/'
         exclude_restore_scopes='InceptionV3/Logits/,global_step:0'
         preprocess_name='inception'
         eval_image_size=299
         train_image_size=299
+        train_using_one_crop=True
         global_pool=True
         create_aux_logits=False
     elif [[ $1 == 'inception_v4' ]]; then
@@ -225,8 +227,8 @@ params=(\
 # train flags \
 [batch_size]=32 \
 [max_train_steps]=-1 \
-[epoch]=5 \
-[throttle_secs]=600 \
+[epoch]=6 \
+[throttle_secs]=300 \
  \
 # dataset flags \
 [prefetch_size]=500 \
@@ -278,6 +280,7 @@ params=(\
 [train_image_size]=${train_image_size} \
 [resize_side_min]=${resize_side_min} \
 [resize_side_max]=${resize_side_max} \
+[train_using_one_crop]=${train_using_one_crop} \
  \
 # finetune flags \
 [num_classes]=2 \

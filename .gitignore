@@ -59,4 +59,5 @@ eval.txt
 validation.txt
 test.txt
 predict_output.txt
+predict_output.*.txt
 *.ckpt

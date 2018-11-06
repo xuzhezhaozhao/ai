@@ -1,6 +1,10 @@
 
+import sys
 
 predict_output = './predict_output.txt'
+
+if len(sys.argv) == 2:
+    predict_output = sys.argv[1]
 
 for line in open(predict_output, 'r'):
     line = line.strip()

@@ -79,6 +79,8 @@ def parse_function(img_path, label, is_training, opts, image_size):
     image_decoded.set_shape([None, None, 3])
 
     preprocessing_name = opts.preprocess_name
+    if opts.train_using_one_crop:
+        is_training = False
     image_preprocessing_fn = preprocessing_factory.get_preprocessing(
         preprocessing_name,
         is_training=is_training)

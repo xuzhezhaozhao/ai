@@ -126,6 +126,9 @@ tf.app.flags.DEFINE_integer('eval_image_size', 256, '')
 tf.app.flags.DEFINE_integer('train_image_size', 224, '')
 tf.app.flags.DEFINE_integer('resize_side_min', 256, '')
 tf.app.flags.DEFINE_integer('resize_side_max', 512, '')
+tf.app.flags.DEFINE_bool(
+    'train_using_one_crop', False,
+    'Do not augument data when training, only use image center crop.')
 
 # finetune flags
 tf.app.flags.DEFINE_integer('num_classes', 1000, '')
