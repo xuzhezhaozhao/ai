@@ -216,7 +216,7 @@ params=(\
 [batch_size]=32 \
 [max_train_steps]=-1 \
 [epoch]=5 \
-[throttle_secs]=600 \
+[throttle_secs]=900 \
  \
 # dataset flags \
 [prefetch_size]=500 \
