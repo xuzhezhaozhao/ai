@@ -23,13 +23,25 @@ import build_model_fn_utils
 def model_fn(features, labels, mode, params):
     """Build model graph."""
 
-    tf.summary.image('images', features[model_keys.DATA_COL])
+    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+
+    if is_training:
+        tf.summary.image('train_images', features[model_keys.DATA_COL])
+    else:
+        tf.summary.image('eval_images', features[model_keys.DATA_COL])
 
     opts = params['opts']
     inputs = features[model_keys.DATA_COL]
-    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
     logits, end_points = get_model_def(
         opts.model_name, inputs, is_training, opts)
+
+    tf.logging.info("logits: {}".format(logits))
+    if len(logits.shape.as_list()) == 4:
+        tf.logging.info("multi scale size")
+        logits = tf.reduce_mean(logits, [1, 2], keepdims=False)
+
+    assert len(logits.shape.as_list()) == 2
+    assert logits.shape.as_list()[1] == opts.num_classes
 
     if opts.use_moving_average:
         variables_to_train = \

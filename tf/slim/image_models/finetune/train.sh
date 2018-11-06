@@ -93,10 +93,10 @@ preprocess_image() {
         trainable_scopes='InceptionV3/Logits/'
         exclude_restore_scopes='InceptionV3/Logits/,global_step:0'
         preprocess_name='inception'
-        eval_image_size=299
+        eval_image_size=320
         train_image_size=299
-        train_using_one_crop=True
-        global_pool=True
+        train_using_one_crop=False
+        global_pool=False
         create_aux_logits=False
     elif [[ $1 == 'inception_v4' ]]; then
         trainable_scopes='InceptionV4/Logits/'
@@ -228,7 +228,7 @@ params=(\
 [batch_size]=32 \
 [max_train_steps]=-1 \
 [epoch]=6 \
-[throttle_secs]=300 \
+[throttle_secs]=600 \
  \
 # dataset flags \
 [prefetch_size]=500 \
@@ -289,7 +289,7 @@ params=(\
 [pretrained_weights_path]=${pretrained_weights_path} \
 [trainable_scopes]=${trainable_scopes} \
 [exclude_restore_scopes]=${exclude_restore_scopes} \
-[dropout_keep_prob]=1.0 \
+[dropout_keep_prob]=0.8 \
 [weight_decay]=0.0000 \
 [use_batch_norm]=True \
 [batch_norm_decay]=0.9 \
@@ -297,7 +297,7 @@ params=(\
 [global_pool]=${global_pool} \
 [min_depth]=16 \
 [depth_multiplier]=1.0 \
-[spatial_squeeze]=True \
+[spatial_squeeze]=False \
 [create_aux_logits]=${create_aux_logits} \
 )
 
