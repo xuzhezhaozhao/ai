@@ -16,13 +16,23 @@ import build_model_fn
 def build_estimator(opts):
     """Build estimator."""
 
+    num_samples_per_epoch = len(input_data.read_txt_file(
+        opts.train_data_path, False))
+
     save_checkpoints_secs = None
     if opts.save_checkpoints_secs > 0:
         save_checkpoints_secs = opts.save_checkpoints_secs
 
     save_checkpoints_steps = None
+    if opts.save_checkpoints_steps > 0 and opts.save_checkpoints_epoches > 0:
+        raise ValueError("save_checkpoints_steps and save_checkpoints_epoches "
+                         "should not be both set.")
+
     if opts.save_checkpoints_steps > 0:
         save_checkpoints_steps = opts.save_checkpoints_steps
+    if opts.save_checkpoints_epoches > 0:
+        save_checkpoints_steps = int(opts.save_checkpoints_epoches *
+                                     num_samples_per_epoch / opts.batch_size)
 
     config_keys = {}
     config_keys['model_dir'] = opts.model_dir
@@ -34,9 +44,6 @@ def build_estimator(opts):
     config_keys['keep_checkpoint_max'] = opts.keep_checkpoint_max
     config_keys['keep_checkpoint_every_n_hours'] = 10000
     config_keys['log_step_count_steps'] = opts.log_step_count_steps
-
-    num_samples_per_epoch = len(input_data.read_txt_file(
-        opts.train_data_path, False))
 
     estimator_keys = {}
     estimator_keys['model_fn'] = build_model_fn.model_fn

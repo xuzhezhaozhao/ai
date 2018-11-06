@@ -32,7 +32,8 @@ tf.app.flags.DEFINE_integer('map_num_parallel_calls', 1, '')
 # log flags
 tf.app.flags.DEFINE_integer('save_summary_steps', 100, '')
 tf.app.flags.DEFINE_integer('save_checkpoints_secs', -1, '')
-tf.app.flags.DEFINE_integer('save_checkpoints_steps', 600, '')
+tf.app.flags.DEFINE_integer('save_checkpoints_steps', -1, '')
+tf.app.flags.DEFINE_float('save_checkpoints_epoches', 1.0, '')
 tf.app.flags.DEFINE_integer('keep_checkpoint_max', 3, '')
 tf.app.flags.DEFINE_integer('log_step_count_steps', 100, '')
 

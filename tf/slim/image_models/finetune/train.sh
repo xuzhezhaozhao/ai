@@ -216,7 +216,7 @@ params=(\
 [batch_size]=32 \
 [max_train_steps]=-1 \
 [epoch]=5 \
-[throttle_secs]=900 \
+[throttle_secs]=60 \
  \
 # dataset flags \
 [prefetch_size]=500 \
@@ -227,7 +227,8 @@ params=(\
 # log flags \
 [save_summary_steps]=10 \
 [save_checkpoints_secs]=-1 \
-[save_checkpoints_steps]=1500 \
+[save_checkpoints_steps]=-1 \
+[save_checkpoints_epoches]=1.0 \
 [keep_checkpoint_max]=5 \
 [log_step_count_steps]=10 \
  \
