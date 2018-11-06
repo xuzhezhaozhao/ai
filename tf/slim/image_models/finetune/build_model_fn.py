@@ -24,6 +24,9 @@ def model_fn(features, labels, mode, params):
     """Build model graph."""
 
     is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    inputs = features[model_keys.DATA_COL]
+
+    tf.logging.info("image size: {}".format(inputs))
 
     if is_training:
         tf.summary.image('train_images', features[model_keys.DATA_COL])
@@ -31,7 +34,6 @@ def model_fn(features, labels, mode, params):
         tf.summary.image('eval_images', features[model_keys.DATA_COL])
 
     opts = params['opts']
-    inputs = features[model_keys.DATA_COL]
     logits, end_points = get_model_def(
         opts.model_name, inputs, is_training, opts)
 
@@ -184,7 +186,8 @@ def inception_v4(inputs, is_training, opts):
             is_training=is_training,
             dropout_keep_prob=opts.dropout_keep_prob,
             reuse=None,
-            create_aux_logits=opts.create_aux_logits)
+            create_aux_logits=opts.create_aux_logits,
+            global_pool=opts.global_pool)
 
 
 def inception_resnet_v2(inputs, is_training, opts):
@@ -199,7 +202,8 @@ def inception_resnet_v2(inputs, is_training, opts):
             is_training=is_training,
             dropout_keep_prob=opts.dropout_keep_prob,
             reuse=None,
-            create_aux_logits=opts.create_aux_logits)
+            create_aux_logits=opts.create_aux_logits,
+            global_pool=opts.global_pool)
 
 
 def resnet_v1_50(inputs, is_training, opts):

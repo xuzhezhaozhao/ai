@@ -372,6 +372,7 @@ def mobilenet(inputs,
       logits = slim.conv2d(
           net,
           num_classes, [1, 1],
+          stride=1,
           activation_fn=None,
           normalizer_fn=None,
           biases_initializer=tf.zeros_initializer(),

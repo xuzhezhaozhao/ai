@@ -213,8 +213,9 @@ def resnet_v2(inputs,
           net = tf.reduce_mean(net, [1, 2], name='pool5', keepdims=True)
           end_points['global_pool'] = net
         if num_classes:
-          net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,
-                            normalizer_fn=None, scope='logits')
+          net = slim.conv2d(net, num_classes, [1, 1], stride=1,
+                            activation_fn=None, normalizer_fn=None,
+                            scope='logits')
           end_points[sc.name + '/logits'] = net
           if spatial_squeeze:
             net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')

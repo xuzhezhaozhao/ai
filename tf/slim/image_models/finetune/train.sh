@@ -22,7 +22,7 @@ train_image_size=224
 resize_side_min=256
 resize_side_max=512
 train_using_one_crop=False
-global_pool=True
+global_pool=False
 create_aux_logits=False
 
 # modified by specified model
@@ -31,7 +31,7 @@ preprocess_image() {
         trainable_scopes='resnet_v1_50/logits/'
         exclude_restore_scopes='resnet_v1_50/logits/,global_step:0'
         preprocess_name='vgg'
-        eval_image_size=224
+        eval_image_size=256
         train_image_size=224
         resize_side_min=256
         resize_side_max=352
@@ -39,7 +39,7 @@ preprocess_image() {
         trainable_scopes='resnet_v1_101/logits/'
         exclude_restore_scopes='resnet_v1_101/logits/,global_step:0'
         preprocess_name='vgg'
-        eval_image_size=224
+        eval_image_size=256
         train_image_size=224
         resize_side_min=256
         resize_side_max=352
@@ -47,7 +47,7 @@ preprocess_image() {
         trainable_scopes='resnet_v1_152/logits/'
         exclude_restore_scopes='resnet_v1_152/logits/,global_step:0'
         preprocess_name='vgg'
-        eval_image_size=224
+        eval_image_size=256
         train_image_size=224
         resize_side_min=256
         resize_side_max=352
@@ -55,7 +55,7 @@ preprocess_image() {
         trainable_scopes='resnet_v2_50/logits/'
         exclude_restore_scopes='resnet_v2_50/logits/,global_step:0'
         preprocess_name='inception'
-        eval_image_size=299
+        eval_image_size=356
         train_image_size=299
         resize_side_min=299
         resize_side_max=352
@@ -63,7 +63,7 @@ preprocess_image() {
         trainable_scopes='resnet_v2_101/logits/'
         exclude_restore_scopes='resnet_v2_101/logits/,global_step:0'
         preprocess_name='inception'
-        eval_image_size=299
+        eval_image_size=356
         train_image_size=299
         resize_side_min=299
         resize_side_max=352
@@ -71,7 +71,7 @@ preprocess_image() {
         trainable_scopes='resnet_v2_152/logits/'
         exclude_restore_scopes='resnet_v2_152/logits/,global_step:0'
         preprocess_name='inception'
-        eval_image_size=299
+        eval_image_size=356
         train_image_size=299
         resize_side_min=299
         resize_side_max=352
@@ -81,55 +81,46 @@ preprocess_image() {
         preprocess_name='inception'
         eval_image_size=256
         train_image_size=224
-        global_pool=True
     elif [[ $1 == 'inception_v2' ]]; then
         trainable_scopes='InceptionV2/Logits/'
         exclude_restore_scopes='InceptionV2/Logits/,global_step:0'
         preprocess_name='inception'
-        eval_image_size=224
+        eval_image_size=256
         train_image_size=224
-        global_pool=True
     elif [[ $1 == 'inception_v3' ]]; then
         trainable_scopes='InceptionV3/Logits/'
         exclude_restore_scopes='InceptionV3/Logits/,global_step:0'
         preprocess_name='inception'
-        eval_image_size=320
+        eval_image_size=356
         train_image_size=299
-        train_using_one_crop=False
-        global_pool=False
-        create_aux_logits=False
     elif [[ $1 == 'inception_v4' ]]; then
         trainable_scopes='InceptionV4/Logits/'
         exclude_restore_scopes='InceptionV4/Logits/,global_step:0'
         preprocess_name='inception'
-        eval_image_size=299
+        eval_image_size=356
         train_image_size=299
-        global_pool=True
     elif [[ $1 == 'inception_resnet_v2' ]]; then
         trainable_scopes='InceptionResnetV2/Logits/'
         exclude_restore_scopes='InceptionResnetV2/Logits/,global_step:0'
         preprocess_name='inception'
-        eval_image_size=299
+        eval_image_size=356
         train_image_size=299
-        global_pool=True
     elif [[ $1 == 'vgg_16' ]]; then
         trainable_scopes='vgg_16/fc6/,vgg_16/fc7/,vgg_16/fc8/'
         exclude_restore_scopes='vgg_16/fc8/,global_step:0'
         preprocess_name='vgg'
-        eval_image_size=224
+        eval_image_size=256
         train_image_size=224
         resize_side_min=256
         resize_side_max=512
-        global_pool=True
     elif [[ $1 == 'vgg_19' ]]; then
         trainable_scopes='vgg_19/fc6/,vgg_19/fc7/,vgg_19/fc8/'
         exclude_restore_scopes='vgg_19/fc8/,global_step:0'
         preprocess_name='vgg'
-        eval_image_size=224
+        eval_image_size=256
         train_image_size=224
         resize_side_min=256
         resize_side_max=512
-        global_pool=True
     elif [[ $1 == 'mobilenet_v1_0.25_128' ]]; then
         pretrained_weights_path=${pretrained_weights_path}/${model_name}.ckpt
         trainable_scopes='MobilenetV1/Logits/'
@@ -137,7 +128,6 @@ preprocess_image() {
         preprocess_name='inception'
         eval_image_size=128
         train_image_size=128
-        global_pool=True
     elif [[ $1 == 'mobilenet_v1_0.5_160' ]]; then
         pretrained_weights_path=${pretrained_weights_path}/${model_name}.ckpt
         trainable_scopes='MobilenetV1/Logits/'
@@ -145,7 +135,6 @@ preprocess_image() {
         preprocess_name='inception'
         eval_image_size=160
         train_image_size=160
-        global_pool=True
     elif [[ $1 == 'mobilenet_v1_1.0_224' ]]; then
         pretrained_weights_path=${pretrained_weights_path}/${model_name}.ckpt
         trainable_scopes='MobilenetV1/Logits/'
@@ -153,7 +142,6 @@ preprocess_image() {
         preprocess_name='inception'
         eval_image_size=224
         train_image_size=224
-        global_pool=True
     elif [[ $1 == 'mobilenet_v2_1.0_224' ]]; then
         pretrained_weights_path=${pretrained_weights_path}/${model_name}.ckpt
         trainable_scopes='MobilenetV2/Logits/'
@@ -227,7 +215,7 @@ params=(\
 # train flags \
 [batch_size]=32 \
 [max_train_steps]=-1 \
-[epoch]=6 \
+[epoch]=5 \
 [throttle_secs]=600 \
  \
 # dataset flags \

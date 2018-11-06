@@ -120,6 +120,7 @@ def overfeat(inputs,
           net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
                              scope='dropout7')
           net = slim.conv2d(net, num_classes, [1, 1],
+                            stride=1,
                             activation_fn=None,
                             normalizer_fn=None,
                             biases_initializer=tf.zeros_initializer(),

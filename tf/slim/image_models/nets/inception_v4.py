@@ -258,7 +258,8 @@ def inception_v4(inputs, num_classes=1001, is_training=True,
                  dropout_keep_prob=0.8,
                  reuse=None,
                  scope='InceptionV4',
-                 create_aux_logits=True):
+                 create_aux_logits=True,
+                 global_pool=False):
   """Creates the Inception V4 model.
 
   Args:
@@ -307,31 +308,61 @@ def inception_v4(inputs, num_classes=1001, is_training=True,
             end_points['AuxLogits'] = aux_logits
 
         # Final pooling and prediction
-        # TODO(sguada,arnoegw): Consider adding a parameter global_pool which
-        # can be set to False to disable pooling here (as in resnet_*()).
         with tf.variable_scope('Logits'):
-          # 8 x 8 x 1536
-          kernel_size = net.get_shape()[1:3]
-          if kernel_size.is_fully_defined():
-            net = slim.avg_pool2d(net, kernel_size, padding='VALID',
-                                  scope='AvgPool_1a')
+          if global_pool:
+            # Global average pooling.
+            net = tf.reduce_mean(net, [1, 2], keep_dims=True, name='GlobalPool')
+            end_points['global_pool'] = net
           else:
-            net = tf.reduce_mean(net, [1, 2], keep_dims=True,
-                                 name='global_pool')
-          end_points['global_pool'] = net
+            # Pooling with a fixed kernel size.
+            kernel_size = _reduced_kernel_size_for_small_input(net, [8, 8])
+            net = slim.avg_pool2d(net, kernel_size, padding='VALID', stride=1,
+                                  scope='AvgPool_1a_{}x{}'.format(*kernel_size))
+            end_points['AvgPool_1a'] = net
+
           if not num_classes:
             return net, end_points
           # 1 x 1 x 1536
           net = slim.dropout(net, dropout_keep_prob, scope='Dropout_1b')
-          net = slim.flatten(net, scope='PreLogitsFlatten')
-          end_points['PreLogitsFlatten'] = net
+          end_points['PreLogits'] = net
           # 1536
-          logits = slim.fully_connected(net, num_classes, activation_fn=None,
-                                        scope='Logits')
+          logits = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,
+                               normalizer_fn=None, scope='Logits')
           end_points['Logits'] = logits
           end_points['Predictions'] = tf.nn.softmax(logits, name='Predictions')
     return logits, end_points
 inception_v4.default_image_size = 299
+
+
+def _reduced_kernel_size_for_small_input(input_tensor, kernel_size):
+  """Define kernel size which is automatically reduced for small input.
+
+  If the shape of the input images is unknown at graph construction time this
+  function assumes that the input images are is large enough.
+
+  Args:
+    input_tensor: input tensor of size [batch_size, height, width, channels].
+    kernel_size: desired kernel size of length 2: [kernel_height, kernel_width]
+
+  Returns:
+    a tensor with the kernel size.
+
+  TODO(jrru): Make this function work with unknown shapes. Theoretically, this
+  can be done with the code below. Problems are two-fold: (1) If the shape was
+  known, it will be lost. (2) inception.slim.ops._two_element_tuple cannot
+  handle tensors that define the kernel size.
+      shape = tf.shape(input_tensor)
+      return = tf.stack([tf.minimum(shape[1], kernel_size[0]),
+                         tf.minimum(shape[2], kernel_size[1])])
+
+  """
+  shape = input_tensor.get_shape().as_list()
+  if shape[1] is None or shape[2] is None:
+    kernel_size_out = kernel_size
+  else:
+    kernel_size_out = [min(shape[1], kernel_size[0]),
+                       min(shape[2], kernel_size[1])]
+  return kernel_size_out
 
 
 inception_v4_arg_scope = inception_utils.inception_arg_scope
