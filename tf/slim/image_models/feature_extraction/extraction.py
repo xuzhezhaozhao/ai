@@ -105,7 +105,8 @@ def create_restore_fn():
 
 def write_to_file(f, net):
     net = np.squeeze(net, (1, 2))
-    net = normalize(net, axis=1)
+    if FLAGS.normalize:
+        net = normalize(net, axis=1)
 
     for features in net:
         for value in features:

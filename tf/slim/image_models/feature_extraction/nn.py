@@ -17,25 +17,37 @@ tf.app.flags.DEFINE_integer('k', 5, '')
 
 FLAGS = tf.app.flags.FLAGS
 
-data = np.loadtxt(FLAGS.image_features)
-data = normalize(data, axis=1)
-dist = np.dot(data, data.transpose())
 
-sorted_indices = np.flip(np.argsort(dist), axis=-1)
-sorted_indices = sorted_indices[:, 1:]
+def load_features(filename):
+    data = np.loadtxt(FLAGS.image_features)
+    data = normalize(data, axis=1)
+    return data
 
-# top-k
-nn_indices = sorted_indices[:, :FLAGS.k]  # [N, k]
 
-keys = [key.strip() for key in open(FLAGS.dict) if key.strip() != '']
-keys = np.array(keys)
-nn_keys = keys[nn_indices]  # [N, k]
+def main(_):
+    data = load_features(FLAGS.image_features)
+    dist = np.dot(data, data.transpose())
 
-with open(FLAGS.output, 'w') as f:
-    for i in range(len(nn_indices)):
-        f.write("nn: {}\n".format(keys[i]))
-        for j in range(len(nn_indices[i, :])):
-            score = dist[i, nn_indices[i, j]]
-            key = nn_keys[i, j]
-            f.write("{}: {}\n".format(key, score))
-        f.write("\n")
+    sorted_indices = np.flip(np.argsort(dist), axis=-1)
+    sorted_indices = sorted_indices[:, 1:]
+
+    # top-k
+    nn_indices = sorted_indices[:, :FLAGS.k]  # [N, k]
+
+    keys = [key.strip() for key in open(FLAGS.dict) if key.strip() != '']
+    keys = np.array(keys)
+    nn_keys = keys[nn_indices]  # [N, k]
+
+    with open(FLAGS.output, 'w') as f:
+        for i in range(len(nn_indices)):
+            f.write("nn: {}\n".format(keys[i]))
+            for j in range(len(nn_indices[i, :])):
+                score = dist[i, nn_indices[i, j]]
+                key = nn_keys[i, j]
+                f.write("{}: {}\n".format(key, score))
+            f.write("\n")
+
+
+if __name__ == '__main__':
+    tf.logging.set_verbosity(tf.logging.ERROR)
+    tf.app.run()
