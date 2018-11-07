@@ -154,4 +154,9 @@ tf.app.flags.DEFINE_float('depth_multiplier', 1.0, '')
 tf.app.flags.DEFINE_bool('spatial_squeeze', True, '')
 tf.app.flags.DEFINE_bool('create_aux_logits', False, '')
 
+# early stopping flags \
+tf.app.flags.DEFINE_float('max_epoches_without_decrease', 2.0, '')
+tf.app.flags.DEFINE_float('early_stopping_min_epoches', 1.0, '')
+tf.app.flags.DEFINE_float('early_stopping_run_every_epoches', 1.0, '')
+
 opts = tf.app.flags.FLAGS

@@ -215,7 +215,7 @@ params=(\
 # train flags \
 [batch_size]=32 \
 [max_train_steps]=-1 \
-[epoch]=5 \
+[epoch]=15 \
 [throttle_secs]=60 \
  \
 # dataset flags \
@@ -288,6 +288,11 @@ params=(\
 [depth_multiplier]=1.0 \
 [spatial_squeeze]=False \
 [create_aux_logits]=${create_aux_logits} \
+ \
+# early stopping flags \
+[max_epoches_without_decrease]=2.0 \
+[early_stopping_min_epoches]=1.0 \
+[early_stopping_run_every_epoches]=1.0 \
 )
 
 params_str=''
