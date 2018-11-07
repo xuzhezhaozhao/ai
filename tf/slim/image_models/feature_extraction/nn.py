@@ -40,7 +40,7 @@ def main(_):
 
     with open(FLAGS.output, 'w') as f:
         for i in range(len(nn_indices)):
-            f.write("nn: {}\n".format(keys[i]))
+            f.write("{}\n".format(keys[i]))
             for j in range(len(nn_indices[i, :])):
                 score = dist[i, nn_indices[i, j]]
                 key = nn_keys[i, j]
