@@ -61,4 +61,7 @@ test.txt
 predict_output.txt
 predict_output.*.txt
 test_*.txt
+input.txt
+output.txt
+nn.txt
 *.ckpt
