@@ -29,9 +29,9 @@ clf = LogisticRegression(
     random_state=None,
     penalty='l2',
     tol=1e-6,
-    C=3.0,
+    C=1.0,
     solver='liblinear',
-    max_iter=40)
+    max_iter=100)
 
 # clf = LogisticRegressionCV(
     # Cs=10,
