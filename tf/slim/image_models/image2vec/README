@@ -1,0 +1,7 @@
+
+Use pretrained CNN models to extract image featrues.
+
+see image2vec.sh for details.
+
+nn.sh is a convenient tool to calculate nearest images according to cosine
+distance.
