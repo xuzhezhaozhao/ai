@@ -10,6 +10,7 @@ from sklearn.preprocessing import normalize
 import tensorflow as tf
 import numpy as np
 import os
+import time
 
 from preprocessing import preprocessing_factory
 from nets import inception
@@ -191,11 +192,24 @@ def main(_):
         sess.run(iterator.initializer)
         restore_fn(sess)
 
+        total = 0
         while True:
             try:
+                start_time = time.time()
                 net_value = sess.run(net)
                 write_to_file(f, net_value)
+                end_time = time.time()
+                duration_sec = end_time - start_time
+
+                batch_size = len(net_value)
+                total += batch_size
+                tf.logging.info(
+                    "{} images processed, cost {:.3f}s, {:.3f}ms per image, "
+                    "total processed images {} ..."
+                    .format(batch_size, duration_sec,
+                            duration_sec*1000.0/batch_size, total))
             except tf.errors.OutOfRangeError:
+                tf.logging.info("{} images processed, done.".format(total))
                 break
 
 
