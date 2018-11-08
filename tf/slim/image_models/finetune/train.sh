@@ -13,7 +13,7 @@ model_name='inception_v3'
 if [[ $# -eq 1 ]]; then
     model_name=$1
 fi
-pretrained_weights_path=`pwd`/../pretrained_checkpoint/${model_name}.ckpt
+pretrained_weights_path=`pwd`/../pretrained_checkpoints/${model_name}.ckpt
 
 # default preprocess image flags
 preprocess_name='vgg'

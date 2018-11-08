@@ -37,8 +37,8 @@ tf.app.flags.DEFINE_bool('normalize', True, 'weather normalize image vector.')
 FLAGS = tf.app.flags.FLAGS
 
 
-inception_v3_ckpt_path = '../pretrained_checkpoint/inception_v3.ckpt'
-resnet_v2_50_ckpt_path = '../pretrained_checkpoint/resnet_v2_50.ckpt'
+inception_v3_ckpt_path = '../pretrained_checkpoints/inception_v3.ckpt'
+resnet_v2_50_ckpt_path = '../pretrained_checkpoints/resnet_v2_50.ckpt'
 
 
 def read_txt_file(txt_file):

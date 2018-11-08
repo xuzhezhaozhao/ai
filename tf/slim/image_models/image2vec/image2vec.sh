@@ -1,3 +1,9 @@
+#! /usr/bin/env bash
+
+set -e
+
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd ${MYDIR}
 
 input='test.txt'
 output='features.txt'
@@ -6,7 +12,7 @@ model_name=resnet_v2_50
 preprocessing_name=inception
 image_size=299
 
-python extraction.py \
+python image2vec.py \
     --input ${input} \
     --output ${output} \
     --batch_size ${batch_size} \
