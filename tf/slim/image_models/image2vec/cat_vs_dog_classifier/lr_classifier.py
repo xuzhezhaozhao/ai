@@ -19,31 +19,31 @@ validation_data = np.loadtxt('./validation_features.txt')
 validation_labels = np.loadtxt('./validation_labels.txt')
 
 # concatenate train and validation data, use cross validation
-train_data = np.concatenate((train_data, validation_data), axis=0)
-train_labels = np.concatenate((train_labels, validation_labels), axis=0)
+# train_data = np.concatenate((train_data, validation_data), axis=0)
+# train_labels = np.concatenate((train_labels, validation_labels), axis=0)
 
 test_data = np.loadtxt('./test_features.txt')
 print("load data done.")
 
-# clf = LogisticRegression(
-    # random_state=None,
-    # penalty='l2',
-    # tol=1e-6,
-    # C=3.0,
-    # solver='liblinear',
-    # max_iter=40)
-
-clf = LogisticRegressionCV(
-    Cs=10,
-    cv=5,
+clf = LogisticRegression(
+    random_state=None,
     penalty='l2',
-    scoring='accuracy',
-    solver='liblinear',
     tol=1e-6,
-    max_iter=40,
-    refit=False,
-    n_jobs=1,
-    verbose=1)
+    C=3.0,
+    solver='liblinear',
+    max_iter=40)
+
+# clf = LogisticRegressionCV(
+    # Cs=10,
+    # cv=10,
+    # penalty='l2',
+    # scoring='accuracy',
+    # solver='liblinear',
+    # tol=1e-6,
+    # max_iter=40,
+    # refit=True,
+    # n_jobs=1,
+    # verbose=1)
 
 print("fitting ...")
 clf.fit(train_data, train_labels)
