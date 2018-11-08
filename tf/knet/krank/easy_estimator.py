@@ -251,7 +251,7 @@ class EasyEstimator(tf.estimator.Estimator):
         self._wait_evaluation = False
         workers = []
         for tid in range(self._num_parallel):
-            tf.logging.info('Start thread {} ...'.format(tid))
+            tf.logging.debug('Start thread {} ...'.format(tid))
             worker = threading.Thread(
                 target=self._train_thread_body,
                 args=(tid, sess, estimator_spec, queue))
@@ -267,7 +267,7 @@ class EasyEstimator(tf.estimator.Estimator):
         loss = 0.0
         while not queue.empty():
             single_loss = queue.get()
-            tf.logging.info('thread loss: {}'.format(single_loss))
+            tf.logging.debug('thread loss: {}'.format(single_loss))
             if single_loss is None:
                 continue
             loss += single_loss
@@ -282,18 +282,18 @@ class EasyEstimator(tf.estimator.Estimator):
         while not self._should_stop:
             try:
                 while self._wait_evaluation:
-                    tf.logging.info('{} thread {} wait evaluation ...'
+                    tf.logging.debug('{} thread {} wait evaluation ...'
                                     .format(datetime.now(), tid))
                     time.sleep(60)
                 _, loss = sess.run(
                     [estimator_spec.train_op, estimator_spec.loss])
             except tf.errors.OutOfRangeError:
-                tf.logging.info(
+                tf.logging.debug(
                     "thread {} catch 'OutOfRangeError'".format(tid))
                 break
 
         queue.put(loss)
-        tf.logging.info('thread {} exit.'.format(tid))
+        tf.logging.debug('thread {} exit.'.format(tid))
         return loss
 
     def _close_train(self, sess, global_steps, loss, saver, summary_writer):

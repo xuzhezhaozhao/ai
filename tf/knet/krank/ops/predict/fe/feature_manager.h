@@ -111,6 +111,7 @@ class FeaturePipline {
     float label = 0.0;
     if (use_smooth_label_) {
       label = std::min(1.0f, rinfo2 / (rinfo1 + video_duration_biases_));
+      //return rinfo2;
     } else {
       // video effective play
       bool o1 = (rinfo1 < 20 && rinfo2 > rinfo1 * 0.8);
