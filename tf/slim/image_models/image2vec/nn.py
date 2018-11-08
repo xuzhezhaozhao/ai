@@ -10,10 +10,12 @@ from sklearn.preprocessing import normalize
 import tensorflow as tf
 import numpy as np
 
-tf.app.flags.DEFINE_string('image_features', 'features.txt', '')
-tf.app.flags.DEFINE_string('images', 'test.txt', '')
-tf.app.flags.DEFINE_string('output', 'nn.txt', '')
-tf.app.flags.DEFINE_integer('k', 10, '')
+tf.app.flags.DEFINE_string(
+    'image_features', 'features.txt', 'features file output by image2vec.')
+
+tf.app.flags.DEFINE_string('images', 'test.txt', 'image paths file')
+tf.app.flags.DEFINE_string('output', 'nn.txt', 'output nn file')
+tf.app.flags.DEFINE_integer('k', 10, 'top k nearest images will be ouput.')
 
 FLAGS = tf.app.flags.FLAGS
 

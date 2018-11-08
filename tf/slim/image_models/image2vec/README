@@ -10,19 +10,30 @@ typical usage:
 $ ./image2vec --input test.txt --output features.txt --batch_size 256
 
 test.txt contains image paths, such as:
-/home/xzz/ai/datasets/nn-dataset/test/1.jpg
-/home/xzz/ai/datasets/nn-dataset/test/10.png
-/home/xzz/ai/datasets/nn-dataset/test/11.png
-/home/xzz/ai/datasets/nn-dataset/test/2.jpg
-/home/xzz/ai/datasets/nn-dataset/test/3.png
-/home/xzz/ai/datasets/nn-dataset/test/4.png
-/home/xzz/ai/datasets/nn-dataset/test/5.png
-/home/xzz/ai/datasets/nn-dataset/test/6.png
-/home/xzz/ai/datasets/nn-dataset/test/7.jpg
-/home/xzz/ai/datasets/nn-dataset/test/8.jpg
-/home/xzz/ai/datasets/nn-dataset/test/9.png
+/usr/local/services/kd_zz_image2vec-1.0/nn-dataset/test/1.jpg
+/usr/local/services/kd_zz_image2vec-1.0/nn-dataset/test/10.png
+/usr/local/services/kd_zz_image2vec-1.0/nn-dataset/test/11.png
+/usr/local/services/kd_zz_image2vec-1.0/nn-dataset/test/2.jpg
+/usr/local/services/kd_zz_image2vec-1.0/nn-dataset/test/3.png
+/usr/local/services/kd_zz_image2vec-1.0/nn-dataset/test/4.png
+/usr/local/services/kd_zz_image2vec-1.0/nn-dataset/test/5.png
+/usr/local/services/kd_zz_image2vec-1.0/nn-dataset/test/6.png
+/usr/local/services/kd_zz_image2vec-1.0/nn-dataset/test/7.jpg
+/usr/local/services/kd_zz_image2vec-1.0/nn-dataset/test/8.jpg
+/usr/local/services/kd_zz_image2vec-1.0/nn-dataset/test/9.png
 
 
 Tools:
-nn.sh: A convenient tool to calculate nearest images according to cosine
+nn: A convenient tool to calculate nearest images according to cosine
 distance.
+Usage help:
+$ ./nn --help
+
+
+Playground:
+We provide a mini dataset to playground.
+run following commands
+$ ./image2vec --input test.txt --output features.txt --batch_size 256
+$ ./nn --image_features features.txt --images test.txt --output nn.txt --k 10
+
+Then see nn.txt for the results.
