@@ -1,7 +1,28 @@
 
 Use pretrained CNN models to extract image featrues.
 
-see image2vec.sh for details.
+Supported image type is "jpg", "png", "bmp".
 
-nn.sh is a convenient tool to calculate nearest images according to cosine
+Usage help:
+$ ./image2vec --help
+
+typical usage:
+$ ./image2vec --input test.txt --output features.txt --batch_size 256
+
+test.txt contains image paths, such as:
+/home/xzz/ai/datasets/nn-dataset/test/1.jpg
+/home/xzz/ai/datasets/nn-dataset/test/10.png
+/home/xzz/ai/datasets/nn-dataset/test/11.png
+/home/xzz/ai/datasets/nn-dataset/test/2.jpg
+/home/xzz/ai/datasets/nn-dataset/test/3.png
+/home/xzz/ai/datasets/nn-dataset/test/4.png
+/home/xzz/ai/datasets/nn-dataset/test/5.png
+/home/xzz/ai/datasets/nn-dataset/test/6.png
+/home/xzz/ai/datasets/nn-dataset/test/7.jpg
+/home/xzz/ai/datasets/nn-dataset/test/8.jpg
+/home/xzz/ai/datasets/nn-dataset/test/9.png
+
+
+Tools:
+nn.sh: A convenient tool to calculate nearest images according to cosine
 distance.

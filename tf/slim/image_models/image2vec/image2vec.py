@@ -9,6 +9,7 @@ from sklearn.preprocessing import normalize
 
 import tensorflow as tf
 import numpy as np
+import os
 
 from preprocessing import preprocessing_factory
 from nets import inception
@@ -16,29 +17,47 @@ from nets import resnet_v2
 
 slim = tf.contrib.slim
 
+# get script path
+basedir = os.path.split(os.path.realpath(__file__))[0]
+pretrained_checkpoints_path = os.path.join(basedir,
+                                           '../pretrained_checkpoints')
 
 tf.app.flags.DEFINE_string(
     'model_name', 'resnet_v2_50',
-    '"resnet_v2_50", "inception_v3"')
+    'Specify the model used, one of "resnet_v2_50", "inception_v3"')
 
 tf.app.flags.DEFINE_string(
     'preprocessing_name', 'inception',
-    '"inception", "vgg"')
+    'Specify the image preprocessing methed, one of "inception", "vgg", '
+    'resnet_v2_50 and inception_v3 suggest "inception".')
 
 tf.app.flags.DEFINE_integer(
     'image_size', 299,
-    'resnet_v2_50 299, inception_v3 299')
+    'Preprocess image size, resnet_v2_50 and inception_v3 suggest 299')
 
-tf.app.flags.DEFINE_string('input', 'input.txt', '')
-tf.app.flags.DEFINE_string('output', 'output.txt', '')
-tf.app.flags.DEFINE_integer('batch_size', 16, '')
-tf.app.flags.DEFINE_bool('normalize', True, 'weather normalize image vector.')
+tf.app.flags.DEFINE_string(
+    'input', 'test.txt',
+    'image path file, one per line')
+
+tf.app.flags.DEFINE_string(
+    'output', 'features.txt',
+    'output image features file, one per line')
+
+tf.app.flags.DEFINE_integer(
+    'batch_size', 64,
+    'batch size, as large as the machine can handle')
+
+tf.app.flags.DEFINE_bool(
+    'normalize', True,
+    'weather normalize image vector.')
 
 FLAGS = tf.app.flags.FLAGS
 
 
-inception_v3_ckpt_path = '../pretrained_checkpoints/inception_v3.ckpt'
-resnet_v2_50_ckpt_path = '../pretrained_checkpoints/resnet_v2_50.ckpt'
+inception_v3_ckpt_path = os.path.join(pretrained_checkpoints_path,
+                                      'inception_v3.ckpt')
+resnet_v2_50_ckpt_path = os.path.join(pretrained_checkpoints_path,
+                                      'resnet_v2_50.ckpt')
 
 
 def read_txt_file(txt_file):
@@ -124,9 +143,6 @@ def get_model_def(model_name, inputs):
 
 def create_restore_fn(checkpoint_path):
     variables_to_restore = slim.get_variables_to_restore()
-    tf.logging.info('Restore variables: ')
-    for var in variables_to_restore:
-        tf.logging.info(var)
 
     if tf.gfile.IsDirectory(checkpoint_path):
         checkpoint_path = tf.train.latest_checkpoint(checkpoint_path)
@@ -136,10 +152,6 @@ def create_restore_fn(checkpoint_path):
         checkpoint_path,
         variables_to_restore,
         ignore_missing_vars=False)
-
-    tf.logging.info('Global trainable variables: ')
-    for var in slim.get_trainable_variables():
-        tf.logging.info(var)
 
     return restore_fn
 
@@ -156,7 +168,16 @@ def write_to_file(f, net):
         f.write('\n')
 
 
+def display_flags():
+    D = FLAGS.flag_values_dict()
+    tf.logging.info("FLAGS: ")
+    for key in D:
+        tf.logging.info('{} = {}'.format(key, D[key]))
+
+
 def main(_):
+    display_flags()
+
     ds = eval_input_fn(FLAGS.input)
     iterator = ds.make_initializable_iterator()
     next_batch = iterator.get_next()

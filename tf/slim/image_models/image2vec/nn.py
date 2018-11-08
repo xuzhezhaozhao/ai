@@ -10,10 +10,10 @@ from sklearn.preprocessing import normalize
 import tensorflow as tf
 import numpy as np
 
-tf.app.flags.DEFINE_string('image_features', 'output.txt', '')
-tf.app.flags.DEFINE_string('dict', 'input.txt', '')
+tf.app.flags.DEFINE_string('image_features', 'features.txt', '')
+tf.app.flags.DEFINE_string('images', 'test.txt', '')
 tf.app.flags.DEFINE_string('output', 'nn.txt', '')
-tf.app.flags.DEFINE_integer('k', 5, '')
+tf.app.flags.DEFINE_integer('k', 10, '')
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -34,7 +34,7 @@ def main(_):
     # top-k
     nn_indices = sorted_indices[:, :FLAGS.k]  # [N, k]
 
-    keys = [key.strip() for key in open(FLAGS.dict) if key.strip() != '']
+    keys = [key.strip() for key in open(FLAGS.images) if key.strip() != '']
     keys = np.array(keys)
     nn_keys = keys[nn_indices]  # [N, k]
 
