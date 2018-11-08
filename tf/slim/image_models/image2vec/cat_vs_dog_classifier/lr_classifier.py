@@ -11,11 +11,15 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import log_loss
 
+print("loading data ...")
+
 train_data = np.loadtxt('./train_features.txt')
 train_labels = np.loadtxt('./train_labels.txt')
 validation_data = np.loadtxt('./validation_features.txt')
 validation_labels = np.loadtxt('./validation_labels.txt')
 test_data = np.loadtxt('./test_features.txt')
+
+print("load data done.")
 
 clf = LogisticRegression(
     random_state=None,
@@ -25,7 +29,10 @@ clf = LogisticRegression(
     solver='liblinear',
     max_iter=10)
 
+print("fitting ...")
 clf.fit(train_data, train_labels)
+print("fitting done.")
+
 validation_pred = clf.predict(validation_data)
 validation_prob = clf.predict_proba(validation_data)
 
