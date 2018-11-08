@@ -23,7 +23,7 @@ clf = SVC(
     kernel='rbf',
     shrinking=True,
     tol=1e-3,
-    max_iter=200)
+    max_iter=20)
 
 clf.fit(train_data, train_labels)
 validation_pred = clf.predict(validation_data)
