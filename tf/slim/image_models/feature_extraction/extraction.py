@@ -12,16 +12,33 @@ import numpy as np
 
 from preprocessing import preprocessing_factory
 from nets import inception
+from nets import resnet_v2
 
 slim = tf.contrib.slim
 
 
+tf.app.flags.DEFINE_string(
+    'model_name', 'resnet_v2_50',
+    '"resnet_v2_50", "inception_v3"')
+
+tf.app.flags.DEFINE_string(
+    'preprocessing_name', 'inception',
+    '"inception", "vgg"')
+
+tf.app.flags.DEFINE_integer(
+    'image_size', 299,
+    'resnet_v2_50 299, inception_v3 299')
+
 tf.app.flags.DEFINE_string('input', 'input.txt', '')
 tf.app.flags.DEFINE_string('output', 'output.txt', '')
 tf.app.flags.DEFINE_integer('batch_size', 16, '')
-tf.app.flags.DEFINE_bool('normalize', True, '')
+tf.app.flags.DEFINE_bool('normalize', True, 'weather normalize image vector.')
 
 FLAGS = tf.app.flags.FLAGS
+
+
+inception_v3_ckpt_path = '../pretrained_checkpoint/inception_v3.ckpt'
+resnet_v2_50_ckpt_path = '../pretrained_checkpoint/resnet_v2_50.ckpt'
 
 
 def read_txt_file(txt_file):
@@ -52,7 +69,7 @@ def parse_function(img_path, image_size):
     image_decoded = tf.image.decode_image(image_string, channels=3)
     image_decoded.set_shape([None, None, 3])
 
-    preprocessing_name = 'inception'
+    preprocessing_name = FLAGS.preprocessing_name
     image_preprocessing_fn = preprocessing_factory.get_preprocessing(
         preprocessing_name,
         is_training=False)
@@ -64,7 +81,8 @@ def parse_function(img_path, image_size):
 def eval_input_fn(data_path):
     ds = create_image_dataset(data_path)
     ds = ds.map(
-        lambda filename: parse_function(filename, 299), num_parallel_calls=1)
+        lambda filename: parse_function(filename, FLAGS.image_size),
+        num_parallel_calls=1)
     ds = ds.batch(FLAGS.batch_size)
 
     return ds
@@ -72,21 +90,44 @@ def eval_input_fn(data_path):
 
 def inception_v3(inputs):
     with slim.arg_scope(inception.inception_v3_arg_scope()):
-        return inception.inception_v3(
+        logits, end_points = inception.inception_v3(
             inputs,
             num_classes=None,
             is_training=False,
             spatial_squeeze=True,
             global_pool=True)
+    return logits, end_points, inception_v3_ckpt_path
 
 
-def create_restore_fn():
+def resnet_v2_50(inputs):
+    with slim.arg_scope(resnet_v2.resnet_arg_scope()):
+        logits, end_points = resnet_v2.resnet_v2_50(
+            inputs,
+            num_classes=None,
+            is_training=False,
+            global_pool=True,
+            spatial_squeeze=True)
+    return logits, end_points, resnet_v2_50_ckpt_path
+
+
+def get_model_def(model_name, inputs):
+    model_def_map = {
+        'inception_v3': inception_v3,
+        'resnet_v2_50': resnet_v2_50,
+    }
+    if model_name not in model_def_map:
+        raise ValueError('Model name [%s] was not recognized' % model_name)
+
+    model_def = model_def_map[model_name]
+    return model_def(inputs)
+
+
+def create_restore_fn(checkpoint_path):
     variables_to_restore = slim.get_variables_to_restore()
     tf.logging.info('Restore variables: ')
     for var in variables_to_restore:
         tf.logging.info(var)
 
-    checkpoint_path = '../pretrained_checkpoint/inception_v3.ckpt'
     if tf.gfile.IsDirectory(checkpoint_path):
         checkpoint_path = tf.train.latest_checkpoint(checkpoint_path)
 
@@ -119,8 +160,9 @@ def main(_):
     ds = eval_input_fn(FLAGS.input)
     iterator = ds.make_initializable_iterator()
     next_batch = iterator.get_next()
-    net, _ = inception_v3(next_batch)
-    restore_fn = create_restore_fn()
+
+    net, _, checkpoint_path = get_model_def(FLAGS.model_name, next_batch)
+    restore_fn = create_restore_fn(checkpoint_path)
 
     with tf.Session() as sess, open(FLAGS.output, 'w') as f:
         sess.run(tf.global_variables_initializer())
@@ -137,5 +179,5 @@ def main(_):
 
 
 if __name__ == '__main__':
-    tf.logging.set_verbosity(tf.logging.ERROR)
+    tf.logging.set_verbosity(tf.logging.INFO)
     tf.app.run()
