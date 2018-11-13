@@ -57,7 +57,8 @@ BATCH_SIZE = 64
 # it maintains a buffer in which it shuffles elements).
 BUFFER_SIZE = 10000
 
-dataset = dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE, drop_remainder=True)
+dataset = dataset.shuffle(BUFFER_SIZE).batch(
+    BATCH_SIZE, drop_remainder=True).repeat()
 
 
 class Model(tf.keras.Model):
