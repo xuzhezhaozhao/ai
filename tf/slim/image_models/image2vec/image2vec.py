@@ -15,6 +15,7 @@ import time
 from preprocessing import preprocessing_factory
 from nets import inception
 from nets import resnet_v2
+from nets import vgg
 
 slim = tf.contrib.slim
 
@@ -59,6 +60,8 @@ inception_v3_ckpt_path = os.path.join(pretrained_checkpoints_path,
                                       'inception_v3.ckpt')
 resnet_v2_50_ckpt_path = os.path.join(pretrained_checkpoints_path,
                                       'resnet_v2_50.ckpt')
+vgg_19_ckpt_path = os.path.join(pretrained_checkpoints_path,
+                                'vgg_19.ckpt')
 
 
 def read_txt_file(txt_file):
@@ -130,10 +133,22 @@ def resnet_v2_50(inputs):
     return logits, end_points, resnet_v2_50_ckpt_path
 
 
+def vgg_19(inputs):
+    with slim.arg_scope(vgg.vgg_arg_scope()):
+        logits, end_points = vgg.vgg_19(
+            inputs,
+            num_classes=None,
+            is_training=False,
+            fc_conv_padding='VALID',
+            global_pool=True)
+    return logits, end_points, vgg_19_ckpt_path
+
+
 def get_model_def(model_name, inputs):
     model_def_map = {
         'inception_v3': inception_v3,
         'resnet_v2_50': resnet_v2_50,
+        'vgg_19': vgg_19,
     }
     if model_name not in model_def_map:
         raise ValueError('Model name [%s] was not recognized' % model_name)
