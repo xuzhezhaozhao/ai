@@ -20,10 +20,23 @@ tf.app.flags.DEFINE_string('predict_checkpoint_path', '', '')
 
 # train flags
 tf.app.flags.DEFINE_integer('seq_length', 20, 'sequence length')
+tf.app.flags.DEFINE_integer('hidden_size', 100, 'rnn hidden size')
+tf.app.flags.DEFINE_integer('num_layers', 2, 'rnn num layers')
+tf.app.flags.DEFINE_float('keep_prob', 1.0, 'rnn dropout keep prob')
+tf.app.flags.DEFINE_bool('use_clip_gradients', True, '')
+tf.app.flags.DEFINE_float('clip_norm', 5.0, '')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'batch size')
 tf.app.flags.DEFINE_integer('max_train_steps', -1, '')
 tf.app.flags.DEFINE_integer('epoch', 1, '')
 tf.app.flags.DEFINE_integer('throttle_secs', 600, '')
+
+tf.app.flags.DEFINE_bool(
+    'use_embedding', False,
+    'whether use embedding for chars')
+
+tf.app.flags.DEFINE_integer(
+    'embedding_dim', 100,
+    'embedding dim for chars')
 
 # dataset flags
 tf.app.flags.DEFINE_integer('prefetch_size', 1000, '')

@@ -67,3 +67,4 @@ output.txt
 nn.txt
 *.ckpt
 *.txt
+*.pkl

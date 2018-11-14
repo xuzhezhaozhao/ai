@@ -16,8 +16,8 @@ import build_model_fn
 def build_estimator(opts):
     """Build estimator."""
 
-    num_samples_per_epoch = len(input_data.read_txt_file(
-        opts.train_data_path, False))
+    num_chars = len(input_data.parse_txt(opts.train_data_path))
+    num_samples_per_epoch = num_chars / (opts.seq_length + 1)
 
     save_checkpoints_secs = None
     if opts.save_checkpoints_secs > 0:
@@ -45,11 +45,12 @@ def build_estimator(opts):
     config_keys['keep_checkpoint_every_n_hours'] = 10000
     config_keys['log_step_count_steps'] = opts.log_step_count_steps
 
+    vocab_size = 128  # TODO
     estimator_keys = {}
     estimator_keys['model_fn'] = build_model_fn.model_fn
     estimator_keys['params'] = {
         'opts': opts,
-        'num_samples_per_epoch': num_samples_per_epoch
+        'vocab_size': vocab_size
     }
     config = tf.estimator.RunConfig(**config_keys)
     estimator_keys['config'] = config
@@ -80,8 +81,8 @@ def train_and_eval_in_local_mode(opts, estimator, hooks):
     build_eval_input_fn = input_data.build_eval_input_fn(
         opts, opts.eval_data_path)
 
-    num_samples_per_epoch = len(
-        input_data.read_txt_file(opts.train_data_path, False))
+    num_chars = len(input_data.parse_txt(opts.train_data_path))
+    num_samples_per_epoch = num_chars / (opts.seq_length + 1)
     num_steps_per_epoch = num_samples_per_epoch / opts.batch_size
 
     if opts.max_train_steps > 0:
@@ -90,20 +91,6 @@ def train_and_eval_in_local_mode(opts, estimator, hooks):
         max_steps = opts.epoch*num_steps_per_epoch
 
     tf.logging.info('max_steps = {}'.format(max_steps))
-    max_steps_without_decrease = int(
-        opts.max_epoches_without_decrease*num_steps_per_epoch)
-    early_stopping_min_steps = int(
-        opts.early_stopping_min_epoches*num_steps_per_epoch)
-    run_every_steps = int(
-        opts.early_stopping_run_every_epoches*num_steps_per_epoch)
-    early_stopping_hook = tf.contrib.estimator.stop_if_no_decrease_hook(
-        estimator, "loss",
-        max_steps_without_decrease=max_steps_without_decrease,
-        run_every_secs=None,
-        min_steps=early_stopping_min_steps,
-        run_every_steps=run_every_steps)
-    hooks.append(early_stopping_hook)
-
     train_spec = tf.estimator.TrainSpec(
         input_fn=build_train_input_fn,
         max_steps=max_steps,
