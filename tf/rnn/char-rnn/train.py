@@ -130,7 +130,24 @@ def train(opts, export=False):
 
 
 def predict(opts):
-    pass
+    tf.logging.info("Begin predict ...")
+    estimator = build_estimator(opts)
+    build_predict_input_fn = input_data.build_predict_input_fn(
+        opts, opts.predict_data_path)
+
+    checkpoint_path = opts.predict_checkpoint_path
+    if tf.gfile.IsDirectory(opts.predict_checkpoint_path):
+        checkpoint_path = tf.train.latest_checkpoint(checkpoint_path)
+
+    results = estimator.predict(
+        input_fn=build_predict_input_fn,
+        checkpoint_path=checkpoint_path,
+        yield_single_examples=True)
+
+    for result in results:
+        print(result)
+
+    tf.logging.info("Predict done")
 
 
 def get_preprocessed(opts):

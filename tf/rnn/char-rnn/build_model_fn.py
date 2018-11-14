@@ -29,16 +29,21 @@ def model_fn(features, labels, mode, params):
          for _ in range(opts.num_layers)]
     )
 
-    initial_state = cell.zero_state(opts.batch_size, tf.float32)
+    batch_size = opts.batch_size
+    if mode == tf.estimator.ModeKeys.PREDICT:
+        batch_size = 1
+
+    states = get_state_variables(batch_size, cell)
 
     # lstm_outputs: shape [batch, seq_length, hidden_size]
-    # final_state: a tuple of num_layers elements,
+    # new_state: a tuple of num_layers elements,
     # each shape [batch, hidden_size]
-    lstm_outputs, final_state = tf.nn.dynamic_rnn(
-        cell, lstm_inputs, initial_state=initial_state)
+    lstm_outputs, new_states = tf.nn.dynamic_rnn(
+        cell, lstm_inputs, initial_state=states)
 
-    # add denpendecy
-    # assign_op = tf.assign(initial_state, final_state)
+    # Add an operation to update the train states with the last state tensors.
+    update_op = get_state_update_op(states, new_states)
+    tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_op)
 
     # shape [batch, seq_length, vocab_size]
     logits = tf.layers.dense(lstm_outputs, vocab_size)
@@ -81,9 +86,13 @@ def create_train_estimator_spec(mode, logits, labels, params):
     gradients, variables = zip(*optimizer.compute_gradients(loss))
     if opts.use_clip_gradients:
         gradients, _ = tf.clip_by_global_norm(gradients, opts.clip_norm)
-    train_op = optimizer.apply_gradients(
-        zip(gradients, variables),
-        global_step=global_step)
+
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    with tf.control_dependencies(update_ops):
+        train_op = optimizer.apply_gradients(
+            zip(gradients, variables),
+            global_step=global_step)
+
     for var, grad in zip(variables, gradients):
         tf.summary.histogram(
             var.name.replace(':', '_') + '/gradient', grad)
@@ -98,7 +107,24 @@ def create_eval_estimator_spec(mode, logits, labels, params):
 
 
 def create_predict_estimator_spec(mode, logits, labels, params):
-    pass
+    # Low temperatures results in more predictable text.
+    # Higher temperatures results in more surprising text.
+    # Experiment to find the best setting.
+    temperature = 1.0
+
+    vocab_size = params['vocab_size']
+    logits = tf.reshape(logits, [-1, vocab_size])
+
+    predictions = tf.nn.softmax(logits)
+    predictions = predictions / temperature
+    predicted_id = tf.multinomial(predictions, num_samples=1)
+    predicted_id = predicted_id[-1, 0]
+    predicted_id = tf.expand_dims(predicted_id, 0)
+    predictions = {
+        'predicted_id': predicted_id,
+    }
+
+    return tf.estimator.EstimatorSpec(mode, predictions=predictions)
 
 
 def configure_optimizer(learning_rate, opts):
@@ -144,7 +170,6 @@ def configure_optimizer(learning_rate, opts):
     return optimizer
 
 
-
 def configure_learning_rate(num_samples_per_epoch, global_step, opts):
     """Configures the learning rate.
 
@@ -184,3 +209,35 @@ def configure_learning_rate(num_samples_per_epoch, global_step, opts):
     else:
         raise ValueError('learning_rate_decay_type [%s] was not recognized' %
                          opts.learning_rate_decay_type)
+
+
+# see https://stackoverflow.com/questions/37969065/tensorflow-best-way-to-save-state-in-rnns?noredirect=1&lq=1
+def get_state_variables(batch_size, cell):
+    # For each layer, get the initial state and make a variable out of it
+    # to enable updating its value.
+    state_variables = []
+    for state_c, state_h in cell.zero_state(batch_size, tf.float32):
+        state_variables.append(tf.contrib.rnn.LSTMStateTuple(
+            tf.Variable(state_c, trainable=False),
+            tf.Variable(state_h, trainable=False)))
+
+    # Return as a tuple, so that it can be fed to dynamic_rnn as an initial
+    # state.
+    return tuple(state_variables)
+
+
+def get_state_update_op(state_variables, new_states):
+    # Add an operation to update the train states with the last state tensors.
+    update_ops = []
+    for state_variable, new_state in zip(state_variables, new_states):
+        # Assign the new state to the state variables on this layer
+        update_ops.extend([state_variable[0].assign(new_state[0]),
+                           state_variable[1].assign(new_state[1])])
+    return tf.group(*update_ops)
+
+
+def get_state_reset_op(state_variables, cell, batch_size):
+    # Return an operation to set each variable in a list of LSTMStateTuples to
+    # zero.
+    zero_states = cell.zero_state(batch_size, tf.float32)
+    return get_state_update_op(state_variables, zero_states)

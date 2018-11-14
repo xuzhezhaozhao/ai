@@ -138,7 +138,7 @@ with tf.Session() as sess:
     sess.run(tf.local_variables_initializer())
     sess.run(it.initializer)
 
-    for step in xrange(200):
+    for step in xrange(2):
         _, loss = sess.run([train_op, loss_tensor])
         print("loss = {}".format(loss))
 
@@ -153,10 +153,10 @@ model.build(tf.TensorShape([1, None]))
 # Evaluation step (generating text using the learned model)
 
 # Number of characters to generate
-num_generate = 1000
+num_generate = 10
 
 # You can change the start string to experiment
-start_string = 'Q'
+start_string = 'QMM'
 
 # Converting our start string to numbers (vectorizing)
 input_eval = [char2idx[s] for s in start_string]
@@ -187,14 +187,13 @@ with tf.Session() as sess:
         # using a multinomial distribution to predict the word returned by the
         # model
         predictions = predictions / temperature
-        predicted_id = tf.multinomial(predictions, num_samples=1)[-1, 0]
+        predicted_ids = tf.multinomial(predictions, num_samples=1)
+        predicted_id = predicted_ids[-1, 0]
 
         # We pass the predicted word as the next input to the model
         # along with the previous hidden state
         input_eval = tf.expand_dims([predicted_id], 0)
-
         predicted_id = sess.run(predicted_id)
-
         text_generated.append(idx2char[predicted_id])
 
-        print (start_string + ''.join(text_generated))
+    print (start_string + ''.join(text_generated))

@@ -97,3 +97,17 @@ def build_eval_input_fn(opts, filename):
         return dataset
 
     return eval_input_fn
+
+
+def build_predict_input_fn(opts, filename):
+    def predict_input_fn():
+
+        text_as_int = parse_txt(filename, opts)
+        chunk_size = len(text_as_int)
+        text_as_int = tf.data.Dataset.from_tensor_slices(text_as_int)
+        chunk = text_as_int.batch(chunk_size, drop_remainder=True)
+        dataset = chunk.batch(1, drop_remainder=True)
+
+        return dataset
+
+    return predict_input_fn
