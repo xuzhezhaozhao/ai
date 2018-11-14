@@ -16,8 +16,7 @@ import build_model_fn
 def build_estimator(opts):
     """Build estimator."""
 
-    num_chars = len(input_data.parse_txt(opts.train_data_path))
-    num_samples_per_epoch = num_chars / (opts.seq_length + 1)
+    num_samples_per_epoch, vocab_size = get_preprocessed(opts)
 
     save_checkpoints_secs = None
     if opts.save_checkpoints_secs > 0:
@@ -45,12 +44,12 @@ def build_estimator(opts):
     config_keys['keep_checkpoint_every_n_hours'] = 10000
     config_keys['log_step_count_steps'] = opts.log_step_count_steps
 
-    vocab_size = 128  # TODO
     estimator_keys = {}
     estimator_keys['model_fn'] = build_model_fn.model_fn
     estimator_keys['params'] = {
         'opts': opts,
-        'vocab_size': vocab_size
+        'vocab_size': vocab_size,
+        'num_samples_per_epoch': num_samples_per_epoch
     }
     config = tf.estimator.RunConfig(**config_keys)
     estimator_keys['config'] = config
@@ -81,8 +80,7 @@ def train_and_eval_in_local_mode(opts, estimator, hooks):
     build_eval_input_fn = input_data.build_eval_input_fn(
         opts, opts.eval_data_path)
 
-    num_chars = len(input_data.parse_txt(opts.train_data_path))
-    num_samples_per_epoch = num_chars / (opts.seq_length + 1)
+    num_samples_per_epoch, _ = get_preprocessed(opts)
     num_steps_per_epoch = num_samples_per_epoch / opts.batch_size
 
     if opts.max_train_steps > 0:
@@ -119,6 +117,10 @@ def export_model_in_local_mode(opts, estimator):
 def train(opts, export=False):
     """Train model."""
 
+    tf.logging.info("Preprocessing ...")
+    input_data.preprocess(opts.train_data_path, opts.preprocessed_filename)
+    tf.logging.info("Preprocessing done.")
+
     estimator = build_estimator(opts)
     hooks = create_hooks(opts)
     result = train_and_eval_in_local_mode(opts, estimator, hooks)
@@ -129,3 +131,13 @@ def train(opts, export=False):
 
 def predict(opts):
     pass
+
+
+def get_preprocessed(opts):
+    load_dict = input_data.load_preprocessed(opts.preprocessed_filename)
+    total_chars = load_dict['total_chars']
+    vocab_size = len(load_dict['vocab'])
+
+    num_samples_per_epoch = total_chars / (opts.seq_length + 1)
+
+    return num_samples_per_epoch, vocab_size

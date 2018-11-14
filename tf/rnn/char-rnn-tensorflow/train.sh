@@ -20,16 +20,18 @@ if [[ ${remove_model_dir} == '1' ]]; then
     fi
 fi
 
+mkdir -p ${model_dir}
 
 declare -A params
 params=(\
 [model_dir]=${model_dir} \
 [export_model_dir]=${export_model_dir} \
+[preprocessed_filename]=${model_dir}/preprocessed.pkl \
  \
 ## run_mode: train, predict, all \
 [run_mode]='train' \
 [train_data_path]=`pwd`/data/tinyshakespeare/input.txt \
-[eval_data_path]=`pwd`/validation.txt \
+[eval_data_path]=`pwd`/data/tinyshakespeare/input.txt \
 [predict_data_path]=`pwd`/validation.txt \
 [predict_output]=`pwd`/predict_output.${model_name}.txt \
 [predict_checkpoint_path]=${model_dir} \
@@ -43,7 +45,7 @@ params=(\
 [clip_norm]=5.0 \
 [batch_size]=32 \
 [max_train_steps]=-1 \
-[epoch]=15 \
+[epoch]=30 \
 [throttle_secs]=600 \
 [use_embedding]=False \
 [embedding_dim]=100 \
@@ -64,7 +66,7 @@ params=(\
  \
 # profile flags \
 [use_profile_hook]=False \
-[profile_steps]=100 \
+[profile_steps]=10 \
  \
 # optimizer flags \
 [optimizer]='adam' \
@@ -82,12 +84,12 @@ params=(\
 [rmsprop_decay]=0.9 \
  \
 # learning rate flags \
-[learning_rate]=0.001 \
+[learning_rate]=0.01 \
 ## fixed, exponential or polynomial
 [learning_rate_decay_type]='exponential' \
 [end_learning_rate]=0.0001 \
-[learning_rate_decay_factor]=0.9 \
-[num_epochs_per_decay]=1.0 \
+[learning_rate_decay_factor]=0.95 \
+[num_epochs_per_decay]=2.0 \
 )
 
 params_str=''

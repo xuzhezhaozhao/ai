@@ -10,6 +10,8 @@ import tensorflow as tf
 
 tf.app.flags.DEFINE_string('model_dir', 'model_dir', '')
 tf.app.flags.DEFINE_string('export_model_dir', 'export_model_dir', '')
+tf.app.flags.DEFINE_string(
+    'preprocessed_filename', 'model_dir/preprocessed.pkl', '')
 
 tf.app.flags.DEFINE_string('run_mode', 'train', 'train, predict and all')
 tf.app.flags.DEFINE_string('train_data_path', '', 'train data path')
