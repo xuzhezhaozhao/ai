@@ -24,6 +24,7 @@ class CharRNN(object):
         num_samples_per_epoch = self.params['num_samples_per_epoch']
         num_steps_per_epoch = int(num_samples_per_epoch/self.opts.batch_size)
         self.train_steps = num_steps_per_epoch * self.opts.epoch
+        tf.logging.info("train_steps = {}".format(self.train_steps))
 
         self.inputs = None
         self.labels = None
