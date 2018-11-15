@@ -9,7 +9,7 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
-start_string="Queen is the bes"
+start_string="春"
 
 run_mode='sample'
 if [[ $# -eq 1 ]]; then
@@ -36,7 +36,7 @@ params=(\
  \
 ## run_mode: train, predict, all \
 [run_mode]=${run_mode} \
-[train_data_path]=`pwd`/data/tinyshakespeare/input.txt \
+[train_data_path]=./ref2/data/poetry.txt \
 [start_string]=${start_string} \
 [num_samples]=1000 \
 [sample_temperature]=0.04 \
@@ -49,9 +49,9 @@ params=(\
 [use_clip_gradients]=True \
 [clip_norm]=5.0 \
 [batch_size]=32 \
-[epoch]=1 \
-[use_embedding]=False \
-[embedding_dim]=100 \
+[epoch]=30 \
+[use_embedding]=True \
+[embedding_dim]=50 \
  \
 # dataset flags \
 [prefetch_size]=500 \

@@ -96,7 +96,6 @@ class CharRNN(object):
 
                 # save for last step
                 self.save_checkpoint(sess, saver, global_step)
-                self.save_summary(sess, writer, merged_summary, global_step)
 
     def sample(self):
         with tf.Graph().as_default():
@@ -169,7 +168,8 @@ class CharRNN(object):
                         .format(self.now(), ckpt_path))
 
     def maybe_logging(self, global_step, loss):
-        if global_step % self.opts.log_step_count_steps == 0:
+        if (global_step == 1 or
+                global_step % self.opts.log_step_count_steps == 0):
             tf.logging.info("step = {}, loss = {}"
                             .format(global_step, loss))
 
