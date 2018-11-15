@@ -1,5 +1,6 @@
 from PIL import Image
 import os
+import skimage.io
 
 dirname = './train'
 filenames = os.listdir(dirname)
@@ -12,10 +13,15 @@ for index, filename in enumerate(filenames):
 
     try:
         img = Image.open(filename)
+        img2 = skimage.io.imread(filename)
     except Exception as e:
         print("catch except: {}".format(e))
         print("delete {} ...".format(filename))
         os.remove(filename)
+        continue
+
+    if (len(img2.shape) != 3) or (img2.shape[2] != 3):
+        print("shape error, filename {}".format(filename))
         continue
 
     img_type = img.format.lower()
