@@ -47,7 +47,7 @@ params=(\
 [clip_norm]=5.0 \
 [batch_size]=32 \
 [max_train_steps]=-1 \
-[epoch]=200 \
+[epoch]=15 \
 [throttle_secs]=600 \
 [use_embedding]=False \
 [embedding_dim]=100 \
@@ -60,9 +60,7 @@ params=(\
  \
 # log flags \
 [save_summary_steps]=10 \
-[save_checkpoints_secs]=-1 \
-[save_checkpoints_steps]=-1 \
-[save_checkpoints_epoches]=1.0 \
+[save_checkpoints_steps]=5000 \
 [keep_checkpoint_max]=5 \
 [log_step_count_steps]=100 \
  \

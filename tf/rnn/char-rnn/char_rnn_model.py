@@ -5,8 +5,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import tensorflow as tf
 from datetime import datetime
+import tensorflow as tf
+import os
 
 
 class CharRNN(object):
@@ -57,7 +58,7 @@ class CharRNN(object):
             global_step_tensor = tf.train.get_or_create_global_step(g)
 
             self.build_graph(features)
-            train_op, loss = self.create_train_op(self.logits, labels)
+            train_op, loss_tensor = self.create_train_op(self.logits, labels)
 
             merged_summary = tf.summary.merge_all()
             summary_writer = tf.summary.FileWriter(self.opts.model_dir)
@@ -68,8 +69,23 @@ class CharRNN(object):
 
             with tf.Session() as sess:
                 self.session_init(sess, summary_writer, saver)
-                tf.logging.info('{} Start training ...'.format(datetime.now()))
+                tf.logging.info('{} Start training ...'.format(self.now()))
                 init_step = sess.run(global_step_tensor)
+
+                while True:
+                    final_state = sess.run(self.initial_state)
+                    feed_dict = {
+                        self.initial_state: final_state
+                    }
+                    run_ops = [train_op, loss_tensor,
+                               self.final_state, global_step_tensor]
+                    _, loss, final_state, global_step = sess.run(
+                        run_ops, feed_dict=feed_dict)
+
+                    self.maybe_logging(global_step, loss)
+                    self.maybe_save_checkpoint(sess, saver, global_step)
+                    self.maybe_save_summary(
+                        sess, summary_writer, merged_summary, global_step)
 
     def session_init(self, sess, summary_writer, saver):
         sess.run(tf.global_variables_initializer())
@@ -86,6 +102,31 @@ class CharRNN(object):
             tf.logging.info('restore model ckpt from {} ...'
                             .format(lastest_path))
             saver.restore(sess, lastest_path)
+
+    def maybe_save_checkpoint(self, sess, saver, global_step):
+        if global_step % self.opts.save_checkpoints_steps == 0:
+            self.save_checkpoint(sess, saver, global_step)
+
+    def save_checkpoint(self, sess, saver, global_step):
+        ckpt_name = os.path.join(
+            self.opts.model_dir, 'model.ckpt-{}'.format(global_step))
+        ckpt_path = saver.save(sess, ckpt_name)
+        tf.logging.info('{} Model ckpt saved at "{}"'
+                        .format(self.now(), ckpt_path))
+
+    def maybe_logging(self, global_step, loss):
+        if global_step % self.opts.log_step_count_steps == 0:
+            tf.logging.info("step = {}, loss = {}"
+                            .format(global_step, loss))
+
+    def maybe_save_summary(self, sess, writer, merged_summary, global_step):
+        if global_step % self.opts.save_summary_steps == 0:
+            self.save_summary(sess, writer, merged_summary, global_step)
+
+    def save_summary(self, sess, writer, merged_summary, global_step):
+            merged_summary = sess.run(merged_summary)
+            writer.add_summary(merged_summary, global_step)
+            writer.flush()
 
     def call_input_fn(self, input_fn):
         with tf.device('/cpu:0'):
@@ -240,3 +281,6 @@ class CharRNN(object):
             raise ValueError(
                 'learning_rate_decay_type [%s] was not recognized' %
                 self.opts.learning_rate_decay_type)
+
+    def now(self):
+        return datetime.now()
