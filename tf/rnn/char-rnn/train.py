@@ -16,7 +16,8 @@ def train(opts):
     """Train model."""
 
     tf.logging.info("Preprocessing ...")
-    input_data.preprocess(opts.train_data_path, opts.preprocessed_filename)
+    input_data.preprocess(opts.train_data_path, opts.preprocessed_filename,
+                          opts.min_count)
     tf.logging.info("Preprocessing done.")
 
     input_fn = input_data.build_train_input_fn(opts, opts.train_data_path)

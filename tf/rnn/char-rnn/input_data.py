@@ -13,10 +13,10 @@ import pickle
 BUFFER_SIZE = 1024*1024
 
 
-def preprocess(filename, preprocessed_filename):
+def preprocess(filename, preprocessed_filename, min_count):
     with codecs.open(filename, 'rb', encoding='utf-8') as f:
         total = 0
-        chars_dict = {}
+        chars_count = {}
 
         while True:
             data = f.read(BUFFER_SIZE)
@@ -26,16 +26,18 @@ def preprocess(filename, preprocessed_filename):
             total += read_size
 
             for char in data:
-                if char not in chars_dict:
-                    chars_dict[char] = 0
-                chars_dict[char] += 1
+                if char not in chars_count:
+                    chars_count[char] = 0
+                chars_count[char] += 1
 
         tf.logging.info("[preprocess] total chars = {}".format(total))
         tf.logging.info("[preprocess] unique chars = {}"
-                        .format(len(chars_dict)))
-
-        vocab = chars_dict.keys()
+                        .format(len(chars_count)))
+        vocab = [c for c in chars_count.keys() if chars_count[c] >= min_count]
         vocab.insert(0, '#UNK#')  # UNK
+
+        tf.logging.info("[preprocess] unique chars count large than {} = {}"
+                        .format(min_count, len(vocab)-1))
 
         dump_dict = {}
         dump_dict['vocab'] = vocab

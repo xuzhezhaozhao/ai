@@ -9,7 +9,7 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
-start_string="春"
+start_string="何人"
 
 run_mode='sample'
 if [[ $# -eq 1 ]]; then
@@ -42,16 +42,17 @@ params=(\
 [sample_temperature]=0.04 \
  \
 # train flags \
-[seq_length]=64 \
-[hidden_size]=100 \
+[seq_length]=32 \
+[hidden_size]=128 \
 [num_layers]=2 \
 [keep_prob]=1.0 \
 [use_clip_gradients]=True \
 [clip_norm]=5.0 \
-[batch_size]=32 \
+[batch_size]=26 \
 [epoch]=30 \
 [use_embedding]=True \
-[embedding_dim]=50 \
+[embedding_dim]=128 \
+[min_count]=5 \
  \
 # dataset flags \
 [prefetch_size]=500 \
@@ -85,7 +86,7 @@ params=(\
 [rmsprop_decay]=0.9 \
  \
 # learning rate flags \
-[learning_rate]=0.001 \
+[learning_rate]=0.005 \
 ## fixed, exponential or polynomial
 [learning_rate_decay_type]='fixed' \
 [end_learning_rate]=0.0001 \
