@@ -19,11 +19,20 @@ for index, filename in enumerate(filenames):
         continue
 
     img_type = img.format.lower()
+    img_mode = img.mode.lower()
     allowed_types = set(['jpeg', 'jpg', 'png', 'bmp'])
-    if img_type not in allowed_types:
-        print("type error: " + filename + ", " + str(img_type))
+    allowed_modes = set(['rgb'])
+    if img_type not in allowed_types or img_mode not in allowed_modes:
+        print("type/mode error: {}, {}, {}"
+              .format(filename, img_type, img_mode))
+        print("delete {} ...".format(filename))
+        os.remove(filename)
+        continue
 
     if len(img.size) != 2:
         print("shape error: " + filename + ", " + str(img.size))
+        print("delete {} ...".format(filename))
+        os.remove(filename)
+        continue
 
     os.rename(filename, filename + '.' + img_type)
