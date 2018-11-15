@@ -20,7 +20,12 @@ class CharRNN(object):
         self.vocab_size = params['vocab_size']
         tf.logging.info("vocab_size = {}".format(self.vocab_size))
 
+        num_samples_per_epoch = self.params['num_samples_per_epoch']
+        num_steps_per_epoch = int(num_samples_per_epoch/self.opts.batch_size)
+        self.train_steps = num_steps_per_epoch * self.opts.epoch
+
         self.inputs = None
+        self.labels = None
         self.iterator_initializer = None
         self.initial_state = None
         self.final_state = None
@@ -49,7 +54,11 @@ class CharRNN(object):
             [self.get_rnn_cell(self.opts.hidden_size, keep_prob)
              for _ in range(self.opts.num_layers)]
         )
-        batch_size = self.inputs.shape.as_list()[0]
+        if training:
+            batch_size = self.opts.batch_size
+        else:
+            batch_size = 1
+        # batch_size = self.inputs.shape.as_list()[0]
         self.initial_state = cell.zero_state(batch_size, tf.float32)
 
         # lstm_outputs: shape [batch, seq_length, hidden_size]
@@ -66,12 +75,15 @@ class CharRNN(object):
         with tf.Graph().as_default() as g:
             # tf.set_random_seed(None)
 
-            self.inputs, labels = self.get_features_and_labels(input_fn)
+            result = self.call_input_fn(input_fn)
+            self.inputs = tf.placeholder(
+                tf.int64, [self.opts.batch_size, self.opts.seq_length])
+            self.labels = tf.placeholder(
+                tf.int64, [self.opts.batch_size, self.opts.seq_length])
             global_step_tensor = tf.train.get_or_create_global_step(g)
-
             self.build_graph(training=True)
             train_op, loss_tensor = self.create_train_op_and_loss(
-                self.logits, labels)
+                self.logits, self.labels)
 
             with tf.Session() as sess:
                 (merged_summary, writer,
@@ -79,20 +91,22 @@ class CharRNN(object):
                 self.session_init(sess, saver)
                 tf.logging.info('{} Start training ...'.format(self.now()))
                 final_state = sess.run(self.initial_state)
-                while True:
-                    try:
-                        feed_dict = {self.initial_state: final_state}
-                        run_ops = [train_op, loss_tensor,
-                                   self.final_state, global_step_tensor]
-                        _, loss, final_state, global_step = sess.run(
-                            run_ops, feed_dict=feed_dict)
-                    except tf.errors.OutOfRangeError:
-                        break
+                for _ in xrange(self.train_steps):
+                    inputs, labels = result.next()
+                    feed_dict = {
+                        self.initial_state: final_state,
+                        self.inputs: inputs,
+                        self.labels: labels
+                    }
+                    run_ops = [train_op, loss_tensor,
+                               self.final_state, global_step_tensor]
+                    _, loss, final_state, global_step = sess.run(
+                        run_ops, feed_dict=feed_dict)
 
                     self.maybe_logging(global_step, loss)
                     self.maybe_save_checkpoint(sess, saver, global_step)
                     self.maybe_save_summary(
-                        sess, writer, merged_summary, global_step)
+                        sess, writer, merged_summary, global_step, feed_dict)
 
                 # save for last step
                 self.save_checkpoint(sess, saver, global_step)
@@ -113,7 +127,7 @@ class CharRNN(object):
                 inputs = text_as_int.reshape([1, len(text_as_int)])
                 samples = text_as_int.tolist()
                 final_state = sess.run(self.initial_state)
-                for i in range(self.opts.num_samples):
+                for _ in range(self.opts.num_samples):
                     feed_dict = {
                         self.inputs: inputs,
                         self.initial_state: final_state
@@ -178,33 +192,21 @@ class CharRNN(object):
             tf.logging.info("step = {}, loss = {}"
                             .format(global_step, loss))
 
-    def maybe_save_summary(self, sess, writer, merged_summary, global_step):
+    def maybe_save_summary(self, sess, writer, merged_summary, global_step,
+                           feed_dict):
         if global_step % self.opts.save_summary_steps == 0:
-            self.save_summary(sess, writer, merged_summary, global_step)
+            self.save_summary(
+                sess, writer, merged_summary, global_step, feed_dict)
 
-    def save_summary(self, sess, writer, merged_summary, global_step):
-            merged_summary = sess.run(merged_summary)
+    def save_summary(self, sess, writer, merged_summary, global_step,
+                     feed_dict):
+            merged_summary = sess.run(merged_summary, feed_dict=feed_dict)
             writer.add_summary(merged_summary, global_step)
             writer.flush()
 
     def call_input_fn(self, input_fn):
         with tf.device('/cpu:0'):
             return input_fn()
-
-    def parse_input_fn_result(self, result):
-        iterator = result.make_initializable_iterator()
-        self.iterator_initializer = iterator.initializer
-        data = iterator.get_next()
-        if isinstance(data, (list, tuple)):
-            if len(data) != 2:
-                raise ValueError(
-                    'input_fn should return (features, labels) as a tuple.')
-            return data[0], data[1]
-        return data, None
-
-    def get_features_and_labels(self, input_fn):
-        result = self.call_input_fn(input_fn)
-        return self.parse_input_fn_result(result)
 
     def get_rnn_cell(self, size, keep_prob):
         lstm = tf.nn.rnn_cell.LSTMCell(size)

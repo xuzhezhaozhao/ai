@@ -20,7 +20,7 @@ def train(opts):
                           opts.min_count)
     tf.logging.info("Preprocessing done.")
 
-    input_fn = input_data.build_train_input_fn(opts, opts.train_data_path)
+    input_fn = input_data.build_train_input_fn_v2(opts, opts.train_data_path)
     model = create_char_rnn_model(opts)
     model.train(input_fn)
 
@@ -43,5 +43,5 @@ def get_preprocessed(opts):
     load_dict = input_data.load_preprocessed(opts.preprocessed_filename)
     total_chars = load_dict['total_chars']
     vocab = load_dict['vocab']
-    num_samples_per_epoch = total_chars / (opts.seq_length + 1)
+    num_samples_per_epoch = int(total_chars / opts.seq_length)
     return num_samples_per_epoch, vocab

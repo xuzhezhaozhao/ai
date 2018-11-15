@@ -58,7 +58,7 @@ params=(\
 # dataset flags \
 [prefetch_size]=500 \
 [shuffle_size]=500 \
-[shuffle_batch]=True \
+[shuffle_batch]=False \
 [map_num_parallel_calls]=1 \
  \
 # log flags \
