@@ -35,6 +35,7 @@ def preprocess(filename, preprocessed_filename):
                         .format(len(chars_dict)))
 
         vocab = chars_dict.keys()
+        vocab.insert(0, '#UNK#')  # UNK
 
         dump_dict = {}
         dump_dict['vocab'] = vocab
@@ -55,7 +56,7 @@ def text_to_int(text, opts):
     load_dict = load_preprocessed(opts.preprocessed_filename)
     vocab = load_dict['vocab']
     char2idx = {u: i for i, u in enumerate(vocab)}
-    text_as_int = np.array([char2idx[c] for c in text])
+    text_as_int = np.array([char2idx[c] if c in vocab else 0 for c in text])
     return text_as_int
 
 

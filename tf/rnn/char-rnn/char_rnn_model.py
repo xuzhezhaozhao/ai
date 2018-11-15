@@ -18,6 +18,7 @@ class CharRNN(object):
         self.opts = opts
         self.params = params
         self.vocab_size = params['vocab_size']
+        tf.logging.info("vocab_size = {}".format(self.vocab_size))
 
         self.inputs = None
         self.iterator_initializer = None
@@ -126,7 +127,7 @@ class CharRNN(object):
                     inputs = np.array(predicted_id).reshape([1, 1])
                     samples.append(c)
 
-                samples = ''.join(samples)
+                samples = ''.join(samples).encode('utf-8')
                 tf.logging.info("sampels: \n{}".format(samples))
                 tf.logging.info('{} Sampling done.'.format(self.now()))
 
