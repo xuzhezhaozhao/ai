@@ -98,7 +98,7 @@ class CharRNN(object):
 
     def sample(self):
         with tf.Graph().as_default():
-            start_string = self.opts.start_string
+            start_string = self.opts.start_string.decode('utf-8')
             text_as_int = input_data.text_to_int(start_string, self.opts)
             text_as_int = np.array(text_as_int).reshape([1, len(text_as_int)])
             self.inputs = tf.placeholder(tf.int64, shape=(1, None))

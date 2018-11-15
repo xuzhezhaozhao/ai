@@ -9,8 +9,12 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
+start_string="Queen is the bes"
 
-run_mode='all'
+run_mode='sample'
+if [[ $# -eq 1 ]]; then
+    run_mode=$1
+fi
 
 remove_model_dir=1
 if [[ ${remove_model_dir} == '1' && ${run_mode} != 'sample' ]]; then
@@ -37,9 +41,9 @@ params=(\
 [predict_data_path]=`pwd`/predict.txt \
 [predict_output]=`pwd`/predict_output.${model_name}.txt \
 [predict_checkpoint_path]=${model_dir} \
-[start_string]='First' \
+[start_string]=${start_string} \
 [num_samples]=1000 \
-[sample_temperature]=0.01 \
+[sample_temperature]=0.04 \
  \
 # train flags \
 [seq_length]=64 \
@@ -102,4 +106,4 @@ do
 done
 echo 'params: ' ${params_str}
 
-python main.py ${params_str}
+python main.py ${params_str} --start_string "${start_string}"
