@@ -90,6 +90,7 @@ def create_image_dataset(data_path):
 def parse_function(img_path, image_size):
     image_string = tf.read_file(img_path)
     image_decoded = tf.image.decode_image(image_string, channels=3)
+    image_decoded = image_decoded[:, :, :3]
     image_decoded.set_shape([None, None, 3])
 
     preprocessing_name = FLAGS.preprocessing_name
