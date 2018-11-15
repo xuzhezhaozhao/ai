@@ -23,7 +23,7 @@ tf.flags.DEFINE_integer('max_vocab', 3500, 'max char number')
 
 
 def main(_):
-    model_path = os.path.join('model', FLAGS.name)
+    model_path = os.path.join('model_dir', FLAGS.name)
     if os.path.exists(model_path) is False:
         os.makedirs(model_path)
     with codecs.open(FLAGS.input_file, encoding='utf-8') as f:

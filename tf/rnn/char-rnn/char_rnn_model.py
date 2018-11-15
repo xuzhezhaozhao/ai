@@ -26,7 +26,7 @@ class CharRNN(object):
         self.final_state = None
         self.logits = None
 
-    def build_graph(self, sampling):
+    def build_graph(self, sampling, training):
         """Build char rnn model graph."""
 
         tf.summary.histogram('inputs', self.inputs)
@@ -39,8 +39,13 @@ class CharRNN(object):
                 'embedding', [self.vocab_size, self.opts.embedding_dim])
             lstm_inputs = tf.nn.embedding_lookup(embedding, self.inputs)
 
+        if training:
+            keep_prob = self.opts.keep_prob
+        else:
+            keep_prob = 1.0
+
         cell = tf.nn.rnn_cell.MultiRNNCell(
-            [self.get_rnn_cell(self.opts.hidden_size, self.opts.keep_prob)
+            [self.get_rnn_cell(self.opts.hidden_size, keep_prob)
              for _ in range(self.opts.num_layers)]
         )
         batch_size = self.inputs.shape.as_list()[0]
@@ -69,7 +74,7 @@ class CharRNN(object):
             self.inputs, labels = self.get_features_and_labels(input_fn)
             global_step_tensor = tf.train.get_or_create_global_step(g)
 
-            self.build_graph(sampling=False)
+            self.build_graph(sampling=False, training=True)
             train_op, loss_tensor = self.create_train_op_and_loss(
                 self.logits, labels)
 
@@ -103,7 +108,7 @@ class CharRNN(object):
             text_as_int = input_data.text_to_int(start_string, self.opts)
             text_as_int = np.array(text_as_int).reshape([1, len(text_as_int)])
             self.inputs = tf.placeholder(tf.int64, shape=(1, None))
-            self.build_graph(sampling=True)
+            self.build_graph(sampling=True, training=False)
 
             with tf.Session() as sess:
                 (merged_summary, writer,

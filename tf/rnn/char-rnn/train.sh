@@ -39,20 +39,20 @@ params=(\
 [train_data_path]=./ref2/data/poetry.txt \
 [start_string]=${start_string} \
 [num_samples]=1000 \
-[sample_temperature]=0.04 \
+[sample_temperature]=0.005 \
  \
 # train flags \
 [seq_length]=32 \
 [hidden_size]=128 \
 [num_layers]=2 \
-[keep_prob]=1.0 \
+[keep_prob]=0.5 \
 [use_clip_gradients]=True \
 [clip_norm]=5.0 \
 [batch_size]=26 \
 [epoch]=30 \
 [use_embedding]=True \
 [embedding_dim]=128 \
-[min_count]=5 \
+[min_count]=10 \
  \
 # dataset flags \
 [prefetch_size]=500 \

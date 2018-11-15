@@ -10,7 +10,7 @@ import numpy as np
 import codecs
 import pickle
 
-BUFFER_SIZE = 1024*1024
+BUFFER_SIZE = 1024 * 1024
 
 
 def preprocess(filename, preprocessed_filename, min_count):
@@ -37,7 +37,7 @@ def preprocess(filename, preprocessed_filename, min_count):
         vocab.insert(0, '#UNK#')  # UNK
 
         tf.logging.info("[preprocess] unique chars count large than {} = {}"
-                        .format(min_count, len(vocab)-1))
+                        .format(min_count, len(vocab) - 1))
 
         dump_dict = {}
         dump_dict['vocab'] = vocab
@@ -87,7 +87,7 @@ def build_train_input_fn(opts, filename):
     def train_input_fn():
         text_as_int = parse_txt(filename, opts)
         text_as_int = tf.data.Dataset.from_tensor_slices(text_as_int)
-        chunks = text_as_int.batch(opts.seq_length+1, drop_remainder=True)
+        chunks = text_as_int.batch(opts.seq_length + 1, drop_remainder=True)
         dataset = chunks.map(split_input_target,
                              num_parallel_calls=opts.map_num_parallel_calls)
         if opts.shuffle_batch:
@@ -98,3 +98,17 @@ def build_train_input_fn(opts, filename):
         return dataset
 
     return train_input_fn
+
+
+def batch_generator(data, batch_size, seq_length):
+    chunk_size = batch_size * seq_length
+    n_batches = int(len(data) / chunk_size)
+    data = data[:chunk_size * n_batches]
+    data = data.reshape((batch_size, -1))
+    while True:
+        np.random.shuffle(data)
+        for n in range(0, data.shape[1], seq_length):
+            x = data[:, n:n + seq_length]
+            y = np.zeros_like(x)
+            y[:, :-1], y[:, -1] = x[:, 1:], x[:, 0]
+            yield x, y
