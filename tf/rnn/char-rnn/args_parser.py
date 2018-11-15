@@ -18,12 +18,6 @@ tf.app.flags.DEFINE_string('train_data_path', '', 'train data path')
 tf.app.flags.DEFINE_string('start_string', '', 'char rnn sample start string')
 tf.app.flags.DEFINE_integer('num_samples', 100, '')
 
-tf.app.flags.DEFINE_float(
-    'sample_temperature', 1.0,
-    'Low temperatures results in more predictable text.'
-    'Higher temperatures results in more surprising text.'
-    'Experiment to find the best setting.')
-
 # train flags
 tf.app.flags.DEFINE_integer('seq_length', 20, 'sequence length')
 tf.app.flags.DEFINE_integer('hidden_size', 100, 'rnn hidden size')
@@ -45,23 +39,12 @@ tf.app.flags.DEFINE_integer(
 tf.app.flags.DEFINE_integer('min_count', 5, 'char min count')
 tf.app.flags.DEFINE_integer('sample_top_k', 5, '')
 
-# dataset flags
-tf.app.flags.DEFINE_integer('prefetch_size', 1000, '')
-tf.app.flags.DEFINE_integer('shuffle_size', 1000, '')
-tf.app.flags.DEFINE_bool('shuffle_batch', True, '')
-tf.app.flags.DEFINE_integer('map_num_parallel_calls', 1, '')
-
-
 # log flags
 tf.app.flags.DEFINE_integer('save_summary_steps', 100, '')
 tf.app.flags.DEFINE_integer('save_checkpoints_steps', 5000, '')
 tf.app.flags.DEFINE_integer('keep_checkpoint_max', 3, '')
 tf.app.flags.DEFINE_integer('log_step_count_steps', 100, '')
 
-
-# profile flags
-tf.app.flags.DEFINE_bool('use_profile_hook', False, '')
-tf.app.flags.DEFINE_integer('profile_steps', 100, '')
 
 # optimizer flags
 tf.app.flags.DEFINE_string(

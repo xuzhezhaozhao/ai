@@ -39,7 +39,6 @@ params=(\
 [train_data_path]=./ref2/data/poetry.txt \
 [start_string]=${start_string} \
 [num_samples]=1000 \
-[sample_temperature]=0.005 \
  \
 # train flags \
 [seq_length]=32 \
@@ -54,12 +53,6 @@ params=(\
 [embedding_dim]=128 \
 [min_count]=6 \
 [sample_top_k]=5 \
- \
-# dataset flags \
-[prefetch_size]=500 \
-[shuffle_size]=500 \
-[shuffle_batch]=False \
-[map_num_parallel_calls]=1 \
  \
 # log flags \
 [save_summary_steps]=10 \

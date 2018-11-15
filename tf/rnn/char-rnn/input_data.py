@@ -77,29 +77,6 @@ def parse_txt(filename, opts):
     return text_to_int(data, opts)
 
 
-def split_input_target(chunk):
-    input_text = chunk[:-1]
-    target_text = chunk[1:]
-    return input_text, target_text
-
-
-def build_train_input_fn(opts, filename):
-    def train_input_fn():
-        text_as_int = parse_txt(filename, opts)
-        text_as_int = tf.data.Dataset.from_tensor_slices(text_as_int)
-        chunks = text_as_int.batch(opts.seq_length + 1, drop_remainder=True)
-        dataset = chunks.map(split_input_target,
-                             num_parallel_calls=opts.map_num_parallel_calls)
-        if opts.shuffle_batch:
-            dataset = dataset.shuffle(opts.shuffle_size)
-        dataset = dataset.batch(opts.batch_size, drop_remainder=True)
-        dataset = dataset.repeat(opts.epoch)
-
-        return dataset
-
-    return train_input_fn
-
-
 def build_train_input_fn_v2(opts, filename):
     def train_input_fn():
         data = parse_txt(filename, opts)
