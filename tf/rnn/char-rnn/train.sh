@@ -52,7 +52,7 @@ params=(\
 [epoch]=20 \
 [use_embedding]=True \
 [embedding_dim]=128 \
-[min_count]=5 \
+[min_count]=6 \
 [sample_top_k]=5 \
  \
 # dataset flags \
@@ -63,8 +63,8 @@ params=(\
  \
 # log flags \
 [save_summary_steps]=10 \
-[save_checkpoints_steps]=5000 \
-[keep_checkpoint_max]=5 \
+[save_checkpoints_steps]=1000 \
+[keep_checkpoint_max]=10 \
 [log_step_count_steps]=100 \
  \
 # profile flags \

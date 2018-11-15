@@ -104,17 +104,16 @@ def build_train_input_fn_v2(opts, filename):
     def train_input_fn():
         data = parse_txt(filename, opts)
         chunk_size = opts.batch_size * opts.seq_length
-        n_batches = int((len(data)-1) / chunk_size)
-        data = data[:chunk_size * n_batches + 1]
+        n_batches = int((len(data) - opts.batch_size) / chunk_size)
+        data = data[:chunk_size * n_batches + opts.batch_size]
         data = data.reshape((opts.batch_size, -1))
         while True:
             np.random.shuffle(data)
-            for n in range(0, data.shape[1], opts.seq_length):
+            for n in range(0, data.shape[1]-opts.seq_length, opts.seq_length):
                 x = data[:, n:n + opts.seq_length]
                 y = np.zeros_like(x)
-                # y[:, :-1], y[:, -1] = x[:, 1:], x[:, 0]
                 y[:, :-1] = x[:, 1:]
-                y[:, -1] = data[:, n + opts.seq_length + 1]
-
+                y[:, -1] = data[:, n + opts.seq_length]
                 yield x, y
+
     return train_input_fn

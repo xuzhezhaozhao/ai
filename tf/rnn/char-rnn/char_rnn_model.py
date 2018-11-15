@@ -9,6 +9,7 @@ from datetime import datetime
 import tensorflow as tf
 import numpy as np
 import os
+import time
 
 import input_data
 
@@ -100,10 +101,13 @@ class CharRNN(object):
                     }
                     run_ops = [train_op, loss_tensor,
                                self.final_state, global_step_tensor]
+
+                    start_time = time.time()
                     _, loss, final_state, global_step = sess.run(
                         run_ops, feed_dict=feed_dict)
+                    duration_sec = time.time() - start_time
 
-                    self.maybe_logging(global_step, loss)
+                    self.maybe_logging(global_step, loss, duration_sec)
                     self.maybe_save_checkpoint(sess, saver, global_step)
                     self.maybe_save_summary(
                         sess, writer, merged_summary, global_step, feed_dict)
@@ -186,11 +190,11 @@ class CharRNN(object):
         tf.logging.info('{} Model ckpt saved at "{}"'
                         .format(self.now(), ckpt_path))
 
-    def maybe_logging(self, global_step, loss):
+    def maybe_logging(self, global_step, loss, duration_sec):
         if (global_step == 1 or
                 global_step % self.opts.log_step_count_steps == 0):
-            tf.logging.info("step = {}, loss = {}"
-                            .format(global_step, loss))
+            tf.logging.info("step = {}, loss = {}, time = {:.3f} s/step"
+                            .format(global_step, loss, duration_sec))
 
     def maybe_save_summary(self, sess, writer, merged_summary, global_step,
                            feed_dict):
@@ -235,37 +239,15 @@ class CharRNN(object):
             gradients, _ = tf.clip_by_global_norm(gradients,
                                                   self.opts.clip_norm)
 
-        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-        with tf.control_dependencies(update_ops):
-            train_op = optimizer.apply_gradients(
-                zip(gradients, variables),
-                global_step=global_step)
+        train_op = optimizer.apply_gradients(
+            zip(gradients, variables),
+            global_step=global_step)
 
         for var, grad in zip(variables, gradients):
             tf.summary.histogram(
                 var.name.replace(':', '_') + '/gradient', grad)
 
         return train_op, loss
-
-    def create_predict_estimator_spec(self, mode, logits, states):
-        # Low temperatures results in more predictable text.
-        # Higher temperatures results in more surprising text.
-        # Experiment to find the best setting.
-        temperature = 1.0
-
-        vocab_size = self.params['vocab_size']
-        logits = tf.reshape(logits, [-1, vocab_size])
-
-        predictions = tf.nn.softmax(logits)
-        predictions = predictions / temperature
-        predicted_id = tf.multinomial(predictions, num_samples=1)
-        predicted_id = predicted_id[-1, 0]
-        predicted_id = tf.expand_dims(predicted_id, 0)
-        predictions = {
-            'predicted_id': predicted_id,
-        }
-
-        return tf.estimator.EstimatorSpec(mode, predictions=predictions)
 
     def configure_optimizer(self, learning_rate):
         """Configures the optimizer used for training."""
