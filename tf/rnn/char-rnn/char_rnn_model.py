@@ -7,7 +7,10 @@ from __future__ import print_function
 
 from datetime import datetime
 import tensorflow as tf
+import numpy as np
 import os
+
+import input_data
 
 
 class CharRNN(object):
@@ -16,29 +19,30 @@ class CharRNN(object):
         self.params = params
         self.vocab_size = params['vocab_size']
 
+        self.inputs = None
         self.iterator_initializer = None
         self.initial_state = None
         self.final_state = None
         self.logits = None
 
-    def build_graph(self, features):
+    def build_graph(self, sampling):
         """Build char rnn model graph."""
 
-        tf.summary.histogram('features', features)
+        tf.summary.histogram('inputs', self.inputs)
 
         # use embedding for Chinese, not necessary for English
         if not self.opts.use_embedding:
-            lstm_inputs = tf.one_hot(features, self.vocab_size)
+            lstm_inputs = tf.one_hot(self.inputs, self.vocab_size)
         else:
             embedding = tf.get_variable(
                 'embedding', [self.vocab_size, self.opts.embedding_dim])
-            lstm_inputs = tf.nn.embedding_lookup(embedding, features)
+            lstm_inputs = tf.nn.embedding_lookup(embedding, self.inputs)
 
         cell = tf.nn.rnn_cell.MultiRNNCell(
             [self.get_rnn_cell(self.opts.hidden_size, self.opts.keep_prob)
              for _ in range(self.opts.num_layers)]
         )
-        batch_size = features.shape.as_list()[0]
+        batch_size = self.inputs.shape.as_list()[0]
         self.initial_state = cell.zero_state(batch_size, tf.float32)
 
         # lstm_outputs: shape [batch, seq_length, hidden_size]
@@ -50,14 +54,25 @@ class CharRNN(object):
         # shape [batch, seq_length, vocab_size]
         self.logits = tf.layers.dense(lstm_outputs, self.vocab_size)
 
+        if sampling:
+            # [batch*seq_length, vocab_size]
+            logits = tf.reshape(self.logits, [-1, self.vocab_size])
+            # Low temperatures results in more predictable text.
+            # Higher temperatures results in more surprising text.
+            # Experiment to find the best setting.
+            temperature = 1.0
+            predictions = tf.nn.softmax(logits) / temperature
+            self.predicted_id = tf.multinomial(predictions, num_samples=1)[-1, 0]
+
+
     def train(self, input_fn):
         with tf.Graph().as_default() as g:
             # tf.set_random_seed(None)
 
-            features, labels = self.get_features_and_labels(input_fn)
+            self.inputs, labels = self.get_features_and_labels(input_fn)
             global_step_tensor = tf.train.get_or_create_global_step(g)
 
-            self.build_graph(features)
+            self.build_graph(sampling=False)
             train_op, loss_tensor = self.create_train_op_and_loss(
                 self.logits, labels)
 
@@ -81,6 +96,44 @@ class CharRNN(object):
                     self.maybe_save_summary(
                         sess, writer, merged_summary, global_step)
 
+                # save for last step
+                self.save_checkpoint(sess, saver, global_step)
+                self.save_summary(sess, writer, merged_summary, global_step)
+
+    def sample(self):
+        with tf.Graph().as_default() as g:
+            start_string = self.opts.start_string
+            text_as_int = input_data.text_to_int(start_string, self.opts)
+            text_as_int = np.array(text_as_int).reshape([1, len(text_as_int)])
+            self.inputs = tf.placeholder(tf.int64, shape=(1, None))
+            self.build_graph(sampling=True)
+
+            with tf.Session() as sess:
+                (merged_summary, writer,
+                 saver) = self.create_writer_and_saver(sess)
+                self.session_init(sess, saver)
+
+                tf.logging.info('{} Start sampling ...'.format(self.now()))
+                inputs = text_as_int
+                final_state = sess.run(self.initial_state)
+                samples = []
+                samples.extend(start_string)
+                for _ in range(self.opts.num_samples):
+                    feed_dict = {
+                        self.inputs: inputs,
+                        self.initial_state: final_state
+                    }
+                    predicted_id, final_state = sess.run(
+                        [self.predicted_id, self.final_state],
+                        feed_dict=feed_dict)
+                    c = input_data.idx_to_text(predicted_id, self.opts)
+                    inputs = np.array(predicted_id).reshape([1, 1])
+                    samples.append(c)
+
+                samples = ''.join(samples)
+                tf.logging.info("sampels: \n{}".format(samples))
+                tf.logging.info('{} Sampling done.'.format(self.now()))
+
     def create_writer_and_saver(self, sess):
         merged_summary = tf.summary.merge_all()
         summary_writer = tf.summary.FileWriter(self.opts.model_dir)
@@ -94,8 +147,9 @@ class CharRNN(object):
     def session_init(self, sess, saver):
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
-        sess.run(self.iterator_initializer)
-        tf.get_default_graph().finalize()
+        if self.iterator_initializer is not None:
+            sess.run(self.iterator_initializer)
+        # tf.get_default_graph().finalize()  # TODO sample
         self.maybe_restore_model(sess, saver)
 
     def maybe_restore_model(self, sess, saver):

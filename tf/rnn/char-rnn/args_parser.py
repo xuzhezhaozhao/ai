@@ -19,6 +19,8 @@ tf.app.flags.DEFINE_string('eval_data_path', '', 'eval data path')
 tf.app.flags.DEFINE_string('predict_data_path', '', 'predict data path')
 tf.app.flags.DEFINE_string('predict_output', '', '')
 tf.app.flags.DEFINE_string('predict_checkpoint_path', '', '')
+tf.app.flags.DEFINE_string('start_string', '', 'char rnn sample start string')
+tf.app.flags.DEFINE_integer('num_samples', 100, '')
 
 # train flags
 tf.app.flags.DEFINE_integer('seq_length', 20, 'sequence length')

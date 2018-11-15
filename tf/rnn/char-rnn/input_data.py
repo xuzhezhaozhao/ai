@@ -51,16 +51,27 @@ def load_preprocessed(filename):
     return load_dict
 
 
+def text_to_int(text, opts):
+    load_dict = load_preprocessed(opts.preprocessed_filename)
+    vocab = load_dict['vocab']
+    char2idx = {u: i for i, u in enumerate(vocab)}
+    text_as_int = np.array([char2idx[c] for c in text])
+    return text_as_int
+
+
+def idx_to_text(idxs, opts):
+    load_dict = load_preprocessed(opts.preprocessed_filename)
+    vocab = load_dict['vocab']
+    idx2char = np.array(vocab)
+    text = idx2char[idxs]
+    return text
+
+
 def parse_txt(filename, opts):
     with codecs.open(filename, 'rb', encoding='utf-8') as f:
         data = f.read()
 
-    load_dict = load_preprocessed(opts.preprocessed_filename)
-    vocab = load_dict['vocab']
-    char2idx = {u: i for i, u in enumerate(vocab)}
-    text_as_int = np.array([char2idx[c] for c in data])
-
-    return text_as_int
+    return text_to_int(data, opts)
 
 
 def split_input_target(chunk):
@@ -97,17 +108,3 @@ def build_eval_input_fn(opts, filename):
         return dataset
 
     return eval_input_fn
-
-
-def build_predict_input_fn(opts, filename):
-    def predict_input_fn():
-
-        text_as_int = parse_txt(filename, opts)
-        chunk_size = len(text_as_int)
-        text_as_int = tf.data.Dataset.from_tensor_slices(text_as_int)
-        chunk = text_as_int.batch(chunk_size, drop_remainder=True)
-        dataset = chunk.batch(1, drop_remainder=True)
-
-        return dataset
-
-    return predict_input_fn

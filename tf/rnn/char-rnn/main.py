@@ -24,11 +24,11 @@ def main(_):
 
     if opts.run_mode == 'train':
         train.train(opts)
-    elif opts.run_mode == 'predict':
-        train.predict(opts)
+    elif opts.run_mode == 'sample':
+        train.sample(opts)
     elif opts.run_mode == 'all':
         train.train(opts)
-        train.predict(opts)
+        train.sample(opts)
     else:
         raise ValueError("Unsupported run mode.")
 

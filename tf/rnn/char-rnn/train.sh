@@ -10,10 +10,10 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
 
-run_mode='train'
+run_mode='sample'
 
 remove_model_dir=1
-if [[ ${remove_model_dir} == '1' && ${run_mode} != 'predict' ]]; then
+if [[ ${remove_model_dir} == '1' && ${run_mode} != 'sample' ]]; then
     echo "remove ${model_dir}.bak"
     rm -rf ${model_dir}.bak
     if [[ -d ${model_dir} ]]; then
@@ -37,6 +37,8 @@ params=(\
 [predict_data_path]=`pwd`/predict.txt \
 [predict_output]=`pwd`/predict_output.${model_name}.txt \
 [predict_checkpoint_path]=${model_dir} \
+[start_string]='QQ' \
+[num_samples]=1000 \
  \
 # train flags \
 [seq_length]=64 \
