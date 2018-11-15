@@ -48,6 +48,8 @@ datasets/leg-dataset/test
 datasets/cifar10-dataset/train
 datasets/cifar10-dataset/test
 datasets/nn-dataset/test
+datasets/video-cover-dataset/train
+datasets/video-cover-dataset/test
 tf/models/alexnet/train.txt
 tf/models/alexnet/test.txt
 tf/models/alexnet/eval.txt
