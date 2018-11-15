@@ -15,10 +15,6 @@ tf.app.flags.DEFINE_string(
 
 tf.app.flags.DEFINE_string('run_mode', 'train', 'train, predict and all')
 tf.app.flags.DEFINE_string('train_data_path', '', 'train data path')
-tf.app.flags.DEFINE_string('eval_data_path', '', 'eval data path')
-tf.app.flags.DEFINE_string('predict_data_path', '', 'predict data path')
-tf.app.flags.DEFINE_string('predict_output', '', '')
-tf.app.flags.DEFINE_string('predict_checkpoint_path', '', '')
 tf.app.flags.DEFINE_string('start_string', '', 'char rnn sample start string')
 tf.app.flags.DEFINE_integer('num_samples', 100, '')
 
@@ -36,9 +32,7 @@ tf.app.flags.DEFINE_float('keep_prob', 1.0, 'rnn dropout keep prob')
 tf.app.flags.DEFINE_bool('use_clip_gradients', True, '')
 tf.app.flags.DEFINE_float('clip_norm', 5.0, '')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'batch size')
-tf.app.flags.DEFINE_integer('max_train_steps', -1, '')
 tf.app.flags.DEFINE_integer('epoch', 1, '')
-tf.app.flags.DEFINE_integer('throttle_secs', 600, '')
 
 tf.app.flags.DEFINE_bool(
     'use_embedding', False,

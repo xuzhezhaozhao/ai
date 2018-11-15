@@ -83,10 +83,13 @@ class CharRNN(object):
                     feed_dict = {
                         self.initial_state: final_state
                     }
-                    run_ops = [train_op, loss_tensor,
-                               self.final_state, global_step_tensor]
-                    _, loss, final_state, global_step = sess.run(
-                        run_ops, feed_dict=feed_dict)
+                    try:
+                        run_ops = [train_op, loss_tensor,
+                                   self.final_state, global_step_tensor]
+                        _, loss, final_state, global_step = sess.run(
+                            run_ops, feed_dict=feed_dict)
+                    except tf.errors.OutOfRangeError:
+                        break
 
                     self.maybe_logging(global_step, loss)
                     self.maybe_save_checkpoint(sess, saver, global_step)

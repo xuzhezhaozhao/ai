@@ -37,10 +37,6 @@ params=(\
 ## run_mode: train, predict, all \
 [run_mode]=${run_mode} \
 [train_data_path]=`pwd`/data/tinyshakespeare/input.txt \
-[eval_data_path]=`pwd`/data/tinyshakespeare/input.txt \
-[predict_data_path]=`pwd`/predict.txt \
-[predict_output]=`pwd`/predict_output.${model_name}.txt \
-[predict_checkpoint_path]=${model_dir} \
 [start_string]=${start_string} \
 [num_samples]=1000 \
 [sample_temperature]=0.04 \
@@ -53,9 +49,7 @@ params=(\
 [use_clip_gradients]=True \
 [clip_norm]=5.0 \
 [batch_size]=32 \
-[max_train_steps]=-1 \
-[epoch]=15 \
-[throttle_secs]=600 \
+[epoch]=1 \
 [use_embedding]=False \
 [embedding_dim]=100 \
  \

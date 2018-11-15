@@ -91,21 +91,8 @@ def build_train_input_fn(opts, filename):
         if opts.shuffle_batch:
             dataset = dataset.shuffle(opts.shuffle_size)
         dataset = dataset.batch(opts.batch_size, drop_remainder=True)
-        dataset = dataset.repeat()
+        dataset = dataset.repeat(opts.epoch)
 
         return dataset
 
     return train_input_fn
-
-
-def build_eval_input_fn(opts, filename):
-    def eval_input_fn():
-        text_as_int = parse_txt(filename, opts)
-        text_as_int = tf.data.Dataset.from_tensor_slices(text_as_int)
-        chunks = text_as_int.batch(opts.seq_length+1, drop_remainder=True)
-        dataset = chunks.map(split_input_target,
-                             num_parallel_calls=opts.map_num_parallel_calls)
-        dataset = dataset.batch(opts.batch_size, drop_remainder=True)
-        return dataset
-
-    return eval_input_fn
