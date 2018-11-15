@@ -10,7 +10,7 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
 
-run_mode='sample'
+run_mode='all'
 
 remove_model_dir=1
 if [[ ${remove_model_dir} == '1' && ${run_mode} != 'sample' ]]; then
@@ -37,8 +37,9 @@ params=(\
 [predict_data_path]=`pwd`/predict.txt \
 [predict_output]=`pwd`/predict_output.${model_name}.txt \
 [predict_checkpoint_path]=${model_dir} \
-[start_string]='QQ' \
+[start_string]='First' \
 [num_samples]=1000 \
+[sample_temperature]=0.01 \
  \
 # train flags \
 [seq_length]=64 \

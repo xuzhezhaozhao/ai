@@ -22,6 +22,12 @@ tf.app.flags.DEFINE_string('predict_checkpoint_path', '', '')
 tf.app.flags.DEFINE_string('start_string', '', 'char rnn sample start string')
 tf.app.flags.DEFINE_integer('num_samples', 100, '')
 
+tf.app.flags.DEFINE_float(
+    'sample_temperature', 1.0,
+    'Low temperatures results in more predictable text.'
+    'Higher temperatures results in more surprising text.'
+    'Experiment to find the best setting.')
+
 # train flags
 tf.app.flags.DEFINE_integer('seq_length', 20, 'sequence length')
 tf.app.flags.DEFINE_integer('hidden_size', 100, 'rnn hidden size')

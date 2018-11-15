@@ -57,13 +57,9 @@ class CharRNN(object):
         if sampling:
             # [batch*seq_length, vocab_size]
             logits = tf.reshape(self.logits, [-1, self.vocab_size])
-            # Low temperatures results in more predictable text.
-            # Higher temperatures results in more surprising text.
-            # Experiment to find the best setting.
-            temperature = 1.0
-            predictions = tf.nn.softmax(logits) / temperature
-            self.predicted_id = tf.multinomial(predictions, num_samples=1)[-1, 0]
-
+            predictions = tf.nn.softmax(logits) / self.opts.sample_temperature
+            self.predicted_id = tf.multinomial(
+                predictions, num_samples=1)[-1, 0]
 
     def train(self, input_fn):
         with tf.Graph().as_default() as g:
@@ -101,7 +97,7 @@ class CharRNN(object):
                 self.save_summary(sess, writer, merged_summary, global_step)
 
     def sample(self):
-        with tf.Graph().as_default() as g:
+        with tf.Graph().as_default():
             start_string = self.opts.start_string
             text_as_int = input_data.text_to_int(start_string, self.opts)
             text_as_int = np.array(text_as_int).reshape([1, len(text_as_int)])
