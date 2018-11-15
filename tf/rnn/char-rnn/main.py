@@ -23,11 +23,11 @@ def main(_):
         tf.logging.info('{} = {}'.format(key, D[key]))
 
     if opts.run_mode == 'train':
-        train.train(opts, export=False)
+        train.train(opts)
     elif opts.run_mode == 'predict':
         train.predict(opts)
     elif opts.run_mode == 'all':
-        train.train(opts, export=False)
+        train.train(opts)
         train.predict(opts)
     else:
         raise ValueError("Unsupported run mode.")

@@ -9,152 +9,30 @@ from __future__ import print_function
 import tensorflow as tf
 
 import input_data
-import hook
-import build_model_fn
+import char_rnn_model
 
 
-def build_estimator(opts):
-    """Build estimator."""
-
-    num_samples_per_epoch, vocab_size = get_preprocessed(opts)
-
-    save_checkpoints_secs = None
-    if opts.save_checkpoints_secs > 0:
-        save_checkpoints_secs = opts.save_checkpoints_secs
-
-    save_checkpoints_steps = None
-    if opts.save_checkpoints_steps > 0 and opts.save_checkpoints_epoches > 0:
-        raise ValueError("save_checkpoints_steps and save_checkpoints_epoches "
-                         "should not be both set.")
-
-    if opts.save_checkpoints_steps > 0:
-        save_checkpoints_steps = opts.save_checkpoints_steps
-    if opts.save_checkpoints_epoches > 0:
-        save_checkpoints_steps = int(opts.save_checkpoints_epoches *
-                                     num_samples_per_epoch / opts.batch_size)
-
-    config_keys = {}
-    config_keys['model_dir'] = opts.model_dir
-    config_keys['tf_random_seed'] = None
-    config_keys['save_summary_steps'] = opts.save_summary_steps
-    config_keys['save_checkpoints_secs'] = save_checkpoints_secs
-    config_keys['save_checkpoints_steps'] = save_checkpoints_steps
-    config_keys['session_config'] = None
-    config_keys['keep_checkpoint_max'] = opts.keep_checkpoint_max
-    config_keys['keep_checkpoint_every_n_hours'] = 10000
-    config_keys['log_step_count_steps'] = opts.log_step_count_steps
-
-    estimator_keys = {}
-    estimator_keys['model_fn'] = build_model_fn.model_fn
-    estimator_keys['params'] = {
-        'opts': opts,
-        'vocab_size': vocab_size,
-        'num_samples_per_epoch': num_samples_per_epoch
-    }
-    config = tf.estimator.RunConfig(**config_keys)
-    estimator_keys['config'] = config
-
-    estimator = tf.estimator.Estimator(**estimator_keys)
-    return estimator
-
-
-def create_hooks(opts):
-    """Create profile hooks."""
-
-    save_steps = opts.profile_steps
-    meta_hook = hook.MetadataHook(save_steps=save_steps,
-                                  output_dir=opts.model_dir)
-    profile_hook = tf.train.ProfilerHook(save_steps=save_steps,
-                                         output_dir=opts.model_dir,
-                                         show_dataflow=True,
-                                         show_memory=True)
-    hooks = [meta_hook, profile_hook] if opts.use_profile_hook else []
-    return hooks
-
-
-def train_and_eval_in_local_mode(opts, estimator, hooks):
-    """Train and eval model in lcoal mode."""
-
-    build_train_input_fn = input_data.build_train_input_fn(
-        opts, opts.train_data_path)
-    build_eval_input_fn = input_data.build_eval_input_fn(
-        opts, opts.eval_data_path)
-
-    num_samples_per_epoch, _ = get_preprocessed(opts)
-    num_steps_per_epoch = num_samples_per_epoch / opts.batch_size
-
-    if opts.max_train_steps > 0:
-        max_steps = opts.max_train_steps
-    else:
-        max_steps = opts.epoch*num_steps_per_epoch
-
-    tf.logging.info('max_steps = {}'.format(max_steps))
-    train_spec = tf.estimator.TrainSpec(
-        input_fn=build_train_input_fn,
-        max_steps=max_steps,
-        hooks=hooks)
-    eval_spec = tf.estimator.EvalSpec(
-        input_fn=build_eval_input_fn,
-        steps=None,
-        name='eval',
-        start_delay_secs=3,
-        throttle_secs=opts.throttle_secs)
-    result = tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
-    return result
-
-
-def export_model_in_local_mode(opts, estimator):
-    """Export model in local mode."""
-
-    # export model
-    tf.logging.info("Beginning export model ...")
-    estimator.export_savedmodel(
-        opts.export_model_dir,
-        serving_input_receiver_fn=input_data.build_serving_input_fn(opts))
-    tf.logging.info("Export model OK")
-
-
-def train(opts, export=False):
+def train(opts):
     """Train model."""
 
     tf.logging.info("Preprocessing ...")
     input_data.preprocess(opts.train_data_path, opts.preprocessed_filename)
     tf.logging.info("Preprocessing done.")
+    num_samples_per_epoch, vocab = get_preprocessed(opts)
+    vocab_size = len(vocab)
+    params = {'vocab_size': vocab_size,
+              'num_samples_per_epoch': num_samples_per_epoch}
 
-    estimator = build_estimator(opts)
-    hooks = create_hooks(opts)
-    result = train_and_eval_in_local_mode(opts, estimator, hooks)
-    if export:
-        export_model_in_local_mode(opts, estimator)
-    return result
-
-
-def predict(opts):
-    tf.logging.info("Begin predict ...")
-    estimator = build_estimator(opts)
-    build_predict_input_fn = input_data.build_predict_input_fn(
-        opts, opts.predict_data_path)
-
-    checkpoint_path = opts.predict_checkpoint_path
-    if tf.gfile.IsDirectory(opts.predict_checkpoint_path):
-        checkpoint_path = tf.train.latest_checkpoint(checkpoint_path)
-
-    results = estimator.predict(
-        input_fn=build_predict_input_fn,
-        checkpoint_path=checkpoint_path,
-        yield_single_examples=True)
-
-    for result in results:
-        print(result)
-
-    tf.logging.info("Predict done")
+    input_fn = input_data.build_train_input_fn(opts, opts.train_data_path)
+    model = char_rnn_model.CharRNN(opts, params)
+    model.train(input_fn)
 
 
 def get_preprocessed(opts):
     load_dict = input_data.load_preprocessed(opts.preprocessed_filename)
     total_chars = load_dict['total_chars']
-    vocab_size = len(load_dict['vocab'])
+    vocab = load_dict['vocab']
 
     num_samples_per_epoch = total_chars / (opts.seq_length + 1)
 
-    return num_samples_per_epoch, vocab_size
+    return num_samples_per_epoch, vocab
