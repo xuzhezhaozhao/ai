@@ -9,7 +9,7 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
-start_string="何人"
+start_string=""
 
 run_mode='sample'
 if [[ $# -eq 1 ]]; then
@@ -49,10 +49,11 @@ params=(\
 [use_clip_gradients]=True \
 [clip_norm]=5.0 \
 [batch_size]=26 \
-[epoch]=30 \
+[epoch]=20 \
 [use_embedding]=True \
 [embedding_dim]=128 \
-[min_count]=10 \
+[min_count]=5 \
+[sample_top_k]=5 \
  \
 # dataset flags \
 [prefetch_size]=500 \

@@ -34,7 +34,7 @@ def preprocess(filename, preprocessed_filename, min_count):
         tf.logging.info("[preprocess] unique chars = {}"
                         .format(len(chars_count)))
         vocab = [c for c in chars_count.keys() if chars_count[c] >= min_count]
-        vocab.insert(0, '#UNK#')  # UNK
+        vocab.insert(0, '<unk>')
 
         tf.logging.info("[preprocess] unique chars count large than {} = {}"
                         .format(min_count, len(vocab) - 1))

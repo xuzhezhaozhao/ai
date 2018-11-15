@@ -43,6 +43,7 @@ tf.app.flags.DEFINE_integer(
     'embedding dim for chars')
 
 tf.app.flags.DEFINE_integer('min_count', 5, 'char min count')
+tf.app.flags.DEFINE_integer('sample_top_k', 5, '')
 
 # dataset flags
 tf.app.flags.DEFINE_integer('prefetch_size', 1000, '')

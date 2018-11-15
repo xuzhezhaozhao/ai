@@ -25,8 +25,9 @@ class CharRNN(object):
         self.initial_state = None
         self.final_state = None
         self.logits = None
+        self.probs = None
 
-    def build_graph(self, sampling, training):
+    def build_graph(self, training):
         """Build char rnn model graph."""
 
         tf.summary.histogram('inputs', self.inputs)
@@ -59,13 +60,7 @@ class CharRNN(object):
 
         # shape [batch, seq_length, vocab_size]
         self.logits = tf.layers.dense(lstm_outputs, self.vocab_size)
-
-        if sampling:
-            # [batch*seq_length, vocab_size]
-            logits = tf.reshape(self.logits, [-1, self.vocab_size])
-            predictions = tf.nn.softmax(logits) / self.opts.sample_temperature
-            self.predicted_id = tf.multinomial(
-                predictions, num_samples=1)[-1, 0]
+        self.probs = tf.nn.softmax(self.logits)
 
     def train(self, input_fn):
         with tf.Graph().as_default() as g:
@@ -74,7 +69,7 @@ class CharRNN(object):
             self.inputs, labels = self.get_features_and_labels(input_fn)
             global_step_tensor = tf.train.get_or_create_global_step(g)
 
-            self.build_graph(sampling=False, training=True)
+            self.build_graph(training=True)
             train_op, loss_tensor = self.create_train_op_and_loss(
                 self.logits, labels)
 
@@ -106,9 +101,8 @@ class CharRNN(object):
         with tf.Graph().as_default():
             start_string = self.opts.start_string.decode('utf-8')
             text_as_int = input_data.text_to_int(start_string, self.opts)
-            text_as_int = np.array(text_as_int).reshape([1, len(text_as_int)])
             self.inputs = tf.placeholder(tf.int64, shape=(1, None))
-            self.build_graph(sampling=True, training=False)
+            self.build_graph(training=False)
 
             with tf.Session() as sess:
                 (merged_summary, writer,
@@ -116,22 +110,28 @@ class CharRNN(object):
                 self.session_init(sess, saver)
 
                 tf.logging.info('{} Start sampling ...'.format(self.now()))
-                inputs = text_as_int
+                inputs = text_as_int.reshape([1, len(text_as_int)])
+                samples = text_as_int.tolist()
                 final_state = sess.run(self.initial_state)
-                samples = []
-                samples.extend(start_string)
-                for _ in range(self.opts.num_samples):
+                for i in range(self.opts.num_samples):
                     feed_dict = {
                         self.inputs: inputs,
                         self.initial_state: final_state
                     }
-                    predicted_id, final_state = sess.run(
-                        [self.predicted_id, self.final_state],
+                    probs, final_state = sess.run(
+                        [self.probs, self.final_state],
                         feed_dict=feed_dict)
-                    c = input_data.idx_to_text(predicted_id, self.opts)
-                    inputs = np.array(predicted_id).reshape([1, 1])
-                    samples.append(c)
+                    if probs.shape[1] == 0:
+                        probs = np.ones((1, 1, self.vocab_size))
+                        k = self.vocab_size
+                    else:
+                        k = self.opts.sample_top_k
 
+                    c = self.pick_top_k(probs, k)
+                    samples.append(c)
+                    inputs = np.array([[c]])
+
+                samples = input_data.idx_to_text(samples, self.opts)
                 samples = ''.join(samples).encode('utf-8')
                 tf.logging.info("sampels: \n{}".format(samples))
                 tf.logging.info('{} Sampling done.'.format(self.now()))
@@ -151,7 +151,7 @@ class CharRNN(object):
         sess.run(tf.local_variables_initializer())
         if self.iterator_initializer is not None:
             sess.run(self.iterator_initializer)
-        # tf.get_default_graph().finalize()  # TODO sample
+        tf.get_default_graph().finalize()
         self.maybe_restore_model(sess, saver)
 
     def maybe_restore_model(self, sess, saver):
@@ -345,3 +345,10 @@ class CharRNN(object):
 
     def now(self):
         return datetime.now()
+
+    def pick_top_k(self, probs, top_k=5):
+        probs = probs[-1, -1, :]
+        probs[np.argsort(probs)[:-top_k]] = 0
+        probs = probs / np.sum(probs)  # normalize
+        c = np.random.choice(self.vocab_size, 1, p=probs)[0]
+        return c
