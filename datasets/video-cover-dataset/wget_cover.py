@@ -5,16 +5,16 @@ import threading
 output_dir = 'train'
 os.system('mkdir -p ' + output_dir)
 
-nthreads = 12
+nthreads = 64
 
 
 def wget_thread_body(tid, urls, rowkeys, start_idx):
     filenames = []
     for idx, url in enumerate(urls):
-        if idx % 1000 == 0:
+        if idx % 100 == 0:
             print("tid {}, wget {} ...".format(tid, idx+1))
 
-        filename = os.path.join(output_dir, rowkeys[idx] + '_'
+        filename = os.path.join(output_dir, rowkeys[idx] + '.'
                                 + str(start_idx + idx))
         cmd = 'wget ' + "'" + url + "'" + ' -O ' + filename + '> wget.' + str(tid) + '.log 2>&1'
         try:
@@ -22,21 +22,6 @@ def wget_thread_body(tid, urls, rowkeys, start_idx):
             filenames.append(filename)
         except Exception as e:
             print("catch Exception: {}".format(e))
-
-    for index, filename in enumerate(filenames):
-        if index % 1000 == 0:
-            print("rename {} ...".format(index))
-
-        img = Image.open(filename)
-        img_type = img.format.lower()
-        allowed_types = set(['jpeg', 'jpg', 'png', 'bmp'])
-        if img_type not in allowed_types:
-            print("type error: " + filename + ", " + str(img_type))
-
-        if len(img.size) != 2:
-            print("shape error: " + filename + ", " + str(img.size))
-
-        os.rename(filename, filename + '.' + img_type)
 
 
 rowkeys = []
