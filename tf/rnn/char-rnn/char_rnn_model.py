@@ -58,20 +58,14 @@ class CharRNN(object):
             global_step_tensor = tf.train.get_or_create_global_step(g)
 
             self.build_graph(features)
-            train_op, loss_tensor = self.create_train_op(self.logits, labels)
-
-            merged_summary = tf.summary.merge_all()
-            summary_writer = tf.summary.FileWriter(self.opts.model_dir)
-            saver = tf.train.Saver(
-                sharded=True,
-                max_to_keep=self.opts.keep_checkpoint_max,
-                save_relative_paths=True)
+            train_op, loss_tensor = self.create_train_op_and_loss(
+                self.logits, labels)
 
             with tf.Session() as sess:
-                self.session_init(sess, summary_writer, saver)
+                (merged_summary, writer,
+                 saver) = self.create_writer_and_saver(sess)
+                self.session_init(sess, saver)
                 tf.logging.info('{} Start training ...'.format(self.now()))
-                init_step = sess.run(global_step_tensor)
-
                 while True:
                     final_state = sess.run(self.initial_state)
                     feed_dict = {
@@ -85,14 +79,22 @@ class CharRNN(object):
                     self.maybe_logging(global_step, loss)
                     self.maybe_save_checkpoint(sess, saver, global_step)
                     self.maybe_save_summary(
-                        sess, summary_writer, merged_summary, global_step)
+                        sess, writer, merged_summary, global_step)
 
-    def session_init(self, sess, summary_writer, saver):
+    def create_writer_and_saver(self, sess):
+        merged_summary = tf.summary.merge_all()
+        summary_writer = tf.summary.FileWriter(self.opts.model_dir)
+        summary_writer.add_graph(sess.graph)
+        saver = tf.train.Saver(
+            sharded=True,
+            max_to_keep=self.opts.keep_checkpoint_max,
+            save_relative_paths=True)
+        return merged_summary, summary_writer, saver
+
+    def session_init(self, sess, saver):
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
         sess.run(self.iterator_initializer)
-
-        summary_writer.add_graph(sess.graph)
         tf.get_default_graph().finalize()
         self.maybe_restore_model(sess, saver)
 
@@ -157,10 +159,12 @@ class CharRNN(object):
             labels=labels, logits=logits)
         return loss
 
-    def create_train_op(self, logits, labels):
+    def create_train_op_and_loss(self, logits, labels):
 
         num_samples_per_epoch = self.params['num_samples_per_epoch']
         loss = self.get_loss(logits, labels)
+        tf.summary.scalar('loss', loss)
+
         global_step = tf.train.get_global_step()
         learning_rate = self.configure_learning_rate(
             num_samples_per_epoch, global_step)
