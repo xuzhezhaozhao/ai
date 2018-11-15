@@ -78,12 +78,10 @@ class CharRNN(object):
                  saver) = self.create_writer_and_saver(sess)
                 self.session_init(sess, saver)
                 tf.logging.info('{} Start training ...'.format(self.now()))
+                final_state = sess.run(self.initial_state)
                 while True:
-                    final_state = sess.run(self.initial_state)
-                    feed_dict = {
-                        self.initial_state: final_state
-                    }
                     try:
+                        feed_dict = {self.initial_state: final_state}
                         run_ops = [train_op, loss_tensor,
                                    self.final_state, global_step_tensor]
                         _, loss, final_state, global_step = sess.run(
