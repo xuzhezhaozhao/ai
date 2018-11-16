@@ -12,6 +12,7 @@ import numpy as np
 import os
 import time
 
+from datetime import datetime
 from preprocessing import preprocessing_factory
 from nets import inception
 from nets import resnet_v2
@@ -209,6 +210,7 @@ def main(_):
         sess.run(iterator.initializer)
         restore_fn(sess)
 
+        tf.logging.info('{} Start image2vec ...'.format(datetime.now()))
         total = 0
         while True:
             try:
@@ -229,6 +231,7 @@ def main(_):
                 break
             except Exception as e:
                 tf.logging.info("{} run error, Exception = {}".format(e))
+        tf.logging.info('{} Finish image2vec.'.format(datetime.now()))
 
 
 if __name__ == '__main__':

@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from datetime import datetime
 from sklearn.preprocessing import normalize
 
 import tensorflow as tf
@@ -93,6 +94,8 @@ def chunking_dot(big_matrix, small_matrix, top_k, chunk_size=128):
 
 
 def main(_):
+    tf.logging.info('{} Start nn ...'.format(datetime.now()))
+
     data, keys = load_features(FLAGS.image_features)
     keys = np.array(keys)
 
@@ -114,7 +117,9 @@ def main(_):
             if FLAGS.output_format == 'human':
                 f.write("\n")
 
+    tf.logging.info('{} Finish nn.'.format(datetime.now()))
+
 
 if __name__ == '__main__':
-    tf.logging.set_verbosity(tf.logging.ERROR)
+    tf.logging.set_verbosity(tf.logging.INFO)
     tf.app.run()
