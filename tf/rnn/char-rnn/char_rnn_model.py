@@ -215,7 +215,11 @@ class CharRNN(object):
 
     def get_rnn_cell(self, size, keep_prob):
         lstm = tf.nn.rnn_cell.LSTMCell(size)
-        lstm = tf.nn.rnn_cell.DropoutWrapper(lstm, output_keep_prob=keep_prob)
+        lstm = tf.nn.rnn_cell.DropoutWrapper(
+            lstm,
+            output_keep_prob=keep_prob,
+            variational_recurrent=True,
+            dtype=tf.float32)
         return lstm
 
     def get_loss(self, logits, labels):

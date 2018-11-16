@@ -13,7 +13,7 @@ start_string=""
 train_data_path=./ref2/data/linux.txt
 use_embedding=False
 seq_length=400
-num_layers=2
+num_layers=3
 
 run_mode='sample'
 if [[ $# -eq 1 ]]; then
