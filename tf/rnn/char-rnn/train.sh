@@ -12,6 +12,8 @@ export_model_dir=`pwd`/export_model_dir
 start_string=""
 train_data_path=./ref2/data/linux.txt
 use_embedding=False
+seq_length=400
+num_layers=2
 
 run_mode='sample'
 if [[ $# -eq 1 ]]; then
@@ -43,17 +45,17 @@ params=(\
 [num_samples]=2000 \
  \
 # train flags \
-[seq_length]=400 \
+[seq_length]=${seq_length} \
 [hidden_size]=128 \
-[num_layers]=2 \
-[keep_prob]=0.8 \
+[num_layers]=${num_layers} \
+[keep_prob]=0.6 \
 [use_clip_gradients]=True \
 [clip_norm]=5.0 \
 [batch_size]=32 \
 [epoch]=20 \
 [use_embedding]=${use_embedding} \
 [embedding_dim]=128 \
-[min_count]=5 \
+[min_count]=2 \
 [sample_top_k]=5 \
  \
 # log flags \
