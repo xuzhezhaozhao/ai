@@ -68,6 +68,7 @@ def chunking_dot(big_matrix, small_matrix, top_k, chunk_size=128):
     # Make a copy if the array is not already contiguous
     small_matrix = np.ascontiguousarray(small_matrix)
     N = big_matrix.shape[0]
+    top_k = min(top_k, N)
     dist = np.zeros((N, top_k), dtype=np.float32)
     nn_indices = np.zeros((N, top_k), dtype=np.int64)
     cnt = 0
