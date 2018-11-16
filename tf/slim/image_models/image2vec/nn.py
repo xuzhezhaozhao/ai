@@ -10,6 +10,7 @@ from sklearn.preprocessing import normalize
 import tensorflow as tf
 import numpy as np
 
+
 tf.app.flags.DEFINE_string(
     'image_features', 'features.txt', 'features file output by image2vec.')
 
@@ -17,6 +18,8 @@ tf.app.flags.DEFINE_string('images', 'test.txt', 'image paths file')
 tf.app.flags.DEFINE_string('output', 'nn.txt', 'output nn file')
 tf.app.flags.DEFINE_integer('k', 10, 'top k nearest images will be ouput.')
 tf.app.flags.DEFINE_string('output_format', 'human', 'human or hbcf')
+
+tf.app.flags.DEFINE_integer('chunk_size', 128, '')
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -61,7 +64,7 @@ def load_features(filename):
     return data
 
 
-def chunking_dot(big_matrix, small_matrix, top_k, chunk_size=100):
+def chunking_dot(big_matrix, small_matrix, top_k, chunk_size=128):
     # Make a copy if the array is not already contiguous
     small_matrix = np.ascontiguousarray(small_matrix)
     N = big_matrix.shape[0]
@@ -88,7 +91,8 @@ def main(_):
     data = load_features(FLAGS.image_features)
 
     # dist = np.dot(data, data.transpose())
-    dist, nn_indices = chunking_dot(data, data.transpose(), FLAGS.k)
+    dist, nn_indices = chunking_dot(
+        data, data.transpose(), FLAGS.k, FLAGS.chunk_size)
     keys = [key.strip() for key in open(FLAGS.images) if key.strip() != '']
     keys = np.array(keys)
     nn_keys = keys[nn_indices]  # [N, k]
