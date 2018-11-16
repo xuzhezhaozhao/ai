@@ -16,6 +16,7 @@ tf.app.flags.DEFINE_string(
 tf.app.flags.DEFINE_string('images', 'test.txt', 'image paths file')
 tf.app.flags.DEFINE_string('output', 'nn.txt', 'output nn file')
 tf.app.flags.DEFINE_integer('k', 10, 'top k nearest images will be ouput.')
+tf.app.flags.DEFINE_string('output_format', 'human', 'human or hbcf')
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -94,12 +95,16 @@ def main(_):
 
     with open(FLAGS.output, 'w') as f:
         for i in range(len(nn_indices)):
-            f.write("{}\n".format(keys[i]))
+            if FLAGS.output_format == 'human':
+                f.write("{}\n".format(keys[i]))
+
             for j in range(len(nn_indices[i, :])):
                 score = dist[i, j]
                 key = nn_keys[i, j]
-                f.write("{}: {}\n".format(key, score))
-            f.write("\n")
+                f.write("{} {}\n".format(key, score))
+
+            if FLAGS.output_format == 'human':
+                f.write("\n")
 
 
 if __name__ == '__main__':
