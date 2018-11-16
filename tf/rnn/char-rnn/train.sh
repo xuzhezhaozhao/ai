@@ -10,6 +10,8 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
 start_string=""
+train_data_path=./ref2/data/linux.txt
+use_embedding=False
 
 run_mode='sample'
 if [[ $# -eq 1 ]]; then
@@ -36,22 +38,22 @@ params=(\
  \
 ## run_mode: train, predict, all \
 [run_mode]=${run_mode} \
-[train_data_path]=./ref2/data/poetry.txt \
+[train_data_path]=${train_data_path} \
 [start_string]=${start_string} \
-[num_samples]=1000 \
+[num_samples]=2000 \
  \
 # train flags \
-[seq_length]=32 \
+[seq_length]=400 \
 [hidden_size]=128 \
 [num_layers]=2 \
-[keep_prob]=0.5 \
+[keep_prob]=0.8 \
 [use_clip_gradients]=True \
 [clip_norm]=5.0 \
-[batch_size]=26 \
+[batch_size]=32 \
 [epoch]=20 \
-[use_embedding]=True \
+[use_embedding]=${use_embedding} \
 [embedding_dim]=128 \
-[min_count]=6 \
+[min_count]=5 \
 [sample_top_k]=5 \
  \
 # log flags \
@@ -60,12 +62,8 @@ params=(\
 [keep_checkpoint_max]=10 \
 [log_step_count_steps]=100 \
  \
-# profile flags \
-[use_profile_hook]=False \
-[profile_steps]=100 \
- \
 # optimizer flags \
-[optimizer]='adam' \
+[optimizer]='rmsprop' \
 [adadelta_rho]=0.95 \
 [adagrad_initial_accumulator_value]=0.1 \
 [adam_beta1]=0.9 \
@@ -75,17 +73,17 @@ params=(\
 [ftrl_initial_accumulator_value]=0.1 \
 [ftrl_l1]=0.0 \
 [ftrl_l2]=0.0 \
-[momentum]=0.9 \
+[momentum]=0.95 \
 [rmsprop_momentum]=0.9 \
 [rmsprop_decay]=0.9 \
  \
 # learning rate flags \
-[learning_rate]=0.005 \
+[learning_rate]=0.001 \
 ## fixed, exponential or polynomial
-[learning_rate_decay_type]='fixed' \
+[learning_rate_decay_type]='exponential' \
 [end_learning_rate]=0.0001 \
-[learning_rate_decay_factor]=0.95 \
-[num_epochs_per_decay]=2.0 \
+[learning_rate_decay_factor]=0.9 \
+[num_epochs_per_decay]=1.0 \
 )
 
 params_str=''
