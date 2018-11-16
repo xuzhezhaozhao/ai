@@ -99,7 +99,7 @@ def parse_function(img_path, image_size):
         is_training=False)
     image = image_preprocessing_fn(image_decoded, image_size, image_size)
 
-    return image
+    return image, img_path
 
 
 def eval_input_fn(data_path):
@@ -173,12 +173,13 @@ def create_restore_fn(checkpoint_path):
     return restore_fn
 
 
-def write_to_file(f, net):
+def write_to_file(f, net, filenames):
     net = np.squeeze(net, (1, 2))
     if FLAGS.normalize:
         net = normalize(net, axis=1)
 
-    for features in net:
+    for idx, features in enumerate(net):
+        f.write(filenames[idx] + ' ')
         for value in features:
             f.write(str(value))
             f.write(' ')
@@ -197,9 +198,9 @@ def main(_):
 
     ds = eval_input_fn(FLAGS.input)
     iterator = ds.make_initializable_iterator()
-    next_batch = iterator.get_next()
+    imgs_tensor, filenames_tensor = iterator.get_next()
 
-    net, _, checkpoint_path = get_model_def(FLAGS.model_name, next_batch)
+    net, _, checkpoint_path = get_model_def(FLAGS.model_name, imgs_tensor)
     restore_fn = create_restore_fn(checkpoint_path)
 
     with tf.Session() as sess, open(FLAGS.output, 'w') as f:
@@ -212,11 +213,10 @@ def main(_):
         while True:
             try:
                 start_time = time.time()
-                net_value = sess.run(net)
-                write_to_file(f, net_value)
+                net_value, filenames = sess.run([net, filenames_tensor])
+                write_to_file(f, net_value, filenames)
                 end_time = time.time()
                 duration_sec = end_time - start_time
-
                 batch_size = len(net_value)
                 total += batch_size
                 tf.logging.info(
@@ -227,6 +227,8 @@ def main(_):
             except tf.errors.OutOfRangeError:
                 tf.logging.info("{} images processed, done.".format(total))
                 break
+            except Exception as e:
+                tf.logging.info("{} run error, Exception = {}".format(e))
 
 
 if __name__ == '__main__':

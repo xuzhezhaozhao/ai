@@ -34,6 +34,6 @@ Playground:
 We provide a mini dataset to playground.
 run following commands
 $ ./image2vec --input test.txt --output features.txt --batch_size 256
-$ ./nn --image_features features.txt --images test.txt --output nn.txt --k 10
+$ ./nn --image_features features.txt --output nn.txt --k 10
 
 Then see nn.txt for the results.

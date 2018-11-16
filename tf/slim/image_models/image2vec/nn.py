@@ -14,7 +14,6 @@ import numpy as np
 tf.app.flags.DEFINE_string(
     'image_features', 'features.txt', 'features file output by image2vec.')
 
-tf.app.flags.DEFINE_string('images', 'test.txt', 'image paths file')
 tf.app.flags.DEFINE_string('output', 'nn.txt', 'output nn file')
 tf.app.flags.DEFINE_integer('k', 10, 'top k nearest images will be ouput.')
 tf.app.flags.DEFINE_string('output_format', 'human', 'human or hbcf')
@@ -33,6 +32,9 @@ def check_data(filename):
             break
         cnt += 1
         tokens = line.split(' ')
+        if len(tokens) < 8:
+            raise ValueError("features file format error.")
+        tokens = tokens[1:]
         if dim is None:
             dim = len(tokens)
         else:
@@ -46,6 +48,7 @@ def load_features(filename):
     cnt, dim = check_data(filename)
     data = np.zeros([cnt, dim], dtype=np.float32)
     print("before load data size = {}".format(data.nbytes))
+    keys = []
     for index, line in enumerate(open(filename)):
         if (index+1) % 1000 == 0:
             print("load {} lines ...".format(index+1))
@@ -53,15 +56,16 @@ def load_features(filename):
         if not line:
             break
         tokens = line.split(' ')
-        tokens = map(float, tokens)
-        data[index, :] = tokens
+        keys.append(tokens[0])
+        features = map(float, tokens[1:])
+        data[index, :] = features
 
     assert index == cnt-1
 
     print("features shape = {}, dtype".format(data.shape, data.dtype))
     print("after load data size = {}".format(data.nbytes))
     data = normalize(data, axis=1)
-    return data
+    return data, keys
 
 
 def chunking_dot(big_matrix, small_matrix, top_k, chunk_size=128):
@@ -89,13 +93,12 @@ def chunking_dot(big_matrix, small_matrix, top_k, chunk_size=128):
 
 
 def main(_):
-    data = load_features(FLAGS.image_features)
+    data, keys = load_features(FLAGS.image_features)
+    keys = np.array(keys)
 
     # dist = np.dot(data, data.transpose())
     dist, nn_indices = chunking_dot(
         data, data.transpose(), FLAGS.k, FLAGS.chunk_size)
-    keys = [key.strip() for key in open(FLAGS.images) if key.strip() != '']
-    keys = np.array(keys)
     nn_keys = keys[nn_indices]  # [N, k]
 
     with open(FLAGS.output, 'w') as f:
