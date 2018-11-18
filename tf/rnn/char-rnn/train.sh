@@ -10,10 +10,10 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
 start_string=""
-train_data_path=./ref2/data/linux.txt
-use_embedding=False
+train_data_path=./data/novel.txt
+use_embedding=True
 seq_length=400
-num_layers=3
+num_layers=2
 
 run_mode='sample'
 if [[ $# -eq 1 ]]; then
@@ -42,7 +42,7 @@ params=(\
 [run_mode]=${run_mode} \
 [train_data_path]=${train_data_path} \
 [start_string]=${start_string} \
-[num_samples]=2000 \
+[num_samples]=5000 \
  \
 # train flags \
 [seq_length]=${seq_length} \
