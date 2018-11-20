@@ -1,0 +1,8 @@
+
+Download from: https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
+backup: https://pan.baidu.com/s/1EzP4xpOgzPzUEDBTJYNwFA  5wew
+
+About 120 training images each for ants and bees. There are 75 validation images
+for each class.
+
+This dataset is a very small subset of imagenet.
