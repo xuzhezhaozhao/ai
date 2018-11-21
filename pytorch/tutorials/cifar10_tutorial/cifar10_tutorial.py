@@ -105,7 +105,7 @@ images, labels = dataiter.next()
 # show images
 imshow(torchvision.utils.make_grid(images))
 # print labels
-print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
+# print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
 plt.show()
 
 
