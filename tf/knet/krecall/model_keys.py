@@ -33,8 +33,11 @@ ALL_OPTIMIZE_LEVELS = [
 
 
 RECORDS_COL = 'records'
+RANK_ROWKEYS_COL = 'rank_rowkeys'
+RANK_IDS_COL = 'rank_ids'
 WORDS_COL = 'words'
 NUM_IN_DICT_COL = 'num_in_dict'
+RANK_NUM_IN_DICT_COL = 'rank_num_in_dict'
 TOKENS_COL = 'tokens'
 AGE_COL = 'age'
 GENDER_COL = 'gender'

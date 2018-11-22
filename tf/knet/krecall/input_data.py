@@ -269,6 +269,16 @@ def train_random_numpy_input_fn(opts):
     )
 
 
+def get_dict(opts):
+    words = [line.strip() for line in
+             open(os.path.join(opts.dict_dir, model_keys.DICT_WORDS))
+             if line.strip() != '']
+    words.insert(0, '')
+    tf.logging.info(
+        "serving_input_receiver_fn words size = {}".format(len(words)))
+    return words
+
+
 def build_serving_input_fn(opts):
     def serving_input_receiver_fn():
         """An input receiver that expects a serialized tf.Example.
@@ -277,8 +287,8 @@ def build_serving_input_fn(opts):
         """
 
         feature_spec = {
-            model_keys.WORDS_COL: tf.FixedLenFeature(shape=[opts.receive_ws],
-                                                     dtype=tf.string)
+            model_keys.WORDS_COL: tf.FixedLenFeature(
+                shape=[opts.receive_ws], dtype=tf.string)
         }
 
         if opts.use_user_features:
@@ -293,12 +303,8 @@ def build_serving_input_fn(opts):
         receiver_tensors = {'examples': serialized_tf_example}
         features = tf.parse_example(serialized_tf_example, feature_spec)
 
-        words = [line.strip() for line in
-                 open(os.path.join(opts.dict_dir, model_keys.DICT_WORDS))
-                 if line.strip() != '']
-        words.insert(0, '')
-        tf.logging.info(
-            "serving_input_receiver_fn words size = {}".format(len(words)))
+        words = get_dict(opts)
+
         ids, num_in_dict = custom_ops.dict_lookup(
             input=features[model_keys.WORDS_COL],
             dict=tf.make_tensor_proto(words),
@@ -306,7 +312,46 @@ def build_serving_input_fn(opts):
         features[model_keys.RECORDS_COL] = ids
         features[model_keys.NUM_IN_DICT_COL] = num_in_dict
 
-        return tf.estimator.export.ServingInputReceiver(features,
-                                                        receiver_tensors)
+        return tf.estimator.export.ServingInputReceiver(
+            features, receiver_tensors)
+
+    return serving_input_receiver_fn
+
+
+def build_rank_serving_input_fn(opts):
+    def serving_input_receiver_fn():
+        """An input receiver that expects a serialized tf.Example.
+        Note: Set serialized_tf_example shape as [None] to handle variable
+        batch size
+        """
+
+        feature_spec = {
+            model_keys.WORDS_COL: tf.FixedLenFeature(
+                shape=[opts.receive_ws], dtype=tf.string),
+            model_keys.RANK_ROWKEYS_COL: tf.FixedLenFeature(
+                shape=[opts.rank_len], dtype=tf.string)
+        }
+
+        serialized_tf_example = tf.placeholder(dtype=tf.string,
+                                               shape=[None],
+                                               name='input_example_tensor')
+        receiver_tensors = {'examples': serialized_tf_example}
+        features = tf.parse_example(serialized_tf_example, feature_spec)
+        words = get_dict(opts)
+        watched_ids, watched_num_in_dict = custom_ops.dict_lookup(
+            input=features[model_keys.WORDS_COL],
+            dict=tf.make_tensor_proto(words),
+            output_ws=opts.predict_ws)
+
+        table = tf.contrib.lookup.index_table_from_tensor(
+            words, default_value=0)
+        rank_ids = table.lookup(features[model_keys.RANK_ROWKEYS_COL])
+
+        features[model_keys.RECORDS_COL] = watched_ids
+        features[model_keys.RANK_IDS_COL] = rank_ids
+        features[model_keys.NUM_IN_DICT_COL] = watched_num_in_dict
+
+        return tf.estimator.export.ServingInputReceiver(
+            features, receiver_tensors)
 
     return serving_input_receiver_fn

@@ -234,9 +234,16 @@ def export_model_in_local_mode(opts):
 
     assets_extra = dict_params
 
+    if opts.export_mode == 'recall':
+        serving_input_fn = input_data.build_serving_input_fn(opts)
+    elif opts.export_mode == 'rank':
+        serving_input_fn = input_data.build_rank_serving_input_fn(opts)
+    else:
+        raise ValueError("Unsurpported export mode.")
+
     opts.estimator.export_savedmodel(
         opts.export_model_dir,
-        serving_input_receiver_fn=input_data.build_serving_input_fn(opts),
+        serving_input_receiver_fn=serving_input_fn,
         assets_extra=assets_extra)
     tf.logging.info("Export model OK")
 

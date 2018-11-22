@@ -9,6 +9,8 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
+export_mode='rank'
+rank_len=100
 
 if [[ $# != 0 ]] ; then
     if [[ $1 == "user" ]]; then
@@ -87,8 +89,8 @@ nce_loss_type='fasttext'  # 'word2vec', 'fasttext', 'default'
 negative_sampler_type='fixed'  # fixed(better), log_uniform
 use_user_features=0
 user_features_file="../../../data/user_features.tsv"
-use_age_feature=1
-use_gender_feature=1
+use_age_feature=0
+use_gender_feature=0
 # 'indicator', 'numeric'
 age_feature_type='numeric'
 add_average_pooling=0
@@ -163,6 +165,8 @@ python main.py \
     --hidden_units "${hidden_units}" \
     --model_dir ${model_dir} \
     --export_model_dir ${export_model_dir} \
+    --export_mode ${export_mode} \
+    --rank_len ${rank_len} \
     --prefetch_size ${prefetch_size} \
     --shuffle_size ${shuffle_size} \
     --max_train_steps ${max_train_steps} \

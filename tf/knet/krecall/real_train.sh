@@ -13,6 +13,7 @@ export PYTHONPATH="${ANACONDA2_ROOT}/lib/python2.7/site-packages:$PYTHONPATH"
 raw_data_dir=`pwd`/raw_data
 model_dir=`pwd`/video_tab/model_dir
 export_model_dir=`pwd`/video_tab/export_model_dir
+export_mode='rank'
 dict_dir=`pwd`/video_tab/dict_dir
 train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
@@ -79,8 +80,8 @@ normalize_embeddings=0
 nce_loss_type='fasttext'  # 'word2vec', 'fasttext', 'default'
 negative_sampler_type='fixed'  # fixed(better), log_uniform
 use_user_features=0
-use_age_feature=1
-use_gender_feature=1
+use_age_feature=0
+use_gender_feature=0
 # 'indicator', 'numeric'
 age_feature_type='indicator'
 add_average_pooling=0
@@ -154,6 +155,7 @@ python main.py \
     --hidden_units "${hidden_units}" \
     --model_dir ${model_dir} \
     --export_model_dir ${export_model_dir} \
+    --export_mode ${export_mode} \
     --prefetch_size ${prefetch_size} \
     --shuffle_size ${shuffle_size} \
     --max_train_steps ${max_train_steps} \

@@ -40,6 +40,8 @@ parser.add_argument('--hidden_units', default="64,64", type=str, help='')
 parser.add_argument('--model_dir', default="model_dir", type=str, help='')
 parser.add_argument('--export_model_dir', default="export_model_dir",
                     type=str, help='')
+parser.add_argument('--export_mode', default="recall", type=str, help='')
+parser.add_argument('--rank_len', default=100, type=int, help='')
 parser.add_argument('--prefetch_size', default=10000, type=int, help='')
 parser.add_argument('--shuffle_size', default=10000, type=int, help='')
 parser.add_argument('--save_summary_steps', default=100, type=int, help='')
@@ -184,6 +186,8 @@ def parse_args(argv):
                                         args.hidden_units.split(',')))
     opts.model_dir = args.model_dir
     opts.export_model_dir = args.export_model_dir
+    opts.export_mode = args.export_mode
+    opts.rank_len = args.rank_len
     opts.prefetch_size = args.prefetch_size
     opts.shuffle_size = args.shuffle_size
     opts.save_summary_steps = args.save_summary_steps

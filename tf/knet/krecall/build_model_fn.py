@@ -653,38 +653,31 @@ def create_predict_estimator_spec(mode, user_vector, features, params):
 
     opts = params['opts']
 
-    if (opts.optimize_level
-            == model_keys.OPTIMIZE_LEVEL_SAVED_NCE_PARAMS):
-        tf.logging.info("Use OPTIMIZE_LEVEL_SAVED_NCE_PARAMS")
-        scores, ids, _ = optimize_level_saved_nce_params(
+    if opts.export_mode == 'recall':
+        recall_scores, ids, _ = optimize_level_saved_nce_params(
             opts.dict_dir, user_vector, opts.recall_k, opts.use_subset)
-    elif (opts.optimize_level
-          == model_keys.OPTIMIZE_LEVEL_OPENBLAS_TOP_K):
-        tf.logging.info("Use OPTIMIZE_LEVEL_OPENBLAS_TOP_K")
-        scores, ids = optimize_level_openblas_top_k(
-            opts.dict_dir, user_vector, opts.recall_k, opts.use_subset)
-    else:
-        raise ValueError(
-            "not surpported optimize_level '{}'".format(opts.optimize_level))
-
-    table = create_index_to_string_table(opts.dict_dir, opts.use_subset)
-    predictions = {
-        'class_ids': ids,
-        'scores': scores,
-        'words': table.lookup(tf.cast(ids, tf.int64)),
-        'num_in_dict': features[model_keys.NUM_IN_DICT_COL]
-    }
-    export_outputs = {
-        'predicts': tf.estimator.export.PredictOutput(
-            outputs={
-                'scores': scores,
+        table = create_index_to_string_table(opts.dict_dir, opts.use_subset)
+        outputs = {
+                'scores': recall_scores,
                 'words': table.lookup(tf.cast(ids, tf.int64)),
                 'num_in_dict': features[model_keys.NUM_IN_DICT_COL]
             }
-        )
+    elif opts.export_mode == 'rank':
+        rank_ids = features[model_keys.RANK_IDS_COL]
+        rank_scores = get_rank_scores(opts, user_vector, rank_ids)
+        outputs = {
+            'scores': rank_scores,
+            'rowkeys': features[model_keys.RANK_ROWKEYS_COL],
+            'rowkey_ids': rank_ids
+        }
+    else:
+        raise ValueError("Unsurpported export mode.")
+
+    export_outputs = {
+        'predicts': tf.estimator.export.PredictOutput(outputs=outputs),
     }
 
-    return tf.estimator.EstimatorSpec(mode, predictions=predictions,
+    return tf.estimator.EstimatorSpec(mode, predictions=outputs,
                                       export_outputs=export_outputs)
 
 
@@ -896,3 +889,14 @@ def attention_layer(embeds, nonzero_mask, opts):
         attention_output = tf.reduce_sum(tf.multiply(embeds, alphas), axis=1)
 
     return attention_output
+
+
+def get_rank_scores(opts, user_vector, rank_ids):
+    (saved_nce_weights,
+     saved_nce_biases) = load_model_nce_params(opts.dict_dir, False)
+    rank_ids = tf.reshape(rank_ids, [-1])
+    weights = tf.nn.embedding_lookup(saved_nce_weights, rank_ids)
+    biases = tf.nn.embedding_lookup(saved_nce_biases, rank_ids)
+
+    scores = tf.matmul(weights, tf.transpose(user_vector)) + biases
+    return scores

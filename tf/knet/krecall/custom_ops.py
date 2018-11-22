@@ -14,7 +14,7 @@ import tensorflow as tf
 ROOT_OPS_PATH = 'lib/'
 FASTTEXT_EXAMPLE_GENERATE_OPS_PATH = os.path.join(
     ROOT_OPS_PATH, 'fasttext_example_generate_ops.so')
-OPENBLAS_TOP_K_OPS_PATH = os.path.join(ROOT_OPS_PATH, 'openblas_top_k_ops.so')
+# OPENBLAS_TOP_K_OPS_PATH = os.path.join(ROOT_OPS_PATH, 'openblas_top_k_ops.so')
 DICT_LOOKUP_OPS_PATH = os.path.join(ROOT_OPS_PATH, 'dict_lookup_ops.so')
 FASTTEXT_NEGATIVE_SAMPLER_OPS_PATH = os.path.join(ROOT_OPS_PATH, 'fasttext_negative_sampler_ops.so')
 
@@ -22,8 +22,8 @@ fasttext_example_generate_ops = tf.load_op_library(
     FASTTEXT_EXAMPLE_GENERATE_OPS_PATH)
 fasttext_example_generate = fasttext_example_generate_ops.fasttext_example_generate
 
-openblas_top_k_ops = tf.load_op_library(OPENBLAS_TOP_K_OPS_PATH)
-openblas_top_k = openblas_top_k_ops.openblas_top_k
+# openblas_top_k_ops = tf.load_op_library(OPENBLAS_TOP_K_OPS_PATH)
+# openblas_top_k = openblas_top_k_ops.openblas_top_k
 
 dict_lookup_ops = tf.load_op_library(DICT_LOOKUP_OPS_PATH)
 dict_lookup = dict_lookup_ops.dict_lookup
