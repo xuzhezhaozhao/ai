@@ -668,7 +668,6 @@ def create_predict_estimator_spec(mode, user_vector, features, params):
         outputs = {
             'scores': rank_scores,
             'rowkeys': features[model_keys.RANK_ROWKEYS_COL],
-            'rowkey_ids': rank_ids,
             'is_target_in_dict': tf.not_equal(rank_ids, 0)
         }
     else:

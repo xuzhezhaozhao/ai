@@ -99,16 +99,16 @@ def krank_model_fn(features, labels, mode, params):
         is_target_in_dict = features[model_keys.IS_TARGET_IN_DICT_COL]
         num_positive = features[model_keys.NUM_POSITIVE_COL]
         num_negative = features[model_keys.NUM_NEGATIVE_COl]
-        retdict = {
+        outputs = {
             'scores': scores,
             'rowkeys': features[model_keys.TARGET_ROWKEYS_COL],
             model_keys.IS_TARGET_IN_DICT_COL: is_target_in_dict,
             model_keys.NUM_POSITIVE_COL: num_positive,
             model_keys.NUM_NEGATIVE_COl: num_negative,
         }
-        predictions = retdict
+        predictions = outputs
         export_outputs = {
-            'predicts': tf.estimator.export.PredictOutput(outputs=retdict)
+            'predicts': tf.estimator.export.PredictOutput(outputs=outputs)
         }
         return tf.estimator.EstimatorSpec(
             mode, predictions=predictions, export_outputs=export_outputs)

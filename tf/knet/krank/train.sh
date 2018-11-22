@@ -82,8 +82,8 @@ negative_threhold=0.20
 video_duration_biases=1.0
 use_smooth_label=1
 use_bn=1
-add_positive=1
-add_negative=1
+add_positive=0
+add_negative=0
 add_first_video=1
 
 if [[ ${remove_model_dir} == '1' ]]; then
