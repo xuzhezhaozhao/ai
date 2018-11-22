@@ -14,6 +14,7 @@ raw_data_dir=`pwd`/raw_data
 model_dir=`pwd`/video_tab/model_dir
 export_model_dir=`pwd`/video_tab/export_model_dir
 export_mode='rank'
+rank_len=1000
 dict_dir=`pwd`/video_tab/dict_dir
 train_data_path=${raw_data_dir}/train_data.vt.in
 eval_data_path=${raw_data_dir}/eval_data.vt.in
@@ -23,13 +24,13 @@ lr=0.1
 embedding_dim=128
 train_ws=20
 train_lower_ws=1
-min_count=100
+min_count=50
 t=1.0
 batch_size=128
 eval_batch_size=2048
 num_sampled=10
 epoch=1
-hidden_units="256,256"
+hidden_units=""
 prefetch_size=10000
 shuffle_size=10000
 max_train_steps=-1
@@ -84,11 +85,11 @@ use_age_feature=0
 use_gender_feature=0
 # 'indicator', 'numeric'
 age_feature_type='indicator'
-add_average_pooling=0
+add_average_pooling=1
 add_max_pooling=0
 add_min_pooling=0
 add_hierarchical_pooling=0
-add_attention_layer=1
+add_attention_layer=0
 hierarchical_average_window=2
 attention_size=200
 log_step_count_secs=300
@@ -156,6 +157,7 @@ python main.py \
     --model_dir ${model_dir} \
     --export_model_dir ${export_model_dir} \
     --export_mode ${export_mode} \
+    --rank_len ${rank_len} \
     --prefetch_size ${prefetch_size} \
     --shuffle_size ${shuffle_size} \
     --max_train_steps ${max_train_steps} \
