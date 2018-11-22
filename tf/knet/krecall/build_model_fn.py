@@ -668,7 +668,8 @@ def create_predict_estimator_spec(mode, user_vector, features, params):
         outputs = {
             'scores': rank_scores,
             'rowkeys': features[model_keys.RANK_ROWKEYS_COL],
-            'rowkey_ids': rank_ids
+            'rowkey_ids': rank_ids,
+            'is_target_in_dict': tf.not_equal(rank_ids, 0)
         }
     else:
         raise ValueError("Unsurpported export mode.")
@@ -895,8 +896,12 @@ def get_rank_scores(opts, user_vector, rank_ids):
     (saved_nce_weights,
      saved_nce_biases) = load_model_nce_params(opts.dict_dir, False)
     rank_ids = tf.reshape(rank_ids, [-1])
+    rank_ids.set_shape([opts.rank_len])
+    # [rank_len, dim]
     weights = tf.nn.embedding_lookup(saved_nce_weights, rank_ids)
+    # [rank_len]
     biases = tf.nn.embedding_lookup(saved_nce_biases, rank_ids)
-
-    scores = tf.matmul(weights, tf.transpose(user_vector)) + biases
+    # [rank_len, 1]
+    scores = tf.matmul(weights, tf.transpose(user_vector))
+    scores = scores + tf.reshape(biases, [-1, 1])
     return scores

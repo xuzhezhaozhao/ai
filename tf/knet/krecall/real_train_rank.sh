@@ -5,51 +5,43 @@ set -e
 MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
-echo 'TF_CONFIG = ' ${TF_CONFIG}
+# add Anaconda2
+export ANACONDA2_ROOT=/usr/local/services/kd_anaconda2-1.0/lib/anaconda2
+export PATH="${ANACONDA2_ROOT}/bin:$PATH"
+export PYTHONPATH="${ANACONDA2_ROOT}/lib/python2.7/site-packages:$PYTHONPATH"
 
-model_dir=`pwd`/model_dir
-export_model_dir=`pwd`/export_model_dir
+raw_data_dir=`pwd`/raw_data
+model_dir=`pwd`/video_tab/model_dir
+export_model_dir=`pwd`/video_tab/export_model_dir
 export_mode='rank'
-rank_len=100
-
-if [[ $# != 0 ]] ; then
-    if [[ $1 == "user" ]]; then
-        echo "Use new train data ..."
-        train_data_path=../../../data/train_data.in.new
-        eval_data_path=../../../data/eval_data.in.new
-    else
-        echo "Usage: [user]"
-        exit -1
-    fi
-else
-    train_data_path=../../../data/train_data.in
-    eval_data_path=../../../data/eval_data.in
-fi
+dict_dir=`pwd`/video_tab/dict_dir
+train_data_path=${raw_data_dir}/train_data.vt.in
+eval_data_path=${raw_data_dir}/eval_data.vt.in
+user_features_file=${raw_data_dir}/user_features.tsv
 
 lr=0.1
 embedding_dim=128
 train_ws=20
 train_lower_ws=1
-min_count=30
-t=0.025
-batch_size=64
-eval_batch_size=1024
-num_sampled=5
-epoch=5
-hidden_units=""
+min_count=100
+t=1.0
+batch_size=128
+eval_batch_size=2048
+num_sampled=10
+epoch=1
+hidden_units="256,256"
 prefetch_size=10000
 shuffle_size=10000
 max_train_steps=-1
-max_eval_steps=-1
+max_eval_steps=200
 max_eval_steps_in_train=50
-save_summary_steps=100
-save_checkpoints_secs=600
-log_step_count_steps=1000
-recall_k=10
-dict_dir=`pwd`/dict_dir
+save_summary_steps=10000
+save_checkpoints_secs=7200
+log_step_count_steps=20000
+recall_k=350
 use_saved_dict=0
 use_profile_hook=0
-profile_steps=1000
+profile_steps=100000
 root_ops_path=lib/
 remove_model_dir=1
 optimize_level=1
@@ -61,67 +53,66 @@ chief_lock=${model_dir}/chief.lock
 max_distribute_train_steps=-1
 train_nce_biases=0
 shuffle_batch=1
-predict_ws=20
+predict_ws=50
 sample_dropout=0.0
 # 'adagrad', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
 optimizer_type='adagrad'
-tfrecord_file='../../../data/train_data.tfrecord'
-num_tfrecord_file=2
+tfrecord_file=${raw_data_dir}/train_data.vt.tfrecord
+num_tfrecord_file=42
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 map_num_parallel_calls=1
-# 'default', 'multi_thread'
+# 'default', 'train_op_parallel', 'multi_thread', 'multi_thread_v2'
 train_parallel_mode='multi_thread'
-train_num_parallel=4
-use_batch_normalization=1
+train_num_parallel=16
+use_batch_normalization=0
 # 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'
-sgd_lr_decay_type='exponential_decay'
+sgd_lr_decay_type='fasttext_decay'
 use_clip_gradients=1
 clip_norm=500.0
 filter_with_rowkey_info=0
 filter_with_rowkey_info_exposure_thr=10000
-filter_with_rowkey_info_play=100
-filter_with_rowkey_info_e_play=100
+filter_with_rowkey_info_play=4000
+filter_with_rowkey_info_e_play=2000
 filter_with_rowkey_info_e_play_ratio_thr=0.3
-rowkey_info_file=""
+rowkey_info_file=${raw_data_dir}/rowkey_info.json
 normalize_nce_weights=0
 normalize_embeddings=0
 nce_loss_type='fasttext'  # 'word2vec', 'fasttext', 'default'
 negative_sampler_type='fixed'  # fixed(better), log_uniform
 use_user_features=0
-user_features_file="../../../data/user_features.tsv"
 use_age_feature=0
 use_gender_feature=0
 # 'indicator', 'numeric'
-age_feature_type='numeric'
+age_feature_type='indicator'
 add_average_pooling=0
 add_max_pooling=0
 add_min_pooling=0
 add_hierarchical_pooling=0
 add_attention_layer=1
-hierarchical_average_window=5
-attention_size=500
-log_step_count_secs=10
-evaluate_every_secs=500000
-max_eval_steps_on_train_dataset=1000
+hierarchical_average_window=2
+attention_size=200
+log_step_count_secs=300
+evaluate_every_secs=3600
+max_eval_steps_on_train_dataset=100
 optimizer_epsilon=0.00001
 optimizer_adadelta_rho=0.95
-optimizer_adam_beta1=0.0
-optimizer_adam_beta2=0.8
-optimizer_rmsprop_decay=0.95
-optimizer_rmsprop_momentum=0.1
+optimizer_adam_beta1=0.9
+optimizer_adam_beta2=0.999
+optimizer_rmsprop_decay=0.9
+optimizer_rmsprop_momentum=0.01
 optimizer_rmsprop_centered=0  # bool value
-optimizer_momentum_momentum=0.9
+optimizer_momentum_momentum=0.99
 optimizer_momentum_use_nesterov=0 # bool value
-optimizer_ftrl_lr_power=-6.5
-optimizer_ftrl_initial_accumulator_value=1.0
-optimizer_ftrl_l1_regularization=0.000
-optimizer_ftrl_l2_regularization=0.00001
+optimizer_ftrl_lr_power=-0.5
+optimizer_ftrl_initial_accumulator_value=0.1
+optimizer_ftrl_l1_regularization=0.001
+optimizer_ftrl_l2_regularization=0.0
 optimizer_ftrl_l2_shrinkage_regularization=0.0
-optimizer_exponential_decay_steps=1000
-optimizer_exponential_decay_rate=0.4
-optimizer_exponential_decay_staircase=1  # bool value
-log_per_lines=100000
-cpp_log_level=1  # 0: all
+optimizer_exponential_decay_steps=2000
+optimizer_exponential_decay_rate=0.98
+optimizer_exponential_decay_staircase=0  # bool value
+log_per_lines=200000
+cpp_log_level=0  # 0: all
 tf_log_level='INFO'  # DEBUG, INFO, ERROR, FATAL
 
 if [[ ${train_data_format} == 'tfrecord' ]]; then
@@ -129,7 +120,7 @@ if [[ ${train_data_format} == 'tfrecord' ]]; then
     echo 'dump tfrecord ...'
     export LD_LIBRARY_PATH=./lib/:$LD_LIBRARY_PATH  # libtensorflow_framework.so
 
-    ./ops/fasttext/tfrecord_writer \
+    ./utils/tfrecord_writer \
         --tfrecord_file ${tfrecord_file} \
         --ws ${train_ws} \
         --lower_ws ${train_lower_ws} \
@@ -144,7 +135,6 @@ if [[ ${train_data_format} == 'tfrecord' ]]; then
         --use_saved_dict ${use_saved_dict}
     echo 'dump tfrecord OK'
 fi
-
 
 python main.py \
     --train_data_path ${train_data_path} \
@@ -166,7 +156,6 @@ python main.py \
     --model_dir ${model_dir} \
     --export_model_dir ${export_model_dir} \
     --export_mode ${export_mode} \
-    --rank_len ${rank_len} \
     --prefetch_size ${prefetch_size} \
     --shuffle_size ${shuffle_size} \
     --max_train_steps ${max_train_steps} \
@@ -249,5 +238,4 @@ python main.py \
     --optimizer_exponential_decay_staircase ${optimizer_exponential_decay_staircase} \
     --log_per_lines ${log_per_lines} \
     --cpp_log_level ${cpp_log_level} \
-    --tf_log_level ${tf_log_level} \
-    --attention_size ${attention_size}
+    --tf_log_level ${tf_log_level}

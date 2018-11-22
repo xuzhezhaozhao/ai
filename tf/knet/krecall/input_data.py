@@ -346,6 +346,7 @@ def build_rank_serving_input_fn(opts):
         table = tf.contrib.lookup.index_table_from_tensor(
             words, default_value=0)
         rank_ids = table.lookup(features[model_keys.RANK_ROWKEYS_COL])
+        rank_ids.set_shape([1, opts.rank_len])
 
         features[model_keys.RECORDS_COL] = watched_ids
         features[model_keys.RANK_IDS_COL] = rank_ids
