@@ -28,6 +28,7 @@
 *.bak
 .ipynb_checkpoints
 *.preprocessed
+*.shuf
 
 # file
 core
