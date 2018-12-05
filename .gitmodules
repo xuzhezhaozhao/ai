@@ -1,3 +1,9 @@
 [submodule "cppml/deps/googletest"]
 	path = deps/googletest
 	url = https://github.com/google/googletest
+[submodule "submodules/glove"]
+	path = submodules/glove
+	url = https://github.com/xuzhezhaozhao/GloVe_reading
+[submodule "submodules/fastText"]
+	path = submodules/fastText
+	url = https://github.com/xuzhezhaozhao/fastText_reading
