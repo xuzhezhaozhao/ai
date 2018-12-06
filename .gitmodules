@@ -7,3 +7,6 @@
 [submodule "submodules/fastText"]
 	path = submodules/fastText
 	url = https://github.com/xuzhezhaozhao/fastText_reading
+[submodule "submodules/darknet"]
+	path = submodules/darknet
+	url = https://github.com/xuzhezhaozhao/darknet_reading
