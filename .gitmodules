@@ -10,3 +10,6 @@
 [submodule "submodules/darknet"]
 	path = submodules/darknet
 	url = https://github.com/xuzhezhaozhao/darknet_reading
+[submodule "submodules/nbsvm"]
+	path = submodules/nbsvm
+	url = https://github.com/xuzhezhaozhao/nbsvm
