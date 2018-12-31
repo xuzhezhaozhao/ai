@@ -52,3 +52,5 @@ val/
 test/
 fe_dir/
 nbsvm_run/
+
+datasets/aclImdb_v1-dataset/aclImdb
