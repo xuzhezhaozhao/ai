@@ -13,3 +13,6 @@
 [submodule "submodules/nbsvm"]
 	path = submodules/nbsvm
 	url = https://github.com/xuzhezhaozhao/nbsvm
+[submodule "submodules/nbsvm-multiclass"]
+	path = submodules/nbsvm-multiclass
+	url = https://github.com/xuzhezhaozhao/nbsvm-multiclass
