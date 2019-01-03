@@ -16,7 +16,6 @@ def tokenize(sentence, grams):
 def build_dict(f, grams):
     dic = Counter()
     for sentence in open(f).xreadlines():
-        sentence = unicode(sentence, 'utf-8')
         dic.update(tokenize(sentence, grams))
     return dic
 
