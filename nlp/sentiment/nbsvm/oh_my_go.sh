@@ -17,5 +17,5 @@ python ../nbsvm.py \
     --ntrain ${datadir}/train-neg.txt \
     --ptest ${datadir}/test-pos.txt \
     --ntest ${datadir}/test-neg.txt \
-    --ngram 123 \
+    --ngram 12 \
     --out NBSVM-TEST

@@ -14,14 +14,25 @@ cat ./data/pos_process.txt | sed 's/[ ][ ]*/ /g' | sed '/^$/d' > ./data/preproce
 
 cd ./data/preprocessed
 total_lines=$(wc -l neg.txt | awk '{print $1}')
-train_lines=340000
-test_lines=100000
+train_lines=echo "scale=2;${total_lines}*0.8"|bc|awk '{print int($1)}'
+test_lines=echo "scale=2;${total_lines}*0.2"|bc|awk '{print int($1)}'
 head neg.txt -n ${train_lines} > train-neg.txt
 tail neg.txt -n ${test_lines} > test-neg.txt
 
 total_lines=$(wc -l pos.txt | awk '{print $1}')
-train_lines=3000000
-test_lines=600000
-head pos.txt -n 3000000 > train-pos.txt
-tail pos.txt -n 600000 > test-pos.txt
-cd -
+train_lines=echo "scale=2;${total_lines}*0.8"|bc|awk '{print int($1)}'
+test_lines=echo "scale=2;${total_lines}*0.2"|bc|awk '{print int($1)}'
+head pos.txt -n ${total_lines} > train-pos.txt
+tail pos.txt -n ${test_lines} > test-pos.txt
+
+mkdir -p fasttext
+sed 's/^/__label__pos / ' train-pos.txt > fasttext/train-pos.txt
+sed 's/^/__label__pos / ' test-pos.txt > fasttext/test-pos.txt
+sed 's/^/__label__neg / ' train-neg.txt > fasttext/train-neg.txt
+sed 's/^/__label__neg / ' test-neg.txt > fasttext/test-neg.txt
+
+cat fasttex/train-* > fasttext/train.txt.tmp
+cat fasttex/test-* > fasttext/test.txt.tmp
+shuf fasttext/train.txt.tmp -o fasttext/train.txt
+shuf fasttext/test.txt.tmp -o fasttext/test.txt
+cd ../../..
