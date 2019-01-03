@@ -10,7 +10,7 @@ make
 cd ..
 fi
 
-datadir=../../../datasets/kd_video_comments-dataset/data/preprocessed
+datadir=../../../../datasets/kd_video_comments-dataset/data/preprocessed
 python ../nbsvm.py \
     --liblinear liblinear-1.96 \
     --ptrain ${datadir}/train-pos.txt \
