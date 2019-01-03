@@ -5,7 +5,7 @@ set -e
 # dict_file=./neg_dict.txt
 dict_file=$1
 
-./grep_keywords.sh ${dict_file}
+./grep_neg.sh ${dict_file}
 ./grep_pos.sh ${dict_file}
 
 mkdir -p data/preprocessed
