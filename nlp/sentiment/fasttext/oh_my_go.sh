@@ -4,7 +4,7 @@ datadir=../../../datasets/kd_video_comments-dataset/data/preprocessed/fasttext
     supervised \
     -input "${datadir}/train.txt" \
     -output "model" \
-    -dim 100 \
+    -dim 50 \
     -lr 0.025 \
     -wordNgrams 3 \
     -minCount 5 \
