@@ -9,8 +9,7 @@ for key in ${keywords[@]}
 do
     echo $key
     mkdir -p data/${key}
-    grep -w ${key} ./kd_video_comments.csv > data/${key}/neg.txt
-
+    grep ${key} ./kd_video_comments.csv > data/${key}/neg.txt
     cat data/${key}/neg.txt >> data/neg.txt
 done
 sed -i 's/^.*\t//g' data/neg.txt
