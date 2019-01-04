@@ -13,7 +13,7 @@ datadir=../../../datasets/kd_video_comments-dataset/data/preprocessed/fasttext
     -thread 7
 
 
-mkdir model
+mkdir -p model
 ../../../submodules/fastText/fasttext \
     test \
     model/model.bin \
