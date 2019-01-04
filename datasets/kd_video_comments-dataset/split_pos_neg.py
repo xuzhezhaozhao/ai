@@ -27,4 +27,4 @@ with open(sys.argv[2], 'w') as fpos, open(sys.argv[3], 'w') as fneg:
 
 print("keywords count\n")
 for key in dic:
-    print("{}: {}\n".format(key, dic[key]))
+    print("{}: {}".format(key, dic[key]))

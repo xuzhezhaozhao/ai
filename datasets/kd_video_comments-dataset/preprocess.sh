@@ -50,5 +50,3 @@ cat fasttext/test-* > fasttext/test.txt.tmp
 shuf fasttext/train.txt.tmp -o fasttext/train.txt
 shuf fasttext/test.txt.tmp -o fasttext/test.txt
 cd ../../..
-
-python filter_rowkey.py
