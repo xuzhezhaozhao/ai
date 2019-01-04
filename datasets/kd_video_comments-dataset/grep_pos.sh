@@ -4,7 +4,7 @@ set -e
 keywords=(`cat $1`)
 N=6000000
 
-cmd="cat ./kd_video_comments.csv"
+cmd="cat ./comments/kd_video_comments.csv"
 for key in ${keywords[@]}
 do
     cmd+="|grep"" ""-v"" "${key}

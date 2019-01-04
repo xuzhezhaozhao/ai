@@ -22,7 +22,7 @@ if len(sys.argv) != 3:
 
 def getStopWords():
     stop_words = [unicode(word, 'utf-8')
-                  for word in open("./stop_words.txt").read().split('\n')]
+                  for word in open("./dict/stop_words.txt").read().split('\n')]
     return set(stop_words)
 
 
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     stop_words = getStopWords()
 
     zh = re.compile(ur'[\u4e00-\u9fa5\u0041-\u005A\u0061-\u007A]+')
-    jieba.load_userdict("./jieba_dict.txt")
+    jieba.load_userdict("./dict/jieba_dict.txt")
 
     with open(sys.argv[2], "w") as fout:
         txt_path = sys.argv[1]
