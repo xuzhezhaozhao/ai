@@ -2,7 +2,7 @@
 
 set -e
 keywords=(`cat $1`)
-N=4000000
+N=6000000
 
 cmd="cat ./kd_video_comments.csv"
 for key in ${keywords[@]}
