@@ -2,13 +2,17 @@
 
 set -e
 
-if [ $# != 1 ] ; then
+if [ $# == 0 ] ; then
+    dict_file=./dict/neg_dict.txt
+elif [ $# == 1 ] ; then
+    dict_file=$1
+else
     echo "Usage: $0 <neg_dic>"
     exit -1
 fi
 
-dict_file=$1
-
+rm -rf data
+mkdir data
 python split_pos_neg.py ${dict_file} ./data/pos.txt ./data/neg.txt
 cat data/neg.txt | sort | uniq | shuf > ./data/neg_uniq_shuf.txt
 neg_lines=$(wc -l ./data/neg_uniq_shuf.txt | awk '{print $1}')
