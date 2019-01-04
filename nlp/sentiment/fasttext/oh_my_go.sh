@@ -2,8 +2,8 @@
 datadir=../../../datasets/kd_video_comments-dataset/data/preprocessed/fasttext
 ../../../submodules/fastText/fasttext \
     supervised \
-    -input "${datadir}/train.txt" \
-    -output "model" \
+    -input ${datadir}/train.txt \
+    -output model/model \
     -dim 50 \
     -lr 0.025 \
     -wordNgrams 3 \
@@ -13,7 +13,8 @@ datadir=../../../datasets/kd_video_comments-dataset/data/preprocessed/fasttext
     -thread 7
 
 
+mkdir model
 ../../../submodules/fastText/fasttext \
     test \
-    model.bin \
+    model/model.bin \
     ${datadir}/test.txt
