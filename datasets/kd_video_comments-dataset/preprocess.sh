@@ -2,11 +2,18 @@
 
 set -e
 
-# dict_file=./neg_dict.txt
+if [ $# != 1 ] ; then
+    echo "Usage: $0 <neg_dic>"
+    exit -1
+fi
+
 dict_file=$1
 
-./grep_neg.sh ${dict_file}
-./grep_pos.sh ${dict_file}
+python ./split_pos_neg.py ${dict_file} ./data/pos.txt ./data/neg.txt
+cat data/neg.txt | sort | uniq | shuf > ./data/neg_uniq_shuf.txt
+neg_lines=$(wc -l ./data/neg_uniq_shuf.txt | awk '{print $1}')
+pos_lines=`echo "scale=2;${neg_lines}*5.0"|bc|awk '{print int($1)}'`
+cat data/pos.txt | sort | uniq | shuf | head -n ${pos_lines} > ./data/pos_uniq_shuf.txt
 
 mkdir -p data/preprocessed
 python transform.py ./data/neg_uniq_shuf.txt ./data/neg_process.txt
