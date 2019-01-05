@@ -1,3 +1,10 @@
+#! /usr/bin/env bash
+
+set -e
+
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd ${MYDIR}
+
 mkdir -p nbsvm_run
 cd nbsvm_run
 
@@ -10,7 +17,7 @@ make
 cd ..
 fi
 
-datadir=../../../../datasets/kd_video_comments-dataset/data/preprocessed
+datadir=../../../../datasets/kd_video_comments-dataset/data/nbsvm
 python ../nbsvm.py \
     --liblinear liblinear-1.96 \
     --ptrain ${datadir}/train-pos.txt \
