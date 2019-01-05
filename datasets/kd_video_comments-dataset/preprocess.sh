@@ -2,6 +2,9 @@
 
 set -e
 
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd ${MYDIR}
+
 if [ $# == 0 ] ; then
     dict_file=dict/neg_dict.txt
 elif [ $# == 1 ] ; then
@@ -31,13 +34,13 @@ sed -i '/^$/d' data/neg_tokens.txt
 sed -i '/^$/d' data/pos_tokens.txt
 
 mkdir -p data/nbsvm
-total_lines=$(wc -l neg.txt | awk '{print $1}')
+total_lines=$(wc -l data/neg.txt | awk '{print $1}')
 train_lines=`echo "scale=2;${total_lines}*0.9"|bc|awk '{print int($1)}'`
 test_lines=`echo "scale=2;${total_lines}*0.1"|bc|awk '{print int($1)}'`
 head data/neg_tokens.txt -n ${train_lines} > data/nbsvm/train-neg.txt
 tail data/neg_tokens.txt -n ${test_lines} > data/nbsvm/test-neg.txt
 
-total_lines=$(wc -l pos.txt | awk '{print $1}')
+total_lines=$(wc -l data/pos.txt | awk '{print $1}')
 train_lines=`echo "scale=2;${total_lines}*0.9"|bc|awk '{print int($1)}'`
 test_lines=`echo "scale=2;${total_lines}*0.1"|bc|awk '{print int($1)}'`
 head data/pos_tokens.txt -n ${total_lines} > data/nbsvm/train-pos.txt
