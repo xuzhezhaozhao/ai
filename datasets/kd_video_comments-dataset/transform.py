@@ -40,8 +40,7 @@ if __name__ == "__main__":
             content = '#'.join(zh.findall(content))
             stop_words.add('#')
             raw_words = jieba.cut(content, cut_all=False)
-            words = [word for word in raw_words
-                     if word not in stop_words]
+            words = [word for word in raw_words if word not in stop_words]
             for word in words:
                 fout.write(word.encode('utf-8') + ' ')
             fout.write('\n')
