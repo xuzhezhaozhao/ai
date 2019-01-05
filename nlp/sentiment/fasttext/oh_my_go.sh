@@ -1,3 +1,9 @@
+#! /usr/bin/env bash
+
+set -e
+
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd ${MYDIR}
 
 mkdir -p model
 datadir=../../../datasets/kd_video_comments-dataset/data/preprocessed/fasttext
@@ -8,9 +14,9 @@ datadir=../../../datasets/kd_video_comments-dataset/data/preprocessed/fasttext
     -dim 50 \
     -lr 0.025 \
     -wordNgrams 2 \
-    -minCount 10 \
-    -bucket 500000 \
-    -epoch 15 \
+    -minCount 5 \
+    -bucket 2000000 \
+    -epoch 20 \
     -thread 7 \
     -minn 0 \
     -maxn 0
