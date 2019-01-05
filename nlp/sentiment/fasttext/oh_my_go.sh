@@ -13,13 +13,11 @@ datadir=../../../datasets/kd_video_comments-dataset/data/fasttext
     -output model/model \
     -dim 50 \
     -lr 0.025 \
-    -wordNgrams 3 \
+    -wordNgrams 2 \
     -minCount 5 \
     -bucket 2000000 \
     -epoch 20 \
-    -thread 7 \
-    -minn 0 \
-    -maxn 0
+    -thread 7
 
 ../../../submodules/fastText/fasttext \
     test \
