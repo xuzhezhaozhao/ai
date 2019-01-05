@@ -11,6 +11,7 @@ else
     exit -1
 fi
 
+rm -rf data
 mkdir data
 python split_pos_neg.py ${dict_file} data/pos.txt data/neg.txt
 sed -i 's/^.*\t//g' data/pos.txt
