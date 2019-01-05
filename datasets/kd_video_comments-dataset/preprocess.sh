@@ -17,17 +17,17 @@ python split_pos_neg.py ${dict_file} ./data/pos.txt ./data/neg.txt
 sed -i 's/^.*\t//g' data/pos.txt
 sed -i 's/^.*\t//g' data/neg.txt
 
-cat data/neg.txt | sort | uniq | shuf > ./data/neg_uniq_shuf.txt
-neg_lines=$(wc -l ./data/neg_uniq_shuf.txt | awk '{print $1}')
+cat data/neg.txt | shuf > ./data/neg_shuf.txt
+neg_lines=$(wc -l ./data/neg_shuf.txt | awk '{print $1}')
 pos_lines=`echo "scale=2;${neg_lines}*5.0"|bc|awk '{print int($1)}'`
-cat data/pos.txt | sort | uniq | shuf | head -n ${pos_lines} > ./data/pos_uniq_shuf.txt
+cat data/pos.txt | shuf | head -n ${pos_lines} > ./data/pos_shuf.txt
 
 mkdir -p data/preprocessed
-python transform.py ./data/neg_uniq_shuf.txt ./data/neg_process.txt
-python transform.py ./data/pos_uniq_shuf.txt ./data/pos_process.txt
+python transform.py ./data/neg_shuf.txt ./data/neg_tokens.txt
+python transform.py ./data/pos_shuf.txt ./data/pos_tokens.txt
 
-cat ./data/neg_process.txt | sed 's/[ ][ ]*/ /g' | sed '/^$/d' > ./data/preprocessed/neg.txt
-cat ./data/pos_process.txt | sed 's/[ ][ ]*/ /g' | sed '/^$/d' > ./data/preprocessed/pos.txt
+cat ./data/neg_tokens.txt | sed 's/[ ][ ]*/ /g' | sed '/^$/d' > ./data/preprocessed/neg.txt
+cat ./data/pos_tokens.txt | sed 's/[ ][ ]*/ /g' | sed '/^$/d' > ./data/preprocessed/pos.txt
 
 cd ./data/preprocessed
 total_lines=$(wc -l neg.txt | awk '{print $1}')
