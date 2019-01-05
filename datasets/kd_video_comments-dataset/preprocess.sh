@@ -31,14 +31,14 @@ cat ./data/pos_tokens.txt | sed 's/[ ][ ]*/ /g' | sed '/^$/d' > ./data/preproces
 
 cd ./data/preprocessed
 total_lines=$(wc -l neg.txt | awk '{print $1}')
-train_lines=`echo "scale=2;${total_lines}*0.8"|bc|awk '{print int($1)}'`
-test_lines=`echo "scale=2;${total_lines}*0.2"|bc|awk '{print int($1)}'`
+train_lines=`echo "scale=2;${total_lines}*0.9"|bc|awk '{print int($1)}'`
+test_lines=`echo "scale=2;${total_lines}*0.1"|bc|awk '{print int($1)}'`
 head neg.txt -n ${train_lines} > train-neg.txt
 tail neg.txt -n ${test_lines} > test-neg.txt
 
 total_lines=$(wc -l pos.txt | awk '{print $1}')
-train_lines=`echo "scale=2;${total_lines}*0.8"|bc|awk '{print int($1)}'`
-test_lines=`echo "scale=2;${total_lines}*0.2"|bc|awk '{print int($1)}'`
+train_lines=`echo "scale=2;${total_lines}*0.9"|bc|awk '{print int($1)}'`
+test_lines=`echo "scale=2;${total_lines}*0.1"|bc|awk '{print int($1)}'`
 head pos.txt -n ${total_lines} > train-pos.txt
 tail pos.txt -n ${test_lines} > test-pos.txt
 
