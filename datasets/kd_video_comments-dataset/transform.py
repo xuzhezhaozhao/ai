@@ -37,7 +37,7 @@ if __name__ == "__main__":
         for line in open(txt_path):
             content = unicode(line.replace('\r\n', ' ').replace(
                 '\r', ' ').replace('\n', ' '), 'utf-8').lower()
-            content = ' '.join(zh.findall(content))
+            content = '#'.join(zh.findall(content))
             raw_words = jieba.cut(content, cut_all=False)
             words = [word for word in raw_words
                      if word not in stop_words]
