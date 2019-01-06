@@ -16,3 +16,6 @@
 [submodule "submodules/nbsvm-multiclass"]
 	path = submodules/nbsvm-multiclass
 	url = https://github.com/xuzhezhaozhao/nbsvm-multiclass
+[submodule "submodules/cnn-text-classification-tf"]
+	path = submodules/cnn-text-classification-tf
+	url = https://github.com/xuzhezhaozhao/cnn-text-classification-tf
