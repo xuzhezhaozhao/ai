@@ -30,3 +30,4 @@ datadir=../../../datasets/kd_video_comments-dataset/data/fasttext
     ${datadir}/test.txt > preidct.txt
 
 python check_error.py preidct.txt ${datadir}/test.txt > error.txt
+rm preidct.txt
