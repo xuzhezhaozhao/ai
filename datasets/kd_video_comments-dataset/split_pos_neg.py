@@ -13,7 +13,9 @@ for key in keywords:
     print("{}").format(key)
 
 with open(sys.argv[2], 'w') as fpos, open(sys.argv[3], 'w') as fneg:
-    for line in open('./comments/kd_video_comments.csv'):
+    for index, line in enumerate(open('./comments/kd_video_comments.csv')):
+        if (index+1) % 1000000 == 0:
+            print("{} lines processed ...".format(index+1))
         ispos = True
         for keyword in keywords:
             if line.lower().find(keyword) >= 0:

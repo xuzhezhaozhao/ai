@@ -34,7 +34,9 @@ if __name__ == "__main__":
 
     with open(sys.argv[2], "w") as fout:
         txt_path = sys.argv[1]
-        for line in open(txt_path):
+        for index, line in enumerate(open(txt_path)):
+            if (index+1) % 1000000 == 0:
+                print("{} lines tokenized ...".format(index+1))
             content = unicode(line.replace('\r\n', ' ').replace(
                 '\r', ' ').replace('\n', ' '), 'utf-8').lower()
             content = '#'.join(zh.findall(content))
