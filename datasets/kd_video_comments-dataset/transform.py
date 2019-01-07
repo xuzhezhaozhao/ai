@@ -29,7 +29,10 @@ def getStopWords():
 if __name__ == "__main__":
     stop_words = getStopWords()
 
-    zh = re.compile(ur'[\u4e00-\u9fa5\u0041-\u005A\u0061-\u007A]+')
+    # 中文, 英文, 数字
+    # https://zh.wikipedia.org/wiki/Unicode%E5%AD%97%E7%AC%A6%E5%88%97%E8%A1%A8
+    zh = re.compile(
+        ur'[\u4e00-\u9fa5\u0041-\u005A\u0061-\u007A\u0030-\u0039]+')
     jieba.load_userdict("./dict/jieba_dict.txt")
 
     with open(sys.argv[2], "w") as fout:
