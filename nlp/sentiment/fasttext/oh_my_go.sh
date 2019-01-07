@@ -19,6 +19,13 @@ datadir=../../../datasets/kd_video_comments-dataset/data/fasttext
     -epoch 20 \
     -thread 7
 
+echo 'train accuracy:'
+../../../submodules/fastText/fasttext \
+    test \
+    model/model.bin \
+    ${datadir}/train.txt
+
+echo 'test accuracy:'
 ../../../submodules/fastText/fasttext \
     test \
     model/model.bin \
