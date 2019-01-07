@@ -16,15 +16,21 @@ fi
 
 rm -rf data
 mkdir data
-python split_pos_neg.py ${dict_file} data/pos.txt data/neg.txt
+
+g++ -std=c++11 split_pos_neg.cpp -o data/split_pos_neg
+./data/split_pos_neg \
+    ${dict_file} \
+    ./comments/kd_video_comments.csv \
+    data/pos.txt \
+    data/neg.txt
 sed -i 's/^.*\t//g' data/pos.txt
 sed -i 's/^.*\t//g' data/neg.txt
 
 cat data/neg.txt | shuf > data/neg_shuf.txt
-# neg_lines=$(wc -l ./data/neg_shuf.txt | awk '{print $1}')
-# pos_lines=`echo "scale=2;${neg_lines}*5.0"|bc|awk '{print int($1)}'`
-# cat data/pos.txt | shuf | head -n ${pos_lines} > data/pos_shuf.txt
-cat data/pos.txt | shuf > data/pos_shuf.txt
+neg_lines=$(wc -l ./data/neg_shuf.txt | awk '{print $1}')
+pos_lines=`echo "scale=2;${neg_lines}*5.0"|bc|awk '{print int($1)}'`
+cat data/pos.txt | shuf | head -n ${pos_lines} > data/pos_shuf.txt
+# cat data/pos.txt | shuf > data/pos_shuf.txt
 
 python transform.py data/neg_shuf.txt data/neg_tokens.txt
 python transform.py data/pos_shuf.txt data/pos_tokens.txt
