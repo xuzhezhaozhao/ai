@@ -1,5 +1,10 @@
 #! /usr/bin/env bash
 
+set -e
+
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd ${MYDIR}
+
 TF_CFLAGS=( $(python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_compile_flags()))') )
 TF_LFLAGS=( $(python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_link_flags()))') )
 echo "TF_CFLAGS = " ${TF_CFLAGS[@]}
