@@ -50,6 +50,7 @@ params=(\
  \
 # dataset flags \
 [max_length]=32 \
+[num_filters]=128 \
 [prefetch_size]=500 \
 [shuffle_size]=500 \
 [shuffle_batch]=True \
@@ -87,6 +88,7 @@ params=(\
 [learning_rate_decay_type]='exponential' \
 [end_learning_rate]=0.0001 \
 [learning_rate_decay_factor]=0.9 \
+[decay_steps]=100 \
  \
 # moving average flags
 [use_moving_average]=False \

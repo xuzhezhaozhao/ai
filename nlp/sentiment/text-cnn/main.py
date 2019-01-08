@@ -33,6 +33,10 @@ tf.app.flags.DEFINE_integer('throttle_secs', 600, '')
 
 # dataset flags
 tf.app.flags.DEFINE_integer('max_length', 32, '')
+tf.app.flags.DEFINE_integer("num_filters", 128,
+                            "Number of filters per filter size (default: 128)")
+tf.app.flags.DEFINE_list("filter_sizes", "3,4,5",
+                         "Comma-separated filter sizes (default: '3,4,5')")
 tf.app.flags.DEFINE_integer('prefetch_size', 1000, '')
 tf.app.flags.DEFINE_integer('shuffle_size', 1000, '')
 tf.app.flags.DEFINE_bool('shuffle_batch', True, '')
@@ -111,6 +115,8 @@ tf.app.flags.DEFINE_float(
 tf.app.flags.DEFINE_float(
     'learning_rate_decay_factor', 0.94, 'Learning rate decay factor.')
 
+tf.app.flags.DEFINE_integer('decay_steps', 100, '')
+
 # moving average flags
 tf.app.flags.DEFINE_bool(
     'use_moving_average', False,
@@ -162,10 +168,13 @@ def build_estimator(opts):
     config_keys['keep_checkpoint_every_n_hours'] = 10000
     config_keys['log_step_count_steps'] = opts.log_step_count_steps
 
+    labels = [label.strip() for label in open(opts.label_dict_path)
+              if label.strip() != '']
     estimator_keys = {}
     estimator_keys['model_fn'] = build_model_fn.model_fn
     estimator_keys['params'] = {
         'opts': opts,
+        'num_classes': len(labels)
     }
     config = tf.estimator.RunConfig(**config_keys)
     estimator_keys['config'] = config
