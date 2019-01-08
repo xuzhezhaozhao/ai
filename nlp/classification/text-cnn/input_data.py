@@ -21,8 +21,6 @@ def parse_function(text, opts):
         word_dict=tf.make_tensor_proto(words),
         label_dict=tf.make_tensor_proto(labels),
         max_length=opts.max_length)
-    label = tf.one_hot(label, len(labels))
-
     return {'data': word_ids}, label
 
 

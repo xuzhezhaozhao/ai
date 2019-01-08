@@ -53,14 +53,13 @@ def model_fn(features, labels, mode, params):
                                1-opts.dropout_keep_prob,
                                training=is_training)
     logits = tf.layers.dense(output, params['num_classes'])
-
+    labels = tf.reshape(labels, [-1])
+    labels = tf.one_hot(labels, params['num_classes'])
     if mode == tf.estimator.ModeKeys.TRAIN:
-        # tf.summary.scalar('batch_accuracy', tf.reduce_mean(
-            # tf.cast(tf.equal(tf.argmax(labels, 1), tf.argmax(logits, 1)),
-                    # tf.float32)))
+        tf.summary.scalar('batch_accuracy', tf.reduce_mean(
+            tf.cast(tf.equal(tf.argmax(labels, 1), tf.argmax(logits, 1)),
+                    tf.float32)))
 
-        print("labels: ", labels)
-        print("logits: ", logits)
         loss = tf.losses.softmax_cross_entropy(labels, logits)
         global_step = tf.train.get_global_step()
 

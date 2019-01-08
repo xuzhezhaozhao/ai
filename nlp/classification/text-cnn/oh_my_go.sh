@@ -68,7 +68,7 @@ params=(\
 [profile_steps]=100 \
  \
 # optimizer flags \
-[optimizer]='momentum' \
+[optimizer]='rmsprop' \
 [adadelta_rho]=0.95 \
 [adagrad_initial_accumulator_value]=0.1 \
 [adam_beta1]=0.9 \
@@ -85,7 +85,7 @@ params=(\
 # learning rate flags \
 [learning_rate]=0.001 \
 ## fixed, exponential or polynomial
-[learning_rate_decay_type]='exponential' \
+[learning_rate_decay_type]='fixed' \
 [end_learning_rate]=0.0001 \
 [learning_rate_decay_factor]=0.9 \
 [decay_steps]=100 \
@@ -94,7 +94,7 @@ params=(\
 [use_moving_average]=False \
 [moving_average_decay]=0.9 \
  \
-[dropout_keep_prob]=0.8 \
+[dropout_keep_prob]=1.0 \
 [weight_decay]=0.0000 \
 [use_batch_norm]=True \
 [batch_norm_decay]=0.9 \
