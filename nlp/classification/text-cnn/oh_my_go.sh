@@ -43,32 +43,32 @@ params=(\
 [word_vectors_path]=model/word2vec.vec \
  \
 # train flags \
-[batch_size]=32 \
+[batch_size]=256 \
 [max_train_steps]=-1 \
 [epoch]=15 \
 [throttle_secs]=60 \
  \
 # dataset flags \
-[max_length]=32 \
-[num_filters]=128 \
+[max_length]=16 \
+[num_filters]=64 \
 [prefetch_size]=500 \
 [shuffle_size]=500 \
 [shuffle_batch]=True \
 [map_num_parallel_calls]=1 \
  \
 # log flags \
-[save_summary_steps]=10 \
-[save_checkpoints_secs]=-1 \
+[save_summary_steps]=100 \
+[save_checkpoints_secs]=1200 \
 [save_checkpoints_steps]=-1 \
 [keep_checkpoint_max]=5 \
-[log_step_count_steps]=10 \
+[log_step_count_steps]=100 \
  \
 # profile flags \
 [use_profile_hook]=False \
 [profile_steps]=100 \
  \
 # optimizer flags \
-[optimizer]='rmsprop' \
+[optimizer]='adam' \
 [adadelta_rho]=0.95 \
 [adagrad_initial_accumulator_value]=0.1 \
 [adam_beta1]=0.9 \
@@ -79,11 +79,11 @@ params=(\
 [ftrl_l1]=0.0 \
 [ftrl_l2]=0.0 \
 [momentum]=0.9 \
-[rmsprop_momentum]=0.9 \
+[rmsprop_momentum]=0.0 \
 [rmsprop_decay]=0.9 \
  \
 # learning rate flags \
-[learning_rate]=0.001 \
+[learning_rate]=0.1 \
 ## fixed, exponential or polynomial
 [learning_rate_decay_type]='fixed' \
 [end_learning_rate]=0.0001 \
