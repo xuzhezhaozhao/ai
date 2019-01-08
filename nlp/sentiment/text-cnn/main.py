@@ -23,6 +23,7 @@ tf.app.flags.DEFINE_string('predict_checkpoint_path', '', '')
 
 tf.app.flags.DEFINE_string('word_dict_path', '', '')
 tf.app.flags.DEFINE_string('label_dict_path', '', '')
+tf.app.flags.DEFINE_string('word_vectors_path', '', '')
 
 # train flags
 tf.app.flags.DEFINE_integer('batch_size', 64, 'batch size')

@@ -36,3 +36,6 @@ t=1e-4
 	-thread ${thread} \
 	-t ${t} \
 	-lrUpdateRate 100
+
+awk 'NR>1{print $1}' model/word2vec.vec > model/word2vec.dict
+awk 'NR>1{print $1}' ${datadir}/train.txt | sort | uniq > model/label.dict

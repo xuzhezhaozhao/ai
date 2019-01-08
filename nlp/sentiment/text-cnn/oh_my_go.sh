@@ -25,12 +25,6 @@ datadir=../../../datasets/kd_video_comments-dataset/data/fasttext
 train_data_path=${datadir}/train.txt
 eval_data_path=${datadir}/test.txt
 
-echo "Generate dict ..."
-mkdir ${model_dir}
-awk 'NR>1{print $1}' model/word2vec.vec > ${model_dir}/word2vec.dict
-awk 'NR>1{print $1}' ${train_data_path} | sort | uniq > ${model_dir}/label.dict
-echo "Generate dict done"
-
 declare -A params
 params=(\
 [model_dir]=${model_dir} \
@@ -44,8 +38,9 @@ params=(\
 [predict_output]=`pwd`/predict_output.${model_name}.txt \
 [predict_checkpoint_path]=${model_dir} \
  \
-[word_dict_path]=${model_dir}/word2vec.dict \
-[label_dict_path]=${model_dir}/label.dict \
+[word_dict_path]=model/word2vec.dict \
+[label_dict_path]=model/label.dict \
+[word_vectors_path]=model/word2vec.vec \
  \
 # train flags \
 [batch_size]=32 \
