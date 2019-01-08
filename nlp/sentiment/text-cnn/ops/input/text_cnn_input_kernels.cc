@@ -62,6 +62,9 @@ class TextCNNInputOp : public OpKernel {
     label.setZero();
     int cnt = 0;
     for (int i = 1; i < tokens.size(); ++i) {
+      if (tokens[i] == "") {
+        continue;
+      }
       auto it = word_dict_.find(tokens[i]);
       if (it != word_dict_.end()) {
         word_ids(cnt) = it->second;
