@@ -87,6 +87,7 @@ def load_word_vectors(filename):
     with open(filename) as f:
         tokens = f.readline().strip().split(' ')
         cnt, dim = int(tokens[0]), int(tokens[1])
+        cnt += 1  # add one padding
         data = np.zeros([cnt, dim], dtype=np.float32)
         for index, line in enumerate(f):
             line = line.strip()
@@ -94,10 +95,10 @@ def load_word_vectors(filename):
                 break
             tokens = line.split(' ')
             features = map(float, tokens[1:])
-            data[index, :] = features
+            data[index+1, :] = features
+        assert index == cnt - 2
+    tf.logging.info("word vectors shape = {}".format(data.shape))
 
-        assert index == cnt - 1
-    print("word vectors shape = {}, dtype".format(data.shape, data.dtype))
     return data
 
 
