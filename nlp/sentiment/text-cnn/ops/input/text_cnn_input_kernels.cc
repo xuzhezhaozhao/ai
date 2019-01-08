@@ -42,7 +42,38 @@ class TextCNNInputOp : public OpKernel {
     LOG(INFO) << "Init  TextCNNInputOp OK";
   }
 
-  void Compute(OpKernelContext* ctx) override {}
+  void Compute(OpKernelContext* ctx) override {
+    const Tensor& input_tensor = ctx->input(0);
+    auto flat_input = input_tensor.flat<std::string>();
+    auto tokens = str_util::Split(flat_input(0), "\t ");
+
+    // Create output tensors
+    Tensor* word_ids_tensor = NULL;
+    Tensor* label_tensor = NULL;
+    TensorShape shape;
+    shape.AddDim(max_length_);
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, shape, &word_ids_tensor));
+    shape.Clear();
+    shape.AddDim(1);
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(1, shape, &label_tensor));
+    auto word_ids = word_ids_tensor->flat<int32>();
+    auto label = label_tensor->flat<int64>();
+    word_ids.setZero();
+    label.setZero();
+    int cnt = 0;
+    for (int i = 1; i < tokens.size(); ++i) {
+      auto it = word_dict_.find(tokens[i]);
+      if (it != word_dict_.end()) {
+        word_ids(cnt) = it->second;
+        ++cnt;
+        if (cnt == max_length_) {
+          break;
+        }
+      }
+    }
+    auto it = label_dict_.find(tokens[0]);
+    label(0) = it->second;
+  }
 
  private:
   void LoadDict(OpKernelConstruction* ctx, const Tensor& dict_tensor,
