@@ -43,7 +43,7 @@ params=(\
 [word_vectors_path]=model/word2vec.vec \
  \
 # train flags \
-[batch_size]=256 \
+[batch_size]=32 \
 [max_train_steps]=-1 \
 [epoch]=15 \
 [throttle_secs]=60 \
