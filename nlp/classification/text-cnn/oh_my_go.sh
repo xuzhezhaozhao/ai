@@ -67,14 +67,14 @@ params=(\
 [num_filters]=64 \
 [filter_sizes]=3,4,5 \
 [label_weights]=1.0,0.2 \
-[prefetch_size]=500 \
-[shuffle_size]=500 \
+[prefetch_size]=2000 \
+[shuffle_size]=1000 \
 [shuffle_batch]=True \
 [map_num_parallel_calls]=1 \
  \
 # log flags \
 [save_summary_steps]=100 \
-[save_checkpoints_secs]=1200 \
+[save_checkpoints_secs]=900 \
 [save_checkpoints_steps]=-1 \
 [keep_checkpoint_max]=5 \
 [log_step_count_steps]=100 \

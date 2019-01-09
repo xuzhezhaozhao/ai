@@ -45,6 +45,8 @@ class TextCNNInputOp : public OpKernel {
   void Compute(OpKernelContext* ctx) override {
     const Tensor& input_tensor = ctx->input(0);
     auto flat_input = input_tensor.flat<std::string>();
+    OP_REQUIRES(ctx, flat_input.size() == 1,
+                errors::InvalidArgument("input must be one string."));
     auto tokens = str_util::Split(flat_input(0), "\t ");
 
     // Create output tensors
@@ -66,7 +68,7 @@ class TextCNNInputOp : public OpKernel {
     }
 
     int cnt = 0;
-    for (int i = 1; i < tokens.size(); ++i) {
+    for (int i = 0; i < tokens.size(); ++i) {
       if (tokens[i] == "") {
         continue;
       }

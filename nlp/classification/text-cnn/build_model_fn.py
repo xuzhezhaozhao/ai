@@ -18,9 +18,6 @@ def model_fn(features, labels, mode, params):
     inputs = features['data']
     inputs.set_shape((None, opts.max_length))
 
-    label_weights = features['label_weights']
-    label_weights = tf.reshape(label_weights, [-1])
-
     embeddings = load_word_vectors(opts.word_vectors_path)
     embed_dim = embeddings.shape[1]
     embeddings_static = tf.convert_to_tensor(
@@ -70,6 +67,9 @@ def model_fn(features, labels, mode, params):
 
     labels = tf.reshape(labels, [-1])
     labels = tf.one_hot(labels, params['num_classes'])
+    label_weights = features['label_weights']
+    label_weights = tf.reshape(label_weights, [-1])
+
     if mode == tf.estimator.ModeKeys.TRAIN:
         tf.summary.scalar('batch_accuracy', tf.reduce_mean(
             tf.cast(tf.equal(tf.argmax(labels, 1), tf.argmax(logits, 1)),
