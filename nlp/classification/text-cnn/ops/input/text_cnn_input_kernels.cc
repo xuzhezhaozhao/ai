@@ -27,8 +27,8 @@ class TextCNNInputOp : public OpKernel {
     OP_REQUIRES_OK(ctx, ctx->GetAttr("log_per_lines", &log_per_lines_));
     LOG(INFO) << "log_per_lines: " << log_per_lines_;
 
-    OP_REQUIRES_OK(ctx, ctx->GetAttr("is_eval", &is_eval_));
-    LOG(INFO) << "is_eval: " << is_eval_;
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("label_str", &label_str_));
+    LOG(INFO) << "label_str: " << label_str_;
 
     Tensor word_dict_tensor;
     OP_REQUIRES_OK(ctx, ctx->GetAttr("word_dict", &word_dict_tensor));
@@ -60,9 +60,17 @@ class TextCNNInputOp : public OpKernel {
     auto label = label_tensor->flat<int64>();
     word_ids.setZero();
     label.setZero();
+
+    if (tokens.empty()) {
+      return;
+    }
+
     int cnt = 0;
     for (int i = 1; i < tokens.size(); ++i) {
       if (tokens[i] == "") {
+        continue;
+      }
+      if (tokens[i].find(label_str_) == 0) {
         continue;
       }
       auto it = word_dict_.find(tokens[i]);
@@ -75,7 +83,9 @@ class TextCNNInputOp : public OpKernel {
       }
     }
     auto it = label_dict_.find(tokens[0]);
-    label(0) = it->second;
+    if (it != label_dict_.end()) {
+      label(0) = it->second;
+    }
   }
 
  private:
@@ -96,9 +106,9 @@ class TextCNNInputOp : public OpKernel {
 
   std::unordered_map<std::string, int> word_dict_;
   std::unordered_map<std::string, int> label_dict_;
+  std::string label_str_;
   int max_length_ = 0;
   int log_per_lines_ = 0;
-  bool is_eval_ = false;
 };
 
 REGISTER_KERNEL_BUILDER(Name("TextCNNInput").Device(DEVICE_CPU),
