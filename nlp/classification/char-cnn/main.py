@@ -22,9 +22,8 @@ tf.app.flags.DEFINE_string('predict_data_path', '', 'predict data path')
 tf.app.flags.DEFINE_string('predict_output', '', '')
 tf.app.flags.DEFINE_string('predict_checkpoint_path', '', '')
 
-tf.app.flags.DEFINE_string('word_dict_path', '', '')
+tf.app.flags.DEFINE_string('char_dict_path', '', '')
 tf.app.flags.DEFINE_string('label_dict_path', '', '')
-tf.app.flags.DEFINE_string('word_vectors_path', '', '')
 
 # train flags
 tf.app.flags.DEFINE_integer('batch_size', 64, 'batch size')
@@ -41,6 +40,7 @@ tf.app.flags.DEFINE_integer('num_filters', 128,
 tf.app.flags.DEFINE_list('filter_sizes', '3,4,5',
                          'Comma-separated filter sizes (default: 3,4,5)')
 tf.app.flags.DEFINE_list('label_weights', '1.0,0.2', '')
+tf.app.flags.DEFINE_integer('embedding_dim', 50, '')
 tf.app.flags.DEFINE_integer('prefetch_size', 1000, '')
 tf.app.flags.DEFINE_integer('shuffle_size', 1000, '')
 tf.app.flags.DEFINE_bool('shuffle_batch', True, '')

@@ -50,9 +50,8 @@ params=(\
 [predict_output]=${predict_output} \
 [predict_checkpoint_path]=${model_dir} \
  \
-[word_dict_path]=${word2vec_model_dir}/word2vec.dict \
-[label_dict_path]=${word2vec_model_dir}/label.dict \
-[word_vectors_path]=${word2vec_model_dir}/word2vec.vec \
+[char_dict_path]=char.dict \
+[label_dict_path]=label.dict \
  \
 # train flags \
 [batch_size]=32 \
@@ -63,10 +62,11 @@ params=(\
  \
 # dataset flags \
 [label_str]='__label__' \
-[max_length]=32 \
+[max_length]=64 \
 [num_filters]=64 \
-[filter_sizes]=3,4,5 \
+[filter_sizes]=2,3,4,5 \
 [label_weights]=1.0,0.2 \
+[embedding_dim]=50 \
 [prefetch_size]=2000 \
 [shuffle_size]=1000 \
 [shuffle_batch]=True \

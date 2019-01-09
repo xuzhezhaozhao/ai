@@ -11,16 +11,16 @@ text_cnn_input_ops = tf.load_op_library('./lib/text_cnn_input_ops.so')
 
 
 def parse_function(text, opts, is_predict):
-    words = [word.strip() for word in open(opts.word_dict_path)
+    chars = [word.strip() for word in open(opts.char_dict_path)
              if word.strip() != '']
-    words.insert(0, '')
+    chars.insert(0, '')
     labels = [label.strip() for label in open(opts.label_dict_path)
               if label.strip() != '']
     label_weights = map(float, opts.label_weights)
     assert len(label_weights) == len(labels)
     word_ids, label = text_cnn_input_ops.text_cnn_input(
         input=text,
-        word_dict=tf.make_tensor_proto(words),
+        char_dict=tf.make_tensor_proto(chars),
         label_dict=tf.make_tensor_proto(labels),
         label_str=opts.label_str,
         max_length=opts.max_length)

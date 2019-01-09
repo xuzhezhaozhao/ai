@@ -5,7 +5,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import numpy as np
 import tensorflow as tf
 
 
@@ -18,21 +17,20 @@ def model_fn(features, labels, mode, params):
     inputs = features['data']
     inputs.set_shape((None, opts.max_length))
 
-    embeddings = load_word_vectors(opts.word_vectors_path)
+    chars = [word.strip() for word in open(opts.char_dict_path)
+             if word.strip() != '']
+    chars.insert(0, '')
+
+    with tf.variable_scope("embeddings", reuse=tf.AUTO_REUSE):
+        init_width = 1.0 / opts.embedding_dim
+        embeddings = tf.get_variable(
+            "embeddings", initializer=tf.random_uniform(
+                [len(chars), opts.embedding_dim], -init_width, init_width))
     embed_dim = embeddings.shape[1]
-    embeddings_static = tf.convert_to_tensor(
-        embeddings, name='embeddings_static')
-    embeddings_dynamic = tf.get_variable(
-        'embeddings_dynamic', initializer=embeddings, trainable=True)
 
-    embed_static = tf.nn.embedding_lookup(embeddings_static, inputs)
-
-    # embed_dynamic = tf.nn.embedding_lookup(embeddings_dynamic, inputs)
-    embed_dynamic = mask_padding_embedding_lookup(
-        embeddings_dynamic, embed_dim, inputs)
-
-    # (None, max_length, embed_dim, 2)
-    embeds = tf.stack((embed_static, embed_dynamic), -1)
+    embeds = mask_padding_embedding_lookup(embeddings, embed_dim, inputs)
+    # (None, max_length, embed_dim, 1)
+    embeds = tf.expand_dims(embeds, -1)
 
     poolings = []
     for width in map(int, opts.filter_sizes):
@@ -50,7 +48,7 @@ def model_fn(features, labels, mode, params):
 
     output = tf.concat(poolings, -1)
     output = tf.layers.dropout(output,
-                               1-opts.dropout_keep_prob,
+                               1 - opts.dropout_keep_prob,
                                training=is_training)
 
     logits = tf.layers.dense(output, params['num_classes'])
@@ -113,25 +111,6 @@ def model_fn(features, labels, mode, params):
             mode, loss=loss, eval_metric_ops=metrics)
     else:
         raise ValueError("Unsupported mode.")
-
-
-def load_word_vectors(filename):
-    with open(filename) as f:
-        tokens = f.readline().strip().split(' ')
-        cnt, dim = int(tokens[0]), int(tokens[1])
-        cnt += 1  # add one padding
-        data = np.zeros([cnt, dim], dtype=np.float32)
-        for index, line in enumerate(f):
-            line = line.strip()
-            if not line:
-                break
-            tokens = line.split(' ')
-            features = map(float, tokens[1:])
-            data[index+1, :] = features
-        assert index == cnt - 2
-    tf.logging.info("word vectors shape = {}".format(data.shape))
-
-    return data
 
 
 def configure_learning_rate(global_step, opts):
