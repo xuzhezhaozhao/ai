@@ -27,6 +27,7 @@ tf.app.flags.DEFINE_string('word_vectors_path', '', '')
 
 # train flags
 tf.app.flags.DEFINE_integer('batch_size', 64, 'batch size')
+tf.app.flags.DEFINE_integer('eval_batch_size', 256, 'eval batch size')
 tf.app.flags.DEFINE_integer('max_train_steps', -1, '')
 tf.app.flags.DEFINE_integer('epoch', 1, '')
 tf.app.flags.DEFINE_integer('throttle_secs', 600, '')
@@ -183,7 +184,7 @@ def build_estimator(opts):
     return estimator
 
 
-def train_and_eval_in_local_mode(opts, estimator):
+def train(opts, estimator):
     """Train and eval model in lcoal mode."""
 
     train_input_fn = input_data.build_train_input_fn(
@@ -197,12 +198,20 @@ def train_and_eval_in_local_mode(opts, estimator):
     estimator.train(
         input_fn=train_input_fn,
         max_steps=max_steps)
-    tf.logging.info("Train model OK\n")
-
-    return None
+    tf.logging.info("Train model done\n")
 
 
-def export_model_in_local_mode(opts, estimator):
+def evaluate(opts, estimator):
+    tf.logging.info("Evaluating model in test dataset ...")
+    eval_input_fn = input_data.build_eval_input_fn(
+        opts, opts.eval_data_path)
+    eval_result = estimator.evaluate(input_fn=eval_input_fn)
+    tf.logging.info("Evaluating model in test dataset done")
+
+    return eval_result
+
+
+def export(opts, estimator):
     """Export model in local mode."""
 
     # export model
@@ -213,19 +222,8 @@ def export_model_in_local_mode(opts, estimator):
     tf.logging.info("Export model OK")
 
 
-def train(opts, export=False):
-    """Train model."""
-
-    estimator = build_estimator(opts)
-    result = train_and_eval_in_local_mode(opts, estimator)
-    if export:
-        export_model_in_local_mode(opts, estimator)
-    return result
-
-
-def predict(opts):
+def predict(opts, estimator):
     tf.logging.info("Begin predict ...")
-    estimator = build_estimator(opts)
     build_predict_input_fn = input_data.build_predict_input_fn(
         opts, opts.predict_data_path)
 
@@ -253,13 +251,18 @@ def main(_):
     for key in D:
         tf.logging.info('{} = {}'.format(key, D[key]))
 
+    estimator = build_estimator(opts)
     if opts.run_mode == 'train':
-        train(opts, export=False)
+        train(opts, estimator)
+        evaluate(opts, estimator)
+    elif opts.run_mode == 'eval':
+        evaluate(opts, estimator)
     elif opts.run_mode == 'predict':
-        predict(opts)
+        predict(opts, estimator)
     elif opts.run_mode == 'all':
-        train(opts, export=False)
-        predict(opts)
+        train(opts, estimator)
+        evaluate(opts, estimator)
+        predict(opts, estimator)
     else:
         raise ValueError("Unsupported run mode.")
 

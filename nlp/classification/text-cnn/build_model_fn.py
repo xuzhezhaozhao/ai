@@ -81,6 +81,21 @@ def model_fn(features, labels, mode, params):
             check_numerics=True)
 
         return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
+    elif mode == tf.estimator.ModeKeys.EVAL:
+        accuracy = tf.metrics.accuracy(
+            labels=tf.argmax(labels, 1),
+            predictions=tf.argmax(logits, 1))
+        metrics = {
+            'accuracy': accuracy
+        }
+        for key in metrics.keys():
+            tf.summary.scalar(key, metrics[key][1])
+
+        loss = tf.losses.softmax_cross_entropy(labels, logits)
+        return tf.estimator.EstimatorSpec(
+            mode, loss=loss, eval_metric_ops=metrics)
+    else:
+        pass
 
 
 def load_word_vectors(filename):

@@ -9,9 +9,21 @@ echo 'TF_CONFIG = ' ${TF_CONFIG}
 
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
+word2vec_model_dir=`pwd`/word2vec_model_dir
 
+# run_mode: train, eval, predict, all \
+run_mode=train
+
+if [[ $# -eq 1 ]]; then
+    run_mode=$1
+fi
+
+echo 'run_mode =' ${run_mode}
 
 remove_model_dir=1
+if [[ ${run_mode} != 'train' && ${run_mode} != 'all' ]]; then
+    remove_model_dir=0
+fi
 if [[ ${remove_model_dir} == '1' ]]; then
     echo "remove ${model_dir}.bak"
     rm -rf ${model_dir}.bak
@@ -30,22 +42,22 @@ params=(\
 [model_dir]=${model_dir} \
 [export_model_dir]=${export_model_dir} \
  \
-## run_mode: train, predict, all \
-[run_mode]='train' \
+[run_mode]=${run_mode} \
 [train_data_path]=${train_data_path} \
 [eval_data_path]=${eval_data_path} \
 [predict_data_path]=`pwd`/validation.txt \
 [predict_output]=`pwd`/predict_output.${model_name}.txt \
 [predict_checkpoint_path]=${model_dir} \
  \
-[word_dict_path]=model/word2vec.dict \
-[label_dict_path]=model/label.dict \
-[word_vectors_path]=model/word2vec.vec \
+[word_dict_path]=${word2vec_model_dir}/word2vec.dict \
+[label_dict_path]=${word2vec_model_dir}/label.dict \
+[word_vectors_path]=${word2vec_model_dir}/word2vec.vec \
  \
 # train flags \
 [batch_size]=32 \
+[eval_batch_size]=2048 \
 [max_train_steps]=-1 \
-[epoch]=15 \
+[epoch]=5 \
 [throttle_secs]=60 \
  \
 # dataset flags \

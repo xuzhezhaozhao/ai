@@ -5,7 +5,7 @@ set -e
 MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
-mkdir -p model
+mkdir -p word2vec_model_dir
 datadir=../../../datasets/kd_video_comments-dataset/data/fasttext
 
 lr=0.025
@@ -21,7 +21,7 @@ t=1e-4
 ../../../submodules/fastText/fasttext \
     skipgram \
     -input ${datadir}/train.txt \
-    -output model/word2vec \
+    -output word2vec_model_dir/word2vec \
 	-lr ${lr} \
     -dim 50 \
 	-ws ${ws} \
@@ -37,5 +37,5 @@ t=1e-4
 	-t ${t} \
 	-lrUpdateRate 100
 
-awk 'NR>1{print $1}' model/word2vec.vec > model/word2vec.dict
-awk 'NR>1{print $1}' ${datadir}/train.txt | sort | uniq > model/label.dict
+awk 'NR>1{print $1}' word2vec_model_dir/word2vec.vec > word2vec_model_dir/word2vec.dict
+awk 'NR>1{print $1}' ${datadir}/train.txt | sort | uniq > word2vec_model_dir/label.dict

@@ -39,3 +39,17 @@ def build_train_input_fn(opts, data_path):
         return ds
 
     return train_input_fn
+
+
+def build_eval_input_fn(opts, data_path):
+
+    def eval_input_fn():
+        ds = tf.data.TextLineDataset(data_path)
+        ds = ds.map(lambda line: parse_function(line, opts),
+                    num_parallel_calls=opts.map_num_parallel_calls)
+        ds = ds.prefetch(opts.prefetch_size)
+        ds = ds.batch(opts.eval_batch_size)
+
+        return ds
+
+    return eval_input_fn
