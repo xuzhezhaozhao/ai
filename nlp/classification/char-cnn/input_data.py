@@ -7,7 +7,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-text_cnn_input_ops = tf.load_op_library('./lib/text_cnn_input_ops.so')
+char_cnn_input_ops = tf.load_op_library('./lib/char_cnn_input_ops.so')
 
 
 def parse_function(text, opts, is_predict):
@@ -18,7 +18,7 @@ def parse_function(text, opts, is_predict):
               if label.strip() != '']
     label_weights = map(float, opts.label_weights)
     assert len(label_weights) == len(labels)
-    word_ids, label = text_cnn_input_ops.text_cnn_input(
+    char_ids, label = char_cnn_input_ops.char_cnn_input(
         input=text,
         char_dict=tf.make_tensor_proto(chars),
         label_dict=tf.make_tensor_proto(labels),
@@ -28,9 +28,9 @@ def parse_function(text, opts, is_predict):
     label_weights = tf.convert_to_tensor(label_weights)
     weight = tf.nn.embedding_lookup(label_weights, label)
     if is_predict:
-        return {'data': word_ids}
+        return {'data': char_ids}
     else:
-        return {'data': word_ids, 'label_weights': weight}, label
+        return {'data': char_ids, 'label_weights': weight}, label
 
 
 def build_train_input_fn(opts, data_path):

@@ -33,7 +33,7 @@ if [[ ${remove_model_dir} == '1' ]]; then
     fi
 fi
 
-datadir=../../../datasets/kd_video_comments-dataset/data/fasttext
+datadir=../../../datasets/kd_video_comments-dataset/data/char-cnn
 train_data_path=${datadir}/train.txt
 eval_data_path=${datadir}/test.txt
 predict_output=`pwd`/predict.txt
@@ -63,9 +63,9 @@ params=(\
 # dataset flags \
 [label_str]='__label__' \
 [max_length]=64 \
-[num_filters]=64 \
-[filter_sizes]=2,3,4,5 \
-[label_weights]=1.0,0.2 \
+[num_filters]=128 \
+[filter_sizes]=2,3,4 \
+[label_weights]=1.0,0.5 \
 [embedding_dim]=50 \
 [prefetch_size]=2000 \
 [shuffle_size]=1000 \
