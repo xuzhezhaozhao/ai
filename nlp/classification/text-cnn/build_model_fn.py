@@ -52,7 +52,19 @@ def model_fn(features, labels, mode, params):
     output = tf.layers.dropout(output,
                                1-opts.dropout_keep_prob,
                                training=is_training)
+
     logits = tf.layers.dense(output, params['num_classes'])
+
+    if mode == tf.estimator.ModeKeys.PREDICT:
+        predictions = {
+            'scores': tf.nn.softmax(logits),
+        }
+        export_outputs = {
+            'predicts': tf.estimator.export.PredictOutput(outputs=predictions)
+        }
+        return tf.estimator.EstimatorSpec(mode, predictions=predictions,
+                                          export_outputs=export_outputs)
+
     labels = tf.reshape(labels, [-1])
     labels = tf.one_hot(labels, params['num_classes'])
     if mode == tf.estimator.ModeKeys.TRAIN:
@@ -95,7 +107,7 @@ def model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(
             mode, loss=loss, eval_metric_ops=metrics)
     else:
-        pass
+        raise ValueError("Unsupported mode.")
 
 
 def load_word_vectors(filename):

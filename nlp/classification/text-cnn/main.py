@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import os
 import tensorflow as tf
+import numpy as np
 
 import build_model_fn
 import input_data
@@ -33,6 +34,7 @@ tf.app.flags.DEFINE_integer('epoch', 1, '')
 tf.app.flags.DEFINE_integer('throttle_secs', 600, '')
 
 # dataset flags
+tf.app.flags.DEFINE_string('label_str', '__label__', '')
 tf.app.flags.DEFINE_integer('max_length', 32, '')
 tf.app.flags.DEFINE_integer("num_filters", 128,
                             "Number of filters per filter size (default: 128)")
@@ -236,12 +238,16 @@ def predict(opts, estimator):
         checkpoint_path=checkpoint_path,
         yield_single_examples=True)
 
+    labels = [label.strip() for label in open(opts.label_dict_path)
+              if label.strip() != '']
     with open(opts.predict_output, 'w') as fout, \
             open(opts.predict_data_path, 'r') as fin:
         for result in results:
-            src = fin.readline().strip()
-            fout.write(src + ' ')
-            fout.write(str(result['score'][1]) + '\n')
+            argmax = np.argmax(result['scores'])
+            fout.write(labels[argmax])
+            fout.write(' ')
+            fout.write(str(result['scores'][argmax]))
+            fout.write('\n')
     tf.logging.info("Predict done")
 
 

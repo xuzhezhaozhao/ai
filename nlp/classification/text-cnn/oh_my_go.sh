@@ -36,6 +36,7 @@ fi
 datadir=../../../datasets/kd_video_comments-dataset/data/fasttext
 train_data_path=${datadir}/train.txt
 eval_data_path=${datadir}/test.txt
+predict_output=`pwd`/predict.txt
 
 declare -A params
 params=(\
@@ -45,8 +46,8 @@ params=(\
 [run_mode]=${run_mode} \
 [train_data_path]=${train_data_path} \
 [eval_data_path]=${eval_data_path} \
-[predict_data_path]=`pwd`/validation.txt \
-[predict_output]=`pwd`/predict_output.${model_name}.txt \
+[predict_data_path]=${eval_data_path} \
+[predict_output]=${predict_output} \
 [predict_checkpoint_path]=${model_dir} \
  \
 [word_dict_path]=${word2vec_model_dir}/word2vec.dict \
@@ -61,6 +62,7 @@ params=(\
 [throttle_secs]=60 \
  \
 # dataset flags \
+[label_str]='__label__' \
 [max_length]=16 \
 [num_filters]=64 \
 [prefetch_size]=500 \
@@ -121,3 +123,8 @@ done
 echo 'params: ' ${params_str}
 
 python main.py ${params_str}
+
+
+if [[ ${run_mode} == 'predict' || ${run_mode} == 'all' ]]; then
+    python check_error.py ${predict_output} ${eval_data_path} > error.txt
+fi
