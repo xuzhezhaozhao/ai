@@ -14,6 +14,6 @@ word_ids, label = text_cnn_input_ops.text_cnn_input(
     label_dict=tf.make_tensor_proto(['__label__pos', '__label__neg']),
     max_length=8
 )
-word_ids, label = sess.run(word_ids), sess.run(label)
+word_ids, label = sess.run([word_ids, label])
 print("word_ids: ", word_ids)
 print("label: ", label)
