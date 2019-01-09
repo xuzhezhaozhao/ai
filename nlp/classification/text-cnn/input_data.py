@@ -16,16 +16,21 @@ def parse_function(text, opts, is_predict):
     words.insert(0, '')
     labels = [label.strip() for label in open(opts.label_dict_path)
               if label.strip() != '']
+    label_weights = map(float, opts.label_weights)
+    assert len(label_weights) == len(labels)
     word_ids, label = text_cnn_input_ops.text_cnn_input(
         input=text,
         word_dict=tf.make_tensor_proto(words),
         label_dict=tf.make_tensor_proto(labels),
         label_str=opts.label_str,
         max_length=opts.max_length)
+
+    label_weights = tf.convert_to_tensor(label_weights)
+    weight = tf.nn.embedding_lookup(label_weights, label)
     if is_predict:
         return {'data': word_ids}
     else:
-        return {'data': word_ids}, label
+        return {'data': word_ids, 'label_weights': weight}, label
 
 
 def build_train_input_fn(opts, data_path):

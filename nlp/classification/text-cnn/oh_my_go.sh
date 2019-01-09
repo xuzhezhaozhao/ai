@@ -63,8 +63,10 @@ params=(\
  \
 # dataset flags \
 [label_str]='__label__' \
-[max_length]=16 \
+[max_length]=32 \
 [num_filters]=64 \
+[filter_sizes]=3,4,5 \
+[label_weights]=1.0,0.2 \
 [prefetch_size]=500 \
 [shuffle_size]=500 \
 [shuffle_batch]=True \

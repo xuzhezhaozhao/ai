@@ -36,10 +36,11 @@ tf.app.flags.DEFINE_integer('throttle_secs', 600, '')
 # dataset flags
 tf.app.flags.DEFINE_string('label_str', '__label__', '')
 tf.app.flags.DEFINE_integer('max_length', 32, '')
-tf.app.flags.DEFINE_integer("num_filters", 128,
-                            "Number of filters per filter size (default: 128)")
-tf.app.flags.DEFINE_list("filter_sizes", "3,4,5",
-                         "Comma-separated filter sizes (default: '3,4,5')")
+tf.app.flags.DEFINE_integer('num_filters', 128,
+                            'Number of filters per filter size (default: 128)')
+tf.app.flags.DEFINE_list('filter_sizes', '3,4,5',
+                         'Comma-separated filter sizes (default: 3,4,5)')
+tf.app.flags.DEFINE_list('label_weights', '1.0,0.2', '')
 tf.app.flags.DEFINE_integer('prefetch_size', 1000, '')
 tf.app.flags.DEFINE_integer('shuffle_size', 1000, '')
 tf.app.flags.DEFINE_bool('shuffle_batch', True, '')

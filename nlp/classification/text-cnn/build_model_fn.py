@@ -18,6 +18,9 @@ def model_fn(features, labels, mode, params):
     inputs = features['data']
     inputs.set_shape((None, opts.max_length))
 
+    label_weights = features['label_weights']
+    label_weights = tf.reshape(label_weights, [-1])
+
     embeddings = load_word_vectors(opts.word_vectors_path)
     embed_dim = embeddings.shape[1]
     embeddings_static = tf.convert_to_tensor(
@@ -35,7 +38,7 @@ def model_fn(features, labels, mode, params):
     embeds = tf.stack((embed_static, embed_dynamic), -1)
 
     poolings = []
-    for width in opts.filter_sizes:
+    for width in map(int, opts.filter_sizes):
         conv = tf.layers.conv2d(embeds,
                                 filters=opts.num_filters,
                                 kernel_size=(width, embed_dim),
@@ -72,7 +75,8 @@ def model_fn(features, labels, mode, params):
             tf.cast(tf.equal(tf.argmax(labels, 1), tf.argmax(logits, 1)),
                     tf.float32)))
 
-        loss = tf.losses.softmax_cross_entropy(labels, logits)
+        loss = tf.losses.softmax_cross_entropy(
+            labels, logits, weights=label_weights)
         global_step = tf.train.get_global_step()
 
         learning_rate = configure_learning_rate(global_step, opts)
@@ -103,7 +107,8 @@ def model_fn(features, labels, mode, params):
         for key in metrics.keys():
             tf.summary.scalar(key, metrics[key][1])
 
-        loss = tf.losses.softmax_cross_entropy(labels, logits)
+        loss = tf.losses.softmax_cross_entropy(
+            labels, logits, weights=label_weights)
         return tf.estimator.EstimatorSpec(
             mode, loss=loss, eval_metric_ops=metrics)
     else:
