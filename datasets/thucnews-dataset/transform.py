@@ -64,5 +64,5 @@ if __name__ == "__main__":
                     ftokens.write('\n')
 
                     fraw.write('__label__' + label + ' ')
-                    fraw.write(raw)
+                    fraw.write(raw.encode('utf-8'))
                     fraw.write('\n')

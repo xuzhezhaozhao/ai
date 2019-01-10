@@ -8,7 +8,8 @@ cd ${MYDIR}
 rm -rf data
 mkdir data
 mkdir -p data/fasttext
-python transform.py ./thucnews data/thucnews_tokens.txt
+mkdir -p data/char-cnn
+python transform.py ./thucnews data/thucnews_tokens.txt data/thucnews.txt
 cat data/thucnews_tokens.txt | shuf > data/thucnews_tokens_shuf.txt
 
 total_lines=$(wc -l data/thucnews_tokens_shuf.txt | awk '{print $1}')

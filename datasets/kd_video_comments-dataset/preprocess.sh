@@ -37,8 +37,6 @@ python transform.py data/pos_shuf.txt data/pos_tokens.txt
 
 sed -i 's/[ ][ ]*/ /g' data/neg_tokens.txt
 sed -i 's/[ ][ ]*/ /g' data/pos_tokens.txt
-sed -i '/^$/d' data/neg_tokens.txt
-sed -i '/^$/d' data/pos_tokens.txt
 
 mkdir -p data/nbsvm
 mkdir -p data/fasttext
