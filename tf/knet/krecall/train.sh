@@ -12,19 +12,29 @@ export_model_dir=`pwd`/export_model_dir
 export_mode='rank'
 rank_len=100
 
+basedir=../../../datasets/kd_video_play-dataset/data
 if [[ $# != 0 ]] ; then
     if [[ $1 == "user" ]]; then
         echo "Use new train data ..."
-        train_data_path=../../../data/train_data.in.new
-        eval_data_path=../../../data/eval_data.in.new
+        train_data_path=${basedir}/train_data.in.new
+        eval_data_path=${basedir}/eval_data.in.new
     else
         echo "Usage: [user]"
         exit -1
     fi
 else
-    train_data_path=../../../data/train_data.in
-    eval_data_path=../../../data/eval_data.in
+    train_data_path=${basedir}/train_data.in
+    eval_data_path=${basedir}/eval_data.in
 fi
+
+remove_model_dir=1
+if [[ ${remove_model_dir} == '1' ]]; then
+    rm -rf ${model_dir}.bak
+    if [[ -d ${model_dir} ]]; then
+        mv ${model_dir} ${model_dir}.bak
+    fi
+fi
+mkdir -p ${model_dir}
 
 lr=0.1
 embedding_dim=128
@@ -65,7 +75,7 @@ predict_ws=20
 sample_dropout=0.0
 # 'adagrad', 'sgd', 'adadelta', 'adam', 'rmsprop', 'momentum', 'ftrl'
 optimizer_type='adagrad'
-tfrecord_file='../../../data/train_data.tfrecord'
+tfrecord_file=${model_dir}/train_data.tfrecord
 num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 map_num_parallel_calls=1
@@ -88,7 +98,7 @@ normalize_embeddings=0
 nce_loss_type='fasttext'  # 'word2vec', 'fasttext', 'default'
 negative_sampler_type='fixed'  # fixed(better), log_uniform
 use_user_features=0
-user_features_file="../../../data/user_features.tsv"
+user_features_file=${basedir}/user_features.tsv
 use_age_feature=0
 use_gender_feature=0
 # 'indicator', 'numeric'

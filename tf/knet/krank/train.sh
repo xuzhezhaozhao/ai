@@ -11,9 +11,10 @@ model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
 fe_dir=`pwd`/fe_dir
 
-rowkey_count_path=../../../data/krank_rowkey_count.csv
-train_data_path=../../../data/krank_train_data.in
-eval_data_path=../../../data/krank_eval_data.in
+basedir=../../../datasets/kd_video_play-dataset/data
+rowkey_count_path=${basedir}/krank_rowkey_count.csv
+train_data_path=${basedir}/krank_train_data.in
+eval_data_path=${basedir}/krank_eval_data.in
 feature_manager_path=${fe_dir}/feature_manager.bin
 lr=0.001
 rowkey_embedding_dim=100
