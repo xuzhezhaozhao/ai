@@ -47,10 +47,8 @@ python_out/
 dict_dir/
 nce_params_dir/
 mnist_convnet_model/
-train/
-val/
-test/
-fe_dir/
-nbsvm_run/
+fe_dir
+nbsvm_run
+datasets
 
 datasets/aclImdb_v1-dataset/aclImdb
