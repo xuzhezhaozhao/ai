@@ -91,10 +91,10 @@ class CharCNNInputOp : public OpKernel {
       auto it = char_dict_.find(ch);
       if (it != char_dict_.end()) {
         char_ids(cnt) = it->second;
-        ++cnt;
-        if (cnt == max_length_) {
-          break;
-        }
+      }
+      ++cnt;
+      if (cnt == max_length_) {
+        break;
       }
     }
   }

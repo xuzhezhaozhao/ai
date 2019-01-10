@@ -62,11 +62,11 @@ params=(\
  \
 # dataset flags \
 [label_str]='__label__' \
-[max_length]=64 \
+[max_length]=80 \
 [num_filters]=128 \
 [filter_sizes]=2,3,4 \
 [label_weights]=1.0,0.5 \
-[embedding_dim]=50 \
+[embedding_dim]=128 \
 [prefetch_size]=2000 \
 [shuffle_size]=1000 \
 [shuffle_batch]=True \
@@ -99,7 +99,7 @@ params=(\
 [rmsprop_decay]=0.9 \
  \
 # learning rate flags \
-[learning_rate]=0.1 \
+[learning_rate]=0.025 \
 ## fixed, exponential or polynomial
 [learning_rate_decay_type]='fixed' \
 [end_learning_rate]=0.0001 \
