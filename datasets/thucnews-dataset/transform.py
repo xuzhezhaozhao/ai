@@ -14,21 +14,26 @@
 import os
 import re
 import jieba
+import sys
 
 
-basedir = './thucnews'
+if len(sys.argv) != 4:
+    print("Usage: <input_dir> <output_tokens> <output_raw>")
+    sys.exit(-1)
+input_dir = sys.argv[1]
+output_tokens = sys.argv[2]
+output_raw = sys.argv[3]
 
 
 def getLabels():
-    labels = filter(lambda x: os.path.isdir(os.path.join(basedir, x)),
-                    os.listdir(basedir))
+    labels = filter(lambda x: os.path.isdir(os.path.join(input_dir, x)),
+                    os.listdir(input_dir))
     return labels
 
 
 def getStopWords():
     stop_words = [unicode(word, 'utf-8')
-                  for word in open(
-                          "./thucnews/stop_words.txt").read().split('\n')]
+                  for word in open("./dict/stop_words.txt").read().split('\n')]
     return set(stop_words)
 
 
@@ -37,23 +42,27 @@ if __name__ == "__main__":
     stop_words = getStopWords()
 
     zh = re.compile(ur'[\u4e00-\u9fa5\u0041-\u005A\u0061-\u007A]+')
-    jieba.load_userdict("./thucnews/jieba_dict.txt")
+    jieba.load_userdict("./dict/jieba_dict.txt")
 
-    with open("thucnews.preprocessed", "w") as fthu:
+    with open(output_tokens, "w") as ftokens, open(output_raw, 'w') as fraw:
         for label in labels:
             print("preprocess {} ...".format(label))
             txts = filter(lambda x: x.endswith(".txt"),
-                          os.listdir(os.path.join(basedir, label)))
+                          os.listdir(os.path.join(input_dir, label)))
             for txt in txts:
-                txt_path = os.path.join(basedir, label, txt)
+                txt_path = os.path.join(input_dir, label, txt)
                 with open(txt_path) as f:
-                    content = unicode(f.read().replace('\r\n', ' ').replace(
-                        '\r', ' ').replace('\n', ' '), 'utf-8').lower()
-                    content = ' '.join(zh.findall(content))
+                    raw = unicode(f.read().replace('\r\n', ' ').replace(
+                        '\r', ' ').replace('\n', ' '), 'utf-8')
+                    content = ' '.join(zh.findall(raw.lower()))
                     raw_words = jieba.cut(content, cut_all=False)
                     words = [word for word in raw_words
                              if word not in stop_words]
-                    fthu.write('__label__' + label + ' ')
+                    ftokens.write('__label__' + label + ' ')
                     for word in words:
-                        fthu.write(word.encode('utf-8') + ' ')
-                    fthu.write('\n')
+                        ftokens.write(word.encode('utf-8') + ' ')
+                    ftokens.write('\n')
+
+                    fraw.write('__label__' + label + ' ')
+                    fraw.write(raw)
+                    fraw.write('\n')
