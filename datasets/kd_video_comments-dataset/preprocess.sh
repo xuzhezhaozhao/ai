@@ -42,7 +42,7 @@ sed -i '/^$/d' data/pos_tokens.txt
 
 mkdir -p data/nbsvm
 mkdir -p data/fasttext
-mkdir -p char-cnn/
+mkdir -p data/char-cnn/
 
 # nbsvm
 total_lines=$(wc -l data/neg_shuf.txt | awk '{print $1}')
@@ -70,7 +70,7 @@ sed 's/^/__label__neg / ' data/nbsvm/train-neg.txt > data/fasttext/train-neg.tmp
 sed 's/^/__label__neg / ' data/nbsvm/test-neg.txt > data/fasttext/test-neg.tmp
 
 cat data/fasttext/train-*.tmp | shuf > data/fasttext/train.txt
-cat data/fasttext/test-*.tmp | shuf > data/fasttext/test.txt
+cat data/fasttext/test-*.tmp > data/fasttext/test.txt
 rm -rf data/fasttext/*.tmp
 
 # char-cnn
@@ -79,5 +79,5 @@ sed -i 's/^/__label__pos / ' data/char-cnn/test-pos.txt.tmp
 sed -i 's/^/__label__neg / ' data/char-cnn/train-neg.txt.tmp
 sed -i 's/^/__label__neg / ' data/char-cnn/test-neg.txt.tmp
 cat data/char-cnn/train-*.tmp | shuf > data/char-cnn/train.txt
-cat data/char-cnn/test-*.tmp | shuf > data/char-cnn/test.txt
+cat data/char-cnn/test-*.tmp > data/char-cnn/test.txt
 rm -rf data/char-cnn/*.tmp
