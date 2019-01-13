@@ -32,6 +32,7 @@ tf.app.flags.DEFINE_integer('eval_batch_size', 256, 'eval batch size')
 tf.app.flags.DEFINE_integer('max_train_steps', -1, '')
 tf.app.flags.DEFINE_integer('epoch', 1, '')
 tf.app.flags.DEFINE_integer('throttle_secs', 600, '')
+tf.app.flags.DEFINE_string('embed_type', 'mixed', 'mixed, static or dynamic')
 
 # dataset flags
 tf.app.flags.DEFINE_string('label_str', '__label__', '')

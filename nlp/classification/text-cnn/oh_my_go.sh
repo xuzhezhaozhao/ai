@@ -7,6 +7,9 @@ cd ${MYDIR}
 
 echo 'TF_CONFIG = ' ${TF_CONFIG}
 
+# datadir=../../../datasets/kd_video_comments-dataset/data/fasttext
+datadir=../../../datasets/thucnews-dataset/data/fasttext
+
 model_dir=`pwd`/model_dir
 export_model_dir=`pwd`/export_model_dir
 word2vec_model_dir=`pwd`/word2vec_model_dir
@@ -33,7 +36,6 @@ if [[ ${remove_model_dir} == '1' ]]; then
     fi
 fi
 
-datadir=../../../datasets/kd_video_comments-dataset/data/fasttext
 train_data_path=${datadir}/train.txt
 eval_data_path=${datadir}/test.txt
 predict_output=`pwd`/predict.txt
@@ -56,17 +58,19 @@ params=(\
  \
 # train flags \
 [batch_size]=32 \
-[eval_batch_size]=2048 \
+[eval_batch_size]=512 \
 [max_train_steps]=-1 \
 [epoch]=5 \
 [throttle_secs]=60 \
+# mixed, static or dynamic \
+[embed_type]='dynamic' \
  \
 # dataset flags \
 [label_str]='__label__' \
-[max_length]=32 \
+[max_length]=200 \
 [num_filters]=64 \
 [filter_sizes]=3,4,5 \
-[label_weights]=1.0,0.2 \
+[label_weights]='1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0' \
 [prefetch_size]=2000 \
 [shuffle_size]=1000 \
 [shuffle_batch]=True \

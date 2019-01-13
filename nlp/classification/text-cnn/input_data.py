@@ -18,6 +18,7 @@ def parse_function(text, opts, is_predict):
               if label.strip() != '']
     label_weights = map(float, opts.label_weights)
     assert len(label_weights) == len(labels)
+
     word_ids, label = text_cnn_input_ops.text_cnn_input(
         input=text,
         word_dict=tf.make_tensor_proto(words),

@@ -6,9 +6,11 @@ MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
 mkdir -p word2vec_model_dir
-datadir=../../../datasets/kd_video_comments-dataset/data/fasttext
+# datadir=../../../datasets/kd_video_comments-dataset/data/fasttext
+datadir=../../../datasets/thucnews-dataset/data/fasttext
 
 lr=0.025
+dim=100
 ws=5
 epoch=20
 minCount=5
@@ -23,7 +25,7 @@ t=1e-4
     -input ${datadir}/train.txt \
     -output word2vec_model_dir/word2vec \
 	-lr ${lr} \
-    -dim 50 \
+    -dim ${dim} \
 	-ws ${ws} \
 	-epoch ${epoch} \
 	-minCount ${minCount} \

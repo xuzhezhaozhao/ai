@@ -26,13 +26,20 @@ def model_fn(features, labels, mode, params):
         'embeddings_dynamic', initializer=embeddings, trainable=True)
 
     embed_static = tf.nn.embedding_lookup(embeddings_static, inputs)
-
-    # embed_dynamic = tf.nn.embedding_lookup(embeddings_dynamic, inputs)
     embed_dynamic = mask_padding_embedding_lookup(
         embeddings_dynamic, embed_dim, inputs)
 
-    # (None, max_length, embed_dim, 2)
-    embeds = tf.stack((embed_static, embed_dynamic), -1)
+    if opts.embed_type == 'mixed':
+        # (None, max_length, embed_dim, 2)
+        embeds = tf.stack((embed_static, embed_dynamic), -1)
+    elif opts.embed_type == 'static':
+        # (None, max_length, embed_dim, 1)
+        embeds = tf.expand_dims(embed_static, -1)
+    elif opts.embed_type == 'dynamic':
+        # (None, max_length, embed_dim, 1)
+        embeds = tf.expand_dims(embed_dynamic, -1)
+    else:
+        raise ValueError("Unsupported embed_type.")
 
     poolings = []
     for width in map(int, opts.filter_sizes):
