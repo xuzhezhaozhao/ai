@@ -28,6 +28,9 @@ params=(\
 [epsilon]=1e-8 \
 [save_output_steps]=100 \
 [save_summary_steps]=10 \
+[save_checkpoints_steps]=200 \
+[content_loss_weight]=0.01 \
+[style_loss_weight]=1.0 \
 )
 
 params_str=''

@@ -30,6 +30,9 @@ tf.app.flags.DEFINE_float('adam_beta2', 0.999, '')
 tf.app.flags.DEFINE_float('epsilon', 1e-8, '')
 tf.app.flags.DEFINE_integer('save_output_steps', 100, '')
 tf.app.flags.DEFINE_integer('save_summary_steps', 10, '')
+tf.app.flags.DEFINE_integer('save_checkpoints_steps', 100, '')
+tf.app.flags.DEFINE_float('content_loss_weight', 0.01, '')
+tf.app.flags.DEFINE_float('style_loss_weight', 1.0, '')
 
 opts = tf.app.flags.FLAGS
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '0'
@@ -74,7 +77,7 @@ def main(_):
                 # save output image
                 img = sess.run([neural_style.output_image])
                 img = np.squeeze(img, 0)
-                output ='output.' + str(global_step) + '.jpg'
+                output = 'output.' + str(global_step) + '.jpg'
                 imsave(output, img)
                 print("save output as {}.".format(output))
 
@@ -83,15 +86,26 @@ def main(_):
                 summary_writer.add_summary(summary, global_step)
                 summary_writer.flush()
 
+            if global_step % opts.save_checkpoints_steps == 0:
+                save_checkpoint(sess, global_step, saver, opts.model_dir)
+
         # save final output image
         img = sess.run([neural_style.output_image])
         img = np.squeeze(img, 0)
         imsave(opts.output_image_path, img)
 
+        summary_writer.close()
+
 
 def imsave(path, img):
     img = np.clip(img, 0, 255).astype(np.uint8)
     Image.fromarray(img).save(path, quality=95)
+
+
+def save_checkpoint(sess, global_step, saver, model_dir):
+    ckpt_name = os.path.join(model_dir, 'model.ckpt-{}'.format(global_step))
+    ckpt_path = saver.save(sess, ckpt_name)
+    print('Model ckpt saved at {}'.format(ckpt_path))
 
 
 if __name__ == '__main__':

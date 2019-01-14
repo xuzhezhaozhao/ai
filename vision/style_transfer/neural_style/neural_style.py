@@ -87,7 +87,8 @@ class NeuralStyle(object):
                 self.style_grams[layer], gram) / 4.0
         tf.summary.scalar('style_loss', self.style_loss)
 
-        self.loss = 0.01 * self.content_loss + self.style_loss
+        self.loss = self.opts.content_loss_weight * self.content_loss \
+            + self.opts.style_loss_weight * self.style_loss
         tf.summary.scalar('loss', self.loss)
 
 
