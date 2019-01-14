@@ -22,6 +22,12 @@ params=(\
  \
 # train flags \
 [iters]=1000 \
+[learning_rate]=10.0 \
+[adam_beta1]=0.9 \
+[adam_beta2]=0.999 \
+[epsilon]=1e-8 \
+[save_output_steps]=100 \
+[save_summary_steps]=10 \
 )
 
 params_str=''

@@ -67,11 +67,13 @@ class NeuralStyle(object):
         self.output_image = tf.get_variable(
             "output_image", initializer=self.init_image)
         vgg.build(self.output_image)
+
         # content loss
         self.content_loss = 0.0
         for layer in CONTENT_LAYERS:
             self.content_loss += tf.losses.mean_squared_error(
                 self.content_features[layer], vgg.end_points[layer]) / 2.0
+        tf.summary.scalar('content_loss', self.content_loss)
 
         # style loss
         self.style_loss = 0.0
@@ -83,8 +85,10 @@ class NeuralStyle(object):
             gram /= tf.cast(tf.size(feature_map), tf.float32)
             self.style_loss += tf.losses.mean_squared_error(
                 self.style_grams[layer], gram) / 4.0
+        tf.summary.scalar('style_loss', self.style_loss)
 
-        self.loss = 0.001 * self.content_loss + self.style_loss
+        self.loss = 0.01 * self.content_loss + self.style_loss
+        tf.summary.scalar('loss', self.loss)
 
 
 def imread(img_path):
