@@ -6,12 +6,11 @@ from __future__ import division
 from __future__ import print_function
 
 from PIL import Image
+from neural_style import NeuralStyle
+
 import os
-import scipy.misc
 import tensorflow as tf
 import numpy as np
-
-from neural_style import NeuralStyle
 
 
 tf.app.flags.DEFINE_string('model_dir', 'model_dir', '')
@@ -29,45 +28,37 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = '0'
 
 
 def main(_):
-    style_image = imread(opts.style_image_path)
-    content_image = imread(opts.content_image_path)
-    init_image = content_image
-    if opts.use_init_image:
-        init_image = imread(opts.init_image_path)
-        init_image = scipy.misc.imresize(init_image, content_image.shape[:2])
 
-    neural_style = NeuralStyle(opts.vgg19_npy_path,
-                               content_image,
-                               style_image,
-                               init_image)
+    neural_style = NeuralStyle(opts)
     loss_tensor = neural_style.loss
+    content_loss_tensor = neural_style.content_loss
+    style_loss_tensor = neural_style.style_loss
     optimizer = tf.train.AdamOptimizer(
-        learning_rate=0.1,
+        learning_rate=10.0,
         beta1=0.9,
         beta2=0.999,
-        epsilon=1.0)
+        epsilon=1e-8)
     train_op = optimizer.minimize(loss=loss_tensor)
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        for i in xrange(opts.iters):
-            _, loss = sess.run([train_op, loss_tensor ])
-            print("iter {}, loss {}".format(i, loss))
+        for step in xrange(opts.iters):
+            _, loss, content_loss, style_loss = sess.run(
+                [train_op, loss_tensor,
+                 content_loss_tensor, style_loss_tensor])
+            print("iter {}, loss = {:.2f}, content_loss = {:.2f},"
+                  " style_loss = {:.2f}"
+                  .format(step, loss, content_loss, style_loss))
+
+            if step % 100 == 0:
+                # save output image
+                img = sess.run([neural_style.output_image])
+                img = np.squeeze(img, 0)
+                imsave(opts.output_image_path + '.' + str(step) + '.jpg', img)
 
         # save output image
         img = sess.run([neural_style.output_image])
         img = np.squeeze(img, 0)
         imsave(opts.output_image_path, img)
-
-
-def imread(img_path):
-    img = scipy.misc.imread(img_path).astype(np.float32)
-    if len(img.shape) == 2:
-        # grayscale
-        img = np.dstack((img, img, img))
-    elif img.shape[2] == 4:
-        # PNG with alpha channel
-        img = img[:, :, :3]
-    return img
 
 
 def imsave(path, img):

@@ -18,10 +18,10 @@ params=(\
 [content_image_path]=./examples/1-content.jpg \
 [output_image_path]=output.jpg \
 [use_init_image]=false \
-[init_image_path]=./examples/1-style.jpg \
+[init_image_path]=./examples/1-content.jpg \
  \
 # train flags \
-[iters]=32 \
+[iters]=1000 \
 )
 
 params_str=''
