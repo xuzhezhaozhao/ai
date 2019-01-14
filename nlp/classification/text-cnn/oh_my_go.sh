@@ -67,7 +67,7 @@ params=(\
  \
 # dataset flags \
 [label_str]='__label__' \
-[max_length]=200 \
+[max_length]=400 \
 [num_filters]=64 \
 [filter_sizes]=3,4,5 \
 [label_weights]='1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0' \
@@ -114,7 +114,7 @@ params=(\
 [use_moving_average]=False \
 [moving_average_decay]=0.9 \
  \
-[dropout_keep_prob]=1.0 \
+[dropout_keep_prob]=0.5 \
 [weight_decay]=0.0000 \
 [use_batch_norm]=True \
 [batch_norm_decay]=0.9 \
