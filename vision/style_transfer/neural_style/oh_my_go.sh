@@ -29,8 +29,8 @@ params=(\
 [save_summary_steps]=20
 [save_checkpoints_steps]=200
 [content_loss_weight]=0.01
-[total_variation_loss_weight]=0.0
 [style_loss_weight]=1.0
+[total_variation_loss_weight]=0.1
 # default: conv4_2,conv5_2
 [content_layers]=conv4_2
 # default: conv1_1,conv2_1,conv3_1,conv4_1,conv5_1

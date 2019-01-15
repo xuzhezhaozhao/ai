@@ -87,7 +87,7 @@ def main(_):
                  total_variation_loss_tensor,
                  global_step_tensor])
             print("iter {}, loss = {:.2f}, content_loss = {:.2f},"
-                  " style_loss = {:.2f}, total_variation_loss = {:.2f}"
+                  " style_loss = {:.2f}, total_variation_loss = {:.2f},"
                   " elapsed {:.2f} s"
                   .format(global_step, loss, content_loss, style_loss,
                           total_variation_loss, time.time()-start))

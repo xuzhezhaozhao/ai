@@ -61,9 +61,9 @@ class NeuralStyle(object):
 
     def build_graph(self):
         vgg = vgg19.Vgg19(self.opts.vgg19_npy_path)
-        self.output_image = tf.get_variable(
+        output_image = tf.get_variable(
             "output_image", initializer=self.init_image)
-        vgg.build(self.output_image)
+        vgg.build(output_image)
 
         # content loss
         self.content_loss = 0.0
@@ -99,14 +99,18 @@ class NeuralStyle(object):
 
         # total variation denoising
         # see https://en.wikipedia.org/wiki/Total_variation_denoising
-        self.total_variation_loss = tf.reduce_mean(
-            tf.image.total_variation(self.output_image))
+        self.total_variation_loss = tf.losses.mean_squared_error(
+            output_image[:, 1:, :, :], output_image[:, :-1, :, :]) + \
+            tf.losses.mean_squared_error(
+                output_image[:, :, 1:, :], output_image[:, :, :-1, :])
         tf.summary.scalar('total_variation_loss', self.total_variation_loss)
 
-        self.loss = self.opts.content_loss_weight*self.content_loss \
-            + self.opts.style_loss_weight*self.style_loss \
-            + self.opts.total_variation_loss_weight*self.total_variation_loss
+        self.loss = self.opts.content_loss_weight * self.content_loss \
+            + self.opts.style_loss_weight * self.style_loss \
+            + self.opts.total_variation_loss_weight * self.total_variation_loss
         tf.summary.scalar('loss', self.loss)
+
+        self.output_image = output_image
 
 
 def imread(img_path):
