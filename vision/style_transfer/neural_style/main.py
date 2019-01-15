@@ -9,6 +9,7 @@ from PIL import Image
 from neural_style import NeuralStyle
 
 import os
+import time
 import tensorflow as tf
 import numpy as np
 
@@ -72,14 +73,18 @@ def main(_):
         summary_writer.add_graph(sess.graph)
         tf.get_default_graph().finalize()
 
+        start = time.time()
         for _ in xrange(opts.iters):
             _, loss, content_loss, style_loss, global_step = sess.run(
                 [train_op, loss_tensor,
                  content_loss_tensor, style_loss_tensor,
                  global_step_tensor])
+
             print("iter {}, loss = {:.2f}, content_loss = {:.2f},"
-                  " style_loss = {:.2f}"
-                  .format(global_step, loss, content_loss, style_loss))
+                  " style_loss = {:.2f}, elapsed {:.2f} s"
+                  .format(global_step, loss, content_loss, style_loss,
+                          time.time()-start))
+            start = time.time()
 
             if global_step % opts.save_output_steps == 0:
                 # save output image
