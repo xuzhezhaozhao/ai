@@ -8,13 +8,14 @@ cd ${MYDIR}
 echo 'TF_CONFIG = ' ${TF_CONFIG}
 
 model_dir=model_dir
+rm -rf ${model_dir}
 
 declare -A params
 params=(\
 [model_dir]=${model_dir}
 [vgg19_npy_path]=../../classification/vgg/pretrained_weights/vgg19.npy
 [style_image_path]=./examples/1-style.jpg
-[content_image_path]=./examples/1-content.jpg
+[content_image_path]=./examples/2-content.jpg
 [output_image_path]=output.jpg
 [use_init_image]=false
 [init_image_path]=./examples/1-content.jpg
