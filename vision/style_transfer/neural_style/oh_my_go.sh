@@ -14,11 +14,11 @@ declare -A params
 params=(\
 [model_dir]=${model_dir}
 [vgg19_npy_path]=../../classification/vgg/pretrained_weights/vgg19.npy
-[style_image_path]=./examples/1-style.jpg
-[content_image_path]=./examples/2-content.jpg
+[style_image_path]=../examples/udnie.jpg
+[content_image_path]=../examples/2-content.jpg
 [output_image_path]=output.jpg
 [use_init_image]=false
-[init_image_path]=./examples/1-content.jpg
+[init_image_path]=../examples/1-content.jpg
 # train flags
 [iters]=1000
 [learning_rate]=10.0
