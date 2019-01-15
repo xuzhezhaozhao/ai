@@ -97,8 +97,15 @@ class NeuralStyle(object):
                 self.style_grams[layer], gram) / 4.0
         tf.summary.scalar('style_loss', self.style_loss)
 
-        self.loss = self.opts.content_loss_weight * self.content_loss \
-            + self.opts.style_loss_weight * self.style_loss
+        # total variation denoising
+        # see https://en.wikipedia.org/wiki/Total_variation_denoising
+        self.total_variation_loss = tf.reduce_mean(
+            tf.image.total_variation(self.output_image))
+        tf.summary.scalar('total_variation_loss', self.total_variation_loss)
+
+        self.loss = self.opts.content_loss_weight*self.content_loss \
+            + self.opts.style_loss_weight*self.style_loss \
+            + self.opts.total_variation_loss_weight*self.total_variation_loss
         tf.summary.scalar('loss', self.loss)
 
 

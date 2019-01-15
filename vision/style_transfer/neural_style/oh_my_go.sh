@@ -14,11 +14,11 @@ declare -A params
 params=(\
 [model_dir]=${model_dir}
 [vgg19_npy_path]=../../classification/vgg/pretrained_weights/vgg19.npy
-[style_image_path]=../examples/udnie.jpg
-[content_image_path]=../examples/2-content.jpg
+[style_image_path]=../examples/style/udnie.jpg
+[content_image_path]=../examples/content/stata.jpg
 [output_image_path]=output.jpg
 [use_init_image]=false
-[init_image_path]=../examples/1-content.jpg
+[init_image_path]=null
 # train flags
 [iters]=1000
 [learning_rate]=10.0
@@ -29,13 +29,14 @@ params=(\
 [save_summary_steps]=20
 [save_checkpoints_steps]=200
 [content_loss_weight]=0.01
+[total_variation_loss_weight]=0.0
 [style_loss_weight]=1.0
 # default: conv4_2,conv5_2
-[content_layers]=conv4_2,conv5_2
+[content_layers]=conv4_2
 # default: conv1_1,conv2_1,conv3_1,conv4_1,conv5_1
 [style_layers]=conv1_1,conv2_1,conv3_1,conv4_1,conv5_1
-[content_layer_loss_weights]=1.0,1.0
-[style_layer_loss_weights]=1.0,1.0,1.0,1.0,1.0
+[content_layer_loss_weights]=1.0
+[style_layer_loss_weights]=1.0
 )
 
 params_str=''

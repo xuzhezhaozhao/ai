@@ -34,6 +34,7 @@ tf.app.flags.DEFINE_integer('save_summary_steps', 10, '')
 tf.app.flags.DEFINE_integer('save_checkpoints_steps', 100, '')
 tf.app.flags.DEFINE_float('content_loss_weight', 0.01, '')
 tf.app.flags.DEFINE_float('style_loss_weight', 1.0, '')
+tf.app.flags.DEFINE_float('total_variation_loss_weight', 0.1, '')
 tf.app.flags.DEFINE_list('content_layers',
                          'conv4_2,conv5_2',
                          'reconstruct content layers')
@@ -52,6 +53,8 @@ def main(_):
     loss_tensor = neural_style.loss
     content_loss_tensor = neural_style.content_loss
     style_loss_tensor = neural_style.style_loss
+    total_variation_loss_tensor = neural_style.total_variation_loss
+
     global_step_tensor = tf.train.get_or_create_global_step()
     optimizer = tf.train.AdamOptimizer(
         learning_rate=opts.learning_rate,
@@ -75,15 +78,19 @@ def main(_):
 
         start = time.time()
         for _ in xrange(opts.iters):
-            _, loss, content_loss, style_loss, global_step = sess.run(
-                [train_op, loss_tensor,
-                 content_loss_tensor, style_loss_tensor,
+            (_, loss, content_loss, style_loss, total_variation_loss,
+             global_step) = sess.run(
+                [train_op,
+                 loss_tensor,
+                 content_loss_tensor,
+                 style_loss_tensor,
+                 total_variation_loss_tensor,
                  global_step_tensor])
-
             print("iter {}, loss = {:.2f}, content_loss = {:.2f},"
-                  " style_loss = {:.2f}, elapsed {:.2f} s"
+                  " style_loss = {:.2f}, total_variation_loss = {:.2f}"
+                  " elapsed {:.2f} s"
                   .format(global_step, loss, content_loss, style_loss,
-                          time.time()-start))
+                          total_variation_loss, time.time()-start))
             start = time.time()
 
             if global_step % opts.save_output_steps == 0:
