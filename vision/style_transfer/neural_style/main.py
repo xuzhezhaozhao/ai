@@ -33,6 +33,14 @@ tf.app.flags.DEFINE_integer('save_summary_steps', 10, '')
 tf.app.flags.DEFINE_integer('save_checkpoints_steps', 100, '')
 tf.app.flags.DEFINE_float('content_loss_weight', 0.01, '')
 tf.app.flags.DEFINE_float('style_loss_weight', 1.0, '')
+tf.app.flags.DEFINE_list('content_layers',
+                         'conv4_2,conv5_2',
+                         'reconstruct content layers')
+tf.app.flags.DEFINE_list('style_layers',
+                         'conv1_1,conv2_1,conv3_1,conv4_1,conv5_1',
+                         'reconstruct style layers')
+tf.app.flags.DEFINE_list('content_layer_loss_weights', '1.0', '')
+tf.app.flags.DEFINE_list('style_layer_loss_weights', '1.0', '')
 
 opts = tf.app.flags.FLAGS
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '0'
