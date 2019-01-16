@@ -7,27 +7,46 @@ cd ${MYDIR}
 
 echo 'TF_CONFIG = ' ${TF_CONFIG}
 
-model_dir=model_dir
-rm -rf ${model_dir}
+model_dir=`pwd`/model_dir
+export_model_dir=`pwd`/export_model_dir
+
+# run_mode: train, eval, predict \
+run_mode=train
+
+if [[ $# -eq 1 ]]; then
+    run_mode=$1
+fi
+
+echo 'run_mode =' ${run_mode}
+
+remove_model_dir=1
+if [[ ${run_mode} != 'train' && ${run_mode} != 'all' ]]; then
+    remove_model_dir=0
+fi
+if [[ ${remove_model_dir} == '1' ]]; then
+    echo "remove ${model_dir}.bak"
+    rm -rf ${model_dir}.bak
+    if [[ -d ${model_dir} ]]; then
+        echo "rename ${model_dir} to ${model_dir}.bak"
+        mv ${model_dir} ${model_dir}.bak
+    fi
+fi
+
+datadir=../../../datasets/coco2014-dataset/
+train_data_path=${datadir}/train.txt
+eval_data_path=${datadir}/test.txt
 
 declare -A params
 params=(\
 [model_dir]=${model_dir}
+[export_model_dir]=${export_model_dir}
+[run_mode]=${run_mode}
+[train_data_path]=${train_data_path}
+[eval_data_path]=${eval_data_path}
+[predict_data_path]=${eval_data_path}
+[predict_checkpoint_path]=${model_dir}
 [vgg19_npy_path]=../../classification/vgg/pretrained_weights/vgg19.npy
 [style_image_path]=../examples/style/udnie.jpg
-[content_image_path]=../examples/content/stata.jpg
-[output_image_path]=output.jpg
-[use_init_image]=false
-[init_image_path]=null
-# train flags
-[iters]=1000
-[learning_rate]=10.0
-[adam_beta1]=0.9
-[adam_beta2]=0.999
-[epsilon]=1e-8
-[save_output_steps]=100
-[save_summary_steps]=20
-[save_checkpoints_steps]=200
 [content_loss_weight]=0.01
 [style_loss_weight]=1.0
 [total_variation_loss_weight]=0.1
@@ -37,6 +56,44 @@ params=(\
 [style_layers]=conv1_1,conv2_1,conv3_1,conv4_1,conv5_1
 [content_layer_loss_weights]=1.0
 [style_layer_loss_weights]=1.0
+# train flags
+[batch_size]=4
+[eval_batch_size]=4
+[max_train_steps]=-1
+[epoch]=5
+[throttle_secs]=60
+# dataset flags
+[prefetch_size]=2000
+[shuffle_size]=1000
+[shuffle_batch]=True
+[map_num_parallel_calls]=1
+# log flags
+[save_summary_steps]=1
+[save_checkpoints_secs]=900
+[save_checkpoints_steps]=-1
+[keep_checkpoint_max]=5
+[log_step_count_steps]=100
+# optimizer flags
+[optimizer]='adam'
+[adadelta_rho]=0.95
+[adagrad_initial_accumulator_value]=0.1
+[adam_beta1]=0.9
+[adam_beta2]=0.999
+[opt_epsilon]=1.0
+[ftrl_learning_rate_power]=-0.5
+[ftrl_initial_accumulator_value]=0.1
+[ftrl_l1]=0.0
+[ftrl_l2]=0.0
+[momentum]=0.9
+[rmsprop_momentum]=0.0
+[rmsprop_decay]=0.9
+# learning rate flags
+[learning_rate]=0.1
+## fixed, exponential or polynomial
+[learning_rate_decay_type]='fixed'
+[end_learning_rate]=0.0001
+[learning_rate_decay_factor]=0.9
+[decay_steps]=100
 )
 
 params_str=''

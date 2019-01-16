@@ -5,29 +5,31 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import scipy.misc
 import tensorflow as tf
+import numpy as np
 import vgg19
+
+from transform_net import transform_net
 
 
 def model_fn(features, labels, mode, params):
     """Build model graph."""
 
-    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    training = (mode == tf.estimator.ModeKeys.TRAIN)
     inputs = features['data']
     tf.logging.info("image size: {}".format(inputs))
     opts = params['opts']
 
-    vgg_predict = vgg19.Vgg19(opts.vgg19_npy_path)
+    style_grams = preprocess_style(opts)
 
-    # TODO pre-compute style grams
-    style_grams = {}
-
-    # compute content features
+    # compute target content features
     vgg_target = vgg19.Vgg19(opts.vgg19_npy_path)
     vgg_target.build(inputs)
+
     # forward transform net and compute predict content features
-    transform_image = None  # TODO
-    vgg_target = vgg19.Vgg19(opts.vgg19_npy_path)
+    transform_image = transform_net('transform_net', inputs, training)
+    vgg_predict = vgg19.Vgg19(opts.vgg19_npy_path)
     vgg_predict.build(transform_image)
 
     # content loss
@@ -63,3 +65,137 @@ def model_fn(features, labels, mode, params):
     loss = opts.content_loss_weight * content_loss \
         + opts.style_loss_weight * style_loss
     tf.summary.scalar('loss', loss)
+
+    if mode == tf.estimator.ModeKeys.TRAIN:
+        global_step = tf.train.get_global_step()
+        learning_rate = configure_learning_rate(global_step, opts)
+        tf.summary.scalar('learning_rate', learning_rate)
+        optimizer = configure_optimizer(learning_rate, opts)
+
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        train_op = tf.contrib.training.create_train_op(
+            total_loss=loss,
+            optimizer=optimizer,
+            global_step=global_step,
+            update_ops=update_ops,
+            variables_to_train=tf.trainable_variables(),
+            transform_grads_fn=None,
+            summarize_gradients=True,
+            aggregation_method=None,
+            colocate_gradients_with_ops=False,
+            check_numerics=True)
+        return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
+    elif mode == tf.estimator.ModeKeys.EVAL:
+        return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops={})
+
+
+def configure_learning_rate(global_step, opts):
+    """Configures the learning rate.
+
+    Args:
+      global_step: The global_step tensor.
+
+    Returns:
+      A `Tensor` representing the learning rate.
+
+    Raises:
+      ValueError: if
+    """
+    decay_steps = opts.decay_steps
+
+    if opts.learning_rate_decay_type == 'exponential':
+        return tf.train.exponential_decay(
+            opts.learning_rate,
+            global_step,
+            decay_steps,
+            opts.learning_rate_decay_factor,
+            staircase=True,
+            name='exponential_decay_learning_rate')
+    elif opts.learning_rate_decay_type == 'fixed':
+        return tf.constant(opts.learning_rate, name='fixed_learning_rate')
+    elif opts.learning_rate_decay_type == 'polynomial':
+        return tf.train.polynomial_decay(
+            opts.learning_rate,
+            global_step,
+            decay_steps,
+            opts.end_learning_rate,
+            power=1.0,
+            cycle=False,
+            name='polynomial_decay_learning_rate')
+    else:
+        raise ValueError('learning_rate_decay_type [%s] was not recognized' %
+                         opts.learning_rate_decay_type)
+
+
+def configure_optimizer(learning_rate, opts):
+    """Configures the optimizer used for training."""
+
+    if opts.optimizer == 'adadelta':
+        optimizer = tf.train.AdadeltaOptimizer(
+            learning_rate,
+            rho=opts.adadelta_rho,
+            epsilon=opts.opt_epsilon)
+    elif opts.optimizer == 'adagrad':
+        optimizer = tf.train.AdagradOptimizer(
+            learning_rate,
+            initial_accumulator_value=opts.adagrad_initial_accumulator_value)
+    elif opts.optimizer == 'adam':
+        optimizer = tf.train.AdamOptimizer(
+            learning_rate,
+            beta1=opts.adam_beta1,
+            beta2=opts.adam_beta2,
+            epsilon=opts.opt_epsilon)
+    elif opts.optimizer == 'ftrl':
+        optimizer = tf.train.FtrlOptimizer(
+            learning_rate,
+            learning_rate_power=opts.ftrl_learning_rate_power,
+            initial_accumulator_value=opts.ftrl_initial_accumulator_value,
+            l1_regularization_strength=opts.ftrl_l1,
+            l2_regularization_strength=opts.ftrl_l2)
+    elif opts.optimizer == 'momentum':
+        optimizer = tf.train.MomentumOptimizer(
+            learning_rate,
+            momentum=opts.momentum,
+            name='Momentum')
+    elif opts.optimizer == 'rmsprop':
+        optimizer = tf.train.RMSPropOptimizer(
+            learning_rate,
+            decay=opts.rmsprop_decay,
+            momentum=opts.rmsprop_momentum,
+            epsilon=opts.opt_epsilon)
+    elif opts.optimizer == 'sgd':
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+    else:
+        raise ValueError('Optimizer [%s] was not recognized' % opts.optimizer)
+    return optimizer
+
+
+def preprocess_style(opts):
+    style_grams = {}
+    with tf.Graph().as_default():
+        vgg = vgg19.Vgg19(opts.vgg19_npy_path)
+        image = imread(opts.style_image_path)
+        image = np.expand_dims(image, 0)
+        vgg.build(image)
+        with tf.Session() as sess:
+            for layer in opts.style_layers:
+                feature_map = sess.run(vgg.end_points[layer])
+                feature_map = np.reshape(feature_map,
+                                         (-1, feature_map.shape[3]))
+                gram = np.matmul(feature_map.T, feature_map)
+                gram /= feature_map.size
+                style_grams[layer] = gram
+                print("layer {} gram matrix shape: {}"
+                      .format(layer, gram.shape))
+    return style_grams
+
+
+def imread(img_path):
+    img = scipy.misc.imread(img_path).astype(np.float32)
+    if len(img.shape) == 2:
+        # grayscale
+        img = np.dstack((img, img, img))
+    elif img.shape[2] == 4:
+        # PNG with alpha channel
+        img = img[:, :, :3]
+    return img
