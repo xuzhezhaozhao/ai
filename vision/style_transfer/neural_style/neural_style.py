@@ -89,8 +89,7 @@ class NeuralStyle(object):
                              "style_layers.")
         for layer, weight in zip(self.opts.style_layers, layer_weights):
             feature_map = vgg.end_points[layer]
-            feature_map = tf.reshape(feature_map,
-                                     (-1, feature_map.shape[3]))
+            feature_map = tf.reshape(feature_map, (-1, feature_map.shape[3]))
             gram = tf.matmul(tf.transpose(feature_map), feature_map)
             gram /= tf.cast(tf.size(feature_map), tf.float32)
             self.style_loss += weight * tf.losses.mean_squared_error(
