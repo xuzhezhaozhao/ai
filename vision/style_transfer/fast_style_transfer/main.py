@@ -9,8 +9,10 @@ import build_model_fn
 import input_data
 from transform_net import transform_net
 
+from PIL import Image
 import os
 import tensorflow as tf
+import numpy as np
 
 
 tf.app.flags.DEFINE_string('model_dir', 'model_dir', '')
@@ -19,7 +21,7 @@ tf.app.flags.DEFINE_string('export_model_dir', 'export_model_dir', '')
 tf.app.flags.DEFINE_string('run_mode', 'train', 'train, eval and predict')
 tf.app.flags.DEFINE_string('train_data_path', '', 'train data path')
 tf.app.flags.DEFINE_string('eval_data_path', '', 'eval data path')
-tf.app.flags.DEFINE_string('predict_data_path', '', 'predict data path')
+tf.app.flags.DEFINE_string('predict_image_path', '', 'predict image path')
 tf.app.flags.DEFINE_string('predict_checkpoint_path', '', '')
 tf.app.flags.DEFINE_string('vgg19_npy_path', '', '')
 
@@ -192,7 +194,25 @@ def evaluate(opts, estimator):
 
 def predict(opts, estimator):
     tf.logging.info("Begin predict ...")
-    pass
+    img = build_model_fn.imread(opts.predict_image_path)
+    img = np.expand_dims(img, 0)
+    img = tf.convert_to_tensor(img)
+    output = transform_net('transform_net', img, False)
+    checkpoint_path = opts.predict_checkpoint_path
+    if tf.gfile.IsDirectory(checkpoint_path):
+        checkpoint_path = tf.train.latest_checkpoint(checkpoint_path)
+    saver = tf.train.Saver()
+    with tf.Session() as sess:
+        saver.restore(sess, checkpoint_path)
+        output = sess.run(output)
+        output = np.squeeze(output, 0)
+        print(output.shape)
+        imsave('output.jpg', output)
+
+
+def imsave(path, img):
+    img = np.clip(img, 0, 255).astype(np.uint8)
+    Image.fromarray(img).save(path, quality=95)
 
 
 def main(_):
@@ -204,7 +224,6 @@ def main(_):
     estimator = build_estimator(opts)
     if opts.run_mode == 'train':
         train(opts, estimator)
-        evaluate(opts, estimator)
     elif opts.run_mode == 'eval':
         evaluate(opts, estimator)
     elif opts.run_mode == 'predict':

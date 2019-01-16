@@ -43,11 +43,11 @@ params=(\
 [run_mode]=${run_mode}
 [train_data_path]=${train_data_path}
 [eval_data_path]=${eval_data_path}
-[predict_data_path]=${eval_data_path}
+[predict_image_path]=../examples/content/stata.jpg
 [predict_checkpoint_path]=${model_dir}
 [vgg19_npy_path]=../../classification/vgg/pretrained_weights/vgg19.npy
 [style_image_path]=../examples/style/udnie.jpg
-[content_loss_weight]=0.01
+[content_loss_weight]=0.1
 [style_loss_weight]=1.0
 [total_variation_loss_weight]=0.1
 # default: conv4_2,conv5_2
@@ -88,7 +88,7 @@ params=(\
 [rmsprop_momentum]=0.0
 [rmsprop_decay]=0.9
 # learning rate flags
-[learning_rate]=0.01
+[learning_rate]=0.001
 ## fixed, exponential or polynomial
 [learning_rate_decay_type]='fixed'
 [end_learning_rate]=0.0001

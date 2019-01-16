@@ -33,7 +33,7 @@ def conv(name, inputs, filters, kernel_size, stride, training,
          activation_fn=tf.nn.relu):
     with tf.variable_scope(name):
         net = tf.layers.conv2d(inputs, filters, kernel_size, stride, 'SAME')
-        net = isinstance_normalization(net, training=training)
+        net = instance_normalization(net, training=training)
         if activation_fn:
             net = activation_fn(net)
         return net
@@ -43,8 +43,15 @@ def batch_normalization(inputs, training):
     return tf.layers.batch_normalization(inputs, training=training)
 
 
-def isinstance_normalization(inputs, training=True):
-    return tf.contrib.layers.instance_norm(inputs)
+def instance_normalization(inputs, training=True):
+    with tf.variable_scope('instance_normalization'):
+        var_shape = [inputs.get_shape()[3].value]
+        mu, sigma_sq = tf.nn.moments(inputs, [1, 2], keep_dims=True)
+        shift = tf.get_variable('shift', tf.zeros(var_shape))
+        scale = tf.get_variable('scale', tf.ones(var_shape))
+        epsilon = 1e-3
+        normalized = (inputs - mu) / (sigma_sq + epsilon)**(.5)
+        return scale * normalized + shift
 
 
 def res(name, inputs, filters, kernel_size, stride, training,
@@ -63,7 +70,7 @@ def conv_transpose(name, inputs, filters, kernel_size, stride, training,
     with tf.variable_scope(name):
         net = tf.layers.conv2d_transpose(inputs, filters, kernel_size, stride,
                                          padding='SAME')
-        net = isinstance_normalization(net, training=training)
+        net = instance_normalization(net, training=training)
         if activation_fn:
             net = activation_fn(net)
         return net

@@ -28,7 +28,7 @@ def model_fn(features, labels, mode, params):
     vgg_target.build(inputs, 'vgg_target')
 
     # forward transform net and compute predict content features
-    transform_image = transform_net('transform_net', inputs, training)
+    transform_image = transform_net('transform_net', inputs / 255.0, training)
     tf.summary.image("transform_image", transform_image)
     vgg_predict = vgg19.Vgg19(opts.vgg19_npy_path)
     vgg_predict.build(transform_image, 'vgg_predict')
@@ -56,9 +56,12 @@ def model_fn(features, labels, mode, params):
                              "style_layers.")
         for layer, weight in zip(opts.style_layers, layer_weights):
             feature_map = vgg_predict.end_points[layer]
-            feature_map = tf.reshape(feature_map, (-1, feature_map.shape[3]))
-            gram = tf.matmul(tf.transpose(feature_map), feature_map)
-            gram /= tf.cast(tf.size(feature_map), tf.float32)
+            _, h, w, filters = map(lambda s: s.value,
+                                   feature_map.get_shape())
+            feature_map = tf.reshape(feature_map, (-1, h*w, filters))
+            gram = tf.matmul(tf.transpose(feature_map, perm=[0, 2, 1]),
+                             feature_map)
+            gram /= float(h*w*filters)
             style_loss += weight * tf.losses.mean_squared_error(
                 style_grams[layer], gram)
         tf.summary.scalar('style_loss', style_loss)
@@ -177,6 +180,7 @@ def preprocess_style(opts):
                                          (-1, feature_map.shape[3]))
                 gram = np.matmul(feature_map.T, feature_map)
                 gram /= feature_map.size
+                gram = np.expand_dims(gram, 0)
                 style_grams[layer] = gram
                 tf.logging.info("layer {} gram matrix shape: {}"
                                 .format(layer, gram.shape))
