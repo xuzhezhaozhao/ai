@@ -88,7 +88,7 @@ params=(\
 [rmsprop_momentum]=0.0
 [rmsprop_decay]=0.9
 # learning rate flags
-[learning_rate]=1.0
+[learning_rate]=0.01
 ## fixed, exponential or polynomial
 [learning_rate_decay_type]='fixed'
 [end_learning_rate]=0.0001
