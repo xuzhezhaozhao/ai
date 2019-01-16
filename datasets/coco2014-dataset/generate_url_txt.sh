@@ -1,2 +1,3 @@
 
-ls data/train2014/ | sed "s:^:`pwd`/:" > train.txt
+datadir=data/train2014/
+ls ${datadir} | sed "s:^:`pwd`/${datadir}:" | shuf > train.txt
