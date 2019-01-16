@@ -135,10 +135,6 @@ def build_estimator(opts):
         save_checkpoints_secs = opts.save_checkpoints_secs
 
     save_checkpoints_steps = None
-    if opts.save_checkpoints_steps > 0 and opts.save_checkpoints_epoches > 0:
-        raise ValueError("save_checkpoints_steps and save_checkpoints_epoches "
-                         "should not be both set.")
-
     if opts.save_checkpoints_steps > 0:
         save_checkpoints_steps = opts.save_checkpoints_steps
 
