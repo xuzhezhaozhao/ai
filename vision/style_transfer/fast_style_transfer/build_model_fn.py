@@ -25,42 +25,42 @@ def model_fn(features, labels, mode, params):
 
     # compute target content features
     vgg_target = vgg19.Vgg19(opts.vgg19_npy_path)
-    vgg_target.build(inputs)
+    vgg_target.build(inputs, 'vgg_target')
 
     # forward transform net and compute predict content features
     transform_image = transform_net('transform_net', inputs, training)
     vgg_predict = vgg19.Vgg19(opts.vgg19_npy_path)
-    vgg_predict.build(transform_image)
+    vgg_predict.build(transform_image, 'vgg_predict')
 
-    # content loss
-    content_loss = 0.0
-    layer_weights = map(float, opts.content_layer_loss_weights)
-    if len(layer_weights) == 1:
-        layer_weights = layer_weights * len(opts.content_layers)
-    elif len(layer_weights) != len(opts.content_layers):
-        raise ValueError("content_layer_loss_weights not match "
-                         "content_layers.")
-    for layer, weight in zip(opts.content_layers, layer_weights):
-        content_loss += weight * tf.losses.mean_squared_error(
-            vgg_target.end_points[layer], vgg_predict.end_points[layer]) / 2.0
-    tf.summary.scalar('content_loss', content_loss)
+    with tf.name_scope("content_loss"):
+        content_loss = 0.0
+        layer_weights = map(float, opts.content_layer_loss_weights)
+        if len(layer_weights) == 1:
+            layer_weights = layer_weights * len(opts.content_layers)
+        elif len(layer_weights) != len(opts.content_layers):
+            raise ValueError("content_layer_loss_weights not match "
+                             "content_layers.")
+        for layer, weight in zip(opts.content_layers, layer_weights):
+            content_loss += weight * tf.losses.mean_squared_error(
+                vgg_target.end_points[layer], vgg_predict.end_points[layer])
+        tf.summary.scalar('content_loss', content_loss)
 
-    # style loss
-    style_loss = 0.0
-    layer_weights = map(float, opts.style_layer_loss_weights)
-    if len(layer_weights) == 1:
-        layer_weights = layer_weights * len(opts.style_layers)
-    elif len(layer_weights) != len(opts.style_layers):
-        raise ValueError("style_layer_loss_weights not match "
-                         "style_layers.")
-    for layer, weight in zip(opts.style_layers, layer_weights):
-        feature_map = vgg_predict.end_points[layer]
-        feature_map = tf.reshape(feature_map, (-1, feature_map.shape[3]))
-        gram = tf.matmul(tf.transpose(feature_map), feature_map)
-        gram /= tf.cast(tf.size(feature_map), tf.float32)
-        style_loss += weight * tf.losses.mean_squared_error(
-            style_grams[layer], gram) / 4.0
-    tf.summary.scalar('style_loss', style_loss)
+    with tf.name_scope("style_loss"):
+        style_loss = 0.0
+        layer_weights = map(float, opts.style_layer_loss_weights)
+        if len(layer_weights) == 1:
+            layer_weights = layer_weights * len(opts.style_layers)
+        elif len(layer_weights) != len(opts.style_layers):
+            raise ValueError("style_layer_loss_weights not match "
+                             "style_layers.")
+        for layer, weight in zip(opts.style_layers, layer_weights):
+            feature_map = vgg_predict.end_points[layer]
+            feature_map = tf.reshape(feature_map, (-1, feature_map.shape[3]))
+            gram = tf.matmul(tf.transpose(feature_map), feature_map)
+            gram /= tf.cast(tf.size(feature_map), tf.float32)
+            style_loss += weight * tf.losses.mean_squared_error(
+                style_grams[layer], gram)
+        tf.summary.scalar('style_loss', style_loss)
 
     loss = opts.content_loss_weight * content_loss \
         + opts.style_loss_weight * style_loss
@@ -90,84 +90,76 @@ def model_fn(features, labels, mode, params):
 
 
 def configure_learning_rate(global_step, opts):
-    """Configures the learning rate.
-
-    Args:
-      global_step: The global_step tensor.
-
-    Returns:
-      A `Tensor` representing the learning rate.
-
-    Raises:
-      ValueError: if
-    """
     decay_steps = opts.decay_steps
 
-    if opts.learning_rate_decay_type == 'exponential':
-        return tf.train.exponential_decay(
-            opts.learning_rate,
-            global_step,
-            decay_steps,
-            opts.learning_rate_decay_factor,
-            staircase=True,
-            name='exponential_decay_learning_rate')
-    elif opts.learning_rate_decay_type == 'fixed':
-        return tf.constant(opts.learning_rate, name='fixed_learning_rate')
-    elif opts.learning_rate_decay_type == 'polynomial':
-        return tf.train.polynomial_decay(
-            opts.learning_rate,
-            global_step,
-            decay_steps,
-            opts.end_learning_rate,
-            power=1.0,
-            cycle=False,
-            name='polynomial_decay_learning_rate')
-    else:
-        raise ValueError('learning_rate_decay_type [%s] was not recognized' %
-                         opts.learning_rate_decay_type)
+    with tf.variable_scope("configure_learning_rate"):
+        if opts.learning_rate_decay_type == 'exponential':
+            return tf.train.exponential_decay(
+                opts.learning_rate,
+                global_step,
+                decay_steps,
+                opts.learning_rate_decay_factor,
+                staircase=True,
+                name='exponential_decay_learning_rate')
+        elif opts.learning_rate_decay_type == 'fixed':
+            return tf.constant(opts.learning_rate, name='fixed_learning_rate')
+        elif opts.learning_rate_decay_type == 'polynomial':
+            return tf.train.polynomial_decay(
+                opts.learning_rate,
+                global_step,
+                decay_steps,
+                opts.end_learning_rate,
+                power=1.0,
+                cycle=False,
+                name='polynomial_decay_learning_rate')
+        else:
+            raise ValueError('learning_rate_decay_type [%s] was not recognized'
+                             % opts.learning_rate_decay_type)
 
 
 def configure_optimizer(learning_rate, opts):
     """Configures the optimizer used for training."""
 
-    if opts.optimizer == 'adadelta':
-        optimizer = tf.train.AdadeltaOptimizer(
-            learning_rate,
-            rho=opts.adadelta_rho,
-            epsilon=opts.opt_epsilon)
-    elif opts.optimizer == 'adagrad':
-        optimizer = tf.train.AdagradOptimizer(
-            learning_rate,
-            initial_accumulator_value=opts.adagrad_initial_accumulator_value)
-    elif opts.optimizer == 'adam':
-        optimizer = tf.train.AdamOptimizer(
-            learning_rate,
-            beta1=opts.adam_beta1,
-            beta2=opts.adam_beta2,
-            epsilon=opts.opt_epsilon)
-    elif opts.optimizer == 'ftrl':
-        optimizer = tf.train.FtrlOptimizer(
-            learning_rate,
-            learning_rate_power=opts.ftrl_learning_rate_power,
-            initial_accumulator_value=opts.ftrl_initial_accumulator_value,
-            l1_regularization_strength=opts.ftrl_l1,
-            l2_regularization_strength=opts.ftrl_l2)
-    elif opts.optimizer == 'momentum':
-        optimizer = tf.train.MomentumOptimizer(
-            learning_rate,
-            momentum=opts.momentum,
-            name='Momentum')
-    elif opts.optimizer == 'rmsprop':
-        optimizer = tf.train.RMSPropOptimizer(
-            learning_rate,
-            decay=opts.rmsprop_decay,
-            momentum=opts.rmsprop_momentum,
-            epsilon=opts.opt_epsilon)
-    elif opts.optimizer == 'sgd':
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-    else:
-        raise ValueError('Optimizer [%s] was not recognized' % opts.optimizer)
-    return optimizer
+    with tf.variable_scope("configure_optimizer"):
+        if opts.optimizer == 'adadelta':
+            optimizer = tf.train.AdadeltaOptimizer(
+                learning_rate,
+                rho=opts.adadelta_rho,
+                epsilon=opts.opt_epsilon)
+        elif opts.optimizer == 'adagrad':
+            optimizer = tf.train.AdagradOptimizer(
+                learning_rate,
+                initial_accumulator_value=opts.adagrad_init_value)
+        elif opts.optimizer == 'adam':
+            optimizer = tf.train.AdamOptimizer(
+                learning_rate,
+                beta1=opts.adam_beta1,
+                beta2=opts.adam_beta2,
+                epsilon=opts.opt_epsilon)
+        elif opts.optimizer == 'ftrl':
+            optimizer = tf.train.FtrlOptimizer(
+                learning_rate,
+                learning_rate_power=opts.ftrl_learning_rate_power,
+                initial_accumulator_value=opts.ftrl_initial_accumulator_value,
+                l1_regularization_strength=opts.ftrl_l1,
+                l2_regularization_strength=opts.ftrl_l2)
+        elif opts.optimizer == 'momentum':
+            optimizer = tf.train.MomentumOptimizer(
+                learning_rate,
+                momentum=opts.momentum,
+                name='Momentum')
+        elif opts.optimizer == 'rmsprop':
+            optimizer = tf.train.RMSPropOptimizer(
+                learning_rate,
+                decay=opts.rmsprop_decay,
+                momentum=opts.rmsprop_momentum,
+                epsilon=opts.opt_epsilon)
+        elif opts.optimizer == 'sgd':
+            optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+        else:
+            raise ValueError('Optimizer [%s] was not recognized'
+                             % opts.optimizer)
+        return optimizer
 
 
 def preprocess_style(opts):
@@ -185,8 +177,8 @@ def preprocess_style(opts):
                 gram = np.matmul(feature_map.T, feature_map)
                 gram /= feature_map.size
                 style_grams[layer] = gram
-                print("layer {} gram matrix shape: {}"
-                      .format(layer, gram.shape))
+                tf.logging.info("layer {} gram matrix shape: {}"
+                                .format(layer, gram.shape))
     return style_grams
 
 

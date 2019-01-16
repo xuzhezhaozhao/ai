@@ -66,7 +66,7 @@ tf.app.flags.DEFINE_float(
     'The decay rate for adadelta.')
 
 tf.app.flags.DEFINE_float(
-    'adagrad_initial_accumulator_value', 0.1,
+    'adagrad_init_value', 0.1,
     'Starting value for the AdaGrad accumulators.')
 
 tf.app.flags.DEFINE_float(

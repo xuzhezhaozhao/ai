@@ -60,23 +60,23 @@ params=(\
 [batch_size]=4
 [eval_batch_size]=4
 [max_train_steps]=-1
-[epoch]=5
+[epoch]=2
 [throttle_secs]=60
 # dataset flags
-[prefetch_size]=2000
-[shuffle_size]=1000
-[shuffle_batch]=True
+[prefetch_size]=50
+[shuffle_size]=50
+[shuffle_batch]=False
 [map_num_parallel_calls]=1
 # log flags
-[save_summary_steps]=1
+[save_summary_steps]=10
 [save_checkpoints_secs]=900
 [save_checkpoints_steps]=-1
-[keep_checkpoint_max]=5
-[log_step_count_steps]=100
+[keep_checkpoint_max]=3
+[log_step_count_steps]=1
 # optimizer flags
 [optimizer]='adam'
 [adadelta_rho]=0.95
-[adagrad_initial_accumulator_value]=0.1
+[adagrad_init_value]=0.1
 [adam_beta1]=0.9
 [adam_beta2]=0.999
 [opt_epsilon]=1.0

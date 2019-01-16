@@ -18,12 +18,10 @@ class Vgg19:
             path = os.path.abspath(os.path.join(path, os.pardir))
             path = os.path.join(path, "vgg19.npy")
             vgg19_npy_path = path
-            print(vgg19_npy_path)
 
         self.data_dict = np.load(vgg19_npy_path, encoding='latin1').item()
-        print("npy file loaded")
 
-    def build(self, rgb):
+    def build(self, rgb, name='vgg19'):
         """
         load variable from npy to build the VGG
 
@@ -31,64 +29,68 @@ class Vgg19:
         """
 
         start_time = time.time()
-        print("build model started")
-        # Convert RGB to BGR
-        red, green, blue = tf.split(axis=3, num_or_size_splits=3, value=rgb)
-        bgr = tf.concat(axis=3, values=[
-            blue - VGG_MEAN[0],
-            green - VGG_MEAN[1],
-            red - VGG_MEAN[2],
-        ])
-        self.end_points = {}
-        self.conv1_1 = self.conv_layer(bgr, "conv1_1")
-        self.end_points["conv1_1"] = self.conv1_1
-        self.conv1_2 = self.conv_layer(self.conv1_1, "conv1_2")
-        self.end_points["conv1_2"] = self.conv1_2
-        self.pool1 = self.avg_pool(self.conv1_2, "pool1")
-        self.end_points["pool1"] = self.pool1
+        tf.logging.info("build model {} started".format(name))
 
-        self.conv2_1 = self.conv_layer(self.pool1, "conv2_1")
-        self.end_points["conv2_1"] = self.conv2_1
-        self.conv2_2 = self.conv_layer(self.conv2_1, "conv2_2")
-        self.end_points["conv2_2"] = self.conv2_2
-        self.pool2 = self.avg_pool(self.conv2_2, "pool2")
-        self.end_points["pool2"] = self.pool2
+        with tf.name_scope(name):
+            # Convert RGB to BGR
+            red, green, blue = tf.split(axis=3, num_or_size_splits=3,
+                                        value=rgb)
+            bgr = tf.concat(axis=3, values=[
+                blue - VGG_MEAN[0],
+                green - VGG_MEAN[1],
+                red - VGG_MEAN[2],
+            ])
+            self.end_points = {}
+            self.conv1_1 = self.conv_layer(bgr, "conv1_1")
+            self.end_points["conv1_1"] = self.conv1_1
+            self.conv1_2 = self.conv_layer(self.conv1_1, "conv1_2")
+            self.end_points["conv1_2"] = self.conv1_2
+            self.pool1 = self.avg_pool(self.conv1_2, "pool1")
+            self.end_points["pool1"] = self.pool1
 
-        self.conv3_1 = self.conv_layer(self.pool2, "conv3_1")
-        self.end_points["conv3_1"] = self.conv3_1
-        self.conv3_2 = self.conv_layer(self.conv3_1, "conv3_2")
-        self.end_points["conv3_2"] = self.conv3_2
-        self.conv3_3 = self.conv_layer(self.conv3_2, "conv3_3")
-        self.end_points["conv3_3"] = self.conv3_3
-        self.conv3_4 = self.conv_layer(self.conv3_3, "conv3_4")
-        self.end_points["conv3_4"] = self.conv3_4
-        self.pool3 = self.avg_pool(self.conv3_4, "pool3")
-        self.end_points["pool3"] = self.pool3
+            self.conv2_1 = self.conv_layer(self.pool1, "conv2_1")
+            self.end_points["conv2_1"] = self.conv2_1
+            self.conv2_2 = self.conv_layer(self.conv2_1, "conv2_2")
+            self.end_points["conv2_2"] = self.conv2_2
+            self.pool2 = self.avg_pool(self.conv2_2, "pool2")
+            self.end_points["pool2"] = self.pool2
 
-        self.conv4_1 = self.conv_layer(self.pool3, "conv4_1")
-        self.end_points["conv4_1"] = self.conv4_1
-        self.conv4_2 = self.conv_layer(self.conv4_1, "conv4_2")
-        self.end_points["conv4_2"] = self.conv4_2
-        self.conv4_3 = self.conv_layer(self.conv4_2, "conv4_3")
-        self.end_points["conv4_3"] = self.conv4_3
-        self.conv4_4 = self.conv_layer(self.conv4_3, "conv4_4")
-        self.end_points["conv4_4"] = self.conv4_4
-        self.pool4 = self.avg_pool(self.conv4_4, "pool4")
-        self.end_points["pool4"] = self.pool4
+            self.conv3_1 = self.conv_layer(self.pool2, "conv3_1")
+            self.end_points["conv3_1"] = self.conv3_1
+            self.conv3_2 = self.conv_layer(self.conv3_1, "conv3_2")
+            self.end_points["conv3_2"] = self.conv3_2
+            self.conv3_3 = self.conv_layer(self.conv3_2, "conv3_3")
+            self.end_points["conv3_3"] = self.conv3_3
+            self.conv3_4 = self.conv_layer(self.conv3_3, "conv3_4")
+            self.end_points["conv3_4"] = self.conv3_4
+            self.pool3 = self.avg_pool(self.conv3_4, "pool3")
+            self.end_points["pool3"] = self.pool3
 
-        self.conv5_1 = self.conv_layer(self.pool4, "conv5_1")
-        self.end_points["conv5_1"] = self.conv5_1
-        self.conv5_2 = self.conv_layer(self.conv5_1, "conv5_2")
-        self.end_points["conv5_2"] = self.conv5_2
-        self.conv5_3 = self.conv_layer(self.conv5_2, "conv5_3")
-        self.end_points["conv5_3"] = self.conv5_3
-        self.conv5_4 = self.conv_layer(self.conv5_3, "conv5_4")
-        self.end_points["conv5_4"] = self.conv5_4
-        self.pool5 = self.avg_pool(self.conv5_4, "pool5")
-        self.end_points["pool5"] = self.pool5
+            self.conv4_1 = self.conv_layer(self.pool3, "conv4_1")
+            self.end_points["conv4_1"] = self.conv4_1
+            self.conv4_2 = self.conv_layer(self.conv4_1, "conv4_2")
+            self.end_points["conv4_2"] = self.conv4_2
+            self.conv4_3 = self.conv_layer(self.conv4_2, "conv4_3")
+            self.end_points["conv4_3"] = self.conv4_3
+            self.conv4_4 = self.conv_layer(self.conv4_3, "conv4_4")
+            self.end_points["conv4_4"] = self.conv4_4
+            self.pool4 = self.avg_pool(self.conv4_4, "pool4")
+            self.end_points["pool4"] = self.pool4
+
+            self.conv5_1 = self.conv_layer(self.pool4, "conv5_1")
+            self.end_points["conv5_1"] = self.conv5_1
+            self.conv5_2 = self.conv_layer(self.conv5_1, "conv5_2")
+            self.end_points["conv5_2"] = self.conv5_2
+            self.conv5_3 = self.conv_layer(self.conv5_2, "conv5_3")
+            self.end_points["conv5_3"] = self.conv5_3
+            self.conv5_4 = self.conv_layer(self.conv5_3, "conv5_4")
+            self.end_points["conv5_4"] = self.conv5_4
+            self.pool5 = self.avg_pool(self.conv5_4, "pool5")
+            self.end_points["pool5"] = self.pool5
 
         self.data_dict = None
-        print(("build model finished: %ds" % (time.time() - start_time)))
+        tf.logging.info("build model {} finished: {:.2f}s"
+                        .format(name, time.time() - start_time))
 
     def avg_pool(self, bottom, name):
         return tf.nn.avg_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],

@@ -9,6 +9,7 @@ import tensorflow as tf
 
 
 def transform_net(name, inputs, training):
+    tf.logging.info("transform_net input {}".format(inputs))
     with tf.variable_scope(name):
         conv1 = conv('conv1', inputs, 32, 9, 1, training)
         conv2 = conv('conv2', conv1, 64, 3, 2, training)
@@ -23,6 +24,7 @@ def transform_net(name, inputs, training):
                                       training)
         conv11 = conv('conv11', conv_trans10, 3, 9, 1, training, None)
         output = tf.nn.tanh(conv11) * 150.0 + 255.0 / 2.0
+        tf.logging.info("transform_net output {}".format(output))
         return output
 
 
