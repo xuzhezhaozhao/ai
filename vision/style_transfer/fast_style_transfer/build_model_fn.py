@@ -32,7 +32,7 @@ def model_fn(features, labels, mode, params):
     vgg_predict = vgg19.Vgg19(opts.vgg19_npy_path)
     vgg_predict.build(transform_image, 'vgg_predict')
 
-    with tf.name_scope("content_loss"):
+    with tf.name_scope('content_loss'):
         content_loss = 0.0
         layer_weights = map(float, opts.content_layer_loss_weights)
         if len(layer_weights) == 1:
@@ -45,7 +45,7 @@ def model_fn(features, labels, mode, params):
                 vgg_target.end_points[layer], vgg_predict.end_points[layer])
         tf.summary.scalar('content_loss', content_loss)
 
-    with tf.name_scope("style_loss"):
+    with tf.name_scope('style_loss'):
         style_loss = 0.0
         layer_weights = map(float, opts.style_layer_loss_weights)
         if len(layer_weights) == 1:
@@ -62,9 +62,9 @@ def model_fn(features, labels, mode, params):
                 style_grams[layer], gram)
         tf.summary.scalar('style_loss', style_loss)
 
-    loss = opts.content_loss_weight * content_loss \
-        + opts.style_loss_weight * style_loss
-    tf.summary.scalar('loss', loss)
+    with tf.name_scope('loss'):
+        loss = opts.content_loss_weight * content_loss \
+            + opts.style_loss_weight * style_loss
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         global_step = tf.train.get_global_step()

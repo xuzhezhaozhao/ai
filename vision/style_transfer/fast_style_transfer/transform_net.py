@@ -13,7 +13,8 @@ def transform_net(name, inputs, training):
     with tf.variable_scope(name):
         conv1 = conv('conv1', inputs, 32, 9, 1, training)
         conv2 = conv('conv2', conv1, 64, 3, 2, training)
-        conv3 = conv('conv3', conv2, 128, 3, 2, training)
+        conv3 = conv('conv3', conv2, 128, 3, 2, training,
+                     use_bn=False, activation_fn=None)
         res4 = res('res4', conv3, 128, 3, 1, training)
         res5 = res('res5', res4, 128, 3, 1, training)
         res6 = res('res6', res5, 128, 3, 1, training)
@@ -28,11 +29,12 @@ def transform_net(name, inputs, training):
         return output
 
 
-def conv(name, inputs, filters, kernel_size, stride, training,
+def conv(name, inputs, filters, kernel_size, stride, training, use_bn=True,
          activation_fn=tf.nn.relu):
     with tf.variable_scope(name):
         net = tf.layers.conv2d(inputs, filters, kernel_size, stride, 'SAME')
-        net = normalization(net, training=training)
+        if use_bn:
+            net = normalization(net, training=training)
         if activation_fn:
             net = activation_fn(net)
         return net
@@ -42,12 +44,19 @@ def normalization(inputs, training):
     return tf.layers.batch_normalization(inputs, training=training)
 
 
-def res(name, inputs, filters, kernel_size, stride, training):
+def res(name, inputs, filters, kernel_size, stride, training,
+        activation_fn=tf.nn.relu):
+    """Use full pre-activation, bn+relu+conv, ..., then addition.
+    see paper: Identity Mappings in Deep Residual Networks
+    """
+
     with tf.variable_scope(name):
-        conv1 = conv('conv1', inputs, filters, kernel_size, stride, training)
-        conv2 = conv('conv2', conv1, filters, kernel_size, stride, training,
-                     activation_fn=None)
-        return conv1 + conv2
+        net = normalization(inputs, training)
+        net = activation_fn(net)
+        net = conv('conv1', net, filters, kernel_size, stride, training,
+                   use_bn=False, activation_fn=None)
+        net = inputs + net
+        return net
 
 
 def conv_transpose(name, inputs, filters, kernel_size, stride, training,

@@ -7,7 +7,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-INPUT_SHAPE = [224, 224, 3]
+INPUT_SHAPE = [256, 256, 3]
 
 
 def build_train_input_fn(opts, train_data_path):
