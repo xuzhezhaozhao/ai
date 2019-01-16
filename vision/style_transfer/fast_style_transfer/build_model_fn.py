@@ -18,7 +18,7 @@ def model_fn(features, labels, mode, params):
 
     training = (mode == tf.estimator.ModeKeys.TRAIN)
     inputs = features['data']
-    tf.logging.info("image size: {}".format(inputs))
+    tf.summary.image("inputs", inputs)
     opts = params['opts']
 
     style_grams = preprocess_style(opts)
@@ -29,6 +29,7 @@ def model_fn(features, labels, mode, params):
 
     # forward transform net and compute predict content features
     transform_image = transform_net('transform_net', inputs, training)
+    tf.summary.image("transform_image", transform_image)
     vgg_predict = vgg19.Vgg19(opts.vgg19_npy_path)
     vgg_predict.build(transform_image, 'vgg_predict')
 

@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import build_model_fn
 import input_data
+from transform_net import transform_net
 
 import os
 import tensorflow as tf
