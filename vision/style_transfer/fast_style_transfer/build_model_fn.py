@@ -43,7 +43,8 @@ def model_fn(features, labels, mode, params):
                              "content_layers.")
         for layer, weight in zip(opts.content_layers, layer_weights):
             content_loss += weight * tf.losses.mean_squared_error(
-                vgg_target.end_points[layer], vgg_predict.end_points[layer])
+                vgg_target.end_points[layer],
+                vgg_predict.end_points[layer]) / 2.0
         tf.summary.scalar('content_loss', content_loss)
 
     with tf.name_scope('style_loss'):
@@ -63,7 +64,7 @@ def model_fn(features, labels, mode, params):
                              feature_map)
             gram /= float(h*w*filters)
             style_loss += weight * tf.losses.mean_squared_error(
-                style_grams[layer], gram)
+                style_grams[layer], gram) / 4.0
         tf.summary.scalar('style_loss', style_loss)
 
     with tf.name_scope('loss'):
