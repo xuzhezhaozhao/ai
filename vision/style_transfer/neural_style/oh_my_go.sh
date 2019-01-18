@@ -14,7 +14,7 @@ declare -A params
 params=(\
 [model_dir]=${model_dir}
 [vgg19_npy_path]=../../classification/vgg/pretrained_weights/vgg19.npy
-[style_image_path]=../examples/style/udnie.jpg
+[style_image_path]=../examples/style/stars.jpg
 [content_image_path]=../examples/content/stata.jpg
 [output_image_path]=output.jpg
 [use_init_image]=false
@@ -32,9 +32,9 @@ params=(\
 [style_loss_weight]=1.0
 [total_variation_loss_weight]=0.1
 # default: conv4_2,conv5_2
-[content_layers]=conv4_2
+[content_layers]=conv4_2,conv5_2
 # default: conv1_1,conv2_1,conv3_1,conv4_1,conv5_1
-[style_layers]=conv1_1,conv2_1,conv3_1,conv4_1,conv5_1
+[style_layers]=conv1_1,conv2_1,conv3_1,conv4_2,conv5_3
 [content_layer_loss_weights]=1.0
 [style_layer_loss_weights]=1.0
 )
