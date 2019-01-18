@@ -64,6 +64,8 @@ class NeuralStyle(object):
         output_image = tf.get_variable(
             "output_image", initializer=self.init_image)
         vgg.build(output_image)
+        tf.summary.image('output', tf.cast(tf.clip_by_value(
+            output_image, 0, 255), tf.uint8))
 
         # content loss
         self.content_loss = 0.0

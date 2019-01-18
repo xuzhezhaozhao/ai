@@ -29,7 +29,8 @@ def model_fn(features, labels, mode, params):
 
     # forward transform net and compute predict content features
     transform_image = transform_net('transform_net', inputs / 255.0, training)
-    tf.summary.image("transform_image", transform_image)
+    tf.summary.image("transform_image", tf.cast(tf.clip_by_value(
+        transform_image, 0, 255), tf.uint8))
     vgg_predict = vgg19.Vgg19(opts.vgg19_npy_path)
     vgg_predict.build(transform_image, 'vgg_predict')
 
