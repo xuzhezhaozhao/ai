@@ -14,7 +14,7 @@ declare -A params
 params=(\
 [model_dir]=${model_dir}
 [vgg19_npy_path]=../../classification/vgg/pretrained_weights/vgg19.npy
-[style_image_path]=../examples/style/stars.jpg
+[style_image_path]=../examples/style/storm.jpeg
 [content_image_path]=../examples/content/stata.jpg
 [output_image_path]=output.jpg
 [use_init_image]=false
