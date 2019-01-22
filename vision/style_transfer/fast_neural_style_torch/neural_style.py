@@ -1,3 +1,10 @@
+#! /usr/bin/env python
+# -*- coding=utf8 -*-
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import argparse
 import os
 import sys
@@ -96,14 +103,12 @@ def train(args):
             agg_style_loss += style_loss.item()
 
             if (batch_id + 1) % args.log_interval == 0:
-                mesg = "{}\tEpoch {}:\t[{}/{}]\tcontent: {:.6f}\tstyle: "
-                "{:.6f}\ttotal: {:.6f}".format(
-                    time.ctime(), e + 1, count, len(train_dataset),
-                    agg_content_loss / (batch_id + 1),
-                    agg_style_loss / (batch_id + 1),
-                    (agg_content_loss + agg_style_loss) / (batch_id + 1)
-                )
-                print(mesg)
+                print('{} Epoch {}: [{}/{}] content: {} style: {} total: {}'
+                      .format(
+                          time.ctime(), e + 1, count, len(train_dataset),
+                          agg_content_loss / (batch_id + 1),
+                          agg_style_loss / (batch_id + 1),
+                          (agg_content_loss+agg_style_loss) / (batch_id+1)))
 
             if args.checkpoint_model_dir is not None \
                     and (batch_id + 1) % args.checkpoint_interval == 0:
