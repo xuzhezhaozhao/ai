@@ -16,7 +16,6 @@ from transform_net import transform_net
 def model_fn(features, labels, mode, params):
     """Build model graph."""
 
-    training = (mode == tf.estimator.ModeKeys.TRAIN)
     inputs = features['data']
     tf.summary.image("inputs", inputs)
     opts = params['opts']
@@ -28,7 +27,7 @@ def model_fn(features, labels, mode, params):
     vgg_target.build(inputs, sub_mean=False, name='vgg_target')
 
     # forward transform net and compute predict content features
-    transform_image = transform_net('transform_net', inputs / 255.0, training)
+    transform_image = transform_net('transform_net', inputs)
     tf.summary.image("transform_image", tf.cast(tf.clip_by_value(
         transform_image, 0, 255), tf.uint8))
     vgg_predict = vgg19.Vgg19(opts.vgg19_npy_path)
