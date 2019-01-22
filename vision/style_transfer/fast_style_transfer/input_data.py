@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from preprocessing import preprocessing_factory
 import tensorflow as tf
 
 INPUT_SHAPE = [256, 256, 3]
@@ -57,6 +58,12 @@ def train_preprocess(image, opts):
 def parse_function(img_path, opts):
     image_string = tf.read_file(img_path)
     image_decoded = tf.image.decode_image(image_string, channels=3)
+    image_decoded = image_decoded[:, :, :3]
     image_decoded.set_shape([None, None, 3])
-    image = tf.cast(image_decoded, tf.float32)
+    image_preprocessing_fn = preprocessing_factory.get_preprocessing(
+        'vgg',
+        is_training=True
+    )
+    image_size = 256
+    image = image_preprocessing_fn(image_decoded, image_size, image_size)
     return image

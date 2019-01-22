@@ -25,14 +25,14 @@ def model_fn(features, labels, mode, params):
 
     # compute target content features
     vgg_target = vgg19.Vgg19(opts.vgg19_npy_path)
-    vgg_target.build(inputs, 'vgg_target')
+    vgg_target.build(inputs, sub_mean=False, name='vgg_target')
 
     # forward transform net and compute predict content features
     transform_image = transform_net('transform_net', inputs / 255.0, training)
     tf.summary.image("transform_image", tf.cast(tf.clip_by_value(
         transform_image, 0, 255), tf.uint8))
     vgg_predict = vgg19.Vgg19(opts.vgg19_npy_path)
-    vgg_predict.build(transform_image, 'vgg_predict')
+    vgg_predict.build(transform_image, sub_mean=True, name='vgg_predict')
 
     with tf.name_scope('content_loss'):
         content_loss = 0.0
@@ -174,7 +174,7 @@ def preprocess_style(opts):
         vgg = vgg19.Vgg19(opts.vgg19_npy_path)
         image = imread(opts.style_image_path)
         image = np.expand_dims(image, 0)
-        vgg.build(image)
+        vgg.build(image, sub_mean=True)
         with tf.Session() as sess:
             for layer in opts.style_layers:
                 feature_map = sess.run(vgg.end_points[layer])

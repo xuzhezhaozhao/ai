@@ -47,8 +47,8 @@ params=(\
 [predict_checkpoint_path]=${model_dir}
 [vgg19_npy_path]=../../classification/vgg/pretrained_weights/vgg19.npy
 [style_image_path]=../examples/style/udnie.jpg
-[content_loss_weight]=0.1
-[style_loss_weight]=1.0
+[content_loss_weight]=10
+[style_loss_weight]=200.0
 [total_variation_loss_weight]=0.1
 # default: conv4_2,conv5_2
 [content_layers]=conv4_2
@@ -72,14 +72,14 @@ params=(\
 [save_checkpoints_secs]=900
 [save_checkpoints_steps]=-1
 [keep_checkpoint_max]=3
-[log_step_count_steps]=1
+[log_step_count_steps]=4
 # optimizer flags
 [optimizer]='adam'
 [adadelta_rho]=0.95
 [adagrad_init_value]=0.1
 [adam_beta1]=0.9
 [adam_beta2]=0.999
-[opt_epsilon]=1.0
+[opt_epsilon]=1e-8
 [ftrl_learning_rate_power]=-0.5
 [ftrl_initial_accumulator_value]=0.1
 [ftrl_l1]=0.0

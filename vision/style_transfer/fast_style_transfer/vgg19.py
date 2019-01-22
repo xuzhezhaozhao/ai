@@ -21,7 +21,7 @@ class Vgg19:
 
         self.data_dict = np.load(vgg19_npy_path, encoding='latin1').item()
 
-    def build(self, rgb, name='vgg19'):
+    def build(self, rgb, sub_mean, name='vgg19'):
         """
         load variable from npy to build the VGG
 
@@ -35,11 +35,13 @@ class Vgg19:
             # Convert RGB to BGR
             red, green, blue = tf.split(axis=3, num_or_size_splits=3,
                                         value=rgb)
-            bgr = tf.concat(axis=3, values=[
-                blue - VGG_MEAN[0],
-                green - VGG_MEAN[1],
-                red - VGG_MEAN[2],
-            ])
+            if sub_mean:
+                bgr = tf.concat(axis=3, values=[
+                    blue - VGG_MEAN[0],
+                    green - VGG_MEAN[1],
+                    red - VGG_MEAN[2]])
+            else:
+                bgr = tf.concat(axis=3, values=[blue, green, red])
             self.end_points = {}
             self.conv1_1 = self.conv_layer(bgr, "conv1_1")
             self.end_points["conv1_1"] = self.conv1_1
