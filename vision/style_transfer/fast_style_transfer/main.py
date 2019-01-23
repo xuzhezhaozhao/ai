@@ -193,7 +193,7 @@ def predict(opts, estimator):
     img = build_model_fn.imread(opts.predict_image_path)
     img = np.expand_dims(img, 0)
     img = tf.convert_to_tensor(img)
-    output = transform_net('transform_net', img, False)
+    output = transform_net('transform_net', img)
     checkpoint_path = opts.predict_checkpoint_path
     if tf.gfile.IsDirectory(checkpoint_path):
         checkpoint_path = tf.train.latest_checkpoint(checkpoint_path)
