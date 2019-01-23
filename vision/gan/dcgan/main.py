@@ -39,6 +39,7 @@ tf.app.flags.DEFINE_float('adam_beta1', 0.9, '')
 tf.app.flags.DEFINE_float('adam_beta2', 0.999, '')
 tf.app.flags.DEFINE_float('opt_epsilon', 1e-8, '')
 
+tf.app.flags.DEFINE_integer('img_size', 64, '')
 tf.app.flags.DEFINE_integer('nz', 100, 'latent vector size')
 tf.app.flags.DEFINE_integer('ngf', 64, 'initial generator features')
 tf.app.flags.DEFINE_integer('ndf', 64, 'initial discriminator features')
@@ -68,7 +69,9 @@ def build(x):
     real_label = 1.0
     fake_label = 0.0
 
-    tf.summary.histogram('inputs', x)
+    tf.summary.histogram('input', x)
+    tf.summary.image('input_img', tf.cast(tf.clip_by_value(
+        (x + 1.0) * 127.5, 0, 255), tf.uint8))
 
     # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
     # train with real
@@ -77,15 +80,18 @@ def build(x):
         beta1=opts.adam_beta1,
         beta2=opts.adam_beta2,
         epsilon=opts.opt_epsilon)
-    output = discriminator_net(x, True, opts)
-    errD_real = criterion(real_label, output)
+    output_x = discriminator_net(x, True, opts)
+    errD_real = criterion(real_label, output_x)
     tf.summary.scalar('errD_real', errD_real)
 
     # train with fake
     noise = tf.random.normal([opts.batch_size, 1, 1, opts.nz])
     fake = generator_net(noise, True, opts)
-    output = discriminator_net(fake, True, opts)
-    errD_fake = criterion(fake_label, output)
+    tf.summary.histogram('fake', fake)
+    tf.summary.image('fake_img', tf.cast(tf.clip_by_value(
+        (fake + 1.0) * 127.5, 0, 255), tf.uint8))
+    output_fake = discriminator_net(fake, True, opts)
+    errD_fake = criterion(fake_label, output_fake)
     errD = errD_real + errD_fake
     tf.summary.scalar('errD_fake', errD_fake)
     tf.summary.scalar('errD', errD)
@@ -96,8 +102,7 @@ def build(x):
         beta1=opts.adam_beta1,
         beta2=opts.adam_beta2,
         epsilon=opts.opt_epsilon)
-    output = discriminator_net(fake, True, opts)
-    errG = criterion(real_label, output)
+    errG = criterion(real_label, output_fake)
     tf.summary.scalar('errG', errG)
 
     t_vars = tf.trainable_variables()
@@ -111,7 +116,7 @@ def build(x):
     return train_op_D, train_op_G, errD_real, errD_fake, errG
 
 
-def main(_):
+def train():
     iterator = data_iterator()
     x = iterator.get_next()['data']
     (train_op_D, train_op_G, errD_real, errD_fake, errG) = build(x)
@@ -148,6 +153,10 @@ def main(_):
             if step % opts.save_checkpoints_steps == 0:
                 save_checkpoint(sess, step, saver, opts.model_dir)
         summary_writer.close()
+
+
+def main(_):
+    train()
 
 
 def save_checkpoint(sess, global_step, saver, model_dir):

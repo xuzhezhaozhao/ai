@@ -58,10 +58,11 @@ params=(\
 [keep_checkpoint_max]=3
 [log_step_count_steps]=4
 # optimize
-[learning_rate]=0.001
+[learning_rate]=0.0002
 [adam_beta1]=0.9
 [adam_beta2]=0.999
 [opt_epsilon]=1e-8
+[img_size]=64
 [nz]=100
 [ngf]=64
 [ndf]=64

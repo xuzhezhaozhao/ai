@@ -37,6 +37,6 @@ def generator_net(x, training, opts, name='Generator'):
         y = deconv(y, opts.nc, 4, 2, 'same', 'deconv5')
 
         # output. 64 x 64 x nc
-        y = tf.nn.tanh(y) * 150
+        y = tf.nn.tanh(y)
 
         return y

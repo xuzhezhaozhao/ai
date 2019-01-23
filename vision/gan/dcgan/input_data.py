@@ -18,9 +18,6 @@ def build_train_input_fn(opts, train_data_path):
         ds = ds.map(
             lambda filename: parse_function(filename, opts),
             num_parallel_calls=num_parallel)
-        ds = ds.map(
-            lambda image: train_preprocess(image, opts),
-            num_parallel_calls=num_parallel)
         ds = ds.prefetch(opts.prefetch_size)
         if opts.shuffle_batch:
             ds = ds.shuffle(buffer_size=opts.shuffle_size)
@@ -50,19 +47,26 @@ def read_txt_file(txt_file):
         return img_paths
 
 
-def train_preprocess(image, opts):
-    resized_image = tf.image.resize_images(image, [IMAGE_SIZE, IMAGE_SIZE])
-    return {'data': resized_image}
-
-
 def parse_function(img_path, opts):
     image_string = tf.read_file(img_path)
-    image_decoded = tf.image.decode_image(image_string, channels=3)
-    image_decoded = image_decoded[:, :, :3]
-    image_decoded.set_shape([None, None, 3])
-    image_preprocessing_fn = preprocessing_factory.get_preprocessing(
-        'vgg',
-        is_training=True
-    )
-    image = image_preprocessing_fn(image_decoded, IMAGE_SIZE, IMAGE_SIZE)
-    return image
+    image_decoded = tf.image.decode_image(image_string, channels=opts.nc)
+    image_decoded = image_decoded[:, :, :opts.nc]
+    image_decoded.set_shape([None, None, opts.nc])
+    image = tf.cast(image_decoded, tf.float32)
+
+    img_size = opts.img_size
+    smallest_side = tf.to_float(img_size + 1.0)
+    height, width = tf.shape(image)[0], tf.shape(image)[1]
+    height = tf.to_float(height)
+    width = tf.to_float(width)
+    scale = tf.cond(tf.greater(height, width),
+                    lambda: smallest_side / width,
+                    lambda: smallest_side / height)
+    new_height = tf.to_int32(height * scale)
+    new_width = tf.to_int32(width * scale)
+    resized_image = tf.image.resize_images(image, [new_height, new_width])
+    crop_image = tf.random_crop(resized_image, [img_size, img_size, opts.nc])
+    norm_image = crop_image / 127.5 - 1.0
+
+    print(norm_image)
+    return {'data': norm_image}
