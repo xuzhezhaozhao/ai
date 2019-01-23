@@ -5,7 +5,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from preprocessing import preprocessing_factory
 import tensorflow as tf
 
 IMAGE_SIZE = 64
@@ -68,5 +67,4 @@ def parse_function(img_path, opts):
     crop_image = tf.random_crop(resized_image, [img_size, img_size, opts.nc])
     norm_image = crop_image / 127.5 - 1.0
 
-    print(norm_image)
     return {'data': norm_image}
