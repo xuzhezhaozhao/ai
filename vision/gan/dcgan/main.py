@@ -105,8 +105,8 @@ def build(x):
     tf.summary.scalar('errG', errG)
 
     t_vars = tf.trainable_variables()
-    d_vars = [var for var in t_vars if 'D' in var.name]
-    g_vars = [var for var in t_vars if 'G' in var.name]
+    d_vars = [var for var in t_vars if 'Discriminator' in var.name]
+    g_vars = [var for var in t_vars if 'Generator' in var.name]
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
         train_op_D = optimizerD.minimize(loss=errD, var_list=d_vars)
@@ -135,8 +135,12 @@ def train():
 
         start = time.time()
         for step in xrange(opts.max_train_steps):
-            _, _, e1, e2, e3 = sess.run([train_op_D, train_op_G,
-                                         errD_real, errD_fake, errG])
+            _, e1, e2 = sess.run([train_op_D, errD_real, errD_fake])
+
+            # update G network twice
+            _, e3 = sess.run([train_op_G, errG])
+            _, e3 = sess.run([train_op_G, errG])
+
             if step % opts.log_step_count_steps == 0:
                 print("step {}, errD_real = {:.5f}, errD_fake = {:.5f}, "
                       "errG = {:.5f}, elapsed {:.2f} s"
