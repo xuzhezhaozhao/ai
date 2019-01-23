@@ -18,21 +18,21 @@ def discriminator_net(x, training, opts):
 
     # state size. 16 x 16 x (ndf*2)
     y = conv(y, opts.ndf*2, 4, 2)
-    y = batch_norm(y)
+    y = batch_norm(y, training)
     y = leaky_relu(y, 0.2)
 
     # state size. 8 x 8 x (ndf*4)
     y = conv(y, opts.ndf*4, 4, 2)
-    y = batch_norm(y)
+    y = batch_norm(y, training)
     y = leaky_relu(y, 0.2)
 
     # state size. 4 x 4 x (ndf*8)
     y = conv(y, opts.ndf*8, 4, 2)
-    y = batch_norm(y)
+    y = batch_norm(y, training)
     y = leaky_relu(y, 0.2)
 
     # output
     y = conv(y, 1, 4, 1, padding='valid')
-    y = tf.nn.sigmoid(y)
+    logits = tf.reshape(y, (-1, 1))
 
-    return y
+    return logits
