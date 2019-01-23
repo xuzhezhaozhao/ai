@@ -135,13 +135,13 @@ def train():
 
         start = time.time()
         for step in xrange(opts.max_train_steps):
-            _, e1, e2 = sess.run([train_op_D, errD_real, errD_fake])
-
             # update G network twice
-            _, e3 = sess.run([train_op_G, errG])
-            _, e3 = sess.run([train_op_G, errG])
+            sess.run(train_op_D)
+            sess.run(train_op_G)
+            sess.run(train_op_G)
 
             if step % opts.log_step_count_steps == 0:
+                e1, e2, e3 = sess.run([errD_real, errD_fake, errG])
                 print("step {}, errD_real = {:.5f}, errD_fake = {:.5f}, "
                       "errG = {:.5f}, elapsed {:.2f} s"
                       .format(step, e1, e2, e3, time.time() - start))
