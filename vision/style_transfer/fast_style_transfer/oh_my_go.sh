@@ -47,13 +47,13 @@ params=(\
 [predict_checkpoint_path]=${model_dir}
 [vgg19_npy_path]=../../classification/vgg/pretrained_weights/vgg19.npy
 [style_image_path]=../examples/style/stars.jpg
-[content_loss_weight]=10
+[content_loss_weight]=5
 [style_loss_weight]=200.0
 [total_variation_loss_weight]=0.1
 # default: conv4_2,conv5_2
 [content_layers]=conv4_2
 # default: conv1_1,conv2_1,conv3_1,conv4_1,conv5_1
-[style_layers]=conv1_1,conv2_1,conv3_1,conv4_1,conv5_1
+[style_layers]=conv1_2,conv2_2,conv3_3,conv4_3,conv5_3
 [content_layer_loss_weights]=1.0
 [style_layer_loss_weights]=1.0
 # train flags
