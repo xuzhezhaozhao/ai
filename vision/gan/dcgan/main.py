@@ -135,9 +135,14 @@ def train():
         tf.get_default_graph().finalize()
 
         start = time.time()
-        for step in xrange(1000):
-            _, _, e1, e2, e3 = sess.run([train_op_D, train_op_G,
-                                         errD_real, errD_fake, errG])
+        step = 0
+        while True:
+            try:
+                _, _, e1, e2, e3 = sess.run([train_op_D, train_op_G,
+                                             errD_real, errD_fake, errG])
+                step += 1
+            except tf.errors.OutOfRangeError:
+                break
 
             if step % opts.log_step_count_steps == 0:
                 print("step {}, errD_real = {:.5f}, errD_fake = {:.5f}, "
