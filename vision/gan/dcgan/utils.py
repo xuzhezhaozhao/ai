@@ -10,14 +10,17 @@ import tensorflow as tf
 
 def conv(x, filters, kernel_size, stride, padding='same', name='conv'):
     with tf.variable_scope(name):
-        y = tf.layers.conv2d(x, filters, kernel_size, stride, padding)
+        y = tf.layers.conv2d(
+            x, filters, kernel_size, stride, padding,
+            kernel_initializer=tf.initializers.truncated_normal(0, 0.02))
         return y
 
 
 def deconv(x, filters, kernel_size, stride, padding='same', name='deconv'):
     with tf.variable_scope(name):
-        y = tf.layers.conv2d_transpose(x, filters, kernel_size, stride,
-                                       padding)
+        y = tf.layers.conv2d_transpose(
+            x, filters, kernel_size, stride, padding,
+            kernel_initializer=tf.initializers.truncated_normal(0, 0.02))
         return y
 
 

@@ -44,7 +44,7 @@ params=(\
 [train_data_path]=${train_data_path}
 [eval_data_path]=${eval_data_path}
 # train flags
-[batch_size]=64
+[batch_size]=128
 [max_train_steps]=-1
 [epoch]=2
 # dataset flags
@@ -59,13 +59,13 @@ params=(\
 [log_step_count_steps]=4
 # optimize
 [learning_rate]=0.0002
-[adam_beta1]=0.9
+[adam_beta1]=0.5
 [adam_beta2]=0.999
 [opt_epsilon]=1e-8
 [img_size]=64
 [nz]=100
-[ngf]=64
-[ndf]=64
+[ngf]=128
+[ndf]=128
 [nc]=3
 )
 
