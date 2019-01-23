@@ -32,7 +32,7 @@ if [[ ${remove_model_dir} == '1' ]]; then
     fi
 fi
 
-datadir=../../../datasets/coco2014-dataset/
+datadir=../../../datasets/lsun_bedroom-dataset/
 train_data_path=${datadir}/train.txt
 eval_data_path=${datadir}/test.txt
 
@@ -45,8 +45,7 @@ params=(\
 [eval_data_path]=${eval_data_path}
 # train flags
 [batch_size]=64
-[max_train_steps]=-1
-[epoch]=2
+[max_train_steps]=100000
 # dataset flags
 [prefetch_size]=500
 [shuffle_size]=500

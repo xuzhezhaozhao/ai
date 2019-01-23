@@ -19,8 +19,7 @@ tf.app.flags.DEFINE_string('run_mode', 'train', 'train, eval and sample')
 tf.app.flags.DEFINE_string('train_data_path', '', 'train data path')
 tf.app.flags.DEFINE_string('eval_data_path', '', 'eval data path')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'batch size')
-tf.app.flags.DEFINE_integer('max_train_steps', -1, '')
-tf.app.flags.DEFINE_integer('epoch', 1, '')
+tf.app.flags.DEFINE_integer('max_train_steps', 1000, '')
 
 # dataset flags
 tf.app.flags.DEFINE_integer('prefetch_size', 1000, '')
@@ -135,15 +134,9 @@ def train():
         tf.get_default_graph().finalize()
 
         start = time.time()
-        step = 0
-        while True:
-            try:
-                _, _, e1, e2, e3 = sess.run([train_op_D, train_op_G,
-                                             errD_real, errD_fake, errG])
-                step += 1
-            except tf.errors.OutOfRangeError:
-                break
-
+        for step in xrange(opts.max_train_steps):
+            _, _, e1, e2, e3 = sess.run([train_op_D, train_op_G,
+                                         errD_real, errD_fake, errG])
             if step % opts.log_step_count_steps == 0:
                 print("step {}, errD_real = {:.5f}, errD_fake = {:.5f}, "
                       "errG = {:.5f}, elapsed {:.2f} s"

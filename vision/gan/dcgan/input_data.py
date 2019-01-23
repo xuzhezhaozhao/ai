@@ -20,7 +20,7 @@ def build_train_input_fn(opts, train_data_path):
         ds = ds.prefetch(opts.prefetch_size)
         if opts.shuffle_batch:
             ds = ds.shuffle(buffer_size=opts.shuffle_size)
-        ds = ds.batch(opts.batch_size)
+        ds = ds.repeat().batch(opts.batch_size)
 
         return ds
     return train_input_fn
