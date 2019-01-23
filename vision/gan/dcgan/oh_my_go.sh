@@ -54,8 +54,7 @@ params=(\
 [map_num_parallel_calls]=1
 # log flags
 [save_summary_steps]=10
-[save_checkpoints_secs]=900
-[save_checkpoints_steps]=-1
+[save_checkpoints_steps]=100
 [keep_checkpoint_max]=3
 [log_step_count_steps]=4
 # optimize
