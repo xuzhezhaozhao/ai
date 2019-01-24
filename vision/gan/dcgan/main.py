@@ -108,17 +108,20 @@ def build(x):
     d_vars = [var for var in t_vars if 'Discriminator' in var.name]
     g_vars = [var for var in t_vars if 'Generator' in var.name]
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    train_op_D = optimizerD.minimize(loss=errD, var_list=d_vars)
+    train_op_G_1 = optimizerG.minimize(loss=errG, var_list=g_vars)
+    train_op_G_2 = optimizerG.minimize(loss=errG, var_list=g_vars)
     with tf.control_dependencies(update_ops):
-        train_op_D = optimizerD.minimize(loss=errD, var_list=d_vars)
-        train_op_G = optimizerG.minimize(loss=errG, var_list=g_vars)
+        # update G network twice
+        train_op = tf.group(train_op_D, train_op_G_1, train_op_G_2)
 
-    return train_op_D, train_op_G, errD_real, errD_fake, errG
+    return train_op, errD_real, errD_fake, errG
 
 
 def train():
     iterator = data_iterator()
     x = iterator.get_next()['data']
-    (train_op_D, train_op_G, errD_real, errD_fake, errG) = build(x)
+    (train_op, errD_real, errD_fake, errG) = build(x)
 
     merged_summary = tf.summary.merge_all()
     summary_writer = tf.summary.FileWriter(opts.model_dir)
@@ -135,11 +138,7 @@ def train():
 
         start = time.time()
         for step in xrange(opts.max_train_steps):
-            # update G network twice
-            sess.run(train_op_D)
-            sess.run(train_op_G)
-            sess.run(train_op_G)
-
+            sess.run(train_op)
             if step % opts.log_step_count_steps == 0:
                 e1, e2, e3 = sess.run([errD_real, errD_fake, errG])
                 print("step {}, errD_real = {:.5f}, errD_fake = {:.5f}, "
