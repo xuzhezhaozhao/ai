@@ -109,11 +109,14 @@ def build(x):
     g_vars = [var for var in t_vars if 'Generator' in var.name]
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     train_op_D = optimizerD.minimize(loss=errD, var_list=d_vars)
-    train_op_G_1 = optimizerG.minimize(loss=errG, var_list=g_vars)
-    train_op_G_2 = optimizerG.minimize(loss=errG, var_list=g_vars)
+
+    # first update D newwork, then update G network twice
+    with tf.control_dependencies([train_op_D]):
+        train_op_G_1 = optimizerG.minimize(loss=errG, var_list=g_vars)
+    with tf.control_dependencies([train_op_G_1]):
+        train_op_G_2 = optimizerG.minimize(loss=errG, var_list=g_vars)
     with tf.control_dependencies(update_ops):
-        # update G network twice
-        train_op = tf.group(train_op_D, train_op_G_1, train_op_G_2)
+        train_op = train_op_G_2
 
     return train_op, errD_real, errD_fake, errG
 
