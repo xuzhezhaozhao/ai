@@ -48,7 +48,7 @@ def read_txt_file(txt_file):
 
 def parse_function(img_path, opts):
     image_string = tf.read_file(img_path)
-    image_decoded = tf.image.decode_image(image_string, channels=opts.nc)
+    image_decoded = tf.image.decode_image(image_string, channels=None)
     image_decoded = image_decoded[:, :, :opts.nc]
     image_decoded.set_shape([None, None, opts.nc])
     image = tf.cast(image_decoded, tf.float32)
