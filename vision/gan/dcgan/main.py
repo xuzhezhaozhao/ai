@@ -50,7 +50,8 @@ tf.app.flags.DEFINE_integer('nc', 3, 'image channels')
 opts = tf.app.flags.FLAGS
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '0'
 
-fixed_noise = np.random.normal(size=[1, 1, 1, opts.nz]).astype(np.float32)
+fixed_noise = np.random.uniform(-1.0, 1.0,
+                                size=[1, 1, 1, opts.nz]).astype(np.float32)
 
 
 def criterion(label, logits):
@@ -89,7 +90,7 @@ def build(x):
     tf.summary.scalar('errD_real', errD_real)
 
     # train with fake
-    noise = tf.random.normal([opts.batch_size, 1, 1, opts.nz])
+    noise = tf.random.uniform([opts.batch_size, 1, 1, opts.nz], -1.0, 1.0)
     fake = generator_net(noise, True, opts)
     tf.summary.histogram('fake', fake)
     tf.summary.image('fake_img', tf.cast(tf.clip_by_value(
