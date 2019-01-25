@@ -68,3 +68,7 @@ def parse_function(img_path, opts):
     norm_image = crop_image / 127.5 - 1.0
 
     return {'data': norm_image}
+
+
+def invert_norm(x):
+    return (x + 1.0) * 127.5

@@ -34,15 +34,14 @@ fi
 
 datadir=../../../datasets/lsun_bedroom-dataset/
 train_data_path=${datadir}/train.txt
-eval_data_path=${datadir}/test.txt
 
 declare -A params
 params=(\
 [model_dir]=${model_dir}
 [export_model_dir]=${export_model_dir}
+[sample_checkpoint_path]=${model_dir}
 [run_mode]=${run_mode}
 [train_data_path]=${train_data_path}
-[eval_data_path]=${eval_data_path}
 # train flags
 [batch_size]=64
 [max_train_steps]=100000

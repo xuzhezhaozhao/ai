@@ -5,19 +5,21 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from PIL import Image
 import os
 import time
 import tensorflow as tf
+import numpy as np
 
-import input_data
 from generator_net import generator_net
 from discriminator_net import discriminator_net
+import input_data
 
 tf.app.flags.DEFINE_string('model_dir', 'model_dir', '')
 tf.app.flags.DEFINE_string('export_model_dir', 'export_model_dir', '')
+tf.app.flags.DEFINE_string('sample_checkpoint_path', '', '')
 tf.app.flags.DEFINE_string('run_mode', 'train', 'train, eval and sample')
 tf.app.flags.DEFINE_string('train_data_path', '', 'train data path')
-tf.app.flags.DEFINE_string('eval_data_path', '', 'eval data path')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'batch size')
 tf.app.flags.DEFINE_integer('max_train_steps', 1000, '')
 
@@ -47,6 +49,8 @@ tf.app.flags.DEFINE_integer('nc', 3, 'image channels')
 opts = tf.app.flags.FLAGS
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '0'
 
+fixed_noise = np.random.normal(size=[1, 1, 1, opts.nz]).astype(np.float32)
+
 
 def criterion(label, logits):
     """Cross entropy loss."""
@@ -70,7 +74,7 @@ def build(x):
 
     tf.summary.histogram('input', x)
     tf.summary.image('input_img', tf.cast(tf.clip_by_value(
-        (x + 1.0) * 127.5, 0, 255), tf.uint8))
+        input_data.invert_norm(x), 0, 255), tf.uint8))
 
     # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
     # train with real
@@ -88,7 +92,7 @@ def build(x):
     fake = generator_net(noise, True, opts)
     tf.summary.histogram('fake', fake)
     tf.summary.image('fake_img', tf.cast(tf.clip_by_value(
-        (fake + 1.0) * 127.5, 0, 255), tf.uint8))
+        input_data.invert_norm(fake), 0, 255), tf.uint8))
     output_fake = discriminator_net(fake, True, opts)
     errD_fake = criterion(fake_label, output_fake)
     errD = errD_real + errD_fake
@@ -159,8 +163,31 @@ def train():
         summary_writer.close()
 
 
+def sample():
+    fake = generator_net(tf.constant(fixed_noise), False, opts)
+    checkpoint_path = opts.sample_checkpoint_path
+    if tf.gfile.IsDirectory(checkpoint_path):
+        checkpoint_path = tf.train.latest_checkpoint(checkpoint_path)
+    saver = tf.train.Saver()
+    with tf.Session() as sess:
+        saver.restore(sess, checkpoint_path)
+        output = sess.run(fake)
+        output = input_data.invert_norm(output)
+        output = np.squeeze(output, 0)
+        print(output.shape)
+        imsave('output.jpg', output)
+
+
+def imsave(path, img):
+    img = np.clip(img, 0, 255).astype(np.uint8)
+    Image.fromarray(img).save(path, quality=95)
+
+
 def main(_):
-    train()
+    if opts.run_mode == 'train':
+        train()
+    elif opts.run_mode == 'sample':
+        sample()
 
 
 def save_checkpoint(sess, global_step, saver, model_dir):
