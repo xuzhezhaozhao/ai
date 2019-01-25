@@ -149,9 +149,10 @@ def train():
             sess.run(train_op)
             if step % opts.log_step_count_steps == 0:
                 e1, e2, e3 = sess.run([errD_real, errD_fake, errG])
-                print("step {}, errD_real = {:.5f}, errD_fake = {:.5f}, "
-                      "errG = {:.5f}, elapsed {:.2f} s"
-                      .format(step, e1, e2, e3, time.time() - start))
+                tf.logging.info(
+                    "step {}, errD_real = {:.5f}, errD_fake = {:.5f}, "
+                    "errG = {:.5f}, elapsed {:.2f} s"
+                    .format(step, e1, e2, e3, time.time() - start))
                 start = time.time()
 
             if step % opts.save_summary_steps == 0:
@@ -201,7 +202,7 @@ def main(_):
 def save_checkpoint(sess, global_step, saver, model_dir):
     ckpt_name = os.path.join(model_dir, 'model.ckpt-{}'.format(global_step))
     ckpt_path = saver.save(sess, ckpt_name)
-    print('Model ckpt saved at {}'.format(ckpt_path))
+    tf.logging.info('Model ckpt saved at {}'.format(ckpt_path))
 
 
 if __name__ == '__main__':

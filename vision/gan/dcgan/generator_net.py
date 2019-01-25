@@ -37,6 +37,6 @@ def generator_net(x, training, opts, name='Generator'):
         # state size. (sz*16) x (sz*16) x nc
         y = deconv(y, opts.nc, 4, 2, 'same', 'deconv5')
         y = tf.nn.tanh(y)
-        print("Generator output: {}".format(y))
+        tf.logging.info("Generator output: {}".format(y))
 
         return y
