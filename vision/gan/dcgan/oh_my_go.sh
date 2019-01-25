@@ -32,7 +32,8 @@ if [[ ${remove_model_dir} == '1' ]]; then
     fi
 fi
 
-datadir=../../../datasets/lsun_bedroom-dataset/
+#datadir=../../../datasets/lsun_bedroom-dataset/
+datadir=../../../datasets/mnist-dataset/
 train_data_path=${datadir}/train.txt
 
 declare -A params
@@ -61,11 +62,11 @@ params=(\
 [adam_beta1]=0.5
 [adam_beta2]=0.999
 [opt_epsilon]=1e-8
-[img_size]=256
+[img_size]=32
 [nz]=100
 [ngf]=64
 [ndf]=64
-[nc]=3
+[nc]=1
 )
 
 params_str=''

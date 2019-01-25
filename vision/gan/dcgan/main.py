@@ -181,6 +181,8 @@ def sample(filename='output.jpg'):
             output = sess.run(fake)
             output = input_data.invert_norm(output)
             output = np.squeeze(output, 0)
+            if opts.nc == 1:
+                output = np.squeeze(output, -1)
             imsave(filename, output)
 
 
