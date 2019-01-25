@@ -170,17 +170,18 @@ def train():
 
 
 def sample(filename='output.jpg'):
-    fake = generator_net(tf.constant(fixed_noise), False, opts)
-    checkpoint_path = opts.sample_checkpoint_path
-    if tf.gfile.IsDirectory(checkpoint_path):
-        checkpoint_path = tf.train.latest_checkpoint(checkpoint_path)
-    saver = tf.train.Saver()
-    with tf.Session() as sess:
-        saver.restore(sess, checkpoint_path)
-        output = sess.run(fake)
-        output = input_data.invert_norm(output)
-        output = np.squeeze(output, 0)
-        imsave(filename, output)
+    with tf.Graph().as_default():
+        fake = generator_net(tf.constant(fixed_noise), False, opts)
+        checkpoint_path = opts.sample_checkpoint_path
+        if tf.gfile.IsDirectory(checkpoint_path):
+            checkpoint_path = tf.train.latest_checkpoint(checkpoint_path)
+        saver = tf.train.Saver()
+        with tf.Session() as sess:
+            saver.restore(sess, checkpoint_path)
+            output = sess.run(fake)
+            output = input_data.invert_norm(output)
+            output = np.squeeze(output, 0)
+            imsave(filename, output)
 
 
 def imsave(path, img):
