@@ -55,6 +55,7 @@ params=(\
 [save_checkpoints_steps]=100
 [keep_checkpoint_max]=3
 [log_step_count_steps]=4
+[save_output_steps]=500
 # optimize
 [learning_rate]=0.0002
 [adam_beta1]=0.5

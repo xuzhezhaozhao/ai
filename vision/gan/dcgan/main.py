@@ -34,6 +34,7 @@ tf.app.flags.DEFINE_integer('save_summary_steps', 100, '')
 tf.app.flags.DEFINE_integer('save_checkpoints_steps', 100, '')
 tf.app.flags.DEFINE_integer('keep_checkpoint_max', 3, '')
 tf.app.flags.DEFINE_integer('log_step_count_steps', 100, '')
+tf.app.flags.DEFINE_integer('save_output_steps', 500, '')
 
 tf.app.flags.DEFINE_float('learning_rate', 0.0002, 'learning rate')
 tf.app.flags.DEFINE_float('adam_beta1', 0.9, '')
@@ -160,10 +161,15 @@ def train():
 
             if step % opts.save_checkpoints_steps == 0:
                 save_checkpoint(sess, step, saver, opts.model_dir)
+
+            if step % opts.save_output_steps == 0:
+                filename = 'output.{}.jpg'.format(step)
+                sample(filename)
+
         summary_writer.close()
 
 
-def sample():
+def sample(filename='output.jpg'):
     fake = generator_net(tf.constant(fixed_noise), False, opts)
     checkpoint_path = opts.sample_checkpoint_path
     if tf.gfile.IsDirectory(checkpoint_path):
@@ -174,8 +180,7 @@ def sample():
         output = sess.run(fake)
         output = input_data.invert_norm(output)
         output = np.squeeze(output, 0)
-        print(output.shape)
-        imsave('output.jpg', output)
+        imsave(filename, output)
 
 
 def imsave(path, img):
