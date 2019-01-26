@@ -173,7 +173,8 @@ def train():
 
 def sample(filename='output.jpg'):
     with tf.Graph().as_default():
-        fake = generator_net(tf.constant(fixed_noise), False, opts)
+        # set training True for good quality image
+        fake = generator_net(tf.constant(fixed_noise), True, opts)
         checkpoint_path = opts.sample_checkpoint_path
         if tf.gfile.IsDirectory(checkpoint_path):
             checkpoint_path = tf.train.latest_checkpoint(checkpoint_path)
