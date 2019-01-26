@@ -10,6 +10,7 @@ import tensorflow as tf
 from utils import conv, leaky_relu
 
 
+# No batch normalization
 def discriminator_net(x, training, opts, name='Discriminator'):
     with tf.variable_scope(name, reuse=tf.AUTO_REUSE):
         sz = opts.img_size // 16
