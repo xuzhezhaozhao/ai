@@ -5,7 +5,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from PIL import Image
 import tensorflow as tf
+import numpy as np
 
 
 def conv(x, filters, kernel_size, stride, padding='same', name='conv'):
@@ -37,3 +39,8 @@ def relu(x):
 def leaky_relu(x, alpha):
     y = tf.nn.leaky_relu(x, alpha)
     return y
+
+
+def imsave(path, img):
+    img = np.clip(img, 0, 255).astype(np.uint8)
+    Image.fromarray(img).save(path, quality=95)

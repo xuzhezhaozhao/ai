@@ -59,7 +59,6 @@ params=(\
 [save_output_steps]=500
 # optimize
 [learning_rate]=0.00005
-[opt_epsilon]=1e-8
 [Diters]=5
 [img_size]=32
 [nz]=100

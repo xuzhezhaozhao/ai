@@ -5,7 +5,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from PIL import Image
 import os
 import time
 import tensorflow as tf
@@ -13,6 +12,7 @@ import numpy as np
 
 from generator_net import generator_net
 from discriminator_net import discriminator_net
+import utils
 import input_data
 
 tf.app.flags.DEFINE_string('model_dir', 'model_dir', '')
@@ -37,8 +37,6 @@ tf.app.flags.DEFINE_integer('log_step_count_steps', 100, '')
 tf.app.flags.DEFINE_integer('save_output_steps', 500, '')
 
 tf.app.flags.DEFINE_float('learning_rate', 0.0002, 'learning rate')
-tf.app.flags.DEFINE_float('opt_epsilon', 1e-8, '')
-
 tf.app.flags.DEFINE_integer('Diters', 5, '')
 tf.app.flags.DEFINE_integer('img_size', 64, '')
 tf.app.flags.DEFINE_integer('nz', 100, 'latent vector size')
@@ -103,20 +101,23 @@ def build(x):
             train_op_D = optimizerD.minimize(errD, var_list=d_vars)
         train_op_G = optimizerG.minimize(errG, var_list=g_vars)
 
+    # add summary
     tf.summary.scalar('errD', errD)
     tf.summary.scalar('errG', errG)
     tf.summary.scalar('errD_fake', errD_fake)
     tf.summary.scalar('errD_real', errD_real)
 
-    tf.summary.histogram('input', x)
-    tf.summary.image('input_img', tf.cast(tf.clip_by_value(
-        input_data.invert_norm(x), 0, 255), tf.uint8))
-
-    tf.summary.histogram('fake', fake)
-    tf.summary.image('fake_img', tf.cast(tf.clip_by_value(
-        input_data.invert_norm(fake), 0, 255), tf.uint8))
+    add_summary_img('input', x)
+    add_summary_img('fake', fake)
+    tf.summary.histogram('input_h', x)
+    tf.summary.histogram('fake_h', fake)
 
     return train_op_D, train_op_G, errD, errG, errD_real, errD_fake
+
+
+def add_summary_img(name, img):
+    tf.summary.image(name, tf.cast(tf.clip_by_value(
+        input_data.invert_norm(img), 0, 255), tf.uint8))
 
 
 def train():
@@ -140,7 +141,7 @@ def train():
         start = time.time()
         for step in xrange(opts.max_train_steps):
             Diters = opts.Diters
-            if step < 25 or step % 500:
+            if step < 25 or step % 500 == 0:
                 Diters = 100
             for _ in range(Diters):
                 sess.run(train_op_D)
@@ -184,12 +185,7 @@ def sample(filename='output.jpg'):
             output = np.squeeze(output, 0)
             if opts.nc == 1:
                 output = np.squeeze(output, -1)
-            imsave(filename, output)
-
-
-def imsave(path, img):
-    img = np.clip(img, 0, 255).astype(np.uint8)
-    Image.fromarray(img).save(path, quality=95)
+            utils.imsave(filename, output)
 
 
 def main(_):
