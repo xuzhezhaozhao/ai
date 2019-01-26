@@ -78,12 +78,12 @@ def data_iterator():
 def build(x):
     # (1) Update D network
     # train with real
-    errD_real = tf.reduce_mean(discriminator_net(x, True, opts))
+    errD_real = -tf.reduce_mean(discriminator_net(x, True, opts))
 
     # train with fake
     noise = tf.random.uniform([opts.batch_size, 1, 1, opts.nz], -1.0, 1.0)
     fake = generator_net(noise, True, opts)
-    errD_fake = -tf.reduce_mean(discriminator_net(fake, True, opts))
+    errD_fake = tf.reduce_mean(discriminator_net(fake, True, opts))
 
     # add gradients penaty
     alpha = tf.random_uniform(shape=[opts.batch_size, 1, 1, 1])
