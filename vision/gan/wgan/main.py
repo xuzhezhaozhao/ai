@@ -85,9 +85,7 @@ def build(x):
     optimizerD = tf.train.RMSPropOptimizer(learning_rate=opts.learning_rate)
 
     # (2) Update G network
-    noise = tf.random.uniform([opts.batch_size, 1, 1, opts.nz], -1.0, 1.0)
-    fake = generator_net(noise, True, opts)
-    errG = tf.reduce_mean(discriminator_net(fake, True, opts))
+    errG = -errD_fake
     optimizerG = tf.train.RMSPropOptimizer(learning_rate=opts.learning_rate)
 
     t_vars = tf.trainable_variables()
@@ -140,13 +138,6 @@ def train():
 
         start = time.time()
         for step in xrange(opts.max_train_steps):
-            Diters = opts.Diters
-            if step < 25 or step % 500 == 0:
-                Diters = 100
-            for _ in range(Diters):
-                sess.run(train_op_D)
-            sess.run(train_op_G)
-
             if step % opts.log_step_count_steps == 0:
                 e1, e2, e3, e4 = sess.run([errD, errG, errD_real, errD_fake])
                 tf.logging.info(
@@ -154,6 +145,13 @@ def train():
                     ", errD_fake = {:.5f}, elapsed {:.2f} s"
                     .format(step, e1, e2, e3, e4, time.time() - start))
                 start = time.time()
+
+            Diters = opts.Diters
+            if step < 25 or step % 500 == 0:
+                Diters = 100
+            for _ in range(Diters):
+                sess.run(train_op_D)
+            sess.run(train_op_G)
 
             if step % opts.save_summary_steps == 0:
                 summary = sess.run(merged_summary)
