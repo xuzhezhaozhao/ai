@@ -11,6 +11,7 @@ from utils import conv, leaky_relu
 
 
 # No batch normalization
+# discriminator and Q share all convolutional layers
 def discriminator_net(x, training, opts, name='Discriminator'):
     with tf.variable_scope(name, reuse=tf.AUTO_REUSE):
         sz = opts.img_size // 16
@@ -37,9 +38,9 @@ def discriminator_net(x, training, opts, name='Discriminator'):
         logits = conv(y, 1, sz, 1, 'valid', 'conv5')
         logits = tf.reshape(y, (-1, 1))
 
-    with tf.variable_scope('MutualInfo', reuse=tf.AUTO_REUSE):
+    with tf.variable_scope('QNet', reuse=tf.AUTO_REUSE):
         # Q output
         dim = opts.num_categorical + opts.num_continuous
         q = tf.layers.dense(flatten, dim)
 
-        return logits, q
+    return logits, q

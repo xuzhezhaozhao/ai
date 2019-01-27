@@ -55,7 +55,6 @@ opts = tf.app.flags.FLAGS
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '0'
 
 
-
 def data_iterator():
     input_fn = input_data.build_train_input_fn(opts, opts.train_data_path)
     dataset = input_fn()
@@ -67,12 +66,11 @@ def build(x):
     # generate imcompression noise and latent code
     inoise = tf.random.uniform([opts.batch_size, opts.nz], -1.0, 1.0)
 
-    categorical_code = tf.random_uniform(
-        (opts.batch_size, 1), minval=0, maxval=opts.num_categorical,
-        dtype=tf.int32)
+    categorical_code = tf.random_uniform((opts.batch_size, 1),
+                                         0, opts.num_categorical,
+                                         dtype=tf.int32)
     categorical_code = tf.one_hot(categorical_code, opts.num_categorical)
     categorical_code = tf.reshape(categorical_code, (opts.batch_size, -1))
-
     continuous_code = tf.random.normal((opts.batch_size, opts.num_continuous))
 
     # TODO add continuous_code
@@ -113,15 +111,14 @@ def build(x):
 
     # (3) Mutual information maximization
     # categorical loss
-    prob_categorical = tf.nn.softmax(q[:, :opts.num_categorical])
-    err_categorical = tf.reduce_mean(tf.reduce_sum(
-        prob_categorical*categorical_code, axis=1))
+    err_categorical = tf.losses.softmax_cross_entropy(
+        categorical_code, q[:, :opts.num_categorical])
 
     # continuous loss
     # TODO
 
-    errI = err_categorical
-    optimizerI = tf.train.AdamOptimizer(
+    errQ = err_categorical
+    optimizerQ = tf.train.AdamOptimizer(
         learning_rate=opts.learning_rate,
         beta1=opts.adam_beta1,
         beta2=opts.adam_beta2)
@@ -129,16 +126,18 @@ def build(x):
     t_vars = tf.trainable_variables()
     d_vars = [var for var in t_vars if 'Discriminator' in var.name]
     g_vars = [var for var in t_vars if 'Generator' in var.name]
+    q_vars = [var for var in t_vars if 'QNet' in var.name]
+
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
         train_op_D = optimizerD.minimize(errD, var_list=d_vars)
         train_op_G = optimizerG.minimize(errG, var_list=g_vars)
-        train_op_I = optimizerI.minimize(errI, var_list=t_vars)
+        train_op_Q = optimizerQ.minimize(errQ, var_list=q_vars + g_vars)
 
     # add summary
     tf.summary.scalar('errD', errD)
     tf.summary.scalar('errG', errG)
-    tf.summary.scalar('errI', errI)
+    tf.summary.scalar('errQ', errQ)
     tf.summary.scalar('errD_fake', errD_fake)
     tf.summary.scalar('errD_real', errD_real)
     tf.summary.scalar('gradient_penalty', gradient_penalty)
@@ -149,7 +148,7 @@ def build(x):
     tf.summary.histogram('input_h', x)
     tf.summary.histogram('fake_h', fake)
 
-    return train_op_D, train_op_G, train_op_I, errD, errG, errI
+    return train_op_D, train_op_G, train_op_Q, errD, errG, errQ
 
 
 def add_summary_img(name, img):
@@ -160,7 +159,7 @@ def add_summary_img(name, img):
 def train():
     iterator = data_iterator()
     x = iterator.get_next()['data']
-    (train_op_D, train_op_G, train_op_I, errD, errG, errI) = build(x)
+    (train_op_D, train_op_G, train_op_Q, errD, errG, errQ) = build(x)
 
     merged_summary = tf.summary.merge_all()
     summary_writer = tf.summary.FileWriter(opts.model_dir)
@@ -178,20 +177,20 @@ def train():
         start = time.time()
         for step in xrange(opts.max_train_steps):
             if step % opts.log_step_count_steps == 0:
-                e1, e2, e3 = sess.run([errD, errG, errI])
+                e1, e2, e3 = sess.run([errD, errG, errQ])
                 tf.logging.info(
-                    "step {}, errD = {:.5f}, errG = {:.5f}, errI = {:.5f}, "
+                    "step {}, errD = {:.5f}, errG = {:.5f}, errQ = {:.5f}, "
                     "elapsed {:.2f} s"
                     .format(step, e1, e2, e3, time.time() - start))
                 start = time.time()
 
             Diters = opts.Diters
-            # if step < 25 or step % 500 == 0:
-                # Diters = 100
+            if step < 25 or step % 500 == 0:
+                Diters = 100
             for _ in range(Diters):
                 sess.run(train_op_D)
             sess.run(train_op_G)
-            sess.run(train_op_I)
+            sess.run(train_op_Q)
 
             if step % opts.save_summary_steps == 0:
                 summary = sess.run(merged_summary)
