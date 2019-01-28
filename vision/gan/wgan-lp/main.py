@@ -78,7 +78,7 @@ def build(x):
                              [interpolates])[0]
     gradients = tf.reshape(gradients, [opts.batch_size, -1])
     slopes = tf.sqrt(tf.reduce_sum(tf.square(gradients), axis=1))
-    gradient_penalty = tf.reduce_mean(tf.maximum(0, slopes - 1.)**2)
+    gradient_penalty = tf.reduce_mean(tf.maximum(0., slopes - 1.)**2)
     errD = errD_real + errD_fake + opts.lp_lambda * gradient_penalty
     optimizerD = tf.train.AdamOptimizer(
         learning_rate=opts.learning_rate,
