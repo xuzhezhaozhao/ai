@@ -49,6 +49,8 @@ tf.app.flags.DEFINE_integer('nc', 3, 'image channels')
 
 tf.app.flags.DEFINE_integer('num_categorical', 10, '')
 tf.app.flags.DEFINE_integer('num_continuous', 2, '')
+tf.app.flags.DEFINE_float('categorical_weight', 1.0, '')
+tf.app.flags.DEFINE_float('continuous_weight', 1.0, '')
 
 
 opts = tf.app.flags.FLAGS
@@ -73,8 +75,7 @@ def build(x):
     categorical_code = tf.reshape(categorical_code, (opts.batch_size, -1))
     continuous_code = tf.random.normal((opts.batch_size, opts.num_continuous))
 
-    # TODO add continuous_code
-    noise = tf.concat([inoise, categorical_code], 1)
+    noise = tf.concat([inoise, categorical_code, continuous_code], 1)
     noise = tf.reshape(noise, (opts.batch_size, 1, 1, -1))
     tf.logging.info('noise: {}'.format(noise))
 
@@ -109,15 +110,17 @@ def build(x):
         beta1=opts.adam_beta1,
         beta2=opts.adam_beta2)
 
-    # (3) Mutual information maximization
+    # (3) Update Q network
     # categorical loss
     err_categorical = tf.losses.softmax_cross_entropy(
         categorical_code, q[:, :opts.num_categorical])
 
     # continuous loss
-    # TODO
+    err_continuous = tf.losses.mean_squared_error(
+        labels=continuous_code, predictions=q[:, opts.num_categorical:])
 
-    errQ = err_categorical
+    errQ = opts.categorical_weight * err_categorical + \
+        opts.continuous_weight * err_continuous
     optimizerQ = tf.train.AdamOptimizer(
         learning_rate=opts.learning_rate,
         beta1=opts.adam_beta1,
@@ -142,6 +145,7 @@ def build(x):
     tf.summary.scalar('errD_real', errD_real)
     tf.summary.scalar('gradient_penalty', gradient_penalty)
     tf.summary.scalar('err_categorical', err_categorical)
+    tf.summary.scalar('err_continuous', err_continuous)
 
     add_summary_img('input', x)
     add_summary_img('fake', fake)
@@ -209,15 +213,15 @@ def train():
 
 def sample(filename='output.jpg'):
     with tf.Graph().as_default():
-        inoise = tf.random.uniform([1, opts.nz], -1.0, 1.0)
-        categorical_code = tf.constant([[0]])
+        batch_size = 12
+        inoise = tf.random.uniform([batch_size, opts.nz], -1.0, 1.0)
+        categorical_code = tf.fill((batch_size, 1), 0)
         categorical_code = tf.one_hot(categorical_code, opts.num_categorical)
-        categorical_code = tf.reshape(categorical_code, (1, -1))
-
-        # TODO add continuous_code
-        noise = tf.concat([inoise, categorical_code], 1)
-        noise = tf.reshape(noise, (1, 1, 1, -1))
-
+        categorical_code = tf.reshape(categorical_code, (batch_size, -1))
+        continuous_code = tf.random.normal((batch_size, opts.num_continuous))
+        noise = tf.concat([inoise, categorical_code, continuous_code], 1)
+        noise = tf.reshape(noise, (batch_size, 1, 1, -1))
+        print(noise)
         # set training True for good quality image
         fake = generator_net(noise, True, opts)
         checkpoint_path = opts.sample_checkpoint_path
@@ -228,10 +232,10 @@ def sample(filename='output.jpg'):
             saver.restore(sess, checkpoint_path)
             output = sess.run(fake)
             output = input_data.invert_norm(output)
-            output = np.squeeze(output, 0)
-            if opts.nc == 1:
-                output = np.squeeze(output, -1)
-            utils.imsave(filename, output)
+            for idx, img in enumerate(output):
+                if opts.nc == 1:
+                    img = np.squeeze(img, -1)
+                utils.imsave(str(idx + 1) + '_' + filename, img)
 
 
 def main(_):
