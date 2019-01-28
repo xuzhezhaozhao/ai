@@ -69,9 +69,9 @@ params=(\
 [ndf]=64
 [nc]=1
 [num_categorical]=10
-[num_continuous]=0
+[num_continuous]=10
 [categorical_weight]=1.0
-[continuous_weight]=1.0
+[continuous_weight]=0.5
 )
 
 params_str=''

@@ -215,7 +215,7 @@ def sample(filename='output.jpg'):
     with tf.Graph().as_default():
         batch_size = 12
         inoise = tf.random.uniform([batch_size, opts.nz], -1.0, 1.0)
-        categorical_code = tf.fill((batch_size, 1), 0)
+        categorical_code = tf.fill((batch_size, 1), 1)
         categorical_code = tf.one_hot(categorical_code, opts.num_categorical)
         categorical_code = tf.reshape(categorical_code, (batch_size, -1))
         continuous_code = tf.random.normal((batch_size, opts.num_continuous))
