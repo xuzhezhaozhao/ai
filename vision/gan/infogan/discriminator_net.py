@@ -36,7 +36,7 @@ def discriminator_net(x, training, opts, name='Discriminator'):
 
         # discriminator output
         logits = conv(y, 1, sz, 1, 'valid', 'conv5')
-        logits = tf.reshape(y, (-1, 1))
+        logits = tf.reshape(logits, (-1, 1))
 
     with tf.variable_scope('QNet', reuse=tf.AUTO_REUSE):
         # Q output
