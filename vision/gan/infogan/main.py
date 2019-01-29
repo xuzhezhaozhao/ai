@@ -215,7 +215,7 @@ def sample(filename='output.jpg'):
     with tf.Graph().as_default():
         batch_size = 12
         inoise = tf.random.uniform([batch_size, opts.nz], -1.0, 1.0)
-        categorical_code = tf.fill((batch_size, 1), 1)
+        categorical_code = tf.fill((batch_size, 1), 9)
         categorical_code = tf.one_hot(categorical_code, opts.num_categorical)
         categorical_code = tf.reshape(categorical_code, (batch_size, -1))
         continuous_code = tf.random.normal((batch_size, opts.num_continuous))
@@ -223,7 +223,7 @@ def sample(filename='output.jpg'):
         noise = tf.reshape(noise, (batch_size, 1, 1, -1))
         print(noise)
         # set training True for good quality image
-        fake = generator_net(noise, True, opts)
+        fake = generator_net(noise, False, opts)
         checkpoint_path = opts.sample_checkpoint_path
         if tf.gfile.IsDirectory(checkpoint_path):
             checkpoint_path = tf.train.latest_checkpoint(checkpoint_path)
