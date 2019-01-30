@@ -56,10 +56,10 @@ int main(int argc, char *argv[]) {
   }
   ifs.close();
   assert(data.size() == ntotal * dim);
-  int k = 100;
+  int k = 3000;
   std::vector<float> centroids(k * dim);
   faiss::kmeans_clustering(dim, ntotal, k, data.data(), centroids.data(), 100,
-                           2000, 100, 5, true);
+                           800, 100, 1, true);
   std::vector<faiss::Index::idx_t> assign(ntotal);
   std::vector<float> dis(ntotal);
   faiss::IndexFlatL2 index(dim);
