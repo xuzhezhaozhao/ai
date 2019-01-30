@@ -11,6 +11,7 @@
 #ifndef FAISS_ASSERT_INCLUDED
 #define FAISS_ASSERT_INCLUDED
 
+#include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
