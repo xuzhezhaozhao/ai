@@ -9,8 +9,7 @@
 TESTS_SRC = $(wildcard *.cpp)
 TESTS     = $(TESTS_SRC:.cpp=.o)
 
-LIBS += -lclustering
-LDFLAGS += -L..
+LIBS += -L.. -lclustering
 
 all: test_mini test_clustering
 
@@ -25,5 +24,6 @@ test_clustering: test_clustering.o
 
 clean:
 	rm -f *.o
+	rm test_mini test_clustering
 
 .PHONY: all clean
