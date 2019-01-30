@@ -12,12 +12,15 @@ TESTS     = $(TESTS_SRC:.cpp=.o)
 LIBS += -lclustering
 LDFLAGS += -L..
 
-all: test_mini
+all: test_mini test_clustering
 
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CPUFLAGS) -c -o $@ $<
 
 test_mini: test_mini.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CPUFLAGS) $< -o $@ $(LDFLAGS) $(LIBS)
+
+test_clustering: test_clustering.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CPUFLAGS) $< -o $@ $(LDFLAGS) $(LIBS)
 
 clean:
