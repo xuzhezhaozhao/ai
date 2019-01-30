@@ -25,6 +25,7 @@ static std::vector<std::string> split(const std::string &s, char sep = ' ') {
 int main(int argc, char *argv[]) {
   if (argc < 3) {
     std::cout << "Usage: <vec> <output>" << std::endl;
+    std::cout << "Note: <vec> file is fasttext vector format." << std::endl;
     exit(-1);
   }
   std::string filename = argv[1];
@@ -58,7 +59,7 @@ int main(int argc, char *argv[]) {
   int k = 100;
   std::vector<float> centroids(k * dim);
   faiss::kmeans_clustering(dim, ntotal, k, data.data(), centroids.data(), 100,
-                           5000, 25, 1, true);
+                           2000, 100, 5, true);
   std::vector<faiss::Index::idx_t> assign(ntotal);
   std::vector<float> dis(ntotal);
   faiss::IndexFlatL2 index(dim);
