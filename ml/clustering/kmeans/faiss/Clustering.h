@@ -84,7 +84,9 @@ struct Clustering : ClusteringParameters {
  * @return final quantization error
  */
 float kmeans_clustering(size_t d, size_t n, size_t k, const float *x,
-                        float *centroids);
+                        float *centroids, int min_points_per_centroid,
+                        int max_points_per_centroid, int niter, int nredo,
+                        bool verbose);
 }
 
 #endif

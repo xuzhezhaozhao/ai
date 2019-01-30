@@ -216,10 +216,16 @@ void Clustering::train(idx_t nx, const float *x_in, Index &index) {
 }
 
 float kmeans_clustering(size_t d, size_t n, size_t k, const float *x,
-                        float *centroids) {
-  Clustering clus(d, k);
-  clus.verbose = d * n * k > (1L << 30);
-  // display logs if > 1Gflop per iteration
+                        float *centroids, int min_points_per_centroid,
+                        int max_points_per_centroid, int iter, int nredo,
+                        bool verbose) {
+  ClusteringParameters cp;
+  cp.min_points_per_centroid = min_points_per_centroid;
+  cp.max_points_per_centroid = max_points_per_centroid;
+  cp.niter = iter;
+  cp.nredo = nredo;
+  cp.verbose = verbose;
+  Clustering clus(d, k, cp);
   IndexFlatL2 index(d);
   clus.train(n, x, index);
   memcpy(centroids, clus.centroids.data(), sizeof(*centroids) * d * k);
