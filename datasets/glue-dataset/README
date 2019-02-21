@@ -1,0 +1,10 @@
+download script: https://gist.github.com/W4ngatang/60c2bdb54d156a41194446737ce03e2e
+
+run with (python3)
+$ python download_glue_data.py --data_dir glue_data --tasks all
+
+backup: 链接: https://pan.baidu.com/s/1pl6RHwhgcSzvTOEqV9oz1Q 提取码: kfh5
+
+
+structure:
+glue_data/
