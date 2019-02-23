@@ -31,6 +31,9 @@ flags = tf.flags
 
 FLAGS = flags.FLAGS
 
+# fix "_csv.Error: field larger than field limit (131072)"
+csv.field_size_limit(100000000)
+
 # Required parameters
 flags.DEFINE_string(
     "data_dir", None,
