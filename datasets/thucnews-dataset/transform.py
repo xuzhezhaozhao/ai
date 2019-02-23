@@ -52,17 +52,17 @@ if __name__ == "__main__":
             for txt in txts:
                 txt_path = os.path.join(input_dir, label, txt)
                 with open(txt_path) as f:
-                    raw = unicode(f.read().replace('\r\n', ' ').replace(
-                        '\r', ' ').replace('\n', ' '), 'utf-8')
+                    raw = unicode(f.read().replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').replace('\t', ' '),
+                                  'utf-8')
                     content = ' '.join(zh.findall(raw.lower()))
                     raw_words = jieba.cut(content, cut_all=False)
                     words = [word for word in raw_words
                              if word not in stop_words]
-                    ftokens.write('__label__' + label + ' ')
+                    ftokens.write('__label__' + label + '\t')
                     for word in words:
                         ftokens.write(word.encode('utf-8') + ' ')
                     ftokens.write('\n')
 
-                    fraw.write('__label__' + label + ' ')
+                    fraw.write('__label__' + label + '\t')
                     fraw.write(raw.encode('utf-8'))
                     fraw.write('\n')

@@ -5,8 +5,7 @@ set -e
 MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
-rm -rf data
-mkdir data
+mkdir -p data
 mkdir -p data/fasttext
 mkdir -p data/char-cnn
 python transform.py ./thucnews data/thucnews_tokens.txt data/thucnews.txt
