@@ -10,3 +10,7 @@ Second sequence is optinonal. Only must be specified for sequence pair tasks.
 
 Additionaly, you should contain a label file named label.txt in the data dir,
 one line for one label name.
+
+
+Just run as follows
+$ ./oh_my_so

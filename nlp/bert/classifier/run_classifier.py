@@ -54,6 +54,10 @@ flags.DEFINE_string(
     "output_dir", None,
     "The output directory where the model checkpoints will be written.")
 
+flags.DEFINE_string(
+    "output_tf_record_dir", None,
+    "The output directory where the tf record files will be written.")
+
 # Other parameters
 flags.DEFINE_string(
     "init_checkpoint", None,
@@ -784,6 +788,7 @@ def main(_):
             (FLAGS.max_seq_length, bert_config.max_position_embeddings))
 
     tf.gfile.MakeDirs(FLAGS.output_dir)
+    tf.gfile.MakeDirs(FLAGS.output_tf_record_dir)
 
     task_name = FLAGS.task_name.lower()
 
@@ -833,10 +838,11 @@ def main(_):
     estimator = tf.estimator.Estimator(**estimator_keys)
 
     if FLAGS.do_train:
-        train_file = os.path.join(FLAGS.output_dir, "train.tf_record")
-        file_based_convert_examples_to_features(
-            train_examples, label_list, FLAGS.max_seq_length, tokenizer,
-            train_file)
+        train_file = os.path.join(FLAGS.output_tf_record_dir, "train.tf_record")
+        if not tf.gfile.Exists(train_file):
+            file_based_convert_examples_to_features(
+                train_examples, label_list, FLAGS.max_seq_length, tokenizer,
+                train_file)
         tf.logging.info("***** Running training *****")
         tf.logging.info("  Num examples = %d", len(train_examples))
         tf.logging.info("  Batch size = %d", FLAGS.train_batch_size)
@@ -852,10 +858,11 @@ def main(_):
     if FLAGS.do_eval:
         eval_examples = processor.get_dev_examples()
         num_actual_eval_examples = len(eval_examples)
-        eval_file = os.path.join(FLAGS.output_dir, "eval.tf_record")
-        file_based_convert_examples_to_features(
-            eval_examples, label_list, FLAGS.max_seq_length, tokenizer,
-            eval_file)
+        eval_file = os.path.join(FLAGS.output_tf_record_dir, "eval.tf_record")
+        if not tf.gfile.Exists(eval_file):
+            file_based_convert_examples_to_features(
+                eval_examples, label_list, FLAGS.max_seq_length, tokenizer,
+                eval_file)
 
         tf.logging.info("***** Running evaluation *****")
         tf.logging.info("  Num examples = %d (%d actual, %d padding)",
@@ -870,7 +877,7 @@ def main(_):
             seq_length=FLAGS.max_seq_length,
             is_training=False,
             drop_remainder=False,
-            batch_size=eval_batch_size)
+            batch_size=FLAGS.eval_batch_size)
 
         result = estimator.evaluate(input_fn=eval_input_fn, steps=eval_steps)
 
@@ -884,10 +891,12 @@ def main(_):
     if FLAGS.do_predict:
         predict_examples = processor.get_test_examples()
         num_actual_predict_examples = len(predict_examples)
-        predict_file = os.path.join(FLAGS.output_dir, "predict.tf_record")
-        file_based_convert_examples_to_features(predict_examples, label_list,
-                                                FLAGS.max_seq_length, tokenizer,
-                                                predict_file)
+        predict_file = os.path.join(FLAGS.output_tf_record_dir,
+                                    "predict.tf_record")
+        if not tf.gfile.Exists(predict_file):
+            file_based_convert_examples_to_features(
+                predict_examples, label_list, FLAGS.max_seq_length, tokenizer,
+                predict_file)
 
         tf.logging.info("***** Running prediction*****")
         tf.logging.info("  Num examples = %d (%d actual, %d padding)",

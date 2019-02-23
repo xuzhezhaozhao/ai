@@ -52,5 +52,4 @@ mnist_convnet_model/
 fe_dir
 nbsvm_run
 datasets
-
-datasets/aclImdb_v1-dataset/aclImdb
+tf_record_dir/
