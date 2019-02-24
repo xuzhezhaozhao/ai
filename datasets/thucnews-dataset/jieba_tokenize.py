@@ -29,7 +29,9 @@ if __name__ == "__main__":
     jieba.load_userdict("./dict/jieba_dict.txt")
 
     with open(output_file, "w") as fout:
-        for line in open(input_file):
+        for idx, line in enumerate(open(input_file)):
+            if idx % 10000 == 0:
+                print("Processed {} lines ...".format(idx))
             line = unicode(line.strip(), 'utf-8')
             tokens = line.split('\t')
             assert(len(tokens) == 2)
