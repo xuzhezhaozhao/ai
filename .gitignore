@@ -51,5 +51,4 @@ nce_params_dir/
 mnist_convnet_model/
 fe_dir
 nbsvm_run
-datasets
 tf_record_dir/
