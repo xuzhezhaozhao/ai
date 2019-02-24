@@ -6,12 +6,13 @@ MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
 mkdir -p model
-#datadir=../../../datasets/kd_video_comments-dataset/data/fasttext
 datadir=../../../datasets/thucnews-dataset/data/fasttext
+train_data=${datadir}/train.tsv
+test_data=${datadir}/dev.tsv
 
 ../../../submodules/fastText/fasttext \
     supervised \
-    -input ${datadir}/train.txt \
+    -input ${train_data} \
     -output model/model \
     -dim 100 \
     -lr 0.025 \
@@ -25,18 +26,18 @@ echo 'train accuracy:'
 ../../../submodules/fastText/fasttext \
     test \
     model/model.bin \
-    ${datadir}/train.txt
+    ${train_data}
 
 echo 'test accuracy:'
 ../../../submodules/fastText/fasttext \
     test \
     model/model.bin \
-    ${datadir}/test.txt
+    ${test_data}
 
 ../../../submodules/fastText/fasttext \
     predict \
     model/model.bin \
-    ${datadir}/test.txt > preidct.txt
+    ${test_data} > preidct.txt
 
-python check_error.py preidct.txt ${datadir}/test.txt > error.txt
+python check_error.py preidct.txt ${test_data} > error.txt
 rm preidct.txt
