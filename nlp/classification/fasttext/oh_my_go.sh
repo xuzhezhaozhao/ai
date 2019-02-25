@@ -15,7 +15,7 @@ test_data=${datadir}/dev.tsv
     -input ${train_data} \
     -output model/model \
     -dim 100 \
-    -lr 0.025 \
+    -lr 0.100 \
     -wordNgrams 2 \
     -minCount 10 \
     -bucket 2000000 \
