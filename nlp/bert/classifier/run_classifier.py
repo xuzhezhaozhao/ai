@@ -109,6 +109,12 @@ flags.DEFINE_integer("keep_checkpoint_max", 3, "")
 
 flags.DEFINE_integer("log_step_count_steps", 10, "")
 
+flags.DEFINE_integer("ngpu", 0, "")
+flags.DEFINE_integer("buffer_size", 100, "")
+flags.DEFINE_integer("num_parallel_batches", 1, "")
+flags.DEFINE_integer("num_parallel_calls", 1, "")
+flags.DEFINE_integer("prefetch_size", 1, "")
+
 
 class InputExample(object):
     """A single training/test example for simple sequence classification."""
@@ -596,14 +602,19 @@ def file_based_input_fn_builder(input_file, seq_length, is_training,
         # For eval, we want no shuffling and parallel reading doesn't matter.
         d = tf.data.TFRecordDataset(input_file)
         if is_training:
-            d = d.repeat()
-            d = d.shuffle(buffer_size=100)
+            d = d.apply(
+                tf.contrib.data.shuffle_and_repeat(
+                    buffer_size=FLAGS.buffer_size))
 
         d = d.apply(
-            tf.data.experimental.map_and_batch(
+            tf.contrib.data.map_and_batch(
                 lambda record: _decode_record(record, name_to_features),
                 batch_size=batch_size,
+                num_parallel_batches=FLAGS.num_parallel_batches,
+                num_parallel_calls=FLAGS.num_parallel_calls,
                 drop_remainder=drop_remainder))
+
+        d = d.prefetch(FLAGS.prefetch_size)
 
         return d
 
@@ -810,6 +821,12 @@ def main(_):
     config_keys['keep_checkpoint_max'] = FLAGS.keep_checkpoint_max
     config_keys['keep_checkpoint_every_n_hours'] = 10000
     config_keys['log_step_count_steps'] = FLAGS.log_step_count_steps
+
+    if FLAGS.ngpu > 1:
+        distribution = tf.contrib.distribute.MirroredStrategy(
+            num_gpus=FLAGS.ngpu)
+        config_keys['train_distribute'] = distribution
+
     run_config = tf.estimator.RunConfig(**config_keys)
 
     train_examples = None

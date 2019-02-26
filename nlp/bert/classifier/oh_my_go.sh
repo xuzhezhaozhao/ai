@@ -31,8 +31,13 @@ python run_classifier.py \
   --predict_batch_size=4 \
   --learning_rate=2e-5 \
   --num_train_epochs=3.0 \
-  --warmup_proportion 0.1 \
-  --save_checkpoints_steps 1000 \
-  --save_summary_steps 10 \
-  --keep_checkpoint_max 3 \
-  --log_step_count_steps 1
+  --warmup_proportion=0.1 \
+  --save_checkpoints_steps=1000 \
+  --save_summary_steps=10 \
+  --keep_checkpoint_max=3 \
+  --log_step_count_steps=1 \
+  --ngpu=0 \
+  --buffer_size=100 \
+  --num_parallel_batches=4 \
+  --num_parallel_calls=4 \
+  --prefetch_size=1
