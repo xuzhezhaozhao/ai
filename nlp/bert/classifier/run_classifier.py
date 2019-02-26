@@ -25,6 +25,7 @@ import tensorflow as tf
 
 from bert import modeling
 from bert import optimization
+from bert import optimization_gpu
 from bert import tokenization
 
 flags = tf.flags
@@ -111,7 +112,6 @@ flags.DEFINE_integer("log_step_count_steps", 10, "")
 
 flags.DEFINE_integer("ngpu", 0, "")
 flags.DEFINE_integer("buffer_size", 100, "")
-flags.DEFINE_integer("num_parallel_batches", 1, "")
 flags.DEFINE_integer("num_parallel_calls", 1, "")
 flags.DEFINE_integer("prefetch_size", 1, "")
 
@@ -603,14 +603,13 @@ def file_based_input_fn_builder(input_file, seq_length, is_training,
         d = tf.data.TFRecordDataset(input_file)
         if is_training:
             d = d.apply(
-                tf.contrib.data.shuffle_and_repeat(
+                tf.data.experimental.shuffle_and_repeat(
                     buffer_size=FLAGS.buffer_size))
 
         d = d.apply(
-            tf.contrib.data.map_and_batch(
+            tf.data.experimental.map_and_batch(
                 lambda record: _decode_record(record, name_to_features),
                 batch_size=batch_size,
-                num_parallel_batches=FLAGS.num_parallel_batches,
                 num_parallel_calls=FLAGS.num_parallel_calls,
                 drop_remainder=drop_remainder))
 
@@ -733,9 +732,14 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
         output_spec = None
         if mode == tf.estimator.ModeKeys.TRAIN:
 
-            train_op = optimization.create_optimizer(
-                total_loss, learning_rate, num_train_steps,
-                num_warmup_steps, False)
+            if FLAGS.ngpu > 0:
+                train_op = optimization_gpu.create_optimizer(
+                    total_loss, learning_rate, num_train_steps,
+                    num_warmup_steps, False)
+            else:
+                train_op = optimization.create_optimizer(
+                    total_loss, learning_rate, num_train_steps,
+                    num_warmup_steps, False)
 
             output_spec = tf.estimator.EstimatorSpec(
                 mode=mode,

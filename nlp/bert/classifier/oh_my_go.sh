@@ -38,6 +38,5 @@ python run_classifier.py \
   --log_step_count_steps=1 \
   --ngpu=0 \
   --buffer_size=100 \
-  --num_parallel_batches=4 \
   --num_parallel_calls=4 \
   --prefetch_size=1

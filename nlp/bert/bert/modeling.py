@@ -334,7 +334,9 @@ def get_assignment_map_from_checkpoint(tvars, init_checkpoint):
     (name, var) = (x[0], x[1])
     if name not in name_to_variable:
       continue
-    assignment_map[name] = name
+    # fix MirroredStrategy error, see https://github.com/tensorflow/tensorflow/issues/23986
+    # assignment_map[name] = name
+    assignment_map[name]=name_to_variable[name]
     initialized_variable_names[name] = 1
     initialized_variable_names[name + ":0"] = 1
 
