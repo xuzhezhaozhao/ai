@@ -1,0 +1,3 @@
+
+fasttext: 95.2%
+BERT base: 97.3%
