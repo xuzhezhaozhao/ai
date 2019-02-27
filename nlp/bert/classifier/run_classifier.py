@@ -27,6 +27,7 @@ from bert import modeling
 from bert import optimization
 from bert import optimization_gpu
 from bert import tokenization
+from ckpt_restore_hook import RestoreCheckpointHook
 
 flags = tf.flags
 
@@ -713,26 +714,26 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
             bert_config, is_training, input_ids, input_mask, segment_ids,
             label_ids, num_labels, use_one_hot_embeddings)
 
-        tvars = tf.trainable_variables()
-        initialized_variable_names = {}
-        if init_checkpoint:
-            (assignment_map, initialized_variable_names
-             ) = modeling.get_assignment_map_from_checkpoint(tvars,
-                                                             init_checkpoint)
-            tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
+        # tvars = tf.trainable_variables()
+        # initialized_variable_names = {}
+        # if init_checkpoint:
+            # (assignment_map, initialized_variable_names
+             # ) = modeling.get_assignment_map_from_checkpoint(tvars,
+                                                             # init_checkpoint)
+            # tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
 
-        tf.logging.info("**** Trainable Variables ****")
-        for var in tvars:
-            init_string = ""
-            if var.name in initialized_variable_names:
-                init_string = ", *INIT_FROM_CKPT*"
-            tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape,
-                            init_string)
+        # tf.logging.info("**** Trainable Variables ****")
+        # for var in tvars:
+            # init_string = ""
+            # if var.name in initialized_variable_names:
+                # init_string = ", *INIT_FROM_CKPT*"
+            # tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape,
+                            # init_string)
 
         output_spec = None
         if mode == tf.estimator.ModeKeys.TRAIN:
 
-            if FLAGS.ngpu > 0:
+            if FLAGS.ngpu > 1:
                 train_op = optimization_gpu.create_optimizer(
                     total_loss, learning_rate, num_train_steps,
                     num_warmup_steps, False)
@@ -873,7 +874,10 @@ def main(_):
             is_training=True,
             drop_remainder=True,
             batch_size=FLAGS.train_batch_size)
-        estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
+        restore_hook = RestoreCheckpointHook(FLAGS.init_checkpoint)
+        estimator.train(input_fn=train_input_fn,
+                        max_steps=num_train_steps,
+                        hooks=[restore_hook])
 
     if FLAGS.do_eval:
         eval_examples = processor.get_dev_examples()

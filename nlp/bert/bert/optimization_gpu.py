@@ -1,7 +1,8 @@
 
-"""copied from: https://github.com/JayYip/bert-multitask-learning/blob/master/src/optimizer.py"""
-
-"""Functions and classes related to optimization (weight updates)."""
+"""
+Functions and classes related to optimization (weight updates).
+copied from: https://github.com/JayYip/bert-multitask-learning/blob/master/src/optimizer.py
+"""
 
 from __future__ import absolute_import
 from __future__ import division
