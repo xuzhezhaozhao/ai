@@ -82,7 +82,9 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu):
 
 
 class AdamWeightDecayOptimizer(optimizer.Optimizer):
-    """A basic Adam optimizer that includes "correct" L2 weight decay."""
+    """A basic Adam optimizer that includes "correct" L2 weight decay.
+    Modified for multi-gpu training.
+    """
 
     def __init__(self,
                  learning_rate,

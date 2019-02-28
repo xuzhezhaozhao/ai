@@ -6,16 +6,21 @@
 
 -include ./makefile.inc
 
+LIBS += -L. -lclustering
+
 SRC = $(wildcard *.cpp)
 OBJ = $(SRC:.cpp=.o)
 
-all: libclustering.a
+all: libclustering.a do_kmeans
 
 libclustering.a: $(OBJ)
 	ar r $@ $^
 
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CPUFLAGS) -c -o $@ $<
+
+do_kmeans: do_kmeans.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CPUFLAGS) $< -o $@ $(LDFLAGS) $(LIBS)
 
 clean:
 	rm -f libclustering.*

@@ -25,7 +25,7 @@ import tensorflow as tf
 
 from bert import modeling
 from bert import optimization
-from bert import optimization_gpu
+from bert import optimization_multi_gpu
 from bert import tokenization
 from ckpt_restore_hook import RestoreCheckpointHook
 
@@ -734,7 +734,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
         if mode == tf.estimator.ModeKeys.TRAIN:
 
             if FLAGS.ngpu > 1:
-                train_op = optimization_gpu.create_optimizer(
+                train_op = optimization_multi_gpu.create_optimizer(
                     total_loss, learning_rate, num_train_steps,
                     num_warmup_steps, False)
             else:
