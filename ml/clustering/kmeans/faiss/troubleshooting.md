@@ -11,7 +11,7 @@
 
 
 ## 使用 openblas 时的性能优化
-执行 export OMP_WAIT_POLICY=PASSIVE, 速度提高 2 倍
+执行 export OMP_WAIT_POLICY=PASSIVE, 速度提高 2~5 倍
 原因是 omp 和 openblas 多线程机制有冲突
 参考：
 https://github.com/facebookresearch/faiss/wiki/Troubleshooting
