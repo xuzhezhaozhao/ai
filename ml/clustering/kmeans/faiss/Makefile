@@ -25,6 +25,7 @@ do_kmeans: do_kmeans.o
 clean:
 	rm -f libclustering.*
 	rm -f $(OBJ)
+	rm -rf do_kmeans
 
 
 .PHONY: all clean run
