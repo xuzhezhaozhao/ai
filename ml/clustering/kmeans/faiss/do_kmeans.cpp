@@ -158,6 +158,8 @@ void load_input_vectors(const std::string &input, std::vector<float> &data,
 
 int main(int argc, char *argv[]) {
   Args args = parse_args(argc, argv);
+
+  // load input vectors
   std::vector<float> data;
   std::vector<std::string> keys;
   int64_t ntotal, dim;
@@ -178,5 +180,28 @@ int main(int argc, char *argv[]) {
   std::cerr << "kmeans error = " << error << std::endl;
   std::cerr << "kmeans done" << std::endl;
 
+  // output
+  std::ofstream ofs(args.output);
+  if (!ofs.is_open()) {
+    std::cerr << "Open file '" << args.output << "' failed." << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  std::string head = "key centroid distance\n";
+  ofs.write(head.data(), head.size());
+  for (int64_t i = 0; i < ntotal; ++i) {
+    // write key
+    ofs.write(keys[i].data(), keys[i].size());
+    ofs.write(" ", 1);
+
+    // write centroid number
+    auto s = std::to_string(assign[i]);
+    ofs.write(s.data(), s.size());
+    ofs.write(" ", 1);
+
+    // write distance
+    s = std::to_string(dist[i]);
+    ofs.write(s.data(), s.size());
+    ofs.write("\n", 1);
+  }
   return 0;
 }
