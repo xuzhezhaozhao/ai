@@ -127,6 +127,9 @@ void load_input_vectors(const std::string &input, std::vector<float> &data,
   while (!ifs.eof()) {
     std::getline(ifs, line);
     ++lineindex;
+    if (lineindex % 200000 == 0) {
+      std::cerr << "load " << lineindex << " lines ..." << std::endl;
+    }
     if (line == "") {
       break;
     }
