@@ -3,7 +3,6 @@
 set -e
 
 MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd ${MYDIR}
 
 # speedup 2~5x
 # https://github.com/facebookresearch/faiss/wiki/Troubleshooting
@@ -13,6 +12,6 @@ export OMP_WAIT_POLICY=PASSIVE
 # for deployment
 # use the specified libblas.so and liblapack.so in this directory
 # because it's almost 5x faster than the machine's own ones
-export LD_LIBRARY_PATH="./:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="${MYDIR}/bin:$LD_LIBRARY_PATH"
 
-./do_kmeans $@
+${MYDIR}/bin/do_kmeans $@
