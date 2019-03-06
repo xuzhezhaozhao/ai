@@ -1,9 +1,13 @@
 #! /usr/bin/env bash
 
-set -e
+BERT_CLASSIFIER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source /usr/local/services/kd_anaconda2-1.0/anaconda2_profile >/dev/null 2>&1
+source /usr/local/services/kd_anaconda2_gpu-1.0/anaconda2_profile >/dev/null 2>&1
 
-MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BERT_BASE_DIR=${BERT_CLASSIFIER_DIR}/../pretrained_checkpoints/chinese_L-12_H-768_A-12
 
-source /usr/local/services/kd_anaconda2-1.0/anaconda2_profile
-
-python ${MYDIR}/run_classifier.py $@
+python ${BERT_CLASSIFIER_DIR}/run_classifier.py $@ \
+    --task_name=fasttext \
+    --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+    --vocab_file=$BERT_BASE_DIR/vocab.txt \
+    --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt
