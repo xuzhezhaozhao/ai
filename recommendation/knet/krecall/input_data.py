@@ -201,6 +201,7 @@ def fasttext_train_input_fn(opts, data_path, skip_rows=0):
     ds = ds.map(
         lambda line: map_generate_example(line, opts, data_path, False),
         num_parallel_calls=opts.map_num_parallel_calls)
+    tf.logging.info(ds)
     ds = ds.prefetch(opts.prefetch_size).flat_map(
         lambda *x: flat_map_example(opts, x))
 

@@ -40,12 +40,12 @@ lr=0.1
 embedding_dim=128
 train_ws=20
 train_lower_ws=1
-min_count=30
+min_count=5
 t=0.025
-batch_size=64
+batch_size=32
 eval_batch_size=1024
-num_sampled=5
-epoch=5
+num_sampled=20
+epoch=10
 hidden_units=""
 prefetch_size=10000
 shuffle_size=10000
@@ -80,7 +80,7 @@ num_tfrecord_file=2
 train_data_format='fasttext'  # 'tfrecord', 'fasttext'
 map_num_parallel_calls=1
 # 'default', 'multi_thread'
-train_parallel_mode='multi_thread'
+train_parallel_mode='default'
 train_num_parallel=4
 use_batch_normalization=1
 # 'exponential_decay', 'fasttext_decay', 'polynomial_decay', 'none'
