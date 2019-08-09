@@ -6,11 +6,12 @@ MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
 if [ $# == 0 ] ; then
-    dict_file=dict/neg_dict.txt
+    echo "Usage: $0 <dict>"
+    exit -1
 elif [ $# == 1 ] ; then
     dict_file=$1
 else
-    echo "Usage: $0 <neg_dic>"
+    echo "Usage: $0 <dict>"
     exit -1
 fi
 

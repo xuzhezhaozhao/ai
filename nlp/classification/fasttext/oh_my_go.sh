@@ -6,9 +6,10 @@ MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${MYDIR}
 
 mkdir -p model
-datadir=../../../datasets/thucnews-dataset/data/fasttext
-train_data=${datadir}/train.tsv
-test_data=${datadir}/dev.tsv
+#datadir=../../../datasets/thucnews-dataset/data/fasttext
+datadir=../../../datasets/kd_video_comments-dataset/data/fasttext/
+train_data=${datadir}/train.txt
+test_data=${datadir}/test.txt
 
 ../../../submodules/fastText/fasttext \
     supervised \
