@@ -8,7 +8,7 @@ from __future__ import print_function
 import tensorflow as tf
 import numpy as np
 from dpp import dpp
-from samson_dpp import dpp as sdpp
+from dpp_ref import dpp as sdpp
 
 
 N = 10
