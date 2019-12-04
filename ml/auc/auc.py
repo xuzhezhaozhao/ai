@@ -26,11 +26,27 @@ def auc(labels, preds, n_bins=100):
     return satisfied_pair / float(total_case)
 
 
+def auc_v2(labels, probs):
+    f = list(zip(probs, labels))
+    rank = [values2 for values1, values2 in sorted(f, key=lambda x:x[0])]
+    rankList = [i+1 for i in range(len(rank)) if rank[i] == 1]
+    posNum = 0
+    negNum = 0
+    for i in range(len(labels)):
+        if(labels[i] == 1):
+            posNum += 1
+        else:
+            negNum += 1
+    auc = 1.0 * (sum(rankList) - (posNum*(posNum+1))/2.0) / (posNum*negNum)
+    return auc
+
+
 if __name__ == '__main__':
 
     y = np.array([1, 0, 0, 0, 1, 0, 1, 0])
-    pred = np.array([0.9, 0.8, 0.3, 0.1, 0.4, 0.9, 0.66, 0.7])
+    preds = np.array([0.9, 0.8, 0.3, 0.1, 0.4, 0.9, 0.66, 0.7])
 
-    fpr, tpr, thresholds = roc_curve(y, pred, pos_label=1)
+    fpr, tpr, thresholds = roc_curve(y, preds, pos_label=1)
     print("sklearn:", sk_auc(fpr, tpr))
-    print("reimplementation:", auc(y, pred))
+    print("v1:", auc(y, preds))
+    print("v2:", auc_v2(y, preds))
