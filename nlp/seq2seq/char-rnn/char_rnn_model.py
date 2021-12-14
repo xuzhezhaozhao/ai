@@ -64,10 +64,15 @@ class CharRNN(object):
         self.initial_state = cell.zero_state(batch_size, tf.float32)
 
         # lstm_outputs: shape [batch, seq_length, hidden_size]
-        # new_state: a tuple of num_layers elements,
-        # each shape [batch, hidden_size]
+        # states：states表示最终的状态，也就是序列中最后一个cell输出的状态。
+        # 一般情况下states的形状为 [batch_size, cell.output_size]，但当输入的
+        # cell为BasicLSTMCell时，state的形状为[2，batch_size, cell.output_size]，
+        # 其中2也对应着LSTM中的cell state和hidden state。
+        # final_state 是个 N-tuple，tuple里面的shape是 (2, batch_size, output_size)
+        # 打印出来是这样： final_state shape:(LSTMStateTuple(c=<tf.Tensor 'rnn/while/Exit_3:0' shape=(32, 128) dtype=float32>, h=<tf.Tensor'rnn/while/Exit_4:0' shape=(32, 128) dtype=float32>), LSTMStateTuple(c=<tf.Tensor 'rnn/while/Exit_5:0' shape=(32, 128) dtype=float32>, h=<tf.Tensor 'rnn/while/Exit_6:0' shape=(32, 128) dtype=float32>))
         lstm_outputs, self.final_state = tf.nn.dynamic_rnn(
             cell, lstm_inputs, initial_state=self.initial_state)
+        print("final_state shape:{}".format(self.final_state))
 
         # shape [batch, seq_length, vocab_size]
         self.logits = tf.layers.dense(lstm_outputs, self.vocab_size)
